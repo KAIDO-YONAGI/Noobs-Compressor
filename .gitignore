@@ -1,10 +1,6 @@
 # ignore IDE setting files
 .vscode/
 
-# ignore plan
-plan.md
-策划.md
-
 # ignore test files
 *.exe
 bin/*.exe
