@@ -1,6 +1,3 @@
-# ignore IDE setting files
-
-
 # ignore test files
 *.exe
 bin/*.exe
