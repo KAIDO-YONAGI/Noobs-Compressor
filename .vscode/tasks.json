@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "-g",
+                "-Wall",
+                "-Wextra",
+                "-std=c++17",
+                "${workspaceFolder}/src/*.cpp",
+                "-I", "C:/Program Files/OpenSSL-Win64/include",
+                "-I", "${workspaceFolder}/include",
+                "-L", "C:/Program Files/OpenSSL-Win64/lib",
+                "-llibssl", "-llibcrypto",
+                "-o", "${workspaceFolder}/bin/Aes.exe"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "Compile AES project with OpenSSL"
+        }
+    ]
+}
