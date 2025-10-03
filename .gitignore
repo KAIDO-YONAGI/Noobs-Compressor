@@ -1,6 +1,10 @@
-# ignore test files
-*.exe
-bin/*.exe
-*.txt
-bin/*.txt
+# 忽略 bin 目录
+bin/
+
+# 忽略 .vscode 目录
+.vscode/
+
+# 忽略 main.cpp 文件
+src/main.cpp
+#git rm --cached src/main.cpp
 
