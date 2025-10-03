@@ -1,5 +1,7 @@
 **开发计划**
-    **Aes**
+
+
+**Aes**
     技术点（适配技术）：
 
         1、密钥hash处理
@@ -8,12 +10,13 @@
 
         3、缓存池
 
-    **Heffman**
+**Heffman**
         1、
         2、
         3、
 
-    **Combination**
+
+**Combination**
 示意：Heffman-(1)>Aes-(2)>.sy文件（实际为二进制）
 
     1、系统间通信：Heffman缓存实现与Aes通信，传输预先计算好的分块id（记录分块顺序），实时释放已处理文件供Aes处理。
