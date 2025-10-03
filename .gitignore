@@ -1,0 +1,8 @@
+# ignore IDE setting files
+.vscode/
+
+# ignore test files
+*.exe
+bin/*.exe
+*.txt
+bin/*.txt
