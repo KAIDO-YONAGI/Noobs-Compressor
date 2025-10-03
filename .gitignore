@@ -1,6 +1,0 @@
-# ignore test files
-*.exe
-bin/*.exe
-*.txt
-bin/*.txt
-
