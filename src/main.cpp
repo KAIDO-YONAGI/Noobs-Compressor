@@ -22,6 +22,7 @@ void processFileAES(const string& inputFile, const string& outputFile,
         return;
     }
 
+    
     // 获取文件大小
     inFile.seekg(0, ios::end);
     size_t fileSize = inFile.tellg();
