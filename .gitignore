@@ -2,7 +2,7 @@
 .vscode/
 
 # ignore test files
-*.exe
-bin/*.exe
+bin/
 *.txt
-bin/*.txt
+*.log
+src/main.cpp
