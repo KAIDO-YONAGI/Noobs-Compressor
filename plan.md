@@ -133,14 +133,50 @@
       + 二级线程：算法内部的并行处理线程(如文件分块处理)
 - **文件**
   * 可借鉴7z：
-    - MARKDOWN
-    [签名头][版本号][压缩流索引]
-    ├─ [压缩头]
-    │ ├─ 属性：加密/CRC32/时间戳
-    │ └─ 方法：LZMA/Huffman参数
-    └─ [数据块]
-    ├─ Packed Size
-    └─ Unpacked Size
+```          
+      [ 文件头 (固定16字节) ]
+      ├─ Magic:         0x2E 0x73 0x79 0x1A (".sy\x1A")
+      ├─ Version:       0x01 0x00 (小端)
+      ├─ Flags:         0xC5 (二进制 11000101)
+      │                  ││││││└─ 保留位
+      │                  │││││└── 含文件属性
+      │                  ││││└─── 含时间戳  
+      │                  │││└──── 分块文件
+      │                  ││└───── 多文件包
+      │                  │└────── 使用压缩
+      │                  └─────── 已加密
+      └─ Header CRC:    0x78 0x56 0x34 0x12
+
+      [ 扩展头（可变长度） ]
+      ├─ [压缩头] (存在当Flags.bit2=1)
+      │  ├─ AlgorithmID: 0x01 (Huffman=0x01,LZMA=0x02)
+      │  └─ DictSize:    0x00 0x40 0x00 0x00 (16MB)
+      │
+      ├─ [加密头] (存在当Flags.bit7=1)
+      │  ├─ Method:      0x02 (AES-256-CBC)
+      │  ├─ KDFIterLog:  0x10 (迭代次数=2^16)
+      │  ├─ SaltSize:    0x10
+      │  └─ Salt:        16字节随机值
+      │
+      ├─ [文件清单] (存在当Flags.bit5=1)
+      │  ├─ FileCount:   0x02 0x00 (2个文件)
+      │  ├─ [FileMeta1]  结构体含文件名
+      │  └─ [FileMeta2]
+      │
+      ├─ [分块信息] (存在当Flags.bit3=1)
+      │  ├─ BlockCount:  0x03 0x00 0x00 0x00
+      │  └─ BlockSizes:  [8字节×3]
+      │
+      └─ HeaderEndMark: 0xFF 0xFF
+
+      [ 数据区 ]
+      ├─ [块1]
+      │  ├─ CompressedSize:   8字节
+      │  ├─ OriginalSize:     8字节
+      │  └─ Data:             N字节密文
+      ├─ [块2]...
+      └─ [块n]
+```
 ### 4.2 关键技术点
 - 线程间通信机制设计
 - 缓冲区数据同步方案
