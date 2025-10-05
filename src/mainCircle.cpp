@@ -48,12 +48,12 @@ ifstream inFile(inputFile, ios::binary);
         return;
     }
 
-    // »ñÈ¡ÎÄ¼ş´óĞ¡
+    // è·å–æ–‡ä»¶å¤§å°
     inFile.seekg(0, ios::end);
     size_t fileSize = inFile.tellg();
     inFile.seekg(0, ios::beg);
 
-    // ¼ÆËãĞèÒªµÄ´¦ÀíºÍ¿é´óĞ¡
+    // è®¡ç®—éœ€è¦çš„å¤„ç†å’Œå—å¤§å°
     size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;
     size_t remainingBytes = fileSize % BUFFER_SIZE;
     if (remainingBytes == 0) remainingBytes = BUFFER_SIZE;
@@ -64,30 +64,30 @@ ifstream inFile(inputFile, ios::binary);
 
     while (blockCount < totalBlocks) {
         size_t currentBlockSize = (blockCount == totalBlocks - 1) ? remainingBytes : BUFFER_SIZE;
-        size_t paddedBlockSize = currentBlockSize; // ¶¨ÒåpaddedBlockSize²¢³õÊ¼»¯Îªµ±Ç°¿é´óĞ¡
+        size_t paddedBlockSize = currentBlockSize; // å®šä¹‰paddedBlockSizeå¹¶åˆå§‹åŒ–ä¸ºå½“å‰å—å¤§å°
         
-        // ¶ÁÈ¡Êı¾İ¿é
+        // è¯»å–æ•°æ®å—
         inFile.read(buffer.data(), currentBlockSize);
         size_t bytesRead = inFile.gcount();
         
         if (bytesRead == 0) break;
 
-        // ¼ÓÃÜÊ±Ìí¼ÓÌî³ä
+        // åŠ å¯†æ—¶æ·»åŠ å¡«å……
         if (encrypt) {
             if (bytesRead % 16 != 0) {
                 size_t paddingSize = 16 - (bytesRead % 16);
                 paddedBlockSize = bytesRead + paddingSize;
                 buffer.resize(paddedBlockSize);
-                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7Ìî³ä
+                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7å¡«å……
             }
         }
 
-        // Ö´ĞĞ¼ÓÃÜ/½âÃÜ
+        // æ‰§è¡ŒåŠ å¯†/è§£å¯†
         if (encrypt) {
             aes(buffer.data(), paddedBlockSize, aes_key);
         } else {
             deAes(buffer.data(), paddedBlockSize, aes_key);
-            // ½âÃÜºóÈ¥³ıÌî³ä
+            // è§£å¯†åå»é™¤å¡«å……
             if (blockCount == totalBlocks - 1) {
                 uint8_t paddingSize = static_cast<uint8_t>(buffer[paddedBlockSize - 1]);
                 if (paddingSize <= 16) {
@@ -96,13 +96,13 @@ ifstream inFile(inputFile, ios::binary);
             }
         }
 
-        // Ğ´Èë´¦ÀíºóµÄÊı¾İ
+        // å†™å…¥å¤„ç†åçš„æ•°æ®
         outFile.write(buffer.data(), paddedBlockSize);
 
         processedBytes += bytesRead;
         blockCount++;
 
-        // ÏÔÊ¾½ø¶È
+        // æ˜¾ç¤ºè¿›åº¦
         int progress = static_cast<int>((processedBytes * 100) / fileSize);
         cout << "\rProgress: " << progress << "%" << flush;
     }
