@@ -76,9 +76,8 @@ int Aes::mergeArrayToInt(int array[4]) {
 int Aes::T(int num, int round) {
     int numArray[4];
     splitIntToArray(num, numArray);
-    leftLoop4int(numArray, 1); // 字循环
+    leftLoop4int(numArray, 1);
 
-    // 字节代换
     for(int i = 0; i < 4; i++)
         numArray[i] = getNumFromSBox(numArray[i]);
 
@@ -92,7 +91,7 @@ void Aes::extendKey(const char* key) {
     for(int i = 4, j = 0; i < 44; i++) {
         if(i % 4 == 0) {
             w[i] = w[i - 4] ^ T(w[i - 1], j);
-            j++; // 下一轮
+            j++;
         }
         else {
             w[i] = w[i - 4] ^ w[i - 1];
