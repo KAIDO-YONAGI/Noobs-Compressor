@@ -40,7 +40,7 @@ int Aes::modeChoose() {
 }
 void Aes::processFileAES(const string& inputFile, const string& outputFile, 
                          const char* aes_key, bool encrypt) {
-ifstream inFile(inputFile, ios::binary);
+    ifstream inFile(inputFile, ios::binary);
     ofstream outFile(outputFile, ios::binary);
     
     if (!inFile || !outFile) {
@@ -54,7 +54,7 @@ ifstream inFile(inputFile, ios::binary);
     inFile.seekg(0, ios::beg);
 
     // 计算需要的处理和块大小
-    size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;
+    size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;//向上取整，取代类型转换
     size_t remainingBytes = fileSize % BUFFER_SIZE;
     if (remainingBytes == 0) remainingBytes = BUFFER_SIZE;
 
