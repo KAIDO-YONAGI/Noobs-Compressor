@@ -77,14 +77,14 @@
 - 多文件打包：需要一个文件目录传输方法，将目录存放到文件头以配合文件分割标志，用于目录的还原。
 
 - 数据块（struct）：
--   '''
+'''
     vector<uint8_t> data    // 数据（二进制）
     uint32_t sequence_tag   // 顺序标签
     bool is_terminated      // 终止信号
     uint8_t header_flags    // 文件头标志位
     string source_tag       // 来源标签（如"COMPRESS", "AES"）
     string error_message    // 错误信息
-    '''
+'''
 
 **Optimization**  
 优化：
@@ -117,7 +117,7 @@
 - **加密：**
   * aes-128：128bit密钥，十轮处理。
 - **压缩：**
-  * heffman基于自然语言重复性的压缩算法
+  * heffman：基于自然语言重复性的压缩算法
 - **控制：**
   * thread/buffer:
     - 线程与线程、模块与缓存池之间的组合与调度
@@ -168,7 +168,7 @@
       └─ [块n]
 ```
 ### 4.2 关键技术点
-- 线程间通信机制设计
+- 模块间通信机制设计
 - 缓冲区数据同步方案
 - 加密压缩的顺序化处理
 - 异常处理和恢复机制
