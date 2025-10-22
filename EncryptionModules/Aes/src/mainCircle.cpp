@@ -40,11 +40,7 @@ int Aes::modeChoose() {
 }
 void Aes::processFileAES(const string& inputFile, const string& outputFile, 
                          const char* aes_key, bool encrypt) {
-<<<<<<<< HEAD:src/mainCircle.cpp
-ifstream inFile(inputFile, ios::binary);
-========
     ifstream inFile(inputFile, ios::binary);
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
     ofstream outFile(outputFile, ios::binary);
     
     if (!inFile || !outFile) {
@@ -52,22 +48,13 @@ ifstream inFile(inputFile, ios::binary);
         return;
     }
 
-<<<<<<<< HEAD:src/mainCircle.cpp
-    // èŽ·å–æ–‡ä»¶å¤§å°
-========
     // »ñÈ¡ÎÄ¼þ´óÐ¡
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
     inFile.seekg(0, ios::end);
     size_t fileSize = inFile.tellg();
     inFile.seekg(0, ios::beg);
 
-<<<<<<<< HEAD:src/mainCircle.cpp
-    // è®¡ç®—éœ€è¦çš„å¤„ç†å’Œå—å¤§å°
-    size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;
-========
     // ¼ÆËãÐèÒªµÄ´¦ÀíºÍ¿é´óÐ¡
     size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;//ÏòÉÏÈ¡Õû£¬È¡´úÀàÐÍ×ª»»
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
     size_t remainingBytes = fileSize % BUFFER_SIZE;
     if (remainingBytes == 0) remainingBytes = BUFFER_SIZE;
 
@@ -77,30 +64,30 @@ ifstream inFile(inputFile, ios::binary);
 
     while (blockCount < totalBlocks) {
         size_t currentBlockSize = (blockCount == totalBlocks - 1) ? remainingBytes : BUFFER_SIZE;
-        size_t paddedBlockSize = currentBlockSize; // å®šä¹‰paddedBlockSizeå¹¶åˆå§‹åŒ–ä¸ºå½“å‰å—å¤§å°
+        size_t paddedBlockSize = currentBlockSize; // ¶¨ÒåpaddedBlockSize²¢³õÊ¼»¯Îªµ±Ç°¿é´óÐ¡
         
-        // è¯»å–æ•°æ®å—
+        // ¶ÁÈ¡Êý¾Ý¿é
         inFile.read(buffer.data(), currentBlockSize);
         size_t bytesRead = inFile.gcount();
         
         if (bytesRead == 0) break;
 
-        // åŠ å¯†æ—¶æ·»åŠ å¡«å……
+        // ¼ÓÃÜÊ±Ìí¼ÓÌî³ä
         if (encrypt) {
             if (bytesRead % 16 != 0) {
                 size_t paddingSize = 16 - (bytesRead % 16);
                 paddedBlockSize = bytesRead + paddingSize;
                 buffer.resize(paddedBlockSize);
-                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7å¡«å……
+                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7Ìî³ä
             }
         }
 
-        // æ‰§è¡ŒåŠ å¯†/è§£å¯†
+        // Ö´ÐÐ¼ÓÃÜ/½âÃÜ
         if (encrypt) {
             aes(buffer.data(), paddedBlockSize, aes_key);
         } else {
             deAes(buffer.data(), paddedBlockSize, aes_key);
-            // è§£å¯†åŽåŽ»é™¤å¡«å……
+            // ½âÃÜºóÈ¥³ýÌî³ä
             if (blockCount == totalBlocks - 1) {
                 uint8_t paddingSize = static_cast<uint8_t>(buffer[paddedBlockSize - 1]);
                 if (paddingSize <= 16) {
@@ -109,13 +96,13 @@ ifstream inFile(inputFile, ios::binary);
             }
         }
 
-        // å†™å…¥å¤„ç†åŽçš„æ•°æ®
+        // Ð´Èë´¦ÀíºóµÄÊý¾Ý
         outFile.write(buffer.data(), paddedBlockSize);
 
         processedBytes += bytesRead;
         blockCount++;
 
-        // æ˜¾ç¤ºè¿›åº¦
+        // ÏÔÊ¾½ø¶È
         int progress = static_cast<int>((processedBytes * 100) / fileSize);
         cout << "\rProgress: " << progress << "%" << flush;
     }
@@ -142,45 +129,6 @@ extendKey(key);for(int k = 0; k < plen; k += 16) {
     shiftRows(pArray);
     addRoundKey(pArray, 10);
     convertArrayToStr(pArray, p + k);
-<<<<<<<< HEAD:src/mainCircle.cpp
-========
-}
-}
-
-void Aes::deAes(char *c, int clen, const char *key) {
-    int cArray[4][4];
-	int k;
-	extendKey(key);
-
-	for(k = 0; k < clen; k += 16) {
-		int i;
-		int wArray[4][4];
-
-		convertToIntArray(c + k, cArray);
-		addRoundKey(cArray, 10);
-
-		for(i = 9; i >= 1; i--) {
-			deSubBytes(cArray);
-
-			deShiftRows(cArray);
-
-			deMixColumns(cArray);
-			getArrayFrom4W(i, wArray);
-			deMixColumns(wArray);
-
-			addRoundTowArray(cArray, wArray);
-		}
-
-		deSubBytes(cArray);
-
-		deShiftRows(cArray);
-
-		addRoundKey(cArray, 0);
-
-		convertArrayToStr(cArray, c + k);
-
-	}
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
 }
 }
 
