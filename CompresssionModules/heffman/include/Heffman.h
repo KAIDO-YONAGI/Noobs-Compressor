@@ -1,0 +1,81 @@
+#ifndef HEFFMAN_H
+#define HEFFMAN_H
+
+#include "../hefftype/Heffman_type.h"
+#include "Connector.h"
+#include <memory>
+
+/**
+ * Heffman类 压缩/解压处理模块
+ * 自定义类型：
+ *     Datablk_ptr：指向Connector对象内缓冲块的指针类型。
+ * 
+ * 参数列表：
+ *     isCompressNow：标记压缩/解压模式
+ *     bytecount：64位整型，记录该文件有多少字节
+ * 
+ *     data_blocks：缓冲块指针列表，(Datablok_ptr)指针
+ *     data_blocks_out：存放输出数据的块们
+ *     thread_tabs：线程在堆上的哈希表 
+ *     hashtab：总哈希表
+ *     treeroot：编码树的根节点
+ * 
+ * 函数功能：
+ *     statistic_freq(线程ID)：线程统计频率
+ *     merge_ttabs()：合并线程提交的哈希表们
+ *     gen_hefftree()：生成编码树(将根节点绑定在treeroot)
+ *     gen_minheap()：生成一个包含树节点指针的优先队列。
+ *     save_code_inTab()：将编码保存至哈希表
+ *     run_save_code_inTab(Hefftreenode* root)：递归运行保存编码方法。
+ *     encode(线程ID，bit处理器)：线程进行编码
+ *     findchar(当前树指针，结果，行走方向)：根据编码树找到对应字符
+ *     decode(线程ID，bit处理器)：线程进行解码，根据比特处理器每次填充
+ *              的8位int列表，在树上行走，列表遍历完成保存当前树节点。
+ *     
+ */
+
+class Heffman: public Producer {
+
+public:
+    Heffman(bool isCmprsnw, int thread_nums);
+    ~Heffman();
+
+private:
+    using Datablk_ptr = Connector::block_t*;
+
+    enum class State{
+        //统计
+        //编码
+    };
+
+    bool isCompressNow;
+    uint64_t bytecount;
+
+    std::vector<Datablk_ptr> data_blocks;
+    std::vector<Datablk_ptr> data_blocks_out; 
+    Heffmaps thread_tabs;
+    Heffmap hashtab;
+    Hefftreenode* treeroot;
+    PathStack pathStack;
+
+    void statistic_freq(int thread_id); 
+    void merge_ttabs();
+
+    void gen_hefftree();
+    std::unique_ptr<Minheap> gen_minheap();
+    void save_code_inTab();
+    void run_save_code_inTab(Hefftreenode* root);
+
+    void encode(int thread_id, BitHandler bitoutput = BitHandler());
+    void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
+    void decode(int thread_id, BitHandler bitinput = BitHandler());
+
+    void output_codeTab();
+
+public:
+    void work() override;
+    //void output() override;
+    
+};
+
+#endif //HEFFMAN_H

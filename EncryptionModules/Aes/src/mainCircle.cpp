@@ -40,7 +40,11 @@ int Aes::modeChoose() {
 }
 void Aes::processFileAES(const string& inputFile, const string& outputFile, 
                          const char* aes_key, bool encrypt) {
+<<<<<<<< HEAD:src/mainCircle.cpp
+ifstream inFile(inputFile, ios::binary);
+========
     ifstream inFile(inputFile, ios::binary);
+>>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
     ofstream outFile(outputFile, ios::binary);
     
     if (!inFile || !outFile) {
@@ -48,13 +52,22 @@ void Aes::processFileAES(const string& inputFile, const string& outputFile,
         return;
     }
 
+<<<<<<<< HEAD:src/mainCircle.cpp
+    // èŽ·å–æ–‡ä»¶å¤§å°
+========
     // »ñÈ¡ÎÄ¼þ´óÐ¡
+>>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
     inFile.seekg(0, ios::end);
     size_t fileSize = inFile.tellg();
     inFile.seekg(0, ios::beg);
 
+<<<<<<<< HEAD:src/mainCircle.cpp
+    // è®¡ç®—éœ€è¦çš„å¤„ç†å’Œå—å¤§å°
+    size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;
+========
     // ¼ÆËãÐèÒªµÄ´¦ÀíºÍ¿é´óÐ¡
     size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;//ÏòÉÏÈ¡Õû£¬È¡´úÀàÐÍ×ª»»
+>>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
     size_t remainingBytes = fileSize % BUFFER_SIZE;
     if (remainingBytes == 0) remainingBytes = BUFFER_SIZE;
 
@@ -64,30 +77,30 @@ void Aes::processFileAES(const string& inputFile, const string& outputFile,
 
     while (blockCount < totalBlocks) {
         size_t currentBlockSize = (blockCount == totalBlocks - 1) ? remainingBytes : BUFFER_SIZE;
-        size_t paddedBlockSize = currentBlockSize; // ¶¨ÒåpaddedBlockSize²¢³õÊ¼»¯Îªµ±Ç°¿é´óÐ¡
+        size_t paddedBlockSize = currentBlockSize; // å®šä¹‰paddedBlockSizeå¹¶åˆå§‹åŒ–ä¸ºå½“å‰å—å¤§å°
         
-        // ¶ÁÈ¡Êý¾Ý¿é
+        // è¯»å–æ•°æ®å—
         inFile.read(buffer.data(), currentBlockSize);
         size_t bytesRead = inFile.gcount();
         
         if (bytesRead == 0) break;
 
-        // ¼ÓÃÜÊ±Ìí¼ÓÌî³ä
+        // åŠ å¯†æ—¶æ·»åŠ å¡«å……
         if (encrypt) {
             if (bytesRead % 16 != 0) {
                 size_t paddingSize = 16 - (bytesRead % 16);
                 paddedBlockSize = bytesRead + paddingSize;
                 buffer.resize(paddedBlockSize);
-                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7Ìî³ä
+                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7å¡«å……
             }
         }
 
-        // Ö´ÐÐ¼ÓÃÜ/½âÃÜ
+        // æ‰§è¡ŒåŠ å¯†/è§£å¯†
         if (encrypt) {
             aes(buffer.data(), paddedBlockSize, aes_key);
         } else {
             deAes(buffer.data(), paddedBlockSize, aes_key);
-            // ½âÃÜºóÈ¥³ýÌî³ä
+            // è§£å¯†åŽåŽ»é™¤å¡«å……
             if (blockCount == totalBlocks - 1) {
                 uint8_t paddingSize = static_cast<uint8_t>(buffer[paddedBlockSize - 1]);
                 if (paddingSize <= 16) {
@@ -96,13 +109,13 @@ void Aes::processFileAES(const string& inputFile, const string& outputFile,
             }
         }
 
-        // Ð´Èë´¦ÀíºóµÄÊý¾Ý
+        // å†™å…¥å¤„ç†åŽçš„æ•°æ®
         outFile.write(buffer.data(), paddedBlockSize);
 
         processedBytes += bytesRead;
         blockCount++;
 
-        // ÏÔÊ¾½ø¶È
+        // æ˜¾ç¤ºè¿›åº¦
         int progress = static_cast<int>((processedBytes * 100) / fileSize);
         cout << "\rProgress: " << progress << "%" << flush;
     }
@@ -129,6 +142,45 @@ extendKey(key);for(int k = 0; k < plen; k += 16) {
     shiftRows(pArray);
     addRoundKey(pArray, 10);
     convertArrayToStr(pArray, p + k);
+<<<<<<<< HEAD:src/mainCircle.cpp
+========
+}
+}
+
+void Aes::deAes(char *c, int clen, const char *key) {
+    int cArray[4][4];
+	int k;
+	extendKey(key);
+
+	for(k = 0; k < clen; k += 16) {
+		int i;
+		int wArray[4][4];
+
+		convertToIntArray(c + k, cArray);
+		addRoundKey(cArray, 10);
+
+		for(i = 9; i >= 1; i--) {
+			deSubBytes(cArray);
+
+			deShiftRows(cArray);
+
+			deMixColumns(cArray);
+			getArrayFrom4W(i, wArray);
+			deMixColumns(wArray);
+
+			addRoundTowArray(cArray, wArray);
+		}
+
+		deSubBytes(cArray);
+
+		deShiftRows(cArray);
+
+		addRoundKey(cArray, 0);
+
+		convertArrayToStr(cArray, c + k);
+
+	}
+>>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
 }
 }
 
