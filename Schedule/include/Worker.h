@@ -9,6 +9,8 @@
  * 输入输出的两个数据块列表。
  */
 
+#include "Datacmnctor.h"
+
 class Worker
 {
 public:
@@ -17,7 +19,7 @@ public:
 private:
 
 public:
-    virtual void work(/*args*/) = 0;
+    virtual void work(Datacmnctor*) = 0;
 };
 
 Worker::Worker()
