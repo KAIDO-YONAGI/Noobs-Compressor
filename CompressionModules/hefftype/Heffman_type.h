@@ -7,7 +7,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "../include/Connector.h"
+#include "../../namespace/namespace_sfc.h"
 
 using freq_t = uint64_t;
 using codelen_t = uint8_t;
@@ -133,7 +133,7 @@ struct BitHandler
     uint64_t bytecount;
     int valued_bits;
 
-    void handle(code_t& codeblocks, codelen_t codelen, Connector::block_t*);
+    void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t*);
     void handle(unsigned char, std::vector<uint8_t>);
     void handle_last();
 };

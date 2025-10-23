@@ -61,7 +61,7 @@ void PathStack::writecode(Chardata& cdata){
 
 //method of BitHandler
 
-void BitHandler::handle(code_t& codeblocks, codelen_t codelen, Connector::block_t* outputblock){
+void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t* outputblock){
    for(auto codeblock: codeblocks)
    {
       while (codelen > 0)
