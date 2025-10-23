@@ -2,7 +2,7 @@
 #define HEFFMAN_H
 
 #include "../hefftype/Heffman_type.h"
-#include "Connector.h"
+#include "../../Schedule/include/Worker.h"
 #include <memory>
 
 /**
@@ -21,7 +21,7 @@
  *     treeroot：编码树的根节点
  * 
  * 函数功能：
- *     statistic_freq(线程ID)：线程统计频率
+ *     statistic_freq(线程ID, 输入缓冲块列表)：线程统计频率
  *     merge_ttabs()：合并线程提交的哈希表们
  *     gen_hefftree()：生成编码树(将根节点绑定在treeroot)
  *     gen_minheap()：生成一个包含树节点指针的优先队列。
@@ -34,31 +34,24 @@
  *     
  */
 
-class Heffman: public Producer {
+class Heffman {
 
 public:
-    Heffman(bool isCmprsnw, int thread_nums);
+    Heffman(int thread_nums);
     ~Heffman();
 
 private:
-    using Datablk_ptr = Connector::block_t*;
+    using Datablk_ptr = sfc::block_t*;
 
-    enum class State{
-        //统计
-        //编码
-    };
-
-    bool isCompressNow;
     uint64_t bytecount;
 
-    std::vector<Datablk_ptr> data_blocks;
-    std::vector<Datablk_ptr> data_blocks_out; 
+    //sfc::blocks_t* data_blocks;
+    //sfc::blocks_t* data_blocks_out; 
     Heffmaps thread_tabs;
     Heffmap hashtab;
     Hefftreenode* treeroot;
     PathStack pathStack;
 
-    void statistic_freq(int thread_id); 
     void merge_ttabs();
 
     void gen_hefftree();
@@ -73,8 +66,7 @@ private:
     void output_codeTab();
 
 public:
-    void work() override;
-    //void output() override;
+    void statistic_freq(int thread_id, sfc::blocks_t*);
     
 };
 
