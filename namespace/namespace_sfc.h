@@ -6,7 +6,7 @@
 namespace sfc{
     using byte = unsigned char;
     using block_t = std::vector<unsigned char>;
-    using blocks_t = std::vector< std::vector<unsigned char> >;
+    using blocks_t = std::vector< block_t* >;
 }
 
 
