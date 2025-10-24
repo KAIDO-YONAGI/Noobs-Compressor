@@ -1,17 +1,18 @@
 #include "../include/Heffman.h"
 #include <stdexcept>
 
-Heffman::Heffman(bool isCmprsnw, int thread_nums):
-    isCompressNow(isCmprsnw), treeroot(NULL) 
+Heffman::Heffman(int thread_nums):
+    treeroot(NULL) 
     { 
         
     }
 
-void Heffman::statistic_freq(int thread_id){
-    Datablk_ptr pblock;
+void Heffman::statistic_freq(int thread_id, sfc::blocks_t* data_blocks_in)
+{    
     Heffmap threadTab;
+    sfc::block_t *pblock;
     try {
-        pblock = data_blocks.at(thread_id - 1);
+        pblock = data_blocks_in->at(thread_id - 1);
         threadTab = thread_tabs.at(thread_id - 1);
     } catch (std::out_of_range) {
 
@@ -81,8 +82,8 @@ void Heffman::run_save_code_inTab(Hefftreenode* root){
 }
 
 void Heffman::encode(int thread_id, BitHandler bitoutput = BitHandler()){
-    auto pblock = data_blocks.at(thread_id - 1);
-    auto outputblock = data_blocks_out.at(thread_id - 1);
+    auto pblock = data_blocks->at(thread_id - 1);
+    auto outputblock = data_blocks_out->at(thread_id - 1);
     for(auto c: *pblock){
         bitoutput.handle(hashtab[c].code, hashtab[c].codelen, outputblock);
     }
@@ -103,8 +104,8 @@ void Heffman::findchar(Hefftreenode* now, unsigned char* result, uint8_t toward)
 }
 
 void Heffman::decode(int thread_id, BitHandler bitinput = BitHandler()){
-    auto pblock = data_blocks.at(thread_id - 1);
-    auto outputblock = data_blocks_out.at(thread_id - 1);
+    auto pblock = data_blocks->at(thread_id - 1);
+    auto outputblock = data_blocks_out->at(thread_id - 1);
     Hefftreenode *now = treeroot;
     std::vector<uint8_t> treepath(8);
     unsigned char *result = new unsigned char(NULL); 
