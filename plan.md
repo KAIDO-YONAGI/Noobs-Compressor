@@ -298,4 +298,9 @@
   7. 结果写入输出文件
   8. 错误处理和日志记录
   9. 内存清理和资源释放
-![alt text](项目分析DFD1.png)
+![alt text](FlowCharts/项目分析DFD1.png)
+![alt text](FlowCharts/配置模块流程图.png) 
+![alt text](FlowCharts/压缩模块流程图.png) 
+![alt text](FlowCharts/解压模块流程图.png)
+![alt text](FlowCharts/SFC结构图.png)
+
