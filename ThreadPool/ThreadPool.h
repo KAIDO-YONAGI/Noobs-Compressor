@@ -1,8 +1,10 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
+#include "../namespace/namespace_sfc.h"
+#include "MonitorTaskQueue.hpp"
+
 #include <thread>
-#include <condition_variable>
 #include <vector>
 #include <queue>
 
@@ -12,12 +14,19 @@
  * 该类封装了线程的创建与销毁。提供对线程命名的功能。
  * 每个线程拥有一个任务队列，对外只开放对指定命名添加任务的功能。
  * 任务队列使用管程封装。
+ * 因为在内部管程并没有分配到堆上，所以请在堆上创建并使用这个线程池
  * 
- * 私有变量:
+ * 变量:
+ *     私有变量：
  *     thread_nums：线程的数量
  *     taskqueCv：列表存储每个队列的条件变量
  *     threads：线程列表
  *     tasks：任务队列列表
+ * 
+ * 函数：
+ *     私有函数：
+ *     thread_running()：线程的函数，内部是一个大循环，从任务队列取出
+ *                      函数指针调用。
  */
 
 class ThreadPool
@@ -30,13 +39,14 @@ public:
 
 private:
     int thread_nums;
-    std::vector< std::condition_variable > taskqueCv;
     std::vector<std::thread> threads;
-    std::vector< std::queue<> > tasks;
+    std::vector<MonitorTaskQueue> tasks;
+
+    void thread_running();
 
 public:
-    template<typename T>
-    void add_task(T&& task);
+    
+    void add_task();
 
 };
 
