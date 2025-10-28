@@ -32,6 +32,7 @@ void listFiles(const string &basePath, const string &relativePath, vector<string
     }
     POSIX_CLOSEDIR(dir);
 }
+
 void appendMagicStatic(const string& outputFilePath) {
     // 以二进制追加模式打开文件
     ofstream outFile(outputFilePath, ios::binary | ios::app);
