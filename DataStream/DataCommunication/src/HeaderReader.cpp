@@ -8,7 +8,6 @@ void readerForCompression(){
 void readerForDecompression(){
     vector<string> tempDirectoryPath;
 }
-
 void listFiles(const string &basePath, const string &relativePath, vector<string> &files)
 {
     string fullPath = basePath + "/" + relativePath;
@@ -33,6 +32,7 @@ void listFiles(const string &basePath, const string &relativePath, vector<string
     }
     closedir(dir);
 }
+
 void appendMagicStatic(const string& outputFilePath) {
     // 以二进制追加模式打开文件
     ofstream outFile(outputFilePath, ios::binary | ios::app);

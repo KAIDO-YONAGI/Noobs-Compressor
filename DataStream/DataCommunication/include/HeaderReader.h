@@ -6,11 +6,13 @@
 #include<vector>
 #include<iostream>
 #include<cstring>
+#include<string>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdint>
 
 using namespace std;
+
 namespace fs = std::filesystem; 
 
 void readerForCompression();
