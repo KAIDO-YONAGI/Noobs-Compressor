@@ -23,9 +23,10 @@ public:
 private:
     Heffman *heffman;
     int *core_use_count;
+    void work(Datacmnctor*) override;
 
 public:
-    void work(Datacmnctor*) override;
+    void work() override;
 };
 
 inline GetFreq::GetFreq(Heffman* heffcore, int *count):
