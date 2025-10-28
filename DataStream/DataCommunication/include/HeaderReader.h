@@ -9,11 +9,13 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdint>
+
 using namespace std;
+namespace fs = std::filesystem; 
 
 void readerForCompression();
 void readerForDecompression();
-void listFiles(const string &basePath, const string &relativePath, vector<string> &files);
+void listFiles(const fs::path &basePath, const fs::path &relativePath, std::vector<std::string> &files);
 void appendMagicStatic(const string& outputFilePath);
 void outPutAllPaths(string &outPutFilePath, string &filePathToScan);
 bool fileIsExist(string &outPutFilePath);
