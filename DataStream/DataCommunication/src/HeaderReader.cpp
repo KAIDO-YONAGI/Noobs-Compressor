@@ -9,24 +9,29 @@ void readerForDecompression(){
     vector<string> tempDirectoryPath;
 }
 
-void listFiles(const fs::path &basePath, const fs::path &relativePath, std::vector<std::string> &files)
+void listFiles(const string &basePath, const string &relativePath, vector<string> &files)
 {
-    fs::path fullPath = basePath / relativePath;  // 使用 / 运算符拼接路径
+    string fullPath = basePath + "/" + relativePath;
+    DIR *dir = opendir(fullPath.c_str());
+    dirent *entry;
 
-    // 遍历目录（recursive_iterator 可以递归遍历所有子目录）
-    for (const auto &entry : fs::directory_iterator(fullPath))
+    while ((entry = readdir(dir)) != nullptr)
     {
-        fs::path filePath = entry.path();  // 当前文件/目录的完整路径
-        fs::path relative = relativePath.empty() ? entry.path().filename() : relativePath / entry.path().filename();
-        
-        // 不需要手动检查 "." 或 ".."，C++17已经自动过滤
-        files.push_back(relative.string());  // 存入相对路径
+        string name = entry->d_name;
+        if (name == "." || name == "..")
+            continue;
 
-        if (entry.is_directory())  // 如果是子目录，递归处理
+        string newRelativePath = relativePath.empty() ? name : relativePath + "/" + name;
+        files.push_back(newRelativePath);
+
+        struct stat statbuf;
+        stat((fullPath + "/" + name).c_str(), &statbuf);
+        if (S_ISDIR(statbuf.st_mode))
         {
-            listFiles(basePath, relative, files);
+            listFiles(basePath, newRelativePath, files);
         }
     }
+    closedir(dir);
 }
 void appendMagicStatic(const string& outputFilePath) {
     // 以二进制追加模式打开文件
