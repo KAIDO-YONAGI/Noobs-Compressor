@@ -16,10 +16,11 @@ class Worker
 public:
     virtual ~Worker() = default;
 
-private:
+protected:
+    virtual void work(Datacmnctor*) = 0;
 
 public:
-    virtual void work(Datacmnctor*) = 0;
+    virtual void work() = 0;
 };
 
 Worker::Worker()
