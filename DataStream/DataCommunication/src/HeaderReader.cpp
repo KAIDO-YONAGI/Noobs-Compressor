@@ -11,10 +11,10 @@ void readerForDecompression(){
 void listFiles(const string &basePath, const string &relativePath, vector<string> &files)
 {
     string fullPath = basePath + "/" + relativePath;
-    DIR *dir = opendir(fullPath.c_str());
-    dirent *entry;
+    POSIX_DIR *dir = POSIX_OPENDIR(fullPath.c_str());
+    POSIX_DIRENT *entry;
 
-    while ((entry = readdir(dir)) != nullptr)
+    while ((entry = POSIX_READDIR(dir)) != nullptr)
     {
         string name = entry->d_name;
         if (name == "." || name == "..")
@@ -23,16 +23,15 @@ void listFiles(const string &basePath, const string &relativePath, vector<string
         string newRelativePath = relativePath.empty() ? name : relativePath + "/" + name;
         files.push_back(newRelativePath);
 
-        struct stat statbuf;
-        stat((fullPath + "/" + name).c_str(), &statbuf);
-        if (S_ISDIR(statbuf.st_mode))
+        POSIX_STAT statbuf;
+        POSIX_STAT_FUNC((fullPath + "/" + name).c_str(), &statbuf);
+        if (POSIX_S_ISDIR(statbuf.st_mode))
         {
             listFiles(basePath, newRelativePath, files);
         }
     }
-    closedir(dir);
+    POSIX_CLOSEDIR(dir);
 }
-
 void appendMagicStatic(const string& outputFilePath) {
     // 以二进制追加模式打开文件
     ofstream outFile(outputFilePath, ios::binary | ios::app);

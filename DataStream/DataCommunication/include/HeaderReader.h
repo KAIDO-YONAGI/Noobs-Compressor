@@ -23,6 +23,16 @@ void outPutAllPaths(string &outPutFilePath, string &filePathToScan);
 bool fileIsExist(string &outPutFilePath);
 void scanFlow(string &outPutFilePath, string &filePathToScan);
 
+//对POSIX文件方案启用宏定义
 
+#define POSIX_DIR            DIR
+#define POSIX_DIRENT         dirent
+#define POSIX_STAT           struct stat
+#define POSIX_OPENDIR        opendir
+#define POSIX_READDIR        readdir
+#define POSIX_CLOSEDIR       closedir
+#define POSIX_STAT_FUNC      stat
+#define POSIX_S_ISDIR(mode)  S_ISDIR(mode)
 
 #endif
+
