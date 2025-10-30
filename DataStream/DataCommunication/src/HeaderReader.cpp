@@ -8,6 +8,12 @@ void readerForCompression(){
 void readerForDecompression(){
     vector<string> tempDirectoryPath;
 }
+void Locator:: relativeLocator(std::ofstream& File,int offset){
+File.seekp(File.tellp()+offset,File.beg);
+}
+void Locator:: relativeLocator(std::ifstream& File,int offset){
+File.seekg(File.tellg()+offset,File.beg);
+}
 void listFiles(const string &basePath, const string &relativePath, vector<string> &files)
 {
     string fullPath = basePath + "/" + relativePath;

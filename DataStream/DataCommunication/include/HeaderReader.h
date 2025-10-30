@@ -15,6 +15,13 @@ using namespace std;
 
 namespace fs = std::filesystem; 
 
+class Locator{
+    public:
+        void relativeLocator(std::ofstream& File,int offset);
+        void relativeLocator(std::ifstream& File,int offset);
+        void relativeLocator(std::fstream& File, int offset) = delete;
+};
+
 void readerForCompression();
 void readerForDecompression();
 void listFiles(const fs::path &basePath, const fs::path &relativePath, std::vector<std::string> &files);
