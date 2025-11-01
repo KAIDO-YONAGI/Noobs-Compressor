@@ -1,24 +1,13 @@
 #include "../include/HeaderReader.h"
 
-template <typename T>
-void write_binary_le(std::ofstream& file, T value) {
-    file.write((const char*)&value, sizeof(T));
-}
-
-template <typename T>
-T read_binary_le(std::ifstream& file) {
-    T value;
-    file.read((char*)&value, sizeof(T));
-    return value;
-}
 
 void readerForCompression(){
-    vector<string> tempDirectoryPath;
+    std::vector<std::string> tempDirectoryPath;
 
 }
 
 void readerForDecompression(){
-    vector<string> tempDirectoryPath;
+    std::vector<std::string> tempDirectoryPath;
 }
 void Locator:: relativeLocator(std::ofstream& File,int offset){
 File.seekp(File.tellp()+offset,File.beg);
@@ -26,19 +15,19 @@ File.seekp(File.tellp()+offset,File.beg);
 void Locator:: relativeLocator(std::ifstream& File,int offset){
 File.seekg(File.tellg()+offset,File.beg);
 }
-void listFiles(const string &basePath, const string &relativePath, vector<string> &files)
+void listFiles(const std::string &basePath, const std::string &relativePath, std::vector<std::string> &files)
 {
-    string fullPath = basePath + "/" + relativePath;
+    std::string fullPath = basePath + "/" + relativePath;
     POSIX_DIR *dir = POSIX_OPENDIR(fullPath.c_str());
     POSIX_DIRENT *entry;
 
     while ((entry = POSIX_READDIR(dir)) != nullptr)
     {
-        string name = entry->d_name;
+        std::string name = entry->d_name;
         if (name == "." || name == "..")
             continue;
 
-        string newRelativePath = relativePath.empty() ? name : relativePath + "/" + name;
+        std::string newRelativePath = relativePath.empty() ? name : relativePath + "/" + name;
         files.push_back(newRelativePath);
 
         POSIX_STAT statbuf;
@@ -51,12 +40,12 @@ void listFiles(const string &basePath, const string &relativePath, vector<string
     POSIX_CLOSEDIR(dir);
 }
 
-void appendMagicStatic(const string& outputFilePath) {
+void appendMagicStatic(const std::string& outputFilePath) {
     // 以二进制追加模式打开文件
-    ofstream outFile(outputFilePath, ios::binary | ios::app);
+    std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
     
     if (!outFile) {
-        std::cerr << "Can't open output file: " << outputFilePath << endl;
+        std::cerr << "Can't open output file: " << outputFilePath <<"\n";
         return;
     }
 
@@ -65,16 +54,16 @@ void appendMagicStatic(const string& outputFilePath) {
     outFile.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
 
     if (!outFile) {
-        std::cerr << "Error:Can't write magic num in file" << endl;
+        std::cerr << "Error:Can't write magic num in file" << "\n";
     }
     return;
     outFile.close();
 }
-void outPutAllPaths(string &outPutFilePath, string &filePathToScan)
+void outPutAllPaths(std::string &outPutFilePath, std::string &filePathToScan)
 {
-    vector<string> files;
+    std::vector<std::string> files;
     listFiles(filePathToScan, "", files);
-    ofstream outFile(outPutFilePath,ios::binary | ios::app);
+    std::ofstream outFile(outPutFilePath,std::ios::binary | std::ios::app);
 
     for (const auto &file : files)
     {
@@ -83,14 +72,14 @@ void outPutAllPaths(string &outPutFilePath, string &filePathToScan)
     }
     outFile.close(); //需要注意关闭时机
 }
-bool fileIsExist(string &outPutFilePath){
+bool fileIsExist(std::string &outPutFilePath){
     FILE* file=fopen(outPutFilePath.c_str(),"r");
     if(file)return true;
     else return false;
 }
-void scanFlow(string &outPutFilePath, string &filePathToScan){
+void scanFlow(std::string &outPutFilePath, std::string &filePathToScan){
     if(fileIsExist(outPutFilePath)){
-        throw runtime_error("Error:fileIsExist \nTry to clear:"+outPutFilePath);
+        throw std::runtime_error("Error:fileIsExist \nTry to clear:"+outPutFilePath);
     }
     appendMagicStatic(outPutFilePath);
     outPutAllPaths(outPutFilePath, filePathToScan);

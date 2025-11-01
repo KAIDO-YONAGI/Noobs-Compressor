@@ -10,8 +10,17 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdint>
+//对POSIX文件方案启用宏定义
 
-using namespace std;
+#define POSIX_DIR            DIR
+#define POSIX_DIRENT         dirent
+#define POSIX_STAT           struct stat
+#define POSIX_OPENDIR        opendir
+#define POSIX_READDIR        readdir
+#define POSIX_CLOSEDIR       closedir
+#define POSIX_STAT_FUNC      stat
+#define POSIX_S_ISDIR(mode)  S_ISDIR(mode)
+
 
 namespace fs = std::filesystem; 
 
@@ -25,21 +34,25 @@ class Locator{
 void readerForCompression();
 void readerForDecompression();
 void listFiles(const fs::path &basePath, const fs::path &relativePath, std::vector<std::string> &files);
-void appendMagicStatic(const string& outputFilePath);
-void outPutAllPaths(string &outPutFilePath, string &filePathToScan);
-bool fileIsExist(string &outPutFilePath);
-void scanFlow(string &outPutFilePath, string &filePathToScan);
+void appendMagicStatic(const std::string& outputFilePath);
+void outPutAllPaths(std::string &outPutFilePath, std::string &filePathToScan);
+bool fileIsExist(std::string &outPutFilePath);
+void scanFlow(std::string &outPutFilePath, std::string &filePathToScan);
 
-//对POSIX文件方案启用宏定义
 
-#define POSIX_DIR            DIR
-#define POSIX_DIRENT         dirent
-#define POSIX_STAT           struct stat
-#define POSIX_OPENDIR        opendir
-#define POSIX_READDIR        readdir
-#define POSIX_CLOSEDIR       closedir
-#define POSIX_STAT_FUNC      stat
-#define POSIX_S_ISDIR(mode)  S_ISDIR(mode)
+
+template <typename T>
+void write_binary_le(std::ofstream& file, T value) {
+    file.write((const char*)&value, sizeof(T));
+}
+
+template <typename T>
+T read_binary_le(std::ifstream& file) {
+    T value;
+    file.read((char*)&value, sizeof(T));
+    return value;
+}
+
 
 #endif
 
