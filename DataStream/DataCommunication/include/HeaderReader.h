@@ -19,7 +19,7 @@ class Locator{
     public:
         void relativeLocator(std::ofstream& File,int offset);
         void relativeLocator(std::ifstream& File,int offset);
-        void relativeLocator(std::fstream& File, int offset) = delete;//防止发生具有歧义的ofstream重载
+        void relativeLocator(std::fstream& File, int offset) = delete;//防止发生具有歧义的fstream重载
 };
 
 void readerForCompression();

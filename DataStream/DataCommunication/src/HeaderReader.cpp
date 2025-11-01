@@ -1,5 +1,17 @@
 #include "../include/HeaderReader.h"
 
+template <typename T>
+void write_binary_le(std::ofstream& file, T value) {
+    file.write((const char*)&value, sizeof(T));
+}
+
+template <typename T>
+T read_binary_le(std::ifstream& file) {
+    T value;
+    file.read((char*)&value, sizeof(T));
+    return value;
+}
+
 void readerForCompression(){
     vector<string> tempDirectoryPath;
 
@@ -86,16 +98,16 @@ void scanFlow(string &outPutFilePath, string &filePathToScan){
 }
 int main()
 {
-    string filePathToScan = "";
-    string outPutFilePath = "";
-    filePathToScan="D:\\1gal";//test
-    outPutFilePath="FilesList.bin";
-    try{
-        scanFlow(outPutFilePath,filePathToScan);
-        cout << "Resluts have been put to:" << outPutFilePath << endl;
-    }catch(runtime_error& e){
-        cerr<<e.what()<<"\n";
-    }
+    // string filePathToScan = "";
+    // string outPutFilePath = "";
+    // filePathToScan="D:\\1gal";//test
+    // outPutFilePath="FilesList.bin";
+    // try{
+    //     scanFlow(outPutFilePath,filePathToScan);
+    //     cout << "Resluts have been put to:" << outPutFilePath << endl;
+    // }catch(runtime_error& e){
+    //     cerr<<e.what()<<"\n";
+    // }
     
 
     // cout << "Enter filePathToScan:";
@@ -104,7 +116,33 @@ int main()
     
     // cout << "Enter outPutFilePath:";
     // cin>>outPutFilePath;
-    
-    system("pause");
+
+//二进制数值读写
+
+    // std::ofstream file("data.bin", std::ios::binary);
+    //     if (!file) {
+    //         std::cerr << "Failed to open file for writing!" << std::endl;
+    //         return 1;
+    //     }
+    //     uint64_t num1 = 0x12345678DEADBEEF;
+
+    //     write_binary_le(file, num1);
+
+    //     std::cout << "Successfully wrote numbers to file." << std::endl;
+
+
+    // std::ifstream file("data.bin", std::ios::binary);
+    // if (!file) {
+    //     std::cerr << "Failed to open file for reading!" << std::endl;
+    //     return 1;
+    // }
+
+    // uint64_t num1 = read_binary_le<uint64_t>(file);
+
+    // std::cout << "Read values:" << std::endl;
+    // std::cout << "num1 : 0x" << std::hex << num1 << std::endl;
+
+
+    getchar(); 
     return 0;
 }
