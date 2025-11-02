@@ -33,10 +33,9 @@ class Locator{
 
 void readerForCompression();
 void readerForDecompression();
-void listFiles(const fs::path &basePath, const fs::path &relativePath, std::vector<std::string> &files);
 void appendMagicStatic(const std::string& outputFilePath);
 void outPutAllPaths(std::string &outPutFilePath, std::string &filePathToScan);
-bool fileIsExist(std::string &outPutFilePath);
+bool fileIsExist(const std::string &outPutFilePath);
 void scanFlow(std::string &outPutFilePath, std::string &filePathToScan);
 
 
