@@ -10,6 +10,8 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdint>
+
+namespace fs = std::filesystem;
 //对POSIX文件方案启用宏定义
 
 #define POSIX_DIR            DIR
@@ -33,11 +35,12 @@ class Locator{
 
 void readerForCompression();
 void readerForDecompression();
+
 void appendMagicStatic(const std::string& outputFilePath);
 void outPutAllPaths(std::string &outPutFilePath, std::string &filePathToScan);
 bool fileIsExist(const std::string &outPutFilePath);
 void scanFlow(std::string &outPutFilePath, std::string &filePathToScan);
-
+uint64_t getFileSize(const std::string& filepath, uint64_t& outSize);
 
 
 template <typename T>

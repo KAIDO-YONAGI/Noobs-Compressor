@@ -13,8 +13,8 @@ void readerForDecompression(){
     std::vector<std::string> tempDirectoryPath;
 }
 
-bool fileIsExist(const std::string &outPutFilePath){
-    FILE* file=fopen(outPutFilePath.c_str(),"r");
+bool fileIsExist(const char* outPutFilePath){
+    FILE* file=fopen(outPutFilePath,"r");
     if(file){
         fclose(file);
         return true;
@@ -26,13 +26,13 @@ bool isFile(const char* path){
     struct stat statbuf;
     
     if (stat(path, &statbuf) != 0) {
-        std::cerr <<(("error_stat: " + std::string(path)).c_str());
+        std::cerr <<(("error_stat(): " + std::string(path)).c_str());
         return false;
     }
     return S_ISREG(statbuf.st_mode);
 } 
 
-void appendMagicStatic(const std::string& outputFilePath) {
+void appendMagicStatic(const char* outputFilePath) {
     // 以二进制追加模式打开文件
     std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
     
@@ -43,17 +43,25 @@ void appendMagicStatic(const std::string& outputFilePath) {
 
     // 写入32位魔数（0xDEADBEEF）
     const uint32_t magic = 0xDEADBEEF;
-    outFile.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    outFile.write((const char*)&magic, sizeof(magic));
 
     if (!outFile) {
         std::cerr << "Error:Can't write magic num in file" << "\n";
     }
     outFile.close();
 }
-
-void outPutAllPaths(const std::string &outPutFilePath,const std::string &filePathToScan)
+uint64_t getFileSize(const char* filepath) {
+    struct stat stat_buf;
+    uint64_t outSize;
+    if (stat(filepath, &stat_buf) != 0) {
+        std::cerr <<("error_stat()"); // 打印错误
+    }
+    outSize = stat_buf.st_size;
+    return outSize;
+}
+void outPutAllPaths(const char* outPutFilePath, const char* filePathToScan)
 {
-    POSIX_DIR *dir=opendir(filePathToScan.c_str());
+    POSIX_DIR *dir=opendir(filePathToScan);
     struct POSIX_DIRENT *entry;
     
     if (!dir) {
@@ -63,34 +71,45 @@ void outPutAllPaths(const std::string &outPutFilePath,const std::string &filePat
     std::ofstream file(outPutFilePath, std::ios::binary | std::ios::app);
     while ((entry = readdir(dir)) != NULL) {
         std::string name = entry->d_name;
+        std::string fullPath = std::string(filePathToScan) + "\\" + name; //绝对路径
+        uint8_t sizeOfName=name.size();
+        bool is_File=isFile(fullPath.c_str());
+
         if (name == "." || name == "..")
             continue;
-        std::string fullPath=filePathToScan+"\\"+name;//绝对路径
-        uint64_t sizeOfName=name.size();
-        write_binary_le(file,sizeOfName);
-        file.write(name.c_str(),sizeOfName);
-        file.write(isFile(fullPath.c_str())?"1":"0",1);
+
+        write_binary_le(file,sizeOfName);//文件名偏移量
+        file.write(name.c_str(),sizeOfName);//文件名
+
+        file.write(is_File?"1":"0",1);
+        
+        if(is_File){
+            uint64_t fileSize=getFileSize(fullPath.c_str());
+            write_binary_le(file,fileSize);
+            write_binary_le(file,uint64_t(0));
+        }
+        else if(!is_File){
+        }
     }
     file.close();
     POSIX_CLOSEDIR(dir);
 }
 
-void scanFlow(const std::string &outPutFilePath,const std::string &filePathToScan){
+void scanFlow(const char* outPutFilePath, const char* filePathToScan){
     if(fileIsExist(outPutFilePath)){
-        std::cerr <<("Error:fileIsExist \nTry to clear:"+outPutFilePath);
+        std::cerr <<("Error:fileIsExist \nTry to clear:" + std::string(outPutFilePath));
     }
     appendMagicStatic(outPutFilePath);
     outPutAllPaths(outPutFilePath, filePathToScan);
     appendMagicStatic(outPutFilePath);
-
 }
 
 int main()
 {
-    const std::string outPutFilePath="FilesList.bin";
-    const std::string filePathToScan="D:\\1gal";
+    const char* outPutFilePath="FilesList.bin";
+    const char* filePathToScan="D:\\1gal";
     
-    scanFlow(outPutFilePath,filePathToScan);
+    scanFlow(outPutFilePath, filePathToScan);
 
     system("pause");
     return 0;
