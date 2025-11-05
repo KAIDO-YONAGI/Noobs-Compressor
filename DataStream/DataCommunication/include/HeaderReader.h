@@ -41,12 +41,11 @@ public:
 class FileDetails
 {
 private:
-    // 成员变量声明顺序
     std::string name;
     uint8_t sizeOfName;
     uint64_t fileSize;
     bool isFile;
-    fs::path fullPath;  // std::filesystem::path
+    fs::path fullPath;
 
 public:
     const std::string &getName() const { return name; }
@@ -71,13 +70,10 @@ public:
 
 class BinaryIO
 {
-private:
-    FilePath &File;
-
 public:
-    BinaryIO(FilePath &File) : File(File) {}
+    BinaryIO()=default;
     uint64_t getFileSize(const fs::path &filePathToScan);
-    void scanner();
+    void scanner(FilePath& File,FileQueue& queue);
     void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue);
     void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, uint32_t count);
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);

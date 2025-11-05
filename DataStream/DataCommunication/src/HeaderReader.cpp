@@ -1,11 +1,18 @@
 // HeaderReader.cpp
 #include "../include/HeaderReader.h"
-
-void readerForCompression(){
+// void Locator:: relativeLocator(std::ofstream& File,int offset){
+//     File.seekp(File.tellp()+offset,File.beg);
+// }
+// void Locator:: relativeLocator(std::ifstream& File,int offset){
+//     File.seekg(File.tellg()+offset,File.beg);
+// }
+void readerForCompression()
+{
     std::vector<fs::path> tempDirectoryPath;
 }
 
-void readerForDecompression(){
+void readerForDecompression()
+{
     std::vector<fs::path> tempDirectoryPath;
 }
 
@@ -16,10 +23,19 @@ void scanFlow(FilePath &File)
         std::cerr << "scanFlow-Error_fileIsExist \nTry to clear:" << File.getOutPutFilePath() << "\n";
         return;
     }
-    
-    BinaryIO headerReader(File);
+    FileQueue queue;
+    while (!queue.fileQueue.empty())
+    {
+        FileDetails details = queue.fileQueue.front().first;
+        int count = queue.fileQueue.front().second;
+
+        
+
+        queue.fileQueue.pop();
+    }
+    BinaryIO headerReader;
     appendMagicStatic(File.getOutPutFilePath());
-    headerReader.scanner();
+    headerReader.scanner(File,queue);
     appendMagicStatic(File.getOutPutFilePath());
 }
 
@@ -43,7 +59,7 @@ void appendMagicStatic(const fs::path &outputFilePath)
     }
 
     const uint32_t magic = 0xDEADBEEF;
-    outFile.write(reinterpret_cast<const char*>(&magic), sizeof(magic));
+    outFile.write((const char *)(&magic), sizeof(magic));
 
     if (!outFile)
     {
@@ -53,19 +69,21 @@ void appendMagicStatic(const fs::path &outputFilePath)
 
 uint64_t BinaryIO::getFileSize(const fs::path &filePathToScan)
 {
-    try {
+    try
+    {
         return fs::file_size(filePathToScan);
-    } catch (const fs::filesystem_error& e) {
+    }
+    catch (const fs::filesystem_error &e)
+    {
         std::cerr << "getFileSize()-Error: " << e.what() << "\n";
         return 0;
     }
 }
 
-void BinaryIO::scanner()
+void BinaryIO::scanner(FilePath& File,FileQueue& queue)
 {
-    FileQueue queue;
     bool goingScan = true;
-    
+
     while (true)
     {
         std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
@@ -76,15 +94,16 @@ void BinaryIO::scanner()
         }
 
         goingScan = false;
-        
-        try {
-            for (const auto& entry : fs::directory_iterator(File.getFilePathToScan()))
+
+        try
+        {
+            for (const auto &entry : fs::directory_iterator(File.getFilePathToScan()))
             {
                 goingScan = true;
                 auto name = entry.path().filename().string();
                 if (name == "." || name == "..")
                     continue;
-                    
+
                 auto fullPath = entry.path();
                 uint8_t sizeOfName = name.size();
                 bool is_File = entry.is_regular_file();
@@ -93,13 +112,17 @@ void BinaryIO::scanner()
                 FileDetails details(name, sizeOfName, fileSize, is_File, fullPath);
                 writeBinaryStandard(outfile, details, queue);
             }
-        } catch (const fs::filesystem_error& e) {
+
+        }
+        catch (const fs::filesystem_error &e)
+        {
             std::cerr << "scanner-Error: " << e.what() << "\n";
             continue;
         }
 
-        if(!goingScan && queue.fileQueue.empty()) break;
-        
+        if (!goingScan && queue.fileQueue.empty())
+            break;
+
         outfile.close();
     }
 }
@@ -113,7 +136,8 @@ void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details,
     else
     {
         int countOfThisHeader = countFilesInDirectory(details.getFullPath());
-        if(countOfThisHeader >= 0){
+        if (countOfThisHeader >= 0)
+        {
             queue.fileQueue.push({details, countOfThisHeader});
             writeHeaderStandard(outfile, details, countOfThisHeader);
         }
@@ -123,27 +147,30 @@ void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details,
 void BinaryIO::writeFileStandard(std::ofstream &outfile, FileDetails &details)
 {
     uint8_t SizeOfName = details.getSizeOfName();
-    write_binary_le(outfile, SizeOfName);                 
-    outfile.write(details.getName().c_str(), SizeOfName); 
-    outfile.write("1", 1);                                
-    write_binary_le(outfile, details.getFileSize());      
-    write_binary_le(outfile, uint64_t(0));                
+    write_binary_le(outfile, SizeOfName);
+    outfile.write(details.getName().c_str(), SizeOfName);
+    outfile.write("1", 1);
+    write_binary_le(outfile, details.getFileSize());
+    write_binary_le(outfile, uint64_t(0));
 }
 
 void BinaryIO::writeHeaderStandard(std::ofstream &outfile, FileDetails &details, uint32_t count)
 {
     uint8_t SizeOfName = details.getSizeOfName();
-    write_binary_le(outfile, SizeOfName);                 
-    outfile.write(details.getName().c_str(), SizeOfName); 
+    write_binary_le(outfile, SizeOfName);
+    outfile.write(details.getName().c_str(), SizeOfName);
     outfile.write("0", 1);
-    write_binary_le(outfile, count); 
+    write_binary_le(outfile, count);
 }
 
 int countFilesInDirectory(const fs::path &filePathToScan)
 {
-    try {
+    try
+    {
         return std::distance(fs::directory_iterator(filePathToScan), fs::directory_iterator{});
-    } catch (const fs::filesystem_error& e) {
+    }
+    catch (const fs::filesystem_error &e)
+    {
         std::cerr << "writeHeaderStandard()-Error: " << e.what() << "\n";
         return -1;
     }
