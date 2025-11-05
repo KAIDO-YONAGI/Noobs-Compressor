@@ -6,13 +6,14 @@
 #include <vector>
 #include <iostream>
 #include <cstring>
-#include <string>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <cstdint>
-
+#include <queue>
+#include <cassert>
 namespace fs = std::filesystem;
-//对POSIX文件方案启用宏定义
+
+//为POSIX文件操作设置宏定义
 
 #define POSIX_DIR DIR
 #define POSIX_DIRENT dirent
@@ -23,14 +24,12 @@ namespace fs = std::filesystem;
 #define POSIX_STAT_FUNC stat
 #define POSIX_S_ISDIR(mode) S_ISDIR(mode)
 
-namespace fs = std::filesystem;
-
 class Locator
 {
 public:
     void relativeLocator(std::ofstream &File, int offset);
     void relativeLocator(std::ifstream &File, int offset);
-    void relativeLocator(std::fstream &File, int offset) = delete; //防止发生具有歧义的fstream重载
+    void relativeLocator(std::fstream &File, int offset) = delete; //禁止使用同时读写fstream调用
 };
 class FilePath
 {
@@ -43,6 +42,9 @@ public:
     {
         this->outPutFilePath = outPutFilePath;
         this->filePathToScan = filePathToScan;
+    }
+    void setFilePathToScan(const char *filePathToScan){
+        this->filePathToScan=filePathToScan;
     }
     const char *getOutPutFilePath() const { return outPutFilePath; }
     const char *getFilePathToScan() const { return filePathToScan; }
@@ -76,18 +78,27 @@ public:
         this->fullPath = fullPath;
     }
 };
+
+class FileQueue
+{
+public:
+    FileQueue()=default;
+    std::queue<std::pair<FileDetails, int>> fileQueue;
+};
+
 class BinaryIO
 {
 private:
     FilePath &File;
-
 public:
     BinaryIO(FilePath &File) : File(File) {}
     uint64_t getFileSize(const char *filePathToScan);
     void scanner();
-    void WriteBinaryStandard(std::ofstream &outfile, FileDetails &details);
-    
+    void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue);
+    void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, uint32_t count);
+    void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
+
 
 void scanFlow(FilePath &File);
 void readerForCompression();
@@ -95,6 +106,7 @@ void readerForDecompression();
 
 void appendMagicStatic(const char *outputFilePath);
 bool fileIsExist(const char *outPutFilePath);
+int countFilesInDirectory(const char *filePathToScan);
 
 template <typename T>
 void write_binary_le(std::ofstream &file, T value)
