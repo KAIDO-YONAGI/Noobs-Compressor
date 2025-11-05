@@ -1,3 +1,4 @@
+// HeaderReader.h
 #ifndef HEADERREADER
 #define HEADERREADER
 
@@ -6,83 +7,65 @@
 #include <vector>
 #include <iostream>
 #include <cstring>
-#include <dirent.h>
-#include <sys/stat.h>
 #include <cstdint>
 #include <queue>
 #include <cassert>
+
 namespace fs = std::filesystem;
-
-//为POSIX文件操作设置宏定义
-
-#define POSIX_DIR DIR
-#define POSIX_DIRENT dirent
-#define POSIX_STAT struct stat
-#define POSIX_OPENDIR opendir
-#define POSIX_READDIR readdir
-#define POSIX_CLOSEDIR closedir
-#define POSIX_STAT_FUNC stat
-#define POSIX_S_ISDIR(mode) S_ISDIR(mode)
 
 class Locator
 {
 public:
     void relativeLocator(std::ofstream &File, int offset);
     void relativeLocator(std::ifstream &File, int offset);
-    void relativeLocator(std::fstream &File, int offset) = delete; //禁止使用同时读写fstream调用
+    void relativeLocator(std::fstream &File, int offset) = delete;
 };
+
 class FilePath
 {
 private:
-    const char *outPutFilePath;
-    const char *filePathToScan;
+    fs::path outPutFilePath;
+    fs::path filePathToScan;
 
 public:
-    FilePath(const char *outPutFilePath, const char *filePathToScan)
-    {
-        this->outPutFilePath = outPutFilePath;
+    FilePath(const fs::path &outPutFilePath, const fs::path &filePathToScan)
+        : outPutFilePath(outPutFilePath), filePathToScan(filePathToScan) {}
+    
+    void setFilePathToScan(const fs::path &filePathToScan){
         this->filePathToScan = filePathToScan;
     }
-    void setFilePathToScan(const char *filePathToScan){
-        this->filePathToScan=filePathToScan;
-    }
-    const char *getOutPutFilePath() const { return outPutFilePath; }
-    const char *getFilePathToScan() const { return filePathToScan; }
+    
+    const fs::path &getOutPutFilePath() const { return outPutFilePath; }
+    const fs::path &getFilePathToScan() const { return filePathToScan; }
 };
 class FileDetails
 {
 private:
+    // 成员变量声明顺序
     std::string name;
-    std::string fullPath;
-
     uint8_t sizeOfName;
     uint64_t fileSize;
     bool isFile;
+    fs::path fullPath;  // std::filesystem::path
 
 public:
     const std::string &getName() const { return name; }
-    const std::string &getFullPath() const { return fullPath; }
-
+    const fs::path &getFullPath() const { return fullPath; }
     uint8_t getSizeOfName() const { return sizeOfName; }
-
     uint64_t getFileSize() const { return fileSize; }
-
     bool getIsFile() const { return isFile; }
 
-    FileDetails(std::string name, uint8_t sizeOfName, uint64_t fileSize, bool isFile, std::string fullPath)
-    {
-        this->name = name;
-        this->sizeOfName = sizeOfName;
-        this->fileSize = fileSize;
-        this->isFile = isFile;
-        this->fullPath = fullPath;
-    }
+    FileDetails(std::string name, uint8_t sizeOfName, uint64_t fileSize, bool isFile, const fs::path &fullPath)
+        : name(std::move(name)),        
+          sizeOfName(sizeOfName),       
+          fileSize(fileSize),           
+          isFile(isFile),               
+          fullPath(fullPath)            
+    {}
 };
-
 class FileQueue
 {
 public:
-    FileQueue()=default;
     std::queue<std::pair<FileDetails, int>> fileQueue;
 };
 
@@ -90,35 +73,34 @@ class BinaryIO
 {
 private:
     FilePath &File;
+
 public:
     BinaryIO(FilePath &File) : File(File) {}
-    uint64_t getFileSize(const char *filePathToScan);
+    uint64_t getFileSize(const fs::path &filePathToScan);
     void scanner();
     void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue);
     void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, uint32_t count);
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
 
-
 void scanFlow(FilePath &File);
 void readerForCompression();
 void readerForDecompression();
-
-void appendMagicStatic(const char *outputFilePath);
-bool fileIsExist(const char *outPutFilePath);
-int countFilesInDirectory(const char *filePathToScan);
+void appendMagicStatic(const fs::path &outputFilePath);
+bool fileIsExist(const fs::path &outPutFilePath);
+int countFilesInDirectory(const fs::path &filePathToScan);
 
 template <typename T>
 void write_binary_le(std::ofstream &file, T value)
 {
-    file.write((const char *)&value, sizeof(T));
+    file.write(reinterpret_cast<const char*>(&value), sizeof(T));
 }
 
 template <typename T>
 T read_binary_le(std::ifstream &file)
 {
     T value;
-    file.read((char *)&value, sizeof(T));
+    file.read(reinterpret_cast<char*>(&value), sizeof(T));
     return value;
 }
 
