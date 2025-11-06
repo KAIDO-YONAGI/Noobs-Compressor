@@ -6,15 +6,15 @@
 // void Locator:: relativeLocator(std::ifstream& File,int offset){
 //     File.seekg(File.tellg()+offset,File.beg);
 // }
-void readerForCompression()
-{
-    std::vector<fs::path> tempDirectoryPath;
-}
+// void readerForCompression()
+// {
+//     std::vector<fs::path> tempDirectoryPath;
+// }
 
-void readerForDecompression()
-{
-    std::vector<fs::path> tempDirectoryPath;
-}
+// void readerForDecompression()
+// {
+//     std::vector<fs::path> tempDirectoryPath;
+// }
 
 bool fileIsExist(const fs::path &outPutFilePath)
 {
@@ -61,47 +61,42 @@ void BinaryIO::scanner(FilePath& File,FileQueue& queue)
 {
     bool goingScan = true;
 
-    // while (true)
-    // {
-        std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-        if (!outfile)
+    std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
+    if (!outfile)
+    {
+        std::cerr << "scanner()-Error_failToOpenFile:" << File.getFilePathToScan() << "\n";
+        return;
+    }
+
+    goingScan = false;
+
+    try
+    {
+        for (const auto &entry : fs::directory_iterator(File.getFilePathToScan()))
         {
-            std::cerr << "scanner()-Error_failToOpenFile:" << File.getFilePathToScan() << "\n";
-            return;
+            goingScan = true;
+            const std::string name = entry.path().filename().string();
+            if (name == "." || name == "..")
+                continue;
+
+            auto fullPath = entry.path();
+            uint8_t sizeOfName = name.size();
+            bool is_File = entry.is_regular_file();
+            uint64_t fileSize = is_File ? entry.file_size() : 0;
+
+            FileDetails details(name, sizeOfName, fileSize, is_File, fullPath);//创建details
+            writeBinaryStandard(outfile, details, queue);
         }
 
-        goingScan = false;
+    }
+    catch (const fs::filesystem_error &e)
+    {
+        std::cerr << "scanner()-Error: " << e.what() << "\n";
+    }
 
-        try
-        {
-            for (const auto &entry : fs::directory_iterator(File.getFilePathToScan()))
-            {
-                goingScan = true;
-                const std::string name = entry.path().filename().string();
-                if (name == "." || name == "..")
-                    continue;
 
-                auto fullPath = entry.path();
-                uint8_t sizeOfName = name.size();
-                bool is_File = entry.is_regular_file();
-                uint64_t fileSize = is_File ? entry.file_size() : 0;
+    outfile.close();
 
-                FileDetails details(name, sizeOfName, fileSize, is_File, fullPath);//创建details
-                writeBinaryStandard(outfile, details, queue);
-            }
-
-        }
-        catch (const fs::filesystem_error &e)
-        {
-            std::cerr << "scanner()-Error: " << e.what() << "\n";
-            // continue;
-        }
-
-        // if (!goingScan && queue.fileQueue.empty())
-        //     break;
-
-        outfile.close();
-    // }
 }
 
 void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue)
@@ -169,12 +164,9 @@ void scanFlow(FilePath &File)
         if(!queue.fileQueue.empty()){
             FileDetails& details = queue.fileQueue.front().first;
 
-        // int count = queue.fileQueue.front().second;
-
             File.setFilePathToScan(details.getFullPath());  
         }
         
-
         IO.scanner(File,queue);
 
         queue.fileQueue.pop();
