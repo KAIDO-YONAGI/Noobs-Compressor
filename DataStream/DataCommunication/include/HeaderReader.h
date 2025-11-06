@@ -48,6 +48,7 @@ private:
     fs::path fullPath;
 
 public:
+    FileDetails()=default;
     const std::string &getName() const { return name; }
     const fs::path &getFullPath() const { return fullPath; }
     uint8_t getSizeOfName() const { return sizeOfName; }
@@ -84,12 +85,12 @@ void readerForCompression();
 void readerForDecompression();
 void appendMagicStatic(const fs::path &outputFilePath);
 bool fileIsExist(const fs::path &outPutFilePath);
-int countFilesInDirectory(const fs::path &filePathToScan);
+uint32_t countFilesInDirectory(const fs::path &filePathToScan);
 
 template <typename T>
 void write_binary_le(std::ofstream &file, T value)
 {
-    file.write(reinterpret_cast<const char*>(&value), sizeof(T));
+    file.write(reinterpret_cast<const char*>(&value), sizeof(T));//不做类型检查，直接进行类型转换
 }
 
 template <typename T>
