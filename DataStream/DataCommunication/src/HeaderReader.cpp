@@ -36,12 +36,8 @@ void appendMagicStatic(const fs::path &outputFilePath)
     }
 
     const uint32_t magic = 0xDEADBEEF;
-    outFile.write((const char *)(&magic), sizeof(magic));
 
-    if (!outFile)
-    {
-        std::cerr << "Error_Can't write magic num in file\n";
-    }
+    write_binary_le(outFile,magic);
 }
 
 uint64_t BinaryIO::getFileSize(const fs::path &filePathToScan)
