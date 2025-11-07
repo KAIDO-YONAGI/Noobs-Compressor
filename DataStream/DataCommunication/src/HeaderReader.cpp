@@ -37,7 +37,7 @@ void appendMagicStatic(const fs::path &outputFilePath)
 
     const uint32_t magic = 0xDEADBEEF;
 
-    write_binary_le(outFile,magic);
+    write_binary_le(outFile, magic);
 }
 
 uint64_t BinaryIO::getFileSize(const fs::path &filePathToScan)
@@ -53,9 +53,8 @@ uint64_t BinaryIO::getFileSize(const fs::path &filePathToScan)
     }
 }
 
-void BinaryIO::scanner(FilePath& File,FileQueue& queue)
+void BinaryIO::scanner(FilePath &File, FileQueue &queue)
 {
-    bool goingScan = true;
 
     std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
     if (!outfile)
@@ -64,35 +63,27 @@ void BinaryIO::scanner(FilePath& File,FileQueue& queue)
         return;
     }
 
-    goingScan = false;
-
     try
     {
         for (const auto &entry : fs::directory_iterator(File.getFilePathToScan()))
         {
-            goingScan = true;
             const std::string name = entry.path().filename().string();
-            if (name == "." || name == "..")
-                continue;
 
             auto fullPath = entry.path();
             uint8_t sizeOfName = name.size();
             bool is_File = entry.is_regular_file();
             uint64_t fileSize = is_File ? entry.file_size() : 0;
 
-            FileDetails details(name, sizeOfName, fileSize, is_File, fullPath);//创建details
+            FileDetails details(name, sizeOfName, fileSize, is_File, fullPath); //创建details
             writeBinaryStandard(outfile, details, queue);
         }
-
     }
     catch (const fs::filesystem_error &e)
     {
         std::cerr << "scanner()-Error: " << e.what() << "\n";
     }
 
-
     outfile.close();
-
 }
 
 void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue)
@@ -115,11 +106,11 @@ void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details,
 void BinaryIO::writeFileStandard(std::ofstream &outfile, FileDetails &details)
 {
     uint8_t SizeOfName = details.getSizeOfName();
-    outfile.write("1", 1);//先写文件标
-    write_binary_le(outfile, SizeOfName);//写入文件名偏移量
-    outfile.write(details.getName().c_str(), SizeOfName);//写入文件名
-    write_binary_le(outfile, details.getFileSize());//写入文件大小
-    write_binary_le(outfile, uint64_t(0));//预留大小
+    outfile.write("1", 1);                                //先写文件标
+    write_binary_le(outfile, SizeOfName);                 //写入文件名偏移量
+    outfile.write(details.getName().c_str(), SizeOfName); //写入文件名
+    write_binary_le(outfile, details.getFileSize());      //写入文件大小
+    write_binary_le(outfile, uint64_t(0));                //预留大小
 }
 
 void BinaryIO::writeHeaderStandard(std::ofstream &outfile, FileDetails &details, uint32_t count)
@@ -128,7 +119,7 @@ void BinaryIO::writeHeaderStandard(std::ofstream &outfile, FileDetails &details,
     outfile.write("0", 1);
     write_binary_le(outfile, SizeOfName);
     outfile.write(details.getName().c_str(), SizeOfName);
-    write_binary_le(outfile, count);//写入文件数目
+    write_binary_le(outfile, count); //写入文件数目
 }
 
 uint32_t countFilesInDirectory(const fs::path &filePathToScan)
@@ -143,7 +134,12 @@ uint32_t countFilesInDirectory(const fs::path &filePathToScan)
         return -1;
     }
 }
+void writeRoot(FilePath &File){
 
+    std::ofstream file(File.getOutPutFilePath(),std::ios::binary | std::ios::app);
+    write_binary_le(file,countFilesInDirectory(File.getFilePathToScan()));
+    file.close();
+}
 void scanFlow(FilePath &File)
 {
     if (fileIsExist(File.getOutPutFilePath()))
@@ -154,19 +150,19 @@ void scanFlow(FilePath &File)
     FileQueue queue;
     BinaryIO IO;
     appendMagicStatic(File.getOutPutFilePath());
-    
-    do{
 
-        if(!queue.fileQueue.empty()){
-            FileDetails& details = queue.fileQueue.front().first;
+    writeRoot(File);//写入当前根节点的文件数目（若选取多个文件夹，则创建一个根节点）
 
-            File.setFilePathToScan(details.getFullPath());  
-        }
-        
-        IO.scanner(File,queue);
+    IO.scanner(File, queue);
+
+    while(!queue.fileQueue.empty()){
+
+        FileDetails &details = queue.fileQueue.front().first;
+        File.setFilePathToScan(details.getFullPath());
+        IO.scanner(File, queue);
 
         queue.fileQueue.pop();
-    }while (!queue.fileQueue.empty());
+    }
 
     appendMagicStatic(File.getOutPutFilePath());
 }
@@ -174,7 +170,7 @@ void scanFlow(FilePath &File)
 int main()
 {
     fs::path outPutFilePath = "FilesList.bin";
-    fs::path filePathToScan = "D:/1gal";
+    fs::path filePathToScan = "D:\\1gal";
 
     FilePath File(outPutFilePath, filePathToScan);
     scanFlow(File);
