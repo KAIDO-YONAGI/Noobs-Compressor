@@ -51,8 +51,6 @@ void MonitorTaskQueue::add_task(T&& task)
     condition.notify_one();
 }
 
-//MonitorTaskQueue::MonitorTaskQueue()
-
 //这里有模版生成约束
 
 #endif //MONITORTASKQUEUE_H

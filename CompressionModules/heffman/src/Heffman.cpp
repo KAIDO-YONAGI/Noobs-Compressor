@@ -9,21 +9,19 @@ Heffman::Heffman(int thread_nums):
 
 void Heffman::statistic_freq(int thread_id, sfc::blocks_t* data_blocks_in)
 {    
-    Heffmap threadTab;
-    sfc::block_t *pblock;
     try {
-        pblock = data_blocks_in->at(thread_id - 1);
-        threadTab = thread_tabs.at(thread_id - 1);
+        sfc::block_t &pblock = data_blocks_in->at(thread_id - 1);
+        Heffmap &threadTab = thread_tabs.at(thread_id - 1);
+        auto iter = pblock.cbegin();
+        auto end = pblock.cend();
+        while (iter != end)
+        {
+            threadTab[*iter++].add();
+        }
+        pblock.clear();
     } catch (std::out_of_range) {
 
     }
-    auto iter = pblock->cbegin();
-    auto end = pblock->cend();
-    while (iter != end)
-    {
-        threadTab[*iter++].add();
-    }
-    pblock->clear();
 }
 
 void Heffman::merge_ttabs(){
