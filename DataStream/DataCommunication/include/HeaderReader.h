@@ -2,8 +2,9 @@
 #ifndef HEADERREADER
 #define HEADERREADER
 
+#include <filesystem> //编译时需要强制链接为静态库
+
 #include <fstream>
-#include <filesystem>
 #include <vector>
 #include <iostream>
 #include <cstring>
@@ -12,6 +13,22 @@
 #include <cassert>
 
 namespace fs = std::filesystem;
+
+class FilePath; //类的前向声明
+class Locator;
+class FileDetails;
+class FileQueue;
+class BinaryIO;
+
+class HeaderReader
+{
+
+public:
+    HeaderReader() = default;
+    void writeRoot(FilePath &File);
+    void scanFlow(FilePath &File);
+    void appendMagicStatic(const fs::path &outputFilePath);
+};
 
 class Locator
 {
@@ -76,13 +93,10 @@ public:
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
 
-void scanFlow(FilePath &File);
 void readerForCompression();
 void readerForDecompression();
-void appendMagicStatic(const fs::path &outputFilePath);
 bool fileIsExist(const fs::path &outPutFilePath);
 uint32_t countFilesInDirectory(const fs::path &filePathToScan);
-void writeRoot(FilePath &File);
 
 template <typename T>
 void write_binary_le(std::ofstream &file, T value)
