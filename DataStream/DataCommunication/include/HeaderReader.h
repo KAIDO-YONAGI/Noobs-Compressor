@@ -9,10 +9,14 @@
 #include <iostream>
 #include <cstring>
 #include <cstdint>
-#include <queue>
 #include <cassert>
 
 namespace fs = std::filesystem;
+//命名空间
+#define FileCount_Int uint32_t
+#define FileSize_Int uint64_t
+#define FileNameSize_Int uint16_t
+#define MagicNum 0xDEADBEEF
 
 class FilePath; //类的前向声明
 class Locator;
@@ -20,6 +24,51 @@ class FileDetails;
 class FileQueue;
 class BinaryIO;
 
+class FileDetails
+{
+private:
+    std::string name;
+    FileNameSize_Int sizeOfName;
+    FileSize_Int fileSize;
+    bool isFile;
+    fs::path fullPath;
+
+public:
+    FileDetails() = default;
+    std::string &getName() { return name; }
+    fs::path &getFullPath() { return fullPath; }
+    FileNameSize_Int getSizeOfName() { return sizeOfName; }
+    FileSize_Int getFileSize() { return fileSize; }
+    bool getIsFile() { return isFile; }
+
+    FileDetails(std::string name, FileNameSize_Int sizeOfName, FileSize_Int fileSize, bool isFile, fs::path &fullPath)
+        : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
+};
+class MyQueue
+{
+private:
+    struct Node
+    {
+        std::pair<FileDetails, FileCount_Int> data;
+        Node *next;
+        Node(std::pair<FileDetails, FileCount_Int> &val)
+            : data(val), next(nullptr) {}
+    };
+
+    Node *frontNode;
+    Node *rearNode;
+    size_t count;
+
+public:
+    MyQueue();
+    ~MyQueue();
+    void push(std::pair<FileDetails, FileCount_Int> val);// 不使用引用，因为使用时会在传值时创建pair，会导致常量引用问题
+    void pop();
+    std::pair<FileDetails, FileCount_Int> &front();
+    std::pair<FileDetails, FileCount_Int> &back();
+    bool empty();
+    size_t size();
+};
 class HeaderReader
 {
 
@@ -27,15 +76,15 @@ public:
     HeaderReader() = default;
     void writeRoot(FilePath &File);
     void scanFlow(FilePath &File);
-    void appendMagicStatic(const fs::path &outputFilePath);
+    void appendMagicStatic(fs::path &outputFilePath);
 };
 
 class Locator
 {
 public:
-    void relativeLocator(std::ofstream &File, int offset);
-    void relativeLocator(std::ifstream &File, int offset);
-    void relativeLocator(std::fstream &File, int offset) = delete;
+    void relativeLocator(std::ofstream &File, FileSize_Int offset);
+    void relativeLocator(std::ifstream &File, FileSize_Int offset);
+    void relativeLocator(std::fstream &File, FileSize_Int offset) = delete;
 };
 
 class FilePath
@@ -45,63 +94,44 @@ private:
     fs::path filePathToScan;
 
 public:
-    FilePath(const fs::path &outPutFilePath, const fs::path &filePathToScan)
+    FilePath(fs::path &outPutFilePath, fs::path &filePathToScan)
         : outPutFilePath(outPutFilePath), filePathToScan(filePathToScan) {}
 
-    void setFilePathToScan(const fs::path &filePathToScan)
+    void setFilePathToScan(fs::path &filePathToScan)
     {
         this->filePathToScan = filePathToScan;
     }
 
-    const fs::path &getOutPutFilePath() const { return outPutFilePath; }
-    const fs::path &getFilePathToScan() const { return filePathToScan; }
+    fs::path &getOutPutFilePath() { return outPutFilePath; }
+    fs::path &getFilePathToScan() { return filePathToScan; }
 };
-class FileDetails
-{
-private:
-    std::string name;
-    uint8_t sizeOfName;
-    uint64_t fileSize;
-    bool isFile;
-    fs::path fullPath;
 
-public:
-    FileDetails() = default;
-    const std::string &getName() const { return name; }
-    const fs::path &getFullPath() const { return fullPath; }
-    uint8_t getSizeOfName() const { return sizeOfName; }
-    uint64_t getFileSize() const { return fileSize; }
-    bool getIsFile() const { return isFile; }
-
-    FileDetails(std::string name, uint8_t sizeOfName, uint64_t fileSize, bool isFile, const fs::path &fullPath)
-        : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
-};
 class FileQueue
 {
 public:
-    std::queue<std::pair<FileDetails, int>> fileQueue;
+    MyQueue fileQueue;
 };
 
 class BinaryIO
 {
 public:
     BinaryIO() = default;
-    uint64_t getFileSize(const fs::path &filePathToScan);
+    FileSize_Int getFileSize(fs::path &filePathToScan);
     void scanner(FilePath &File, FileQueue &queue);
     void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue);
-    void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, uint32_t count);
+    void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, FileCount_Int count);
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
 
 void readerForCompression();
 void readerForDecompression();
-bool fileIsExist(const fs::path &outPutFilePath);
-uint32_t countFilesInDirectory(const fs::path &filePathToScan);
+bool fileIsExist(fs::path &outPutFilePath);
+FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
 
 template <typename T>
 void write_binary_le(std::ofstream &file, T value)
 {
-    file.write(reinterpret_cast<const char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
+    file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
 }
 
 template <typename T>
