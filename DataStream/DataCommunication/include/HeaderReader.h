@@ -94,6 +94,7 @@ private:
     fs::path filePathToScan;
 
 public:
+    
     FilePath(fs::path &outPutFilePath, fs::path &filePathToScan)
         : outPutFilePath(outPutFilePath), filePathToScan(filePathToScan) {}
 
