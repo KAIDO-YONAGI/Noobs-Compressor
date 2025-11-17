@@ -1,15 +1,9 @@
 // FileQueue.h
 #ifndef FILEQUEUE
 #define FILEQUEUE
+#include "../include/FileDetails.h"
 
-#include "../include/HeaderReader.h"
 
-
-class QueueInterface
-{
-public:
-    FileQueue fileQueue;
-};
 
 class FileQueue
 {
@@ -69,24 +63,18 @@ public:
         count--;
     }
 
-    std::pair<FileDetails, FileCount_Int> & front()
+    std::pair<FileDetails, FileCount_Int>& front()
     {
-        if (empty())
-        {
-            std::cerr << "front()-Error:Queue is empty"
-                    << "\n";
-            return ;
+        if (empty()) {
+            throw std::runtime_error("Accessing front of empty queue");
         }
         return frontNode->data;
     }
         
-    std::pair<FileDetails, FileCount_Int> &back()
+    std::pair<FileDetails, FileCount_Int>& back()
     {
-        if (empty())
-        {
-            std::cerr << "back()-Error:Queue is empty"
-                    << "\n";
-            return ;
+        if (empty()) {
+            throw std::runtime_error("Accessing back of empty queue");
         }
         return rearNode->data;
     }
@@ -104,6 +92,11 @@ public:
     {
         return fs::exists(outPutFilePath);
     }
+};
+class QueueInterface
+{
+public:
+    FileQueue fileQueue;
 };
 
 

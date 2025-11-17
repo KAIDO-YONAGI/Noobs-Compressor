@@ -93,7 +93,7 @@ void HeaderReader::writeRoot(FilePath &File)
 }
 void HeaderReader::scanFlow(FilePath &File)
 {
-    if (fileIsExist(File.getOutPutFilePath()))
+    if (fs::exists(File.getOutPutFilePath()))
     {
         std::cerr << "scanFlow-Error_fileIsExist \nTry to clear:" << File.getOutPutFilePath() << "\n";
         return;
@@ -118,10 +118,6 @@ void HeaderReader::scanFlow(FilePath &File)
 
     appendMagicStatic(File.getOutPutFilePath());
 }
-bool isFile(fs::path &outPutFilePath)
-{
-    return fs::is_regular_file(outPutFilePath);
-}
 
 FileSize_Int BinaryIO::getFileSize(fs::path &filePathToScan)
 {
@@ -135,7 +131,6 @@ FileSize_Int BinaryIO::getFileSize(fs::path &filePathToScan)
         return 0;
     }
 }
-
 FileCount_Int countFilesInDirectory(fs::path &filePathToScan)
 {
     try
