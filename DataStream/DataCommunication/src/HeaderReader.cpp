@@ -1,7 +1,7 @@
 // HeaderReader.cpp
 #include "../include/HeaderReader.h"
 
-void BinaryIO::scanner(FilePath &File, FileQueue &queue)
+void BinaryIO::scanner(FilePath &File, QueueInterface &queue)
 {
 
     std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
@@ -34,7 +34,7 @@ void BinaryIO::scanner(FilePath &File, FileQueue &queue)
     outfile.close();
 }
 
-void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue)
+void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue)
 {
     if (details.getIsFile())
     {
@@ -98,7 +98,7 @@ void HeaderReader::scanFlow(FilePath &File)
         std::cerr << "scanFlow-Error_fileIsExist \nTry to clear:" << File.getOutPutFilePath() << "\n";
         return;
     }
-    FileQueue queue;
+    QueueInterface queue;
     BinaryIO IO;
     appendMagicStatic(File.getOutPutFilePath());
 
@@ -118,85 +118,6 @@ void HeaderReader::scanFlow(FilePath &File)
 
     appendMagicStatic(File.getOutPutFilePath());
 }
-MyQueue::MyQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
-
-void MyQueue::push(std::pair<FileDetails, FileCount_Int> val)
-{
-    Node *newNode = new Node(val);
-    if (rearNode)
-    {
-        rearNode->next = newNode;
-    }
-    else
-    {
-        frontNode = newNode;
-    }
-    rearNode = newNode;
-    count++;
-}
-MyQueue::~MyQueue()
-{
-    while (frontNode)
-    { // 循环直到链表为空
-        Node *temp = frontNode;
-        frontNode = frontNode->next;
-        delete temp; // 释放节点内存
-    }
-    rearNode = nullptr; // 重置尾指针
-    count = 0;          // 重置计数器
-}
-void MyQueue::pop()
-{
-    if (empty())
-    {
-        return;
-    }
-    Node *temp = frontNode;
-    frontNode = frontNode->next;
-    if (frontNode == nullptr)
-    {
-        rearNode = nullptr;
-    }
-    delete temp;
-    count--;
-}
-
-std::pair<FileDetails, FileCount_Int> &MyQueue::front()
-{
-    if (empty())
-    {
-        std::cerr << "front()-Error:Queue is empty"
-                  << "\n";
-        return ;
-    }
-    return frontNode->data;
-}
-
-std::pair<FileDetails, FileCount_Int> &MyQueue::back()
-{
-    if (empty())
-    {
-        std::cerr << "back()-Error:Queue is empty"
-                  << "\n";
-        return ;
-    }
-    return rearNode->data;
-}
-
-bool MyQueue::empty()
-{
-    return count == 0;
-}
-
-size_t MyQueue::size()
-{
-    return count;
-}
-bool fileIsExist(fs::path &outPutFilePath)
-{
-    return fs::exists(outPutFilePath);
-}
-
 bool isFile(fs::path &outPutFilePath)
 {
     return fs::is_regular_file(outPutFilePath);

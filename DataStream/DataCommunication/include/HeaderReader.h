@@ -3,12 +3,24 @@
 #define HEADERREADER
 
 #include "../include/FileLibrary.h"
+#include "../include/FileQueue.h"
 
 class FilePath; //类的前向声明
 class Locator;
 class FileDetails;
-class FileQueue;
+class QueueInterface;
 class BinaryIO;
+
+class HeaderReader
+{
+
+public:
+    HeaderReader() = default;
+    void writeRoot(FilePath &File);
+    void scanFlow(FilePath &File);
+    void appendMagicStatic(fs::path &outputFilePath);
+    void headerReader(std::string& path);
+};
 
 class FileDetails
 {
@@ -30,42 +42,6 @@ public:
     FileDetails(std::string name, FileNameSize_Int sizeOfName, FileSize_Int fileSize, bool isFile, fs::path &fullPath)
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 };
-class MyQueue
-{
-private:
-    struct Node
-    {
-        std::pair<FileDetails, FileCount_Int> data;
-        Node *next;
-        Node(std::pair<FileDetails, FileCount_Int> &val)
-            : data(val), next(nullptr) {}
-    };
-
-    Node *frontNode;
-    Node *rearNode;
-    size_t count;
-
-public:
-    MyQueue();
-    ~MyQueue();
-    void push(std::pair<FileDetails, FileCount_Int> val); // 不使用引用，因为使用时会在传值时创建pair，会导致常量引用问题
-    void pop();
-    std::pair<FileDetails, FileCount_Int> &front();
-    std::pair<FileDetails, FileCount_Int> &back();
-    bool empty();
-    size_t size();
-};
-class HeaderReader
-{
-
-public:
-    HeaderReader() = default;
-    void writeRoot(FilePath &File);
-    void scanFlow(FilePath &File);
-    void appendMagicStatic(fs::path &outputFilePath);
-    void headerReader(std::string& path);
-};
-
 class FilePath
 {
 private:
@@ -86,19 +62,14 @@ public:
     fs::path &getFilePathToScan() { return filePathToScan; }
 };
 
-class FileQueue
-{
-public:
-    MyQueue fileQueue;
-};
 
 class BinaryIO
 {
 public:
     BinaryIO() = default;
     FileSize_Int getFileSize(fs::path &filePathToScan);
-    void scanner(FilePath &File, FileQueue &queue);
-    void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, FileQueue &queue);
+    void scanner(FilePath &File, QueueInterface &queue);
+    void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue);
     void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, FileCount_Int count);
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
