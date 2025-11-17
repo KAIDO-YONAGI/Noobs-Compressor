@@ -70,14 +70,6 @@ void BinaryIO::writeHeaderStandard(std::ofstream &outfile, FileDetails &details,
     outfile.write(details.getName().c_str(), SizeOfName);
     write_binary_le(outfile, count); //写入文件数目
 }
-void Locator::relativeLocator(std::ofstream &File, FileSize_Int offset)
-{
-    File.seekp(File.tellp() + static_cast<std::streamoff>(offset), File.beg);
-}
-void Locator::relativeLocator(std::ifstream &File, FileSize_Int offset)
-{
-    File.seekg(File.tellg() + static_cast<std::streamoff>(offset), File.beg);
-}
 
 void HeaderReader::appendMagicStatic(fs::path &outputFilePath)
 {
@@ -168,15 +160,6 @@ void MyQueue::pop()
     delete temp;
     count--;
 }
-void readerForCompression()
-{
-    std::vector<fs::path> tempDirectoryPath;
-}
-
-void readerForDecompression()
-{
-    std::vector<fs::path> tempDirectoryPath;
-}
 
 std::pair<FileDetails, FileCount_Int> &MyQueue::front()
 {
@@ -184,6 +167,7 @@ std::pair<FileDetails, FileCount_Int> &MyQueue::front()
     {
         std::cerr << "front()-Error:Queue is empty"
                   << "\n";
+        return ;
     }
     return frontNode->data;
 }
@@ -194,6 +178,7 @@ std::pair<FileDetails, FileCount_Int> &MyQueue::back()
     {
         std::cerr << "back()-Error:Queue is empty"
                   << "\n";
+        return ;
     }
     return rearNode->data;
 }
@@ -244,12 +229,14 @@ FileCount_Int countFilesInDirectory(fs::path &filePathToScan)
 }
 
 // 将字节字符串转换为 Wide 字符串
-std::wstring convertToWString(const std::string& s) {
+std::wstring convertToWString(const std::string &s)
+{
     std::setlocale(LC_ALL, ""); // 使用本地化设置
     size_t len = s.size() + 1;
-    wchar_t* wStr = new wchar_t[len];
+    wchar_t *wStr = new wchar_t[len];
     size_t result = std::mbstowcs(wStr, s.c_str(), len);
-    if (result == (size_t)-1) {
+    if (result == (size_t)-1)
+    {
         delete[] wStr;
         throw std::runtime_error("mbstowcs conversion failed");
     }
@@ -259,27 +246,36 @@ std::wstring convertToWString(const std::string& s) {
 }
 
 // 处理路径的函数
-fs::path _getPath(const std::string& p) {
+fs::path _getPath(const std::string &p)
+{
     std::wstring wPath = convertToWString(p);
     return fs::path(wPath);
 }
-
-int main() {
-    std::string path;
-    std::cout << "Enter a path" << std::endl;
-    std::getline(std::cin, path);
-
+void HeaderReader::headerReader(std::string& path){
+    
     fs::path outPutFilePath = fs::path(L"FilesList.bin"); // 直接使用 Wide 字符串
     fs::path filePathToScan;
 
-    try {
+    try
+    {
         filePathToScan = _getPath(path); // 调用路径处理函数
         FilePath File(outPutFilePath, filePathToScan);
         HeaderReader reader;
-        reader.scanFlow(File);  
-    } catch (const std::exception& e) {
-        std::cerr << "Main()-Error: " << e.what() << std::endl;
+        reader.scanFlow(File);
     }
+    catch (const std::exception &e)
+    {
+        std::cerr << "headerReader()-Error: " << e.what() << std::endl;
+    }
+}
+int main()
+{
+    std::string path;
+    path="D:\\1gal";
+
+    HeaderReader begin;
+    begin.headerReader(path);
+
 
     system("pause");
     return 0;

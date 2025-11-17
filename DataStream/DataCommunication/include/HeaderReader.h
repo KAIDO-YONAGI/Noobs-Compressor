@@ -2,21 +2,7 @@
 #ifndef HEADERREADER
 #define HEADERREADER
 
-#include <filesystem> //编译时需要强制链接为静态库
-
-#include <fstream>
-#include <vector>
-#include <iostream>
-#include <cstring>
-#include <cstdint>
-#include <cassert>
-
-namespace fs = std::filesystem;
-//命名空间
-#define FileCount_Int uint32_t
-#define FileSize_Int uint64_t
-#define FileNameSize_Int uint16_t
-#define MagicNum 0xDEADBEEF
+#include "../include/FileLibrary.h"
 
 class FilePath; //类的前向声明
 class Locator;
@@ -62,7 +48,7 @@ private:
 public:
     MyQueue();
     ~MyQueue();
-    void push(std::pair<FileDetails, FileCount_Int> val);// 不使用引用，因为使用时会在传值时创建pair，会导致常量引用问题
+    void push(std::pair<FileDetails, FileCount_Int> val); // 不使用引用，因为使用时会在传值时创建pair，会导致常量引用问题
     void pop();
     std::pair<FileDetails, FileCount_Int> &front();
     std::pair<FileDetails, FileCount_Int> &back();
@@ -77,14 +63,7 @@ public:
     void writeRoot(FilePath &File);
     void scanFlow(FilePath &File);
     void appendMagicStatic(fs::path &outputFilePath);
-};
-
-class Locator
-{
-public:
-    void relativeLocator(std::ofstream &File, FileSize_Int offset);
-    void relativeLocator(std::ifstream &File, FileSize_Int offset);
-    void relativeLocator(std::fstream &File, FileSize_Int offset) = delete;
+    void headerReader(std::string& path);
 };
 
 class FilePath
@@ -94,7 +73,7 @@ private:
     fs::path filePathToScan;
 
 public:
-    
+    FilePath(const FilePath&)=delete;
     FilePath(fs::path &outPutFilePath, fs::path &filePathToScan)
         : outPutFilePath(outPutFilePath), filePathToScan(filePathToScan) {}
 
@@ -124,8 +103,6 @@ public:
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
 
-void readerForCompression();
-void readerForDecompression();
 bool fileIsExist(fs::path &outPutFilePath);
 FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
 
@@ -135,12 +112,5 @@ void write_binary_le(std::ofstream &file, T value)
     file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
 }
 
-template <typename T>
-T read_binary_le(std::ifstream &file)
-{
-    T value;
-    file.read(reinterpret_cast<char *>(&value), sizeof(T));
-    return value;
-}
 
 #endif
