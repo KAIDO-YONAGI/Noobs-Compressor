@@ -3,7 +3,8 @@
 #define HEADERLOADER
 
 #include "../include/FileLibrary.h"
-
+#include "../include/FileQueue.h"
+#include "../include/FileDetails.h"
 
 class Locator
 {
@@ -13,11 +14,15 @@ public:
     void relativeLocator(std::fstream &File, FileSize_Int offset) = delete;
 };
 
-class FilePath
+class FilePath_Loader
 {
 private:
     fs::path outPutFilePath;
     fs::path filePathToScan;
+};
+class BinaryIO_Loader
+{
+
 };
 template <typename T>
 T read_binary_le(std::ifstream &file)

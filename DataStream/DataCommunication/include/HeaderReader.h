@@ -5,10 +5,10 @@
 #include "../include/FileLibrary.h"
 #include "../include/FileQueue.h"
 #include "../include/FileDetails.h"
-
+#include "../include/Transfer.h"
 class FilePath; //类的前向声明
 class Locator;
-class BinaryIO;
+class BinaryIO_Reader;
 
 class HeaderReader
 {
@@ -42,10 +42,10 @@ public:
 };
 
 
-class BinaryIO
+class BinaryIO_Reader
 {
 public:
-    BinaryIO() = default;
+    BinaryIO_Reader() = default;
     FileSize_Int getFileSize(fs::path &filePathToScan);
     void scanner(FilePath &File, QueueInterface &queue);
     void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue);

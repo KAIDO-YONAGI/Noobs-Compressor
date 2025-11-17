@@ -1,7 +1,7 @@
 // HeaderReader.cpp
 #include "../include/HeaderReader.h"
 
-void BinaryIO::scanner(FilePath &File, QueueInterface &queue)
+void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
 {
 
     std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
@@ -34,7 +34,7 @@ void BinaryIO::scanner(FilePath &File, QueueInterface &queue)
     outfile.close();
 }
 
-void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue)
+void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue)
 {
     if (details.getIsFile())
     {
@@ -52,7 +52,7 @@ void BinaryIO::writeBinaryStandard(std::ofstream &outfile, FileDetails &details,
     }
 }
 
-void BinaryIO::writeFileStandard(std::ofstream &outfile, FileDetails &details)
+void BinaryIO_Reader::writeFileStandard(std::ofstream &outfile, FileDetails &details)
 {
     FileNameSize_Int SizeOfName = details.getSizeOfName();
     outfile.write("1", 1);                                //先写文件标
@@ -62,7 +62,7 @@ void BinaryIO::writeFileStandard(std::ofstream &outfile, FileDetails &details)
     write_binary_le(outfile, FileSize_Int(0));            //预留大小
 }
 
-void BinaryIO::writeHeaderStandard(std::ofstream &outfile, FileDetails &details, FileCount_Int count)
+void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outfile, FileDetails &details, FileCount_Int count)
 {
     FileNameSize_Int SizeOfName = details.getSizeOfName();
     outfile.write("0", 1);
@@ -99,7 +99,7 @@ void HeaderReader::scanFlow(FilePath &File)
         return;
     }
     QueueInterface queue;
-    BinaryIO IO;
+    BinaryIO_Reader IO;
     appendMagicStatic(File.getOutPutFilePath());
 
     writeRoot(File); //写入当前根节点的文件数目（若选取多个文件夹，则创建一个根节点）
@@ -119,7 +119,7 @@ void HeaderReader::scanFlow(FilePath &File)
     appendMagicStatic(File.getOutPutFilePath());
 }
 
-FileSize_Int BinaryIO::getFileSize(fs::path &filePathToScan)
+FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
 {
     try
     {
@@ -144,29 +144,6 @@ FileCount_Int countFilesInDirectory(fs::path &filePathToScan)
     }
 }
 
-// 将字节字符串转换为 Wide 字符串
-std::wstring convertToWString(const std::string &s)
-{
-    std::setlocale(LC_ALL, ""); // 使用本地化设置
-    size_t len = s.size() + 1;
-    wchar_t *wStr = new wchar_t[len];
-    size_t result = std::mbstowcs(wStr, s.c_str(), len);
-    if (result == (size_t)-1)
-    {
-        delete[] wStr;
-        throw std::runtime_error("mbstowcs conversion failed");
-    }
-    std::wstring ws(wStr);
-    delete[] wStr;
-    return ws;
-}
-
-// 处理路径的函数
-fs::path _getPath(const std::string &p)
-{
-    std::wstring wPath = convertToWString(p);
-    return fs::path(wPath);
-}
 void HeaderReader::headerReader(std::string& path){
     
     fs::path outPutFilePath = fs::path(L"FilesList.bin"); // 直接使用 Wide 字符串
