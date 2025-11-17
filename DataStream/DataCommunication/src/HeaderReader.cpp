@@ -72,6 +72,19 @@ void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outfile, FileDetails &d
     write_binary_le(outfile, count); //写入文件数目
 }
 
+FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
+{
+    try
+    {
+        return fs::file_size(filePathToScan);
+    }
+    catch (fs::filesystem_error &e)
+    {
+        std::cerr << "getFileSize()-Error: " << e.what() << "\n";
+        return 0;
+    }
+}
+
 void HeaderReader::appendMagicStatic(fs::path &outputFilePath)
 {
     std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
@@ -120,18 +133,6 @@ void HeaderReader::scanFlow(FilePath &File)
     appendMagicStatic(File.getOutPutFilePath());
 }
 
-FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
-{
-    try
-    {
-        return fs::file_size(filePathToScan);
-    }
-    catch (fs::filesystem_error &e)
-    {
-        std::cerr << "getFileSize()-Error: " << e.what() << "\n";
-        return 0;
-    }
-}
 FileCount_Int HeaderReader::countFilesInDirectory(fs::path &filePathToScan)
 {
     try

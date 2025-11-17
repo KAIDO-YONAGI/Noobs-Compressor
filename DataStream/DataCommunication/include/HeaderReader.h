@@ -7,7 +7,6 @@
 #include "../include/FileDetails.h"
 #include "../include/Transfer.h"
 class FilePath; //类的前向声明
-class Locator;
 class BinaryIO_Reader;
 
 class HeaderReader
