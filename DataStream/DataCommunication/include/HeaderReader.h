@@ -12,13 +12,13 @@ class BinaryIO_Reader;
 
 class HeaderReader
 {
-
 public:
     HeaderReader() = default;
     void writeRoot(FilePath &File);
     void scanFlow(FilePath &File);
     void appendMagicStatic(fs::path &outputFilePath);
-    void headerReader(std::string& path);
+    void headerReader(std::string &path);
+    FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
 };
 
 class FilePath
@@ -28,7 +28,7 @@ private:
     fs::path filePathToScan;
 
 public:
-    FilePath(const FilePath&)=delete;
+    FilePath(const FilePath &) = delete;
     FilePath(fs::path &outPutFilePath, fs::path &filePathToScan)
         : outPutFilePath(outPutFilePath), filePathToScan(filePathToScan) {}
 
@@ -41,7 +41,6 @@ public:
     fs::path &getFilePathToScan() { return filePathToScan; }
 };
 
-
 class BinaryIO_Reader
 {
 public:
@@ -53,13 +52,10 @@ public:
     void writeFileStandard(std::ofstream &outfile, FileDetails &details);
 };
 
-FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
-
 template <typename T>
 void write_binary_le(std::ofstream &file, T value)
 {
     file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
 }
-
 
 #endif

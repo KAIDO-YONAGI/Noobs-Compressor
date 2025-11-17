@@ -3,8 +3,6 @@
 #define FILEQUEUE
 #include "../include/FileDetails.h"
 
-
-
 class FileQueue
 {
 private:
@@ -23,7 +21,7 @@ private:
 public:
     FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
     ~FileQueue()
-    {     
+    {
         while (frontNode)
         { // 循环直到链表为空
             Node *temp = frontNode;
@@ -63,17 +61,19 @@ public:
         count--;
     }
 
-    std::pair<FileDetails, FileCount_Int>& front()
+    std::pair<FileDetails, FileCount_Int> &front()
     {
-        if (empty()) {
+        if (empty())
+        {
             throw std::runtime_error("Accessing front of empty queue");
         }
         return frontNode->data;
     }
-        
-    std::pair<FileDetails, FileCount_Int>& back()
+
+    std::pair<FileDetails, FileCount_Int> &back()
     {
-        if (empty()) {
+        if (empty())
+        {
             throw std::runtime_error("Accessing back of empty queue");
         }
         return rearNode->data;
@@ -98,9 +98,5 @@ class QueueInterface
 public:
     FileQueue fileQueue;
 };
-
-
-
-
 
 #endif

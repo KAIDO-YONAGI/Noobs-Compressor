@@ -42,7 +42,8 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outfile, FileDetails &d
     }
     else
     {
-        FileCount_Int countOfThisHeader = countFilesInDirectory(details.getFullPath());
+        HeaderReader reader;
+        FileCount_Int countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
         if (countOfThisHeader >= 0)
         {
 
@@ -131,7 +132,7 @@ FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
         return 0;
     }
 }
-FileCount_Int countFilesInDirectory(fs::path &filePathToScan)
+FileCount_Int HeaderReader::countFilesInDirectory(fs::path &filePathToScan)
 {
     try
     {
@@ -144,8 +145,9 @@ FileCount_Int countFilesInDirectory(fs::path &filePathToScan)
     }
 }
 
-void HeaderReader::headerReader(std::string& path){
-    
+void HeaderReader::headerReader(std::string &path)
+{
+
     fs::path outPutFilePath = fs::path(L"FilesList.bin"); // 直接使用 Wide 字符串
     fs::path filePathToScan;
 
@@ -164,11 +166,10 @@ void HeaderReader::headerReader(std::string& path){
 int main()
 {
     std::string path;
-    path="D:\\1gal";
+    path = "D:\\1gal";
 
     HeaderReader begin;
     begin.headerReader(path);
-
 
     system("pause");
     return 0;

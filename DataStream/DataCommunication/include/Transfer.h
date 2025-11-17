@@ -4,7 +4,6 @@
 
 #include "../include/FileLibrary.h"
 
-
 // ½«×Ö½Ú×Ö·û´®×ª»»Îª Wide ×Ö·û´®
 std::wstring convertToWString(const std::string &s)
 {
