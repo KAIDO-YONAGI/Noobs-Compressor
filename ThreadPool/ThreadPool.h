@@ -54,6 +54,8 @@ ThreadPool::ThreadPool(int t_nums):
     thread_nums(t_nums)
 {
     threads.reserve(t_nums);
+    
 }
+
 
 #endif //THREADPOOL_H
