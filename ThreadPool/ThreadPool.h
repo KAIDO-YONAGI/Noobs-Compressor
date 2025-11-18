@@ -12,6 +12,13 @@
 #include <map>
 
 /**
+ * 版本一：2025.11.18
+ *        基本功能开发完成。考虑日志与异常。
+ *        _Thread中需要终止线程的方法
+ *        MonitorTaskQueue和_Thread考虑模板化
+ */
+
+/**
  * 线程池，用于管理一组线程。
  * 禁用拷贝操作。
  * 该类封装了自定义线程类。提供对线程命名的功能。
@@ -27,6 +34,9 @@
  *     私有函数：
  *     thread_running()：线程的函数，内部是一个大循环，从任务队列取出
  *                      函数指针调用。
+ *     用户接口：
+ *     new_thread(trd_name)：创建一个命名线程
+ *     add_task(trd_name, task)：为命名线程添加任务
  */
 
 class ThreadPool
@@ -55,7 +65,10 @@ public:
 template<typename T>
 void ThreadPool::add_task(std::string trd_name, T&& task)
 {
-    
+    if(threads.find(trd_name) != threads.end())
+    {
+        threads[trd_name].add_task(std::forward<T>(task));
+    }
 }
 
 #endif //THREADPOOL_H
