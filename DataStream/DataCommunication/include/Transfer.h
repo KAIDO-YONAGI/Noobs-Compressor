@@ -1,11 +1,11 @@
 // Transfer.h
-#ifndef TRANSFER
-#define TRANSFER
+#ifndef TRANSFER_H
+#define TRANSFER_H
 
 #include "../include/FileLibrary.h"
 
-// 将字节字符串转换为 Wide 字符串
-std::wstring convertToWString(const std::string &s)
+// 使用inline避免重复定义
+inline std::wstring convertToWString(const std::string &s)
 {
     std::setlocale(LC_ALL, ""); // 使用本地化设置
     size_t len = s.size() + 1;
@@ -21,8 +21,8 @@ std::wstring convertToWString(const std::string &s)
     return ws;
 }
 
-// 处理路径的函数
-fs::path _getPath(const std::string &p)
+// 使用inline
+inline fs::path _getPath(const std::string &p)
 {
     std::wstring wPath = convertToWString(p);
     return fs::path(wPath);

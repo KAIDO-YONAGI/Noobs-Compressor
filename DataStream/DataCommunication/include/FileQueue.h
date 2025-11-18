@@ -88,10 +88,7 @@ public:
     {
         return count;
     }
-    bool fileIsExist(fs::path &outPutFilePath)
-    {
-        return fs::exists(outPutFilePath);
-    }
+
 };
 class QueueInterface
 {

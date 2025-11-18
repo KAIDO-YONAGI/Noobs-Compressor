@@ -6,17 +6,19 @@
 #include "../include/FileQueue.h"
 #include "../include/FileDetails.h"
 #include "../include/Transfer.h"
-class FilePath; //类的前向声明
-class BinaryIO_Reader;
+
+class BinaryIO_Reader;//类的前向声明
+class FilePath; 
+class HeaderReader;
 
 class HeaderReader
 {
 public:
     HeaderReader() = default;
-    void writeRoot(FilePath &File);
+    void writeLogicalRoot(FilePath &File,std::string &logicalRoot, FileCount_Int count);
     void scanFlow(FilePath &File);
     void appendMagicStatic(fs::path &outputFilePath);
-    void headerReader(std::string &path);
+    void headerReader(std::vector<std::string>& filePathToScan1,std::string &outPutFilePath1,std::string &logicalRoot);
     FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
 };
 
@@ -28,9 +30,10 @@ private:
 
 public:
     FilePath(const FilePath &) = delete;
-    FilePath(fs::path &outPutFilePath, fs::path &filePathToScan)
-        : outPutFilePath(outPutFilePath), filePathToScan(filePathToScan) {}
-
+    FilePath() {}
+    void setOutPutFilePath(fs::path &outPutFilePath){
+        this->outPutFilePath=outPutFilePath;
+    }
     void setFilePathToScan(fs::path &filePathToScan)
     {
         this->filePathToScan = filePathToScan;
@@ -46,9 +49,9 @@ public:
     BinaryIO_Reader() = default;
     FileSize_Int getFileSize(fs::path &filePathToScan);
     void scanner(FilePath &File, QueueInterface &queue);
-    void writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue);
-    void writeHeaderStandard(std::ofstream &outfile, FileDetails &details, FileCount_Int count);
-    void writeFileStandard(std::ofstream &outfile, FileDetails &details);
+    void writeBinaryStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue);
+    void writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_Int count);
+    void writeFileStandard(std::ofstream &outFile, FileDetails &details);
 };
 
 template <typename T>

@@ -8,6 +8,4 @@ void Locator::relativeLocator(std::ifstream &File, FileSize_Int offset)
 {
     File.seekg(File.tellg() + static_cast<std::streamoff>(offset), File.beg);
 }
-int main()
-{
-}
+

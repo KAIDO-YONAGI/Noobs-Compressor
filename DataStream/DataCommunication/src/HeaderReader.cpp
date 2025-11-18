@@ -4,8 +4,8 @@
 void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
 {
 
-    std::ofstream outfile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-    if (!outfile)
+    std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
+    if (!outFile)
     {
         std::cerr << "scanner()-Error_failToOpenFile:" << File.getFilePathToScan() << "\n";
         return;
@@ -13,6 +13,7 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
 
     try
     {
+
         for (auto &entry : fs::directory_iterator(File.getFilePathToScan()))
         {
             std::string name = entry.path().filename().string();
@@ -23,7 +24,7 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
             FileSize_Int fileSize = is_File ? entry.file_size() : 0;
 
             FileDetails details(name, sizeOfName, fileSize, is_File, fullPath); //创建details
-            writeBinaryStandard(outfile, details, queue);
+            writeBinaryStandard(outFile, details, queue);
         }
     }
     catch (fs::filesystem_error &e)
@@ -31,14 +32,14 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
         std::cerr << "scanner()-Error: " << e.what() << "\n";
     }
 
-    outfile.close();
+    outFile.close();
 }
 
-void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outfile, FileDetails &details, QueueInterface &queue)
+void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue)
 {
     if (details.getIsFile())
     {
-        writeFileStandard(outfile, details);
+        writeFileStandard(outFile, details);
     }
     else
     {
@@ -46,30 +47,29 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outfile, FileDetails &d
         FileCount_Int countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
         if (countOfThisHeader >= 0)
         {
-
             queue.fileQueue.push({details, countOfThisHeader});
-            writeHeaderStandard(outfile, details, countOfThisHeader);
+            writeHeaderStandard(outFile, details, countOfThisHeader);
         }
     }
 }
 
-void BinaryIO_Reader::writeFileStandard(std::ofstream &outfile, FileDetails &details)
+void BinaryIO_Reader::writeFileStandard(std::ofstream &outFile, FileDetails &details)
 {
-    FileNameSize_Int SizeOfName = details.getSizeOfName();
-    outfile.write("1", 1);                                //先写文件标
-    write_binary_le(outfile, SizeOfName);                 //写入文件名偏移量
-    outfile.write(details.getName().c_str(), SizeOfName); //写入文件名
-    write_binary_le(outfile, details.getFileSize());      //写入文件大小
-    write_binary_le(outfile, FileSize_Int(0));            //预留大小
+    FileNameSize_Int sizeOfName = details.getSizeOfName();
+    outFile.write("1", 1);                                //先写文件标
+    write_binary_le(outFile, sizeOfName);                 //写入文件名偏移量
+    outFile.write(details.getName().c_str(), sizeOfName); //写入文件名
+    write_binary_le(outFile, details.getFileSize());      //写入文件大小
+    write_binary_le(outFile, FileSize_Int(0));            //预留大小
 }
 
-void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outfile, FileDetails &details, FileCount_Int count)
+void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_Int count)
 {
-    FileNameSize_Int SizeOfName = details.getSizeOfName();
-    outfile.write("0", 1);
-    write_binary_le(outfile, SizeOfName);
-    outfile.write(details.getName().c_str(), SizeOfName);
-    write_binary_le(outfile, count); //写入文件数目
+    FileNameSize_Int sizeOfName = details.getSizeOfName();
+    outFile.write("0", 1);
+    write_binary_le(outFile, sizeOfName);
+    outFile.write(details.getName().c_str(), sizeOfName);
+    write_binary_le(outFile, count); //写入文件数目
 }
 
 FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
@@ -98,25 +98,30 @@ void HeaderReader::appendMagicStatic(fs::path &outputFilePath)
     outFile.close();
 }
 
-void HeaderReader::writeRoot(FilePath &File)
+void HeaderReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
 {
 
     std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-    write_binary_le(outFile, countFilesInDirectory(File.getFilePathToScan()));
+
+    if (!outFile)
+    {
+        std::cerr << "Error"
+                  << "\n";
+        return;
+    }
+
+    FileNameSize_Int rootLength = logicalRoot.size();
+    outFile.write("0", 1);
+    write_binary_le(outFile, rootLength);
+    outFile.write(logicalRoot.c_str(), rootLength);
+    write_binary_le(outFile, count); //写文件数
     outFile.close();
 }
 void HeaderReader::scanFlow(FilePath &File)
 {
-    if (fs::exists(File.getOutPutFilePath()))
-    {
-        std::cerr << "scanFlow-Error_fileIsExist \nTry to clear:" << File.getOutPutFilePath() << "\n";
-        return;
-    }
+
     QueueInterface queue;
     BinaryIO_Reader IO;
-    appendMagicStatic(File.getOutPutFilePath());
-
-    writeRoot(File); //写入当前根节点的文件数目（若选取多个文件夹，则创建一个根节点）
 
     IO.scanner(File, queue);
 
@@ -125,12 +130,11 @@ void HeaderReader::scanFlow(FilePath &File)
 
         FileDetails &details = (queue.fileQueue.front()).first;
         File.setFilePathToScan(details.getFullPath());
+
         IO.scanner(File, queue);
 
         queue.fileQueue.pop();
     }
-
-    appendMagicStatic(File.getOutPutFilePath());
 }
 
 FileCount_Int HeaderReader::countFilesInDirectory(fs::path &filePathToScan)
@@ -141,37 +145,86 @@ FileCount_Int HeaderReader::countFilesInDirectory(fs::path &filePathToScan)
     }
     catch (fs::filesystem_error &e)
     {
-        std::cerr << "countFilesInDirectory()-Error: " << e.what() << "\n";
-        return -1;
+        throw("countFilesInDirectory()-Error: " + std::string(e.what()) + "\n") ;
     }
 }
 
-void HeaderReader::headerReader(std::string &path)
+void HeaderReader::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
 {
 
-    fs::path outPutFilePath = fs::path(L"FilesList.bin"); // 直接使用 Wide 字符串
-    fs::path filePathToScan;
+    fs::path oPath = fs::path(_getPath(outPutFilePath));
+    fs::path sPath;
+
+    FilePath File;
+    File.setOutPutFilePath(oPath);
+
+    if (fs::exists(File.getOutPutFilePath()))
+    {
+        std::cerr << "headerReader()-Error_fileIsExist\n"
+                  << "Try to clear:" << File.getOutPutFilePath()
+                  << "\n";
+        return;
+    }
+
+    appendMagicStatic(File.getOutPutFilePath());
 
     try
     {
-        filePathToScan = _getPath(path); // 调用路径处理函数
-        FilePath File(outPutFilePath, filePathToScan);
-        HeaderReader reader;
-        reader.scanFlow(File);
+
+        FileCount_Int length = filePathToScan.size();
+
+        writeLogicalRoot(File, logicalRoot, length); //写入当前根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
+
+        for (int i = 0; i < length; i++)
+        {
+
+            sPath = _getPath(filePathToScan[i]);
+            
+            if(fs::exists(sPath)){
+                 File.setFilePathToScan(sPath);
+            }
+            else std::cerr<<"headerReader()-Error:File Not Exist";
+            
+            HeaderReader reader;
+            BinaryIO_Reader BIO;
+            fs::path rootPath = File.getFilePathToScan(); // 获取根目录
+
+            // 1. 先写入根目录(或文件)自身（手动构造）
+            FileDetails rootDetails(
+                rootPath.filename().string(), // 获取目录名 (如 "Folder")
+                rootPath.filename().string().size(),
+                fs::is_regular_file(rootPath) ? fs::file_size(rootPath) : 0,
+                fs::is_regular_file(rootPath),
+                rootPath // 完整路径
+            );
+            std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
+            if (!rootDetails.getIsFile())
+            {
+                FileCount_Int count = reader.countFilesInDirectory(rootPath);
+                BIO.writeHeaderStandard(outFile, rootDetails, count);
+            }
+            else if (rootDetails.getIsFile())
+            {
+                BIO.writeFileStandard(outFile, rootDetails);
+            }
+            outFile.close();
+        }
+
+        for (int i = 0; i < length; i++)
+        {
+
+            sPath = _getPath(filePathToScan[i]);
+            if (!fs::is_regular_file(sPath))
+            {
+                File.setFilePathToScan(sPath);
+                HeaderReader reader;
+                reader.scanFlow(File);
+            }
+        } 
     }
     catch (const std::exception &e)
     {
         std::cerr << "headerReader()-Error: " << e.what() << std::endl;
     }
-}
-int main()
-{
-    std::string path;
-    path = "D:\\1gal";
-
-    HeaderReader begin;
-    begin.headerReader(path);
-
-    system("pause");
-    return 0;
+    appendMagicStatic(File.getOutPutFilePath());
 }
