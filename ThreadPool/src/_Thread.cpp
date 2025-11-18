@@ -2,7 +2,7 @@
 
 Thread::Thread()
 {
-    a_thread = std::thread(thread_running);
+    a_thread = std::thread(&Thread::thread_running, this);
 }
 
 void Thread::thread_running()
@@ -12,4 +12,10 @@ void Thread::thread_running()
         auto task = tasks.get_task();
         task();
     }
+}
+
+Thread::~Thread()
+{
+    if (a_thread.joinable())
+        a_thread.join();
 }

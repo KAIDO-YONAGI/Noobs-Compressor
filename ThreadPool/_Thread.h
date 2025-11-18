@@ -7,7 +7,7 @@
 
 /**
  * 线程类
- * 封装线程
+ * 封装线程与任务队列
  */
 
 class Thread
@@ -16,6 +16,7 @@ public:
     Thread();
     Thread(const Thread&) = delete;
     const Thread& operator=(const Thread&) = delete;
+    ~Thread();
 
 private:
     std::thread a_thread;
