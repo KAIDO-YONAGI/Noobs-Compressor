@@ -16,6 +16,7 @@ class HeaderReader
 public:
     HeaderReader() = default;
     void writeLogicalRoot(FilePath &File,std::string &logicalRoot, FileCount_Int count);
+    void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan);
     void scanFlow(FilePath &File);
     void appendMagicStatic(fs::path &outputFilePath);
     void headerReader(std::vector<std::string>& filePathToScan1,std::string &outPutFilePath1,std::string &logicalRoot);
