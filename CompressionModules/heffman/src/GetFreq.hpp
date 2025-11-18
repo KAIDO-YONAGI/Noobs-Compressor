@@ -12,6 +12,16 @@
  * 
  * 实现Worker接口的work函数，当获得的数据块列表
  * 内有多个块，则启用多线程，独立处理每一个块。
+ * 
+ * 成员函数：
+ *    私有：
+ *    work()：
+ *        交给线程执行的任务函数，是实际操作
+ * 
+ *    用户接口：
+ *    work(Datacmnctor*)：
+ *        将数据块指针保存在类内，
+ *    
  */
 
 class GetFreq: public Worker 
@@ -23,10 +33,11 @@ public:
 private:
     Heffman *heffman;
     int *core_use_count;
-    void work(Datacmnctor*) override;
 
+    void work();
+    
 public:
-    void work() override;
+    void work(Datacmnctor*) override;
 };
 
 inline GetFreq::GetFreq(Heffman* heffcore, int *count):
@@ -54,7 +65,7 @@ void GetFreq::work(Datacmnctor *datacmnctor)
     } 
     else 
     {
-        //多线程
+        //多线程（需要阻塞主线程）
     }
 }
 
