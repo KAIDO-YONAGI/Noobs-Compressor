@@ -28,7 +28,7 @@ void HeaderReader::headerReader(std::vector<std::string> &filePathToScan, std::s
         writeLogicalRoot(File, logicalRoot, length); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
         writeRoot(File, filePathToScan);             //写入文件根目录
 
-        for (int i = 0; i < length; i++)
+        for (FileCount_Int i = 0; i < length; i++)
         {
 
             sPath = _getPath(filePathToScan[i]);
@@ -123,11 +123,9 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
     {
         HeaderReader reader;
         FileCount_Int countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
-        if (countOfThisHeader >= 0)
-        {
-            queue.fileQueue.push({details, countOfThisHeader});
-            writeHeaderStandard(outFile, details, countOfThisHeader);
-        }
+
+        queue.fileQueue.push({details, countOfThisHeader});
+        writeHeaderStandard(outFile, details, countOfThisHeader);
     }
 }
 
@@ -198,7 +196,7 @@ void HeaderReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, Fi
 void HeaderReader::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
 {
     FileCount_Int length = filePathToScan.size();
-    for (int i = 0; i < length; i++)
+    for (FileCount_Int i = 0; i < length; i++)
     {
 
         fs::path sPath = _getPath(filePathToScan[i]);

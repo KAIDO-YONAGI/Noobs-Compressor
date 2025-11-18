@@ -4,7 +4,7 @@ int main()
     std::vector<std::string> filePathToScan;
     std::string outPutFilePath, logicalRoot;
 
-    filePathToScan.push_back("D:\\1gal\\TEST\\Atri");
+    filePathToScan.push_back("D:\\1gal");
 
     filePathToScan.push_back("D:\\1gal\\TEST\\我挚爱的时光");
 
