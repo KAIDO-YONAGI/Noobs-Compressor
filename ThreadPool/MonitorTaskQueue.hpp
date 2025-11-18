@@ -27,7 +27,7 @@
 class MonitorTaskQueue 
 {
 public:
-    MonitorTaskQueue();
+    MonitorTaskQueue() = default;
     ~MonitorTaskQueue();
     MonitorTaskQueue(const MonitorTaskQueue&) = delete;
     MonitorTaskQueue& operator=(MonitorTaskQueue&&) = delete;
