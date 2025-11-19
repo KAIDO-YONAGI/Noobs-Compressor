@@ -36,6 +36,7 @@
  *                      函数指针调用。
  *     用户接口：
  *     new_thread(trd_name)：创建一个命名线程
+ *     del_thread(trd_name)：销毁一个命名线程
  *     add_task(trd_name, task)：为命名线程添加任务
  */
 
@@ -57,7 +58,8 @@ private:
     */
 
 public:
-    void new_thread(std::string trd_name);
+    void new_thread(const std::string& trd_name);
+    void del_thread(const std::string& trd_name);
     template<typename T> void add_task(std::string trd_name, T&& task);
 
 };
