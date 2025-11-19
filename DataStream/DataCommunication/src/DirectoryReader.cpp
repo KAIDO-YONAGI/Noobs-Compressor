@@ -1,7 +1,7 @@
-// HeaderReader.cpp
-#include "../include/HeaderReader.h"
+// DirectoryReader.cpp
+#include "../include/DirectoryReader.h"
 
-void HeaderReader::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
+void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
 {
 
     fs::path oPath = fs::path(_getPath(outPutFilePath));
@@ -35,7 +35,7 @@ void HeaderReader::headerReader(std::vector<std::string> &filePathToScan, std::s
             if (!fs::is_regular_file(sPath))
             {
                 File.setFilePathToScan(sPath);
-                HeaderReader reader;
+                DirectoryReader reader;
                 reader.scanFlow(File);
             }
         }
@@ -47,7 +47,7 @@ void HeaderReader::headerReader(std::vector<std::string> &filePathToScan, std::s
     appendMagicStatic(File.getOutPutFilePath());
 }
 
-void HeaderReader::scanFlow(FilePath &File)
+void DirectoryReader::scanFlow(FilePath &File)
 {
 
     QueueInterface queue;
@@ -67,7 +67,7 @@ void HeaderReader::scanFlow(FilePath &File)
     }
 }
 
-FileCount_Int HeaderReader::countFilesInDirectory(fs::path &filePathToScan)
+FileCount_Int DirectoryReader::countFilesInDirectory(fs::path &filePathToScan)
 {
     try
     {
@@ -98,10 +98,16 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
 
             auto fullPath = entry.path();
             FileNameSize_Int sizeOfName = name.size();
-            bool is_File = entry.is_regular_file();
-            FileSize_Int fileSize = is_File ? entry.file_size() : 0;
+            bool isRegularFile = entry.is_regular_file();
+            FileSize_Int fileSize = isRegularFile ? entry.file_size() : 0;
 
-            FileDetails details(name, sizeOfName, fileSize, is_File, fullPath); //创建details
+            FileDetails details(
+                name,
+                sizeOfName,
+                fileSize,
+                isRegularFile, 
+                fullPath
+            ); //创建details
             writeBinaryStandard(outFile, details, queue);
         }
     }
@@ -121,7 +127,7 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
     }
     else
     {
-        HeaderReader reader;
+        DirectoryReader reader;
         FileCount_Int countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
 
         queue.fileQueue.push({details, countOfThisHeader});
@@ -161,7 +167,7 @@ FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
     }
 }
 
-void HeaderReader::appendMagicStatic(fs::path &outputFilePath)
+void DirectoryReader::appendMagicStatic(fs::path &outputFilePath)
 {
     std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
     if (!outFile)
@@ -174,7 +180,7 @@ void HeaderReader::appendMagicStatic(fs::path &outputFilePath)
     outFile.close();
 }
 
-void HeaderReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
+void DirectoryReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
 {
 
     std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
@@ -193,7 +199,7 @@ void HeaderReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, Fi
     write_binary_le(outFile, count); //写文件数
     outFile.close();
 }
-void HeaderReader::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
+void DirectoryReader::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
 {
     FileCount_Int length = filePathToScan.size();
     for (FileCount_Int i = 0; i < length; i++)
@@ -208,18 +214,25 @@ void HeaderReader::writeRoot(FilePath &File, std::vector<std::string> &filePathT
         else
             std::cerr << "headerReader()-Error:File Not Exist";
 
-        HeaderReader reader;
+        DirectoryReader reader;
         BinaryIO_Reader BIO;
         fs::path rootPath = File.getFilePathToScan(); // 获取根目录
 
         // 1. 先写入根目录(或文件)自身（手动构造）
+
+        std::string rootName = rootPath.filename().string();
+        FileNameSize_Int rootNameSize = rootName.size();
+        bool isRegularFile = fs::is_regular_file(rootPath);
+        FileSize_Int fileSize = isRegularFile ? fs::file_size(rootPath) : 0;
+
         FileDetails rootDetails(
-            rootPath.filename().string(), // 获取目录名 (如 "Folder")
-            rootPath.filename().string().size(),
-            fs::is_regular_file(rootPath) ? fs::file_size(rootPath) : 0,
-            fs::is_regular_file(rootPath),
-            rootPath // 完整路径
+            rootName,           // 目录名 (如 "Folder")
+            rootNameSize,       // 名称长度
+            fileSize,           // 文件大小(如果是文件)
+            isRegularFile,      // 是否为常规文件
+            rootPath            // 完整路径
         );
+
         std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
         if (!rootDetails.getIsFile())
         {

@@ -1,6 +1,6 @@
-// HeaderReader.h
-#ifndef HEADERREADER
-#define HEADERREADER
+// DirectoryReader.h
+#ifndef DIRECTORYREADER
+#define DIRECTORYREADER
 
 #include "../include/FileLibrary.h"
 #include "../include/FileQueue.h"
@@ -9,12 +9,12 @@
 
 class BinaryIO_Reader;//类的前向声明
 class FilePath; 
-class HeaderReader;
+class DirectoryReader;
 
-class HeaderReader
+class DirectoryReader
 {
 public:
-    HeaderReader() = default;
+    DirectoryReader() = default;
     void writeLogicalRoot(FilePath &File,std::string &logicalRoot, FileCount_Int count);
     void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan);
     void scanFlow(FilePath &File);
