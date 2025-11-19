@@ -25,4 +25,25 @@ public:
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 };
 
+class FilePath
+{
+private:
+    fs::path outPutFilePath;
+    fs::path filePathToScan;
+
+public:
+    FilePath(const FilePath &) = delete;
+    FilePath() {}
+    void setOutPutFilePath(fs::path &outPutFilePath)
+    {
+        this->outPutFilePath = outPutFilePath;
+    }
+    void setFilePathToScan(fs::path &filePathToScan)
+    {
+        this->filePathToScan = filePathToScan;
+    }
+
+    fs::path &getOutPutFilePath() { return outPutFilePath; }
+    fs::path &getFilePathToScan() { return filePathToScan; }
+};
 #endif

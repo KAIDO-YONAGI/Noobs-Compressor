@@ -3,11 +3,14 @@
 
 void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
 {
+    Transfer transfer;
+    FilePath File;
+    MagicNumWriter writer;//创建三个工具类的对象
 
-    fs::path oPath = fs::path(_getPath(outPutFilePath));
+    fs::path oPath = fs::path(transfer._getPath(outPutFilePath));
     fs::path sPath;
 
-    FilePath File;
+    
     File.setOutPutFilePath(oPath);
 
     if (fs::exists(File.getOutPutFilePath()))
@@ -18,7 +21,7 @@ void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std
         return;
     }
 
-    appendMagicStatic(File.getOutPutFilePath());
+    writer.appendMagicStatic(File.getOutPutFilePath());
 
     try
     {
@@ -31,7 +34,7 @@ void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std
         for (FileCount_Int i = 0; i < length; i++)
         {
 
-            sPath = _getPath(filePathToScan[i]);
+            sPath = transfer._getPath(filePathToScan[i]);
             if (!fs::is_regular_file(sPath))
             {
                 File.setFilePathToScan(sPath);
@@ -44,7 +47,7 @@ void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std
     {
         std::cerr << "headerReader()-Error: " << e.what() << std::endl;
     }
-    appendMagicStatic(File.getOutPutFilePath());
+    writer.appendMagicStatic(File.getOutPutFilePath());
 }
 
 void DirectoryReader::scanFlow(FilePath &File)
@@ -167,19 +170,6 @@ FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
     }
 }
 
-void DirectoryReader::appendMagicStatic(fs::path &outputFilePath)
-{
-    std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
-    if (!outFile)
-    {
-        std::cerr << "appendMagicStatic-Error_failToOpenFile: " << outputFilePath << "\n";
-        return;
-    }
-
-    write_binary_le(outFile, MagicNum);
-    outFile.close();
-}
-
 void DirectoryReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
 {
 
@@ -201,11 +191,13 @@ void DirectoryReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot,
 }
 void DirectoryReader::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
 {
+    Transfer transfer;
+
     FileCount_Int length = filePathToScan.size();
     for (FileCount_Int i = 0; i < length; i++)
     {
 
-        fs::path sPath = _getPath(filePathToScan[i]);
+        fs::path sPath = transfer._getPath(filePathToScan[i]);
 
         if (fs::exists(sPath))
         {

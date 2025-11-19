@@ -1,7 +1,59 @@
-// FileQueue.h
-#ifndef FILEQUEUE
-#define FILEQUEUE
+// ToolClasses.h
+#ifndef TOOLCLASSES
+#define TOOLCLASSES
+
+#include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
+
+class Transfer
+{
+    public:
+    std::wstring convertToWString(const std::string &s)
+    {
+        std::setlocale(LC_ALL, ""); // 使用本地化设置
+        size_t len = s.size() + 1;
+        wchar_t *wStr = new wchar_t[len];
+        size_t result = std::mbstowcs(wStr, s.c_str(), len);
+        if (result == (size_t)-1)
+        {
+            delete[] wStr;
+            throw std::runtime_error("mbstowcs conversion failed");
+        }
+        std::wstring ws(wStr);
+        delete[] wStr;
+        return ws;
+    }
+
+    // 使用inline
+    fs::path _getPath(const std::string &p)
+    {
+        std::wstring wPath = convertToWString(p);
+        return fs::path(wPath);
+    }
+};
+
+class MagicNumWriter
+{
+    public:
+    void appendMagicStatic(fs::path &outputFilePath)
+    {
+        std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
+        if (!outFile)
+        {
+            std::cerr << "appendMagicStatic-Error_failToOpenFile: " << outputFilePath << "\n";
+            return;
+        }
+
+        write_binary_le(outFile, MagicNum);
+        outFile.close();
+    }
+
+    template <typename T>
+    void write_binary_le(std::ofstream &file, T value)
+    {
+        file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
+    }
+};
 
 class FileQueue
 {
@@ -88,7 +140,6 @@ public:
     {
         return count;
     }
-
 };
 class QueueInterface
 {

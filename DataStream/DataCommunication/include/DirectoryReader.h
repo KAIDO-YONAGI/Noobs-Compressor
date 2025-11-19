@@ -3,45 +3,22 @@
 #define DIRECTORYREADER
 
 #include "../include/FileLibrary.h"
-#include "../include/FileQueue.h"
 #include "../include/FileDetails.h"
-#include "../include/Transfer.h"
+#include "../include/ToolClasses.hpp"
 
-class BinaryIO_Reader;//类的前向声明
-class FilePath; 
+class BinaryIO_Reader; //类的前向声明
+class FilePath;
 class DirectoryReader;
 
 class DirectoryReader
 {
 public:
     DirectoryReader() = default;
-    void writeLogicalRoot(FilePath &File,std::string &logicalRoot, FileCount_Int count);
+    void writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count);
     void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan);
     void scanFlow(FilePath &File);
-    void appendMagicStatic(fs::path &outputFilePath);
-    void headerReader(std::vector<std::string>& filePathToScan1,std::string &outPutFilePath1,std::string &logicalRoot);
+    void headerReader(std::vector<std::string> &filePathToScan1, std::string &outPutFilePath1, std::string &logicalRoot);
     FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
-};
-
-class FilePath
-{
-private:
-    fs::path outPutFilePath;
-    fs::path filePathToScan;
-
-public:
-    FilePath(const FilePath &) = delete;
-    FilePath() {}
-    void setOutPutFilePath(fs::path &outPutFilePath){
-        this->outPutFilePath=outPutFilePath;
-    }
-    void setFilePathToScan(fs::path &filePathToScan)
-    {
-        this->filePathToScan = filePathToScan;
-    }
-
-    fs::path &getOutPutFilePath() { return outPutFilePath; }
-    fs::path &getFilePathToScan() { return filePathToScan; }
 };
 
 class BinaryIO_Reader
