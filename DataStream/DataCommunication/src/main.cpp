@@ -1,4 +1,4 @@
-#include "../include/DirectoryReader.h"
+#include "../include/Directory_FileProcessor.h"
 int main()
 {
     std::vector<std::string> filePathToScan;
@@ -14,7 +14,7 @@ int main()
 
     logicalRoot = "YONAGI";
     
-    DirectoryReader begin;
+    Directory_FileProcessor begin;
     begin.headerReader(filePathToScan, outPutFilePath, logicalRoot);
 
     system("pause");

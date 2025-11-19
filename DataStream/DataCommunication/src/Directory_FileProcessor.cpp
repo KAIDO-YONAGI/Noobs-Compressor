@@ -1,11 +1,11 @@
-// DirectoryReader.cpp
-#include "../include/DirectoryReader.h"
+// Directory_FileProcessor.cpp
+#include "../include/Directory_FileProcessor.h"
 
-void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
+void Directory_FileProcessor::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
 {
     Transfer transfer;
-    FilePath File;
-    MagicNumWriter writer;//创建三个工具类的对象
+    FilePath File;//创建各个工具类的对象
+    MagicNumWriter writer;
 
     fs::path oPath = fs::path(transfer._getPath(outPutFilePath));
     fs::path sPath;
@@ -38,7 +38,7 @@ void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std
             if (!fs::is_regular_file(sPath))
             {
                 File.setFilePathToScan(sPath);
-                DirectoryReader reader;
+                Directory_FileProcessor reader;
                 reader.scanFlow(File);
             }
         }
@@ -50,7 +50,7 @@ void DirectoryReader::headerReader(std::vector<std::string> &filePathToScan, std
     writer.appendMagicStatic(File.getOutPutFilePath());
 }
 
-void DirectoryReader::scanFlow(FilePath &File)
+void Directory_FileProcessor::scanFlow(FilePath &File)
 {
 
     QueueInterface queue;
@@ -70,7 +70,7 @@ void DirectoryReader::scanFlow(FilePath &File)
     }
 }
 
-FileCount_Int DirectoryReader::countFilesInDirectory(fs::path &filePathToScan)
+FileCount_Int Directory_FileProcessor::countFilesInDirectory(fs::path &filePathToScan)
 {
     try
     {
@@ -130,7 +130,7 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
     }
     else
     {
-        DirectoryReader reader;
+        Directory_FileProcessor reader;
         FileCount_Int countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
 
         queue.fileQueue.push({details, countOfThisHeader});
@@ -170,7 +170,7 @@ FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
     }
 }
 
-void DirectoryReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
+void Directory_FileProcessor::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
 {
 
     std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
@@ -189,7 +189,7 @@ void DirectoryReader::writeLogicalRoot(FilePath &File, std::string &logicalRoot,
     write_binary_le(outFile, count); //写文件数
     outFile.close();
 }
-void DirectoryReader::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
+void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
 {
     Transfer transfer;
 
@@ -206,7 +206,7 @@ void DirectoryReader::writeRoot(FilePath &File, std::vector<std::string> &filePa
         else
             std::cerr << "headerReader()-Error:File Not Exist";
 
-        DirectoryReader reader;
+        Directory_FileProcessor reader;
         BinaryIO_Reader BIO;
         fs::path rootPath = File.getFilePathToScan(); // 获取根目录
 

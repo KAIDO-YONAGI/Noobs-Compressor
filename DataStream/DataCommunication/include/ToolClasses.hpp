@@ -34,6 +34,12 @@ class Transfer
 
 class MagicNumWriter
 {
+    
+    template <typename T>
+    void write_binary_le(std::ofstream &file, T value)
+    {
+        file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
+    }
     public:
     void appendMagicStatic(fs::path &outputFilePath)
     {
@@ -48,11 +54,6 @@ class MagicNumWriter
         outFile.close();
     }
 
-    template <typename T>
-    void write_binary_le(std::ofstream &file, T value)
-    {
-        file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
-    }
 };
 
 class FileQueue

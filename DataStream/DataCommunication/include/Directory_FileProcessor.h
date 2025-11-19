@@ -1,6 +1,6 @@
-// DirectoryReader.h
-#ifndef DIRECTORYREADER
-#define DIRECTORYREADER
+// Directory_FileProcessor.h
+#ifndef DIRECTORY_FILEPROCESSOR
+#define DIRECTORY_FILEPROCESSOR
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
@@ -8,12 +8,12 @@
 
 class BinaryIO_Reader; //类的前向声明
 class FilePath;
-class DirectoryReader;
+class Directory_FileProcessor;
 
-class DirectoryReader
+class Directory_FileProcessor
 {
 public:
-    DirectoryReader() = default;
+    Directory_FileProcessor() = default;
     void writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count);
     void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan);
     void scanFlow(FilePath &File);

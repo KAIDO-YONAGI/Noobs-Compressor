@@ -3,8 +3,8 @@
 #define HEADERLOADER
 
 #include "../include/FileLibrary.h"
-#include "../include/FileQueue.h"
 #include "../include/FileDetails.h"
+#include "../include/ToolClasses.hpp"
 
 class Locator
 {
