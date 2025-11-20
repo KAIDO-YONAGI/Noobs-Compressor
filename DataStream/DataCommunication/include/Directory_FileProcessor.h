@@ -7,7 +7,6 @@
 #include "../include/ToolClasses.hpp"
 
 class BinaryIO_Reader; //类的前向声明
-class FilePath;
 class Directory_FileProcessor;
 
 class Directory_FileProcessor
@@ -17,7 +16,7 @@ public:
     void writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count);
     void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan);
     void scanFlow(FilePath &File);
-    void headerReader(std::vector<std::string> &filePathToScan1, std::string &outPutFilePath1, std::string &logicalRoot);
+    void directory_fileProcessor(std::vector<std::string> &filePathToScan1, std::string &outPutFilePath1, std::string &logicalRoot);
     FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
 };
 

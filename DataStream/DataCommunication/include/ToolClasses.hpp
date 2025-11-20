@@ -24,7 +24,6 @@ class Transfer
         return ws;
     }
 
-    //  π”√inline
     fs::path _getPath(const std::string &p)
     {
         std::wstring wPath = convertToWString(p);

@@ -1,11 +1,11 @@
 // Directory_FileProcessor.cpp
 #include "../include/Directory_FileProcessor.h"
 
-void Directory_FileProcessor::headerReader(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
+void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
 {
     Transfer transfer;
-    FilePath File;//创建各个工具类的对象
-    MagicNumWriter writer;
+    FilePath File;
+    MagicNumWriter writer;//创建各个工具类的对象
 
     fs::path oPath = fs::path(transfer._getPath(outPutFilePath));
     fs::path sPath;
@@ -15,13 +15,11 @@ void Directory_FileProcessor::headerReader(std::vector<std::string> &filePathToS
 
     if (fs::exists(File.getOutPutFilePath()))
     {
-        std::cerr << "headerReader()-Error_fileIsExist\n"
+        std::cerr << "directory_fileProcessor()-Error_fileIsExist\n"
                   << "Try to clear:" << File.getOutPutFilePath()
                   << "\n";
         return;
     }
-
-    writer.appendMagicStatic(File.getOutPutFilePath());
 
     try
     {
@@ -45,7 +43,7 @@ void Directory_FileProcessor::headerReader(std::vector<std::string> &filePathToS
     }
     catch (const std::exception &e)
     {
-        std::cerr << "headerReader()-Error: " << e.what() << std::endl;
+        std::cerr << "directory_fileProcessor()-Error: " << e.what() << std::endl;
     }
     writer.appendMagicStatic(File.getOutPutFilePath());
 }
@@ -204,7 +202,7 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
             File.setFilePathToScan(sPath);
         }
         else
-            std::cerr << "headerReader()-Error:File Not Exist";
+            std::cerr << "directory_fileProcessor()-Error:File Not Exist";
 
         Directory_FileProcessor reader;
         BinaryIO_Reader BIO;

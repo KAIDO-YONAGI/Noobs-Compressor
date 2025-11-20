@@ -6,6 +6,7 @@
 #include "../include/FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
+
 class Locator
 {
 public:
