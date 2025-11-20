@@ -13,13 +13,6 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
     
     File.setOutPutFilePath(oPath);
 
-    if (fs::exists(File.getOutPutFilePath()))
-    {
-        std::cerr << "directory_fileProcessor()-Error_fileIsExist\n"
-                  << "Try to clear:" << File.getOutPutFilePath()
-                  << "\n";
-        return;
-    }
 
     try
     {

@@ -13,13 +13,22 @@ int main()
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
 
-    //写入表示文件起始的文件头
     fs::path fullOutPath = fs::path(transfer._getPath(outPutFilePath));
-    writer.appendMagicStatic(fullOutPath); 
+    if (fs::exists(fullOutPath))
+    {
+        std::cerr << "HeaderWriter.cpp(main())-Error_fileIsExist\n"
+                  << "Try to clear:" << fullOutPath
+                  << "\n";
+    }
+    else{
+        //写入表示文件起始的魔数
+        writer.appendMagicStatic(fullOutPath);
 
-    //处理从gui获取的路径
-    Directory_FileProcessor begin;
-    begin.directory_fileProcessor(filePathToScan, outPutFilePath, logicalRoot);
+        //处理从gui获取的路径
+        Directory_FileProcessor begin;
+        begin.directory_fileProcessor(filePathToScan, outPutFilePath, logicalRoot);  
+    }
+
 
     system("pause");
     return 0;
