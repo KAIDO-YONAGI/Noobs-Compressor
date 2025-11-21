@@ -5,6 +5,8 @@
 
 #include <thread>
 
+//FIXME: Thread需要终止线程的方法。
+
 /**
  * 线程类
  * 封装线程与任务队列
