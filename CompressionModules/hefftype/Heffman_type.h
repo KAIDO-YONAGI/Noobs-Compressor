@@ -125,7 +125,6 @@ struct PathStack
  *     handle(unsigned char, std::vector<int>)：解压处理bit流
  *     
  */
-
 struct BitHandler
 {
     unsigned char byte;
@@ -133,7 +132,7 @@ struct BitHandler
     uint64_t bytecount;
     int valued_bits;
 
-    void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t*);
+    void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t&);
     void handle(unsigned char, std::vector<uint8_t>);
     void handle_last();
 };
