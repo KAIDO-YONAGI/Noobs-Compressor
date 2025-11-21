@@ -63,7 +63,6 @@ inline GetFreq::~GetFreq()
 void GetFreq::work(Datacmnctor *datacmnctor)
 {
     in_blocks = datacmnctor->get_input_blocks();
-    out_blocks = datacmnctor->get_output_blocks();
     if(in_blocks->size() == 1)
     {
         heffman->statistic_freq(0, in_blocks->at(0));
