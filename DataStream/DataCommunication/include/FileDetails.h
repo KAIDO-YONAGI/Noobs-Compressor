@@ -15,11 +15,11 @@ private:
 
 public:
     FileDetails() = default;
-    std::string &getName() { return name; }
-    fs::path &getFullPath() { return fullPath; }
-    FileNameSize_Int getSizeOfName() { return sizeOfName; }
-    FileSize_Int getFileSize() { return fileSize; }
-    bool getIsFile() { return isFile; }
+    const std::string &getName() { return name; }
+    const fs::path &getFullPath() { return fullPath; }
+    const FileNameSize_Int getSizeOfName() { return sizeOfName; }
+    const FileSize_Int getFileSize() { return fileSize; }
+    const bool getIsFile() { return isFile; }
 
     FileDetails(std::string name, FileNameSize_Int sizeOfName, FileSize_Int fileSize, bool isFile, fs::path &fullPath)
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
@@ -32,18 +32,17 @@ private:
     fs::path filePathToScan;
 
 public:
-    FilePath(const FilePath &) = delete;
     FilePath() {}
-    void setOutPutFilePath(fs::path &outPutFilePath)
+    void setOutPutFilePath(const fs::path &outPutFilePath)
     {
         this->outPutFilePath = outPutFilePath;
     }
-    void setFilePathToScan(fs::path &filePathToScan)
+    void setFilePathToScan(const fs::path &filePathToScan)
     {
         this->filePathToScan = filePathToScan;
     }
 
-    fs::path &getOutPutFilePath() { return outPutFilePath; }
-    fs::path &getFilePathToScan() { return filePathToScan; }
+    const fs::path &getOutPutFilePath() { return outPutFilePath; }
+    const fs::path &getFilePathToScan() { return filePathToScan; }
 };
 #endif

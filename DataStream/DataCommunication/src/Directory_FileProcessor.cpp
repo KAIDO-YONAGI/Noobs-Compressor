@@ -1,18 +1,16 @@
 // Directory_FileProcessor.cpp
 #include "../include/Directory_FileProcessor.h"
 
-void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, std::string &logicalRoot)
+void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &filePathToScan, const std::string &outPutFilePath, const std::string &logicalRoot)
 {
     Transfer transfer;
     FilePath File;
-    MagicNumWriter writer;//创建各个工具类的对象
+    MagicNumWriter writer; //创建各个工具类的对象
 
     fs::path oPath = fs::path(transfer._getPath(outPutFilePath));
     fs::path sPath;
 
-    
     File.setOutPutFilePath(oPath);
-
 
     try
     {
@@ -61,7 +59,7 @@ void Directory_FileProcessor::scanFlow(FilePath &File)
     }
 }
 
-FileCount_Int Directory_FileProcessor::countFilesInDirectory(fs::path &filePathToScan)
+FileCount_Int Directory_FileProcessor::countFilesInDirectory(const fs::path &filePathToScan)
 {
     try
     {
@@ -99,9 +97,8 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
                 name,
                 sizeOfName,
                 fileSize,
-                isRegularFile, 
-                fullPath
-            ); //创建details
+                isRegularFile,
+                fullPath); //创建details
             writeBinaryStandard(outFile, details, queue);
         }
     }
@@ -161,7 +158,7 @@ FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
     }
 }
 
-void Directory_FileProcessor::writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count)
+void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, FileCount_Int count)
 {
 
     std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
@@ -209,11 +206,11 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
         FileSize_Int fileSize = isRegularFile ? fs::file_size(rootPath) : 0;
 
         FileDetails rootDetails(
-            rootName,           // 目录名 (如 "Folder")
-            rootNameSize,       // 名称长度
-            fileSize,           // 文件大小(如果是文件)
-            isRegularFile,      // 是否为常规文件
-            rootPath            // 完整路径
+            rootName,      // 目录名 (如 "Folder")
+            rootNameSize,  // 名称长度
+            fileSize,      // 文件大小(如果是文件)
+            isRegularFile, // 是否为常规文件
+            rootPath       // 完整路径
         );
 
         std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);

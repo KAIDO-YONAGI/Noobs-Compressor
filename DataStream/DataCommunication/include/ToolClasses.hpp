@@ -40,7 +40,7 @@ class MagicNumWriter
         file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
     }
     public:
-    void appendMagicStatic(fs::path &outputFilePath)
+    void appendMagicStatic(const fs::path &outputFilePath)
     {
         std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
         if (!outFile)
@@ -62,7 +62,7 @@ private:
     {
         std::pair<FileDetails, FileCount_Int> data;
         Node *next;
-        Node(std::pair<FileDetails, FileCount_Int> &val)
+        Node(const std::pair<const FileDetails, FileCount_Int> &val)
             : data(val), next(nullptr) {}
     };
 

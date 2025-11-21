@@ -13,11 +13,11 @@ class Directory_FileProcessor
 {
 public:
     Directory_FileProcessor() = default;
-    void writeLogicalRoot(FilePath &File, std::string &logicalRoot, FileCount_Int count);
+    void writeLogicalRoot(FilePath &File, const std::string &logicalRoot, FileCount_Int count);
     void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan);
     void scanFlow(FilePath &File);
-    void directory_fileProcessor(std::vector<std::string> &filePathToScan1, std::string &outPutFilePath1, std::string &logicalRoot);
-    FileCount_Int countFilesInDirectory(fs::path &filePathToScan);
+    void directory_fileProcessor(std::vector<std::string> &filePathToScan, const std::string &outPutFilePath, const std::string &logicalRoot);
+    FileCount_Int countFilesInDirectory(const fs::path &filePathToScan);
 };
 
 class BinaryIO_Reader
