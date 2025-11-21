@@ -8,8 +8,8 @@ class FileDetails
 {
 private:
     std::string name;
-    FileNameSize_Int sizeOfName;
-    FileSize_Int fileSize;
+    FileNameSize_uint sizeOfName;
+    FileSize_uint fileSize;
     bool isFile;
     fs::path fullPath;
 
@@ -17,11 +17,11 @@ public:
     FileDetails() = default;
     const std::string &getName() { return name; }
     const fs::path &getFullPath() { return fullPath; }
-    const FileNameSize_Int getSizeOfName() { return sizeOfName; }
-    const FileSize_Int getFileSize() { return fileSize; }
+    const FileNameSize_uint getSizeOfName() { return sizeOfName; }
+    const FileSize_uint getFileSize() { return fileSize; }
     const bool getIsFile() { return isFile; }
 
-    FileDetails(std::string name, FileNameSize_Int sizeOfName, FileSize_Int fileSize, bool isFile, fs::path &fullPath)
+    FileDetails(std::string name, FileNameSize_uint sizeOfName, FileSize_uint fileSize, bool isFile, fs::path &fullPath)
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 };
 

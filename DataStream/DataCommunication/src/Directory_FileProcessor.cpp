@@ -15,12 +15,12 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
     try
     {
 
-        FileCount_Int length = filePathToScan.size();
+        FileCount_uint length = filePathToScan.size();
 
         writeLogicalRoot(File, logicalRoot, length); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
         writeRoot(File, filePathToScan);             //写入文件根目录
 
-        for (FileCount_Int i = 0; i < length; i++)
+        for (FileCount_uint i = 0; i < length; i++)
         {
 
             sPath = transfer._getPath(filePathToScan[i]);
@@ -59,7 +59,7 @@ void Directory_FileProcessor::scanFlow(FilePath &File)
     }
 }
 
-FileCount_Int Directory_FileProcessor::countFilesInDirectory(const fs::path &filePathToScan)
+FileCount_uint Directory_FileProcessor::countFilesInDirectory(const fs::path &filePathToScan)
 {
     try
     {
@@ -89,9 +89,9 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
             std::string name = entry.path().filename().string();
 
             auto fullPath = entry.path();
-            FileNameSize_Int sizeOfName = name.size();
+            FileNameSize_uint sizeOfName = name.size();
             bool isRegularFile = entry.is_regular_file();
-            FileSize_Int fileSize = isRegularFile ? entry.file_size() : 0;
+            FileSize_uint fileSize = isRegularFile ? entry.file_size() : 0;
 
             FileDetails details(
                 name,
@@ -119,7 +119,7 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
     else
     {
         Directory_FileProcessor reader;
-        FileCount_Int countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
+        FileCount_uint countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
 
         queue.fileQueue.push({details, countOfThisHeader});
         writeHeaderStandard(outFile, details, countOfThisHeader);
@@ -128,24 +128,24 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
 
 void BinaryIO_Reader::writeFileStandard(std::ofstream &outFile, FileDetails &details)
 {
-    FileNameSize_Int sizeOfName = details.getSizeOfName();
+    FileNameSize_uint sizeOfName = details.getSizeOfName();
     outFile.write("1", 1);                                //先写文件标
     write_binary_le(outFile, sizeOfName);                 //写入文件名偏移量
     outFile.write(details.getName().c_str(), sizeOfName); //写入文件名
     write_binary_le(outFile, details.getFileSize());      //写入文件大小
-    write_binary_le(outFile, FileSize_Int(0));            //预留大小
+    write_binary_le(outFile, FileSize_uint(0));           //预留大小
 }
 
-void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_Int count)
+void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count)
 {
-    FileNameSize_Int sizeOfName = details.getSizeOfName();
+    FileNameSize_uint sizeOfName = details.getSizeOfName();
     outFile.write("0", 1);
     write_binary_le(outFile, sizeOfName);
     outFile.write(details.getName().c_str(), sizeOfName);
     write_binary_le(outFile, count); //写入文件数目
 }
 
-FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
+FileSize_uint BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
 {
     try
     {
@@ -158,19 +158,17 @@ FileSize_Int BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
     }
 }
 
-void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, FileCount_Int count)
+void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count)
 {
 
     std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-
     if (!outFile)
     {
-        std::cerr << "Error"
-                  << "\n";
+        std::cerr << "writeLogicalRoot()-Error_failToOpenFile: " << File.getOutPutFilePath() << "\n";
         return;
     }
 
-    FileNameSize_Int rootLength = logicalRoot.size();
+    FileNameSize_uint rootLength = logicalRoot.size();
     outFile.write("0", 1);
     write_binary_le(outFile, rootLength);
     outFile.write(logicalRoot.c_str(), rootLength);
@@ -181,8 +179,8 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
 {
     Transfer transfer;
 
-    FileCount_Int length = filePathToScan.size();
-    for (FileCount_Int i = 0; i < length; i++)
+    FileCount_uint length = filePathToScan.size();
+    for (FileCount_uint i = 0; i < length; i++)
     {
 
         fs::path sPath = transfer._getPath(filePathToScan[i]);
@@ -201,9 +199,9 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
         // 1. 先写入根目录(或文件)自身（手动构造）
 
         std::string rootName = rootPath.filename().string();
-        FileNameSize_Int rootNameSize = rootName.size();
+        FileNameSize_uint rootNameSize = rootName.size();
         bool isRegularFile = fs::is_regular_file(rootPath);
-        FileSize_Int fileSize = isRegularFile ? fs::file_size(rootPath) : 0;
+        FileSize_uint fileSize = isRegularFile ? fs::file_size(rootPath) : 0;
 
         FileDetails rootDetails(
             rootName,      // 目录名 (如 "Folder")
@@ -214,9 +212,14 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
         );
 
         std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
+        if (!outFile)
+        {
+            std::cerr << "writeRoot()-Error_failToOpenFile: " << File.getOutPutFilePath() << "\n";
+            return;
+        }
         if (!rootDetails.getIsFile())
         {
-            FileCount_Int count = reader.countFilesInDirectory(rootPath);
+            FileCount_uint count = reader.countFilesInDirectory(rootPath);
             BIO.writeHeaderStandard(outFile, rootDetails, count);
         }
         else if (rootDetails.getIsFile())

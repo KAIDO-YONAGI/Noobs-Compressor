@@ -7,7 +7,7 @@
 
 class Transfer
 {
-    public:
+public:
     std::wstring convertToWString(const std::string &s)
     {
         std::setlocale(LC_ALL, ""); // 使用本地化设置
@@ -33,13 +33,12 @@ class Transfer
 
 class MagicNumWriter
 {
-    
+public:
     template <typename T>
     void write_binary_le(std::ofstream &file, T value)
     {
         file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
     }
-    public:
     void appendMagicStatic(const fs::path &outputFilePath)
     {
         std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
@@ -52,7 +51,6 @@ class MagicNumWriter
         write_binary_le(outFile, MagicNum);
         outFile.close();
     }
-
 };
 
 class FileQueue
@@ -60,9 +58,9 @@ class FileQueue
 private:
     struct Node
     {
-        std::pair<FileDetails, FileCount_Int> data;
+        std::pair<FileDetails, FileCount_uint> data;
         Node *next;
-        Node(const std::pair<const FileDetails, FileCount_Int> &val)
+        Node(const std::pair<const FileDetails, FileCount_uint> &val)
             : data(val), next(nullptr) {}
     };
 
@@ -83,7 +81,7 @@ public:
         rearNode = nullptr; // 重置尾指针
         count = 0;          // 重置计数器
     }
-    void push(std::pair<FileDetails, FileCount_Int> val)
+    void push(std::pair<FileDetails, FileCount_uint> val)
     {
         Node *newNode = new Node(val);
         if (rearNode)
@@ -113,7 +111,7 @@ public:
         count--;
     }
 
-    std::pair<FileDetails, FileCount_Int> &front()
+    std::pair<FileDetails, FileCount_uint> &front()
     {
         if (empty())
         {
@@ -122,7 +120,7 @@ public:
         return frontNode->data;
     }
 
-    std::pair<FileDetails, FileCount_Int> &back()
+    std::pair<FileDetails, FileCount_uint> &back()
     {
         if (empty())
         {
@@ -145,6 +143,35 @@ class QueueInterface
 {
 public:
     FileQueue fileQueue;
+};
+
+class Locator
+{
+public:
+    Locator() = default;
+    void offsetLocator(std::ofstream &File, FileSize_uint offset)
+    {
+        File.seekp(static_cast<std::streamoff>(offset), File.beg);
+    }
+    void offsetLocator(std::ifstream &File, FileSize_uint offset)
+    {
+        File.seekg(static_cast<std::streamoff>(offset), File.beg);
+    }
+
+    void offsetLocator(std::fstream &File, FileSize_uint offset) = delete;
+
+    FileSize_uint getFileSize(fs::path &filePathToScan)
+    {
+        try
+        {
+            return fs::file_size(filePathToScan);
+        }
+        catch (fs::filesystem_error &e)
+        {
+            std::cerr << "getFileSize()-Error: " << e.what() << "\n";
+            return 0;
+        }
+    }
 };
 
 #endif

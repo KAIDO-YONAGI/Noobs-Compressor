@@ -6,15 +6,6 @@
 #include "../include/FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
-
-class Locator
-{
-public:
-    void relativeLocator(std::ofstream &File, FileSize_Int offset);
-    void relativeLocator(std::ifstream &File, FileSize_Int offset);
-    void relativeLocator(std::fstream &File, FileSize_Int offset) = delete;
-};
-
 class FilePath_Loader
 {
 private:

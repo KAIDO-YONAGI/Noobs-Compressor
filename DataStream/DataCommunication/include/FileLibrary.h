@@ -13,9 +13,13 @@
 //ÃüÃû¿Õ¼ä
 
 namespace fs = std::filesystem;
-#define FileCount_Int uint32_t
-#define FileSize_Int uint64_t
-#define FileNameSize_Int uint16_t
+#define FileCount_uint uint32_t
+#define FileSize_uint uint64_t
+#define FileNameSize_uint uint16_t
 #define MagicNum 0xDEADBEEF
+#define CompressStrategy_uint uint8_t
+#define CompressorVersion_uint uint8_t
+#define HeaderOffsetSize_uint uint8_t
+#define DirectoryOffsetSize_uint uint32_t
 
 #endif
