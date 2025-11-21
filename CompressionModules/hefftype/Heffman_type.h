@@ -14,14 +14,14 @@ using codelen_t = uint8_t;
 using code_t = std::vector<uint8_t>;
 
 /**
- * ChardataÀà£º´æ´¢Ò»¸ö×Ö·ûµÄ±àÂëĞÅÏ¢
- * ²ÎÊıÁĞ±í£º
- *     freq£ºÆµÂÊ
- *     codelen£º±àÂë³¤¶È
- *     code£º±àÂë
- * º¯Êı¹¦ÄÜ£º
- *     add()£ºÆµÂÊ¼Ó1
- *     add(const Chardata&)£ººÏ²¢ÆµÂÊµ½´Ë¶ÔÏó
+ * Chardataç±»ï¼šå­˜å‚¨ä¸€ä¸ªå­—ç¬¦çš„ç¼–ç ä¿¡æ¯
+ * å‚æ•°åˆ—è¡¨ï¼š
+ *     freqï¼šé¢‘ç‡
+ *     codelenï¼šç¼–ç é•¿åº¦
+ *     codeï¼šç¼–ç 
+ * å‡½æ•°åŠŸèƒ½ï¼š
+ *     add()ï¼šé¢‘ç‡åŠ 1
+ *     add(const Chardata&)ï¼šåˆå¹¶é¢‘ç‡åˆ°æ­¤å¯¹è±¡
  */
 
 struct Chardata{
@@ -36,7 +36,7 @@ struct Chardata{
 };
 
 /**
- * HeffmapÀà£º×Ö·ûµ½×Ö·ûĞÅÏ¢µÄÓ³Éä
+ * Heffmapç±»ï¼šå­—ç¬¦åˆ°å­—ç¬¦ä¿¡æ¯çš„æ˜ å°„
  */
 
 typedef  
@@ -47,13 +47,13 @@ std::map<
 Heffmap;
 
 /**
- * Heffmaps: ´æ´¢¹şÏ£±íµÄÁĞ±í
+ * Heffmaps: å­˜å‚¨å“ˆå¸Œè¡¨çš„åˆ—è¡¨
  */
 
 typedef std::vector<Heffmap> Heffmaps;
 
 /**
- * Hefftreenode£º±àÂëÊ÷½Úµã
+ * Hefftreenodeï¼šç¼–ç æ ‘èŠ‚ç‚¹
  */
 
 
@@ -85,8 +85,8 @@ struct Hefftreenode{
 };
 
 /**
- * Minheap£º×îĞ¡¶ÑÓÅÏÈ¶ÓÁĞ
- * ¸ÃÈİÆ÷´æ´¢Ê÷½ÚµãµÄÖ¸Õë
+ * Minheapï¼šæœ€å°å †ä¼˜å…ˆé˜Ÿåˆ—
+ * è¯¥å®¹å™¨å­˜å‚¨æ ‘èŠ‚ç‚¹çš„æŒ‡é’ˆ
  */
 
 struct CompareHeap
@@ -100,7 +100,7 @@ using Minheap =
 std::priority_queue<Hefftreenode*, std::vector<Hefftreenode*>, CompareHeap>;
 
 /**
- * PathStack£º½ÚµãÂ·¾¶Õ»
+ * PathStackï¼šèŠ‚ç‚¹è·¯å¾„æ ˆ
  */
 
 struct PathStack
@@ -114,18 +114,17 @@ struct PathStack
 };
 
 /**
- * BitHandler£º±ÈÌØ´¦ÀíÆ÷
- *     Ñ¹ËõÊ±£¬½«±ÈÌØ×é×°³É×Ö½Ú£¬½âÑ¹Ê±£¬½«×Ö½Ú·Ö½âÎª±ÈÌØ¡£
- *     ¼ÇÂ¼×Ü×Ö½ÚÊı¡¢×îºóÒ»¸ö×Ö½ÚµÄÓĞĞ§Î»Êı¡£½áÊø´¦ÀíÊ±Ğ´»ØHeffman£¬
+ * BitHandlerï¼šæ¯”ç‰¹å¤„ç†å™¨
+ *     å‹ç¼©æ—¶ï¼Œå°†æ¯”ç‰¹ç»„è£…æˆå­—èŠ‚ï¼Œè§£å‹æ—¶ï¼Œå°†å­—èŠ‚åˆ†è§£ä¸ºæ¯”ç‰¹ã€‚
+ *     è®°å½•æ€»å­—èŠ‚æ•°ã€æœ€åä¸€ä¸ªå­—èŠ‚çš„æœ‰æ•ˆä½æ•°ã€‚ç»“æŸå¤„ç†æ—¶å†™å›Heffmanï¼Œ
  *     
- * ²ÎÊıÁĞ±í£º
+ * å‚æ•°åˆ—è¡¨ï¼š
  * 
- * º¯Êı¹¦ÄÜ£º
- *     handle(code_t&, codelen_t, block_t*)£ºÑ¹Ëõ´¦ÀíbitÁ÷
- *     handle(unsigned char, std::vector<int>)£º½âÑ¹´¦ÀíbitÁ÷
+ * å‡½æ•°åŠŸèƒ½ï¼š
+ *     handle(code_t&, codelen_t, block_t*)ï¼šå‹ç¼©å¤„ç†bitæµ
+ *     handle(unsigned char, std::vector<int>)ï¼šè§£å‹å¤„ç†bitæµ
  *     
  */
-
 struct BitHandler
 {
     unsigned char byte;
@@ -133,7 +132,7 @@ struct BitHandler
     uint64_t bytecount;
     int valued_bits;
 
-    void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t*);
+    void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t&);
     void handle(unsigned char, std::vector<uint8_t>);
     void handle_last();
 };

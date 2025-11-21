@@ -1,29 +1,25 @@
 #include "../include/Heffman.h"
 #include <stdexcept>
 
+//TODO: 检查方法中in_block使用完是否清空
+
 Heffman::Heffman(int thread_nums):
     treeroot(NULL) 
     { 
         
     }
 
-void Heffman::statistic_freq(int thread_id, sfc::blocks_t* data_blocks_in)
+void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
 {    
-    Heffmap threadTab;
-    sfc::block_t *pblock;
     try {
-        pblock = data_blocks_in->at(thread_id - 1);
-        threadTab = thread_tabs.at(thread_id - 1);
+        Heffmap &threadTab = thread_tabs.at(thread_id);
+        for(auto& c: in_block)
+        {
+            threadTab[c].freq++;
+        }
     } catch (std::out_of_range) {
 
     }
-    auto iter = pblock->cbegin();
-    auto end = pblock->cend();
-    while (iter != end)
-    {
-        threadTab[*iter++].add();
-    }
-    pblock->clear();
 }
 
 void Heffman::merge_ttabs(){
@@ -81,11 +77,10 @@ void Heffman::run_save_code_inTab(Hefftreenode* root){
     pathStack.pop();
 }
 
-void Heffman::encode(int thread_id, BitHandler bitoutput = BitHandler()){
-    auto pblock = data_blocks->at(thread_id - 1);
-    auto outputblock = data_blocks_out->at(thread_id - 1);
-    for(auto c: *pblock){
-        bitoutput.handle(hashtab[c].code, hashtab[c].codelen, outputblock);
+void Heffman::encode(const int& thread_id, sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput = BitHandler()){
+    
+    for(auto& c: in_block){
+        bitoutput.handle(hashtab[c].code, hashtab[c].codelen, out_block);
     }
 }
 
@@ -103,20 +98,18 @@ void Heffman::findchar(Hefftreenode* now, unsigned char* result, uint8_t toward)
     }
 }
 
-void Heffman::decode(int thread_id, BitHandler bitinput = BitHandler()){
-    auto pblock = data_blocks->at(thread_id - 1);
-    auto outputblock = data_blocks_out->at(thread_id - 1);
+void Heffman::decode(const int& thread_id, sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput = BitHandler()){
     Hefftreenode *now = treeroot;
     std::vector<uint8_t> treepath(8);
     unsigned char *result = new unsigned char(NULL); 
-    for(auto c: *pblock)
+    for(auto& c: in_block)
     {
         bitinput.handle(c, treepath);
         for(auto toward: treepath)
         {
             findchar(now, result, toward);
             if(result != NULL){
-                outputblock->push_back(*result);
+                out_block.push_back(*result);
             }
         }
         treepath.clear();

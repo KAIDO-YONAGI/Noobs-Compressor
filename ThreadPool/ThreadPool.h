@@ -1,23 +1,45 @@
 #ifndef THREADPOOL_H
 #define THREADPOOL_H
 
+#include "../namespace/namespace_sfc.h"
+#include "MonitorTaskQueue.hpp"
+#include "_Thread.h"
+
+#include <string>
 #include <thread>
-#include <condition_variable>
 #include <vector>
 #include <queue>
+#include <map>
+
+//TODO: 需要维护当前线程数，并有返回线程数量的方法
+//TODO: 考虑日志与异常处理。
+
+/**
+ * 版本一：2025.11.18
+ *        基本功能开发完成。考虑日志与异常。
+ *        _Thread中需要终止线程的方法
+ *        MonitorTaskQueue和_Thread考虑模板化
+ */
 
 /**
  * 线程池，用于管理一组线程。
- * 禁用拷贝操作。
- * 该类封装了线程的创建与销毁。提供对线程命名的功能。
- * 每个线程拥有一个任务队列，对外只开放对指定命名添加任务的功能。
- * 任务队列使用管程封装。
+ * 该类封装了自定义线程类。提供对线程命名的功能。
+ * 任务队列在线程类内部，使用管程封装。
+ * 请在堆上创建并使用这个线程池
  * 
- * 私有变量:
- *     thread_nums：线程的数量
- *     taskqueCv：列表存储每个队列的条件变量
+ * 变量:
+ *     私有变量：
+ *     thread_nums：当前线程的数量
  *     threads：线程列表
- *     tasks：任务队列列表
+ * 
+ * 函数：
+ *     私有函数：
+ *     thread_running()：线程的函数，内部是一个大循环，从任务队列取出
+ *                      函数指针调用。
+ *     用户接口：
+ *     new_thread(trd_name)：创建一个命名线程
+ *     del_thread(trd_name)：销毁一个命名线程
+ *     add_task(trd_name, task)：为命名线程添加任务
  */
 
 class ThreadPool
@@ -30,20 +52,28 @@ public:
 
 private:
     int thread_nums;
-    std::vector< std::condition_variable > taskqueCv;
+    std::map<std::string, Thread> threads;
+
+    /*
     std::vector<std::thread> threads;
-    std::vector< std::queue<> > tasks;
+    std::vector<MonitorTaskQueue> tasks;
+    */
 
 public:
-    template<typename T>
-    void add_task(T&& task);
+    void new_thread(const std::string& trd_name);
+    void del_thread(const std::string& trd_name);
+    template<typename T> void add_task(std::string trd_name, T&& task);
 
 };
 
-ThreadPool::ThreadPool(int t_nums):
-    thread_nums(t_nums)
+template<typename T>
+void ThreadPool::add_task(std::string trd_name, T&& task)
 {
-    threads.reserve(t_nums);
+    if(threads.find(trd_name) != threads.end())
+    {
+        threads[trd_name].add_task(std::forward<T>(task));
+    }
 }
+
 
 #endif //THREADPOOL_H

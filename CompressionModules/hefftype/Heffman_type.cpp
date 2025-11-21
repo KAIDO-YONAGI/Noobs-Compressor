@@ -61,7 +61,7 @@ void PathStack::writecode(Chardata& cdata){
 
 //method of BitHandler
 
-void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t* outputblock){
+void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out_block){
    for(auto codeblock: codeblocks)
    {
       while (codelen > 0)
@@ -77,7 +77,7 @@ void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t* out
          }
          codelen -= offset;
          if(bitlen == 8){
-            outputblock->push_back(byte);
+            out_block.push_back(byte);
             ++bytecount;
          }
       }      
