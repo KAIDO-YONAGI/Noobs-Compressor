@@ -30,7 +30,6 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
                 reader.scanFlow(File,outFile);
             }
         }
-        writer.appendMagicStatic(outFile);
     }
     catch (const std::exception &e)
     {
