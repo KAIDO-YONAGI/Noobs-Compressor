@@ -41,6 +41,10 @@ public:
     Heffman(int thread_nums);
     ~Heffman();
 
+    void statistic_freq(const int& thread_id, sfc::block_t&);
+    void encode(const int&, sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
+    void decode(const int&, sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
+
 private:
     using Datablk_ptr = sfc::block_t*;
 
@@ -59,16 +63,9 @@ private:
     std::unique_ptr<Minheap> gen_minheap();
     void save_code_inTab();
     void run_save_code_inTab(Hefftreenode* root);
-
-    void encode(int thread_id, BitHandler bitoutput = BitHandler());
     void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
-    void decode(int thread_id, BitHandler bitinput = BitHandler());
-
     void output_codeTab();
 
-public:
-    void statistic_freq(int thread_id, sfc::blocks_t*);
-    
 };
 
 #endif //HEFFMAN_H
