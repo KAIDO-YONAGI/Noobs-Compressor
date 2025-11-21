@@ -64,9 +64,7 @@ void GetFreq::work(Datacmnctor *datacmnctor)
 {
     in_blocks = datacmnctor->get_input_blocks();
     if(in_blocks->size() == 1)
-    {
         heffman->statistic_freq(0, in_blocks->at(0));
-    }
     else 
     {
         //多线程（需要阻塞主线程）
@@ -77,6 +75,8 @@ void GetFreq::work(Datacmnctor *datacmnctor)
             auto task = gen_task(i);
             tasks.push_back(task);
             results.push_back(task->get_future());
+            //FIXME: 线程池内的命名线程只需创建一次
+            //TODO: 写方法：检测是否需要创建/销毁线程
             tpool->new_thread(std::to_string(i));
             tpool->add_task(std::to_string(i), task);
         }
