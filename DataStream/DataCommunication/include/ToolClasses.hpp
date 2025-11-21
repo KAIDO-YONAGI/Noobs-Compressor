@@ -34,22 +34,15 @@ public:
 class MagicNumWriter
 {
 public:
+    MagicNumWriter() = default;
     template <typename T>
     void write_binary_le(std::ofstream &file, T value)
     {
         file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
     }
-    void appendMagicStatic(const fs::path &outputFilePath)
+    void appendMagicStatic(std::ofstream &outFile)
     {
-        std::ofstream outFile(outputFilePath, std::ios::binary | std::ios::app);
-        if (!outFile)
-        {
-            std::cerr << "appendMagicStatic-Error_failToOpenFile: " << outputFilePath << "\n";
-            return;
-        }
-
         write_binary_le(outFile, MagicNum);
-        outFile.close();
     }
 };
 

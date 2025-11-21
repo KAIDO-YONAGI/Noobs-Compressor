@@ -1,7 +1,7 @@
 // Directory_FileProcessor.cpp
 #include "../include/Directory_FileProcessor.h"
 
-void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &filePathToScan, const std::string &outPutFilePath, const std::string &logicalRoot)
+void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &filePathToScan, const std::string &outPutFilePath, const std::string &logicalRoot,std::ofstream &outFile)
 {
     Transfer transfer;
     FilePath File;
@@ -14,11 +14,10 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
 
     try
     {
-
         FileCount_uint length = filePathToScan.size();
 
-        writeLogicalRoot(File, logicalRoot, length); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
-        writeRoot(File, filePathToScan);             //写入文件根目录
+        writeLogicalRoot(File, logicalRoot, length,outFile); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
+        writeRoot(File, filePathToScan,outFile);             //写入文件根目录
 
         for (FileCount_uint i = 0; i < length; i++)
         {
@@ -28,24 +27,25 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
             {
                 File.setFilePathToScan(sPath);
                 Directory_FileProcessor reader;
-                reader.scanFlow(File);
+                reader.scanFlow(File,outFile);
             }
         }
+        writer.appendMagicStatic(outFile);
     }
     catch (const std::exception &e)
     {
         std::cerr << "directory_fileProcessor()-Error: " << e.what() << std::endl;
     }
-    writer.appendMagicStatic(File.getOutPutFilePath());
+    
 }
 
-void Directory_FileProcessor::scanFlow(FilePath &File)
+void Directory_FileProcessor::scanFlow(FilePath &File,std::ofstream &outFile)
 {
 
     QueueInterface queue;
     BinaryIO_Reader IO;
 
-    IO.scanner(File, queue);
+    IO.scanner(File, queue,outFile);
 
     while (!queue.fileQueue.empty())
     {
@@ -53,7 +53,7 @@ void Directory_FileProcessor::scanFlow(FilePath &File)
         FileDetails &details = (queue.fileQueue.front()).first;
         File.setFilePathToScan(details.getFullPath());
 
-        IO.scanner(File, queue);
+        IO.scanner(File, queue,outFile);
 
         queue.fileQueue.pop();
     }
@@ -71,15 +71,9 @@ FileCount_uint Directory_FileProcessor::countFilesInDirectory(const fs::path &fi
     }
 }
 
-void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
+void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue,std::ofstream &outFile)
 {
 
-    std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-    if (!outFile)
-    {
-        std::cerr << "scanner()-Error_failToOpenFile:" << File.getFilePathToScan() << "\n";
-        return;
-    }
 
     try
     {
@@ -107,7 +101,6 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue)
         std::cerr << "scanner()-Error: " << e.what() << "\n";
     }
 
-    outFile.close();
 }
 
 void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue)
@@ -158,24 +151,17 @@ FileSize_uint BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
     }
 }
 
-void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count)
+void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count,std::ofstream &outFile)
 {
 
-    std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-    if (!outFile)
-    {
-        std::cerr << "writeLogicalRoot()-Error_failToOpenFile: " << File.getOutPutFilePath() << "\n";
-        return;
-    }
 
     FileNameSize_uint rootLength = logicalRoot.size();
     outFile.write("0", 1);
     write_binary_le(outFile, rootLength);
     outFile.write(logicalRoot.c_str(), rootLength);
     write_binary_le(outFile, count); //写文件数
-    outFile.close();
 }
-void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan)
+void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan,std::ofstream &outFile)
 {
     Transfer transfer;
 
@@ -211,12 +197,6 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
             rootPath       // 完整路径
         );
 
-        std::ofstream outFile(File.getOutPutFilePath(), std::ios::binary | std::ios::app);
-        if (!outFile)
-        {
-            std::cerr << "writeRoot()-Error_failToOpenFile: " << File.getOutPutFilePath() << "\n";
-            return;
-        }
         if (!rootDetails.getIsFile())
         {
             FileCount_uint count = reader.countFilesInDirectory(rootPath);
@@ -226,6 +206,5 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
         {
             BIO.writeFileStandard(outFile, rootDetails);
         }
-        outFile.close();
     }
 }
