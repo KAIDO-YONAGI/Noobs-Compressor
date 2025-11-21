@@ -40,13 +40,14 @@ public:
     ~GetFreq();
 
 private:
-    std::shared_ptr<Heffman> heffman; 
+    using ptask_t = std::shared_ptr<std::packaged_task<void()>>;
+    std::shared_ptr<Heffman> heffman;
+    //int thread_nums; 
     std::unique_ptr<ThreadPool> tpool;
-    sfc::blocks_t* in_block;
-    sfc::blocks_t* out_block;
+    sfc::blocks_t* in_blocks;
     
     void work(const int&);
-    std::packaged_task<void()> gen_task(const int&);
+    ptask_t gen_task(const int&);
     
 public:
     void work(Datacmnctor*) override;
@@ -61,20 +62,22 @@ inline GetFreq::~GetFreq()
 
 void GetFreq::work(Datacmnctor *datacmnctor)
 {
-    in_block = datacmnctor->get_input_blocks();
-    out_block = datacmnctor->get_output_blocks();
-    if(in_block->size() == 1)
+    in_blocks = datacmnctor->get_input_blocks();
+    out_blocks = datacmnctor->get_output_blocks();
+    if(in_blocks->size() == 1)
     {
-        heffman->statistic_freq(1, in_block);
+        heffman->statistic_freq(0, in_blocks->at(0));
     }
     else 
     {
         //多线程（需要阻塞主线程）
         std::vector<std::future<void>> results;
-        for(int i = 1; i <= in_block->size(); ++i)
+        std::vector<ptask_t> tasks;
+        for(int i = 0; i < in_blocks->size(); ++i)
         {
             auto task = gen_task(i);
-            results.push_back(task.get_future());
+            tasks.push_back(task);
+            results.push_back(task->get_future());
             tpool->new_thread(std::to_string(i));
             tpool->add_task(std::to_string(i), task);
         }
@@ -87,14 +90,15 @@ void GetFreq::work(Datacmnctor *datacmnctor)
 
 void GetFreq::work(const int& i)
 {
-    heffman->statistic_freq(i, in_block); 
+    heffman->statistic_freq(i, in_blocks->at(i)); 
 }
 
-std::packaged_task<void()> GetFreq::gen_task(const int& i)
+GetFreq::ptask_t GetFreq::gen_task(const int& i)
 {
-    std::packaged_task<void()> task([this, i]{
-        this->work(i);
-    });
+    std::packaged_task<void()> *task_ptr = new std::packaged_task<void()>(
+        [this, i] { this->work(i); }
+    );
+    ptask_t task(task_ptr);
     return task;
 }
 

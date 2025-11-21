@@ -7,18 +7,14 @@ Heffman::Heffman(int thread_nums):
         
     }
 
-void Heffman::statistic_freq(int thread_id, sfc::blocks_t* data_blocks_in)
+void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
 {    
     try {
-        sfc::block_t &pblock = data_blocks_in->at(thread_id - 1);
-        Heffmap &threadTab = thread_tabs.at(thread_id - 1);
-        auto iter = pblock.cbegin();
-        auto end = pblock.cend();
-        while (iter != end)
+        Heffmap &threadTab = thread_tabs.at(thread_id);
+        for(auto& c: in_block)
         {
-            threadTab[*iter++].add();
+            threadTab[c]++;
         }
-        pblock.clear();
     } catch (std::out_of_range) {
 
     }
