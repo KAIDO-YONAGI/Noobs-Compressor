@@ -17,11 +17,11 @@
  *    work(Datacmnctor*)：
  *        将数据块指针保存在类内
  */
-
+//TODO: 完成拷贝操作/移动操作
 class DoEncode: public Worker
 {
 public:
-    DoEncode(/* args */);
+    DoEncode(Heffman*);
     ~DoEncode();
 
     void work(Datacmnctor*) override;

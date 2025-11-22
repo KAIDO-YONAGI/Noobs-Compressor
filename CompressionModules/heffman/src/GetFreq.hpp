@@ -8,8 +8,7 @@
 #include "../include/Heffman.h"
 #include "../../../ThreadPool/ThreadPool.h"
 
-//临时
-#define MAX_NUMS_OF_THREAD 8
+//FIXME: 分开为.h与.cpp文件
 
 /**
  * 赫夫曼统计字符频率的功能模块
@@ -63,7 +62,7 @@ private:
 };
 
 inline GetFreq::GetFreq(Heffman* heffcore):
-    heffman(heffcore), tpool(new ThreadPool(MAX_NUMS_OF_THREAD))
+    heffman(heffcore), tpool(new ThreadPool())
 { }
 
 inline GetFreq::~GetFreq()
@@ -72,6 +71,17 @@ inline GetFreq::~GetFreq()
 void GetFreq::work(Datacmnctor *datacmnctor)
 {
     in_blocks = datacmnctor->get_input_blocks();
+    if(in_blocks == NULL)
+    {
+        //TODO: 异常处理
+        return;
+    }
+    if(in_blocks->size() == 0)
+    {
+        //TODO: 异常处理
+        return;
+    }
+
     if(in_blocks->size() == 1)
         heffman->statistic_freq(0, in_blocks->at(0));
     else 

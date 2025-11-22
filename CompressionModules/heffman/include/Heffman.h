@@ -1,7 +1,7 @@
 #ifndef HEFFMAN_H
 #define HEFFMAN_H
 
-#include "../hefftype/Heffman_type.h"
+#include "../../hefftype/Heffman_type.h"
 #include "../../Schedule/include/Worker.h"
 #include <memory>
 
@@ -42,8 +42,8 @@ public:
     ~Heffman();
 
     void statistic_freq(const int& thread_id, sfc::block_t&);
-    void encode(const int&, sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
-    void decode(const int&, sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
+    void encode(const sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
+    void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
 
 private:
     using Datablk_ptr = sfc::block_t*;

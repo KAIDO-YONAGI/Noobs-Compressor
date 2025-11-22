@@ -1,19 +1,35 @@
 #include "../include/DoEncode.h"
 
-DoEncode::DoEncode(/* args */)
-{
-}
+DoEncode::DoEncode(Heffman* heffcore):
+heffman(heffcore), in_blocks(NULL), out_blocks(NULL),
+tpool(new ThreadPool())
+{ }
 
 DoEncode::~DoEncode()
-{
-}
+{ }
 
 void DoEncode::work(Datacmnctor* datacmnctor)
 {
     in_blocks = datacmnctor->get_input_blocks();
     out_blocks = datacmnctor->get_output_blocks();
+    if(in_blocks == NULL)
+    {
+        //TODO: 异常处理
+        return;
+    }
+    if(out_blocks == NULL)
+    {
+        //TODO: 异常处理
+        return;
+    }
+    if(in_blocks->size() == 0)
+    {
+        //TODO: 异常处理
+        return;
+    }
+
     if(in_blocks->size() == 1)
-        heffman->encode(0, in_blocks->at(0), out_blocks->at(0));
+        heffman->encode(in_blocks->at(0), out_blocks->at(0));
     else
     {
         std::vector<std::future<void>> results;
@@ -56,7 +72,7 @@ void DoEncode::check_tpool()
 
 void DoEncode::work(const int& thread_id)
 {
-    heffman->encode(thread_id, in_blocks->at(thread_id), out_blocks->at(thread_id));
+    heffman->encode(in_blocks->at(thread_id), out_blocks->at(thread_id));
 }
 
 DoEncode::ptask_t DoEncode::gen_task(const int& thread_id)
