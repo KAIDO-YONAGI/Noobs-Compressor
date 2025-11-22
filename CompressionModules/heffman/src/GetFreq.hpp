@@ -101,14 +101,14 @@ void GetFreq::check_tpool()
         return;
     else if(in_blocks->size() < thread_nums)
     {
-        for(int i = in_blocks->size(); i <= thread_nums; ++i)
+        for(int i = in_blocks->size(); i < thread_nums; ++i)
         {
             tpool->del_thread(std::to_string(i));
         }
     }
     else
     {
-        for(int i = thread_nums; i <= in_blocks->size(); ++i)
+        for(int i = thread_nums; i < in_blocks->size(); ++i)
         {
             tpool->new_thread(std::to_string(i));
         }
