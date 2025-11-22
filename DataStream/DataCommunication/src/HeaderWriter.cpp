@@ -1,52 +1,7 @@
 #include "../include/HeaderWriter.h"
 #include "../include/Directory_FileProcessor.h"
-void HeaderWriter_v0::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
-{
-    Transfer transfer;
-    MagicNumWriter numWriter;
 
-    try
-    {
-        fs::path fullOutPath = fs::path(transfer._getPath(outPutFilePath));
-        if (fs::exists(fullOutPath))
-        {
-            throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
-        }
-
-        std::ofstream outFile(fullOutPath,
-                              std::ios::binary | std::ios::out | std::ios::ate); // ate打开，避免覆写文件，使用偏移量定位
-        if (!outFile)
-        {
-            throw std::runtime_error("HeaderWriter()-Error_File open failed: " + fullOutPath.string());
-        }
-
-        try
-        {
-
-            //写入表示文件起始的4字节魔数
-            numWriter.appendMagicStatic(outFile);
-            header_v0(outFile, fullOutPath);
-            //文件头结束--包含魔数一共11字节(已回填)
-            numWriter.appendMagicStatic(outFile);
-            //目录信息
-            directory_v0(outFile, filePathToScan, fullOutPath, logicalRoot);
-            //目录区结束（已回填）
-            numWriter.appendMagicStatic(outFile);
-        }
-        catch (const std::exception &e)
-        {
-            throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + std::string(e.what()));
-        }
-
-        outFile.close();
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << e.what() << std::endl;
-        throw; // 重新抛出异常以便上层处理
-    }
-}
-void HeaderWriter_v0::header_v0(std::ofstream &outFile, fs::path &fullOutPath)
+void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
 {
     MagicNumWriter numWriter;
     Locator locator;
@@ -72,7 +27,7 @@ void HeaderWriter_v0::header_v0(std::ofstream &outFile, fs::path &fullOutPath)
     numWriter.write_binary_le(outFile, headerOffset);
     outFile.seekp(0, std::ios::end);
 }
-void HeaderWriter_v0::directory_v0(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
     MagicNumWriter numWriter;
@@ -86,4 +41,52 @@ void HeaderWriter_v0::directory_v0(std::ofstream &outFile, const std::vector<std
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath);
     numWriter.write_binary_le(outFile, directoryOffset);
     outFile.seekp(0, std::ios::end);
+}
+void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
+{
+    Transfer transfer;
+    MagicNumWriter numWriter;
+    HeaderWriter headerWriter;
+
+    try
+    {
+        fs::path fullOutPath = fs::path(transfer._getPath(outPutFilePath));
+        if (fs::exists(fullOutPath))
+        {
+            throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
+        }
+
+        std::ofstream outFile(fullOutPath,
+                              std::ios::binary | std::ios::out | std::ios::ate); // ate打开，避免覆写文件，使用偏移量定位
+        if (!outFile)
+        {
+            throw std::runtime_error("HeaderWriter()-Error_File open failed: " + fullOutPath.string());
+        }
+
+        try
+        {
+
+            //写入表示文件起始的4字节魔数
+            numWriter.appendMagicStatic(outFile);
+            headerWriter.writeHeader(outFile, fullOutPath); //文件头结束--包含魔数一共11字节(已回填)
+
+            numWriter.appendMagicStatic(outFile);
+
+            //目录信息
+            headerWriter.writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); //目录区结束（已回填）
+
+            numWriter.appendMagicStatic(outFile);
+        }
+        catch (const std::exception &e)
+        {
+            throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + std::string(e.what()));
+        }
+
+        outFile.close();
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << std::endl;
+        throw; // 重新抛出异常以便上层处理
+    }
 }

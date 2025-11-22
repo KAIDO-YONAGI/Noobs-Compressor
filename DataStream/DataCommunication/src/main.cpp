@@ -12,7 +12,11 @@ int main()
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
 
-    HeaderWriter_v0 headerWriter_v0;
+    HeaderWriter headerWriter_v0;
+    //默认v0,如果更新版本，可以按照以下代码指定新版函数或接口
+    // auto customWriter = std::make_unique<HeaderWriter_v0>();
+    // HeaderWriter writer2(std::move(customWriter));
+    // writer2.write(files, "output_v2.bin", "/custom_root");
     headerWriter_v0.headerWriter(filePathToScan, outPutFilePath, logicalRoot);
 
     system("pause");
