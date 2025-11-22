@@ -3,12 +3,13 @@
 #define FILEWRITER_H
 
 #include "../include/FileLibrary.h"
+#include "../include/Directory_FileProcessor.h"
 
 class HeaderWriter_Interface
 {
 public:
     virtual ~HeaderWriter_Interface() = default;
-    virtual void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) = 0;
+    virtual void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) = 0; //=0:标明是纯虚函数，必须重写，没有=0则可选择性重载
     virtual void writeDirectory(
         std::ofstream &outFile,
         const std::vector<std::string> &filePathToScan,
@@ -44,12 +45,9 @@ public:
     {
         writer->writeHeader(outFile, fullOutPath);
     }
-    void writeDirectory(
-        std::ofstream &outFile,
-        const std::vector<std::string> &filePathToScan,
-        const fs::path &fullOutPath,
-        const std::string &logicalRoot){
-        writer->writeDirectory(outFile,filePathToScan,fullOutPath,logicalRoot);
+    void writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+    {
+        writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };
 };
 #endif

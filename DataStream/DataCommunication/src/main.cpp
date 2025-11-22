@@ -17,6 +17,7 @@ int main()
     // auto customWriter = std::make_unique<HeaderWriter_v0>();
     // HeaderWriter writer2(std::move(customWriter));
     // writer2.write(files, "output_v2.bin", "/custom_root");
+    
     headerWriter_v0.headerWriter(filePathToScan, outPutFilePath, logicalRoot);
 
     system("pause");

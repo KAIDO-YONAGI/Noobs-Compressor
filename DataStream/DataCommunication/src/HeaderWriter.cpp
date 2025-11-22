@@ -1,5 +1,4 @@
 #include "../include/HeaderWriter.h"
-#include "../include/Directory_FileProcessor.h"
 
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
 {
@@ -56,8 +55,7 @@ void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::s
             throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
         }
 
-        std::ofstream outFile(fullOutPath,
-                              std::ios::binary | std::ios::out | std::ios::ate); // ate打开，避免覆写文件，使用偏移量定位
+        std::ofstream outFile(fullOutPath, std::ios::binary | std::ios::out | std::ios::ate); // ate打开，避免覆写文件，使用偏移量定位
         if (!outFile)
         {
             throw std::runtime_error("HeaderWriter()-Error_File open failed: " + fullOutPath.string());
