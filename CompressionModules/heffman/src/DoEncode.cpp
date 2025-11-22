@@ -18,15 +18,39 @@ void DoEncode::work(Datacmnctor* datacmnctor)
     {
         std::vector<std::future<void>> results;
         std::vector<ptask_t> tasks;
-        
+        check_tpool();
+        for(int i = 0; i < in_blocks->size(); ++i)
+        {
+            auto task = gen_task(i);
+            tasks.push_back(task);
+            results.push_back(task->get_future());
+            tpool->add_task(std::to_string(i), task);
+        }
+        for(auto& result: results)
+        {
+            result.get();
+        }
     }
 }
 
 void DoEncode::check_tpool()
 {
-    for(int i = 0; i < in_blocks->size(); ++i)
+    int thread_nums = tpool->get_thread_nums();
+    if(in_blocks->size() == thread_nums)
+        return;
+    else if(in_blocks->size() < thread_nums)
     {
-        
+        for(int i = in_blocks->size(); i <= thread_nums; ++i)
+        {
+            tpool->del_thread(std::to_string(i));
+        }
+    }
+    else
+    {
+        for(int i = thread_nums; i <= in_blocks->size(); ++i)
+        {
+            tpool->new_thread(std::to_string(i));
+        }
     }
 }
 

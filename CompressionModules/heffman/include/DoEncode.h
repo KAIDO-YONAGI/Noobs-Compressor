@@ -7,6 +7,16 @@
 #include "../../Schedule/include/Worker.h"
 #include "../../../ThreadPool/ThreadPool.h"
 
+/**
+ * 赫夫曼进行压缩的功能模块
+ * 类内组合的heffman在堆上唯一
+ * 
+ * 实现Worker接口，可供调度器调用
+ * 
+ *    用户接口：
+ *    work(Datacmnctor*)：
+ *        将数据块指针保存在类内
+ */
 
 class DoEncode: public Worker
 {
