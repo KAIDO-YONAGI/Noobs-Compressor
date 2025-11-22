@@ -1,5 +1,5 @@
 // HeaderLoader.h
-#ifndef HEADERLOADER
+#ifndef HEADERLOADER_H
 #define HEADERLOADER_H
 
 #include "../include/FileLibrary.h"
@@ -14,6 +14,7 @@ private:
 };
 class BinaryIO_Loader
 {
+
 };
 template <typename T>
 T read_binary_le(std::ifstream &file)
