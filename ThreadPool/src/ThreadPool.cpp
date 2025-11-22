@@ -1,7 +1,7 @@
 #include "../ThreadPool.h"
 
-ThreadPool::ThreadPool(int t_nums):
-    thread_nums(t_nums) { }
+ThreadPool::ThreadPool()
+{ }
 
 
 void ThreadPool::new_thread(const std::string& trd_name)

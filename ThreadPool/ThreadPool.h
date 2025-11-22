@@ -46,7 +46,7 @@
 class ThreadPool
 {
 public:
-    ThreadPool(int);
+    ThreadPool();
     ~ThreadPool();
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator=(const ThreadPool&) = delete;
