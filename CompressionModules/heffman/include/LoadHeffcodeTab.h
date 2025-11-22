@@ -1,0 +1,6 @@
+#ifndef LOADHEFFCODETAB_H
+#define LOADHEFFCODETAB_H
+
+//TODO: 从输入块中读取并加载编码表
+
+#endif //LOADHEFFCODETAB_H
