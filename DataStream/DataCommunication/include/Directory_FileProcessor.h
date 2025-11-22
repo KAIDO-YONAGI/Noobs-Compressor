@@ -1,6 +1,6 @@
 // Directory_FileProcessor.h
-#ifndef DIRECTORY_FILEPROCESSOR
-#define DIRECTORY_FILEPROCESSOR
+#ifndef DIRECTORY_FILEPROCESSOR_H
+#define DIRECTORY_FILEPROCESSOR_H
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
@@ -14,9 +14,9 @@ class Directory_FileProcessor
 public:
     Directory_FileProcessor() = default;
     void writeLogicalRoot(FilePath &File, const std::string &logicalRoot,const FileCount_uint count,std::ofstream &outFile);
-    void writeRoot(FilePath &File, std::vector<std::string> &filePathToScan,std::ofstream &outFile);
+    void writeRoot(FilePath &File,const std::vector<std::string> &filePathToScan,std::ofstream &outFile);
     void scanFlow(FilePath &File,std::ofstream &outFile);
-    void directory_fileProcessor(std::vector<std::string> &filePathToScan, const std::string &outPutFilePath, const std::string &logicalRoot,std::ofstream &outFile);
+    void directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath , const std::string &logicalRoot,std::ofstream &outFile);
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
 };
 

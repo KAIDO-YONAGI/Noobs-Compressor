@@ -1,6 +1,6 @@
 // FileDetails.h
-#ifndef FILEDETAILS
-#define FILEDETAILS
+#ifndef FILEDETAILS_H
+#define FILEDETAILS_H
 
 #include "../include/FileLibrary.h"
 

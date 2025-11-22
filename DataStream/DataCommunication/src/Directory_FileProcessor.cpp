@@ -1,13 +1,13 @@
 // Directory_FileProcessor.cpp
 #include "../include/Directory_FileProcessor.h"
 
-void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &filePathToScan, const std::string &outPutFilePath, const std::string &logicalRoot,std::ofstream &outFile)
+void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot, std::ofstream &outFile)
 {
     Transfer transfer;
     FilePath File;
     MagicNumWriter writer; //创建各个工具类的对象
 
-    fs::path oPath = fs::path(transfer._getPath(outPutFilePath));
+    fs::path oPath = fullOutPath;
     fs::path sPath;
 
     File.setOutPutFilePath(oPath);
@@ -16,8 +16,8 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
     {
         FileCount_uint length = filePathToScan.size();
 
-        writeLogicalRoot(File, logicalRoot, length,outFile); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
-        writeRoot(File, filePathToScan,outFile);             //写入文件根目录
+        writeLogicalRoot(File, logicalRoot, length, outFile); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
+        writeRoot(File, filePathToScan, outFile);             //写入文件根目录
 
         for (FileCount_uint i = 0; i < length; i++)
         {
@@ -27,7 +27,7 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
             {
                 File.setFilePathToScan(sPath);
                 Directory_FileProcessor reader;
-                reader.scanFlow(File,outFile);
+                reader.scanFlow(File, outFile);
             }
         }
     }
@@ -35,16 +35,15 @@ void Directory_FileProcessor::directory_fileProcessor(std::vector<std::string> &
     {
         std::cerr << "directory_fileProcessor()-Error: " << e.what() << std::endl;
     }
-    
 }
 
-void Directory_FileProcessor::scanFlow(FilePath &File,std::ofstream &outFile)
+void Directory_FileProcessor::scanFlow(FilePath &File, std::ofstream &outFile)
 {
 
     QueueInterface queue;
     BinaryIO_Reader IO;
 
-    IO.scanner(File, queue,outFile);
+    IO.scanner(File, queue, outFile);
 
     while (!queue.fileQueue.empty())
     {
@@ -52,27 +51,14 @@ void Directory_FileProcessor::scanFlow(FilePath &File,std::ofstream &outFile)
         FileDetails &details = (queue.fileQueue.front()).first;
         File.setFilePathToScan(details.getFullPath());
 
-        IO.scanner(File, queue,outFile);
+        IO.scanner(File, queue, outFile);
 
         queue.fileQueue.pop();
     }
 }
 
-FileCount_uint Directory_FileProcessor::countFilesInDirectory(const fs::path &filePathToScan)
+void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue, std::ofstream &outFile)
 {
-    try
-    {
-        return std::distance(fs::directory_iterator(filePathToScan), fs::directory_iterator{});
-    }
-    catch (fs::filesystem_error &e)
-    {
-        throw("countFilesInDirectory()-Error: " + std::string(e.what()) + "\n");
-    }
-}
-
-void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue,std::ofstream &outFile)
-{
-
 
     try
     {
@@ -99,7 +85,6 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue,std::ofstrea
     {
         std::cerr << "scanner()-Error: " << e.what() << "\n";
     }
-
 }
 
 void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue)
@@ -137,22 +122,8 @@ void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &d
     write_binary_le(outFile, count); //写入文件数目
 }
 
-FileSize_uint BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
+void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile)
 {
-    try
-    {
-        return fs::file_size(filePathToScan);
-    }
-    catch (fs::filesystem_error &e)
-    {
-        std::cerr << "getFileSize()-Error: " << e.what() << "\n";
-        return 0;
-    }
-}
-
-void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count,std::ofstream &outFile)
-{
-
 
     FileNameSize_uint rootLength = logicalRoot.size();
     outFile.write("0", 1);
@@ -160,10 +131,11 @@ void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string
     outFile.write(logicalRoot.c_str(), rootLength);
     write_binary_le(outFile, count); //写文件数
 }
-void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string> &filePathToScan,std::ofstream &outFile)
+void Directory_FileProcessor::writeRoot(FilePath &File,const std::vector<std::string> &filePathToScan, std::ofstream &outFile)
 {
     Transfer transfer;
-
+    Directory_FileProcessor reader;
+    BinaryIO_Reader BIO;
     FileCount_uint length = filePathToScan.size();
     for (FileCount_uint i = 0; i < length; i++)
     {
@@ -175,10 +147,11 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
             File.setFilePathToScan(sPath);
         }
         else
+        {
             std::cerr << "directory_fileProcessor()-Error:File Not Exist";
+        }
 
-        Directory_FileProcessor reader;
-        BinaryIO_Reader BIO;
+        
         fs::path rootPath = File.getFilePathToScan(); // 获取根目录
 
         // 1. 先写入根目录(或文件)自身（手动构造）
@@ -205,5 +178,28 @@ void Directory_FileProcessor::writeRoot(FilePath &File, std::vector<std::string>
         {
             BIO.writeFileStandard(outFile, rootDetails);
         }
+    }
+}
+FileCount_uint Directory_FileProcessor::countFilesInDirectory(const fs::path &filePathToScan)
+{
+    try
+    {
+        return std::distance(fs::directory_iterator(filePathToScan), fs::directory_iterator{});
+    }
+    catch (fs::filesystem_error &e)
+    {
+        throw("countFilesInDirectory()-Error: " + std::string(e.what()) + "\n");
+    }
+}
+FileSize_uint BinaryIO_Reader::getFileSize(fs::path &filePathToScan)
+{
+    try
+    {
+        return fs::file_size(filePathToScan);
+    }
+    catch (fs::filesystem_error &e)
+    {
+        std::cerr << "getFileSize()-Error: " << e.what() << "\n";
+        return 0;
     }
 }

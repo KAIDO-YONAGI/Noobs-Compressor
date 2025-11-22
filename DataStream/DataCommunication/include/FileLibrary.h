@@ -1,6 +1,6 @@
 // FileLibaray.h
-#ifndef FILELIBARAY
-#define FILELIBARAY
+#ifndef FILELIBARAY_H
+#define FILELIBARAY_H
 
 #include <filesystem> //编译时需要强制链接为静态库
 

@@ -1,6 +1,6 @@
 // ToolClasses.h
-#ifndef TOOLCLASSES
-#define TOOLCLASSES
+#ifndef TOOLCLASSES_HPP
+#define TOOLCLASSES_HPP
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
@@ -153,7 +153,7 @@ public:
 
     void offsetLocator(std::fstream &File, FileSize_uint offset) = delete;
 
-    FileSize_uint getFileSize(fs::path &filePathToScan)
+    FileSize_uint getFileSize(const fs::path &filePathToScan)
     {
         try
         {

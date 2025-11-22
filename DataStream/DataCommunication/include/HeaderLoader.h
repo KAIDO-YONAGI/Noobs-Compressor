@@ -1,6 +1,6 @@
 // HeaderLoader.h
 #ifndef HEADERLOADER
-#define HEADERLOADER
+#define HEADERLOADER_H
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
