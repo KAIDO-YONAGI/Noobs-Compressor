@@ -6,7 +6,7 @@ int main()
     std::vector<std::string> filePathToScan;
     std::string outPutFilePath, logicalRoot;
 
-    //假装是gui获取的
+    //假装是gui获取的，多个文件（目录）
     filePathToScan.push_back("D:\\1gal");
     filePathToScan.push_back("D:\\1gal\\TEST\\我挚爱的时光");
     filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");

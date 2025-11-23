@@ -12,9 +12,9 @@ class Directory_FileProcessor;
 class Directory_FileProcessor
 {
     /*
-    writeLogicalRoot()写入逻辑根节点
-    writeRoot()写入根节点（filesystem自动忽略了根节点）
-    scanFlow()扫描指定目录下所有文件的函数，包含了队列逻辑，用于处理scanner()扫描到的目录
+    writeLogicalRoot()写入逻辑根节点，用于处理多文件（目录）任务，具体情况可见调试代码
+    writeRoot()写入根节点（因为filesystem自动忽略了根节点）
+    scanFlow()扫描指定目录下所有文件的函数，包含了队列逻辑，用于处理scanner()的循环扫描到的目录
     directory_fileProcessor()当前类的主逻辑函数
     */
 public:
