@@ -14,7 +14,6 @@ private:
 };
 class BinaryIO_Loader
 {
-
 };
 template <typename T>
 T read_binary_le(std::ifstream &file)
