@@ -36,13 +36,13 @@ class MagicNumWriter
 public:
     MagicNumWriter() = default;
     template <typename T>
-    void BIO.write_binary_le(std::ofstream &file, T value)
+    void write_binary_le(std::ofstream &file, T value)
     {
         file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
     }
     void appendMagicStatic(std::ofstream &outFile)
     {
-        BIO.write_binary_le(outFile, MagicNum);
+        write_binary_le(outFile, MagicNum);
     }
 };
 
