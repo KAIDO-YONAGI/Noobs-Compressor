@@ -150,7 +150,7 @@ void Directory_FileProcessor::writeRoot(FilePath &File, const std::vector<std::s
         }
         else
         {
-            std::cerr << "directory_fileProcessor()-Error:File Not Exist: "<<sPath.string()<<"\n";
+            throw("directory_fileProcessor()-Error:File Not Exist: "+sPath.string()+"\n") ;
         }
 
         fs::path rootPath = File.getFilePathToScan(); // 获取根目录
