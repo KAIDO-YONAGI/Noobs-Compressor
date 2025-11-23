@@ -4,6 +4,16 @@
 #include "../../namespace/namespace_sfc.h"
 
 /**
+ * 用于类型擦除的基类
+ * 当需要传输特定类型的数据结构时，可以使用继承该类的派生类
+ * 包装数据结构，存入继承了Datacmnctor的数据块类中。
+ */
+class Type
+{
+    virtual ~Type() = default;
+};
+
+/**
  * 数据传输接口
  * 有两个分别负责返回输入块列表与输出块列表的
  * 纯虚函数。数据块类应该继承这个抽象类并实现
@@ -13,17 +23,14 @@
  * 也可能在策略接口的实现内就取出数据块，将它们传递给
  * work函数。
  */
-
 class Datacmnctor 
 {
 public:
     virtual ~Datacmnctor() = default;
 
-private:
-
-public:
     virtual sfc::blocks_t* get_input_blocks() = 0;
     virtual sfc::blocks_t* get_output_blocks() = 0;
+    virtual Type* get_value() = 0;
 };
 
 #endif //DATACOMUNICATOR_H_INTERFACE
