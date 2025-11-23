@@ -2,5 +2,5 @@
 # 有没有什么好的创意呢？
 # Our practice project is still in progress... 
 # Do you have any good ideas?
-- github:https://github.com/KAIDO-YONAGI/Noobs-Compressor
-- gitee:https://gitee.com/fifseason/We_compress
+- source_gitee:https://gitee.com/fifseason/We_compress
+- mirror_github:https://github.com/KAIDO-YONAGI/Noobs-Compressor
