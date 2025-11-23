@@ -104,7 +104,7 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
 
 void BinaryIO_Reader::writeFileStandard(std::ofstream &outFile, FileDetails &details)
 {
-    BinaryIO_Reader BIO;
+    BinaryIO_Reader BIO; 
     FileNameSize_uint sizeOfName = details.getSizeOfName();
     outFile.write("1", 1);                                //先写文件标
     BIO.write_binary_le(outFile, sizeOfName);             //写入文件名偏移量
