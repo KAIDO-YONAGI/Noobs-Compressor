@@ -44,6 +44,11 @@ public:
     void statistic_freq(const int& thread_id, sfc::block_t&);
     void encode(const sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
     void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
+    void merge_ttabs();
+    void gen_hefftree();
+    void save_code_inTab();
+
+    const Heffmap& getHashtab();
 
 private:
     using Datablk_ptr = sfc::block_t*;
@@ -57,11 +62,8 @@ private:
     Hefftreenode* treeroot;
     PathStack pathStack;
 
-    void merge_ttabs();
 
-    void gen_hefftree();
     std::unique_ptr<Minheap> gen_minheap();
-    void save_code_inTab();
     void run_save_code_inTab(Hefftreenode* root);
     void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
     void output_codeTab();

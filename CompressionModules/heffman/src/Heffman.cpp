@@ -116,3 +116,8 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
     }
     delete result;
 }
+
+const Heffmap& Heffman::getHashtab()
+{
+    return hashtab;
+}
