@@ -98,7 +98,7 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
         Directory_FileProcessor reader;
         FileCount_uint countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
 
-        queue.fileQueue.push({details, countOfThisHeader});
+        queue.fileQueue.push({details, countOfThisHeader}); //如果是目录则存入其details到队列中备用
         writeHeaderStandard(outFile, details, countOfThisHeader);
     }
 }
