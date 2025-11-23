@@ -4,8 +4,7 @@
 void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot, std::ofstream &outFile)
 {
     Transfer transfer;
-    FilePath File;
-    MagicNumWriter writer; //创建各个工具类的对象
+    FilePath File; //创建各个工具类的对象
 
     fs::path oPath = fullOutPath;
     fs::path sPath;
@@ -137,7 +136,8 @@ void Directory_FileProcessor::writeRoot(FilePath &File, const std::vector<std::s
 {
     Transfer transfer;
     Directory_FileProcessor reader;
-    BinaryIO_Reader BIO;
+    BinaryIO_Reader BIO;//创建各个工具类的对象
+
     FileCount_uint length = filePathToScan.size();
     for (FileCount_uint i = 0; i < length; i++)
     {
@@ -150,12 +150,12 @@ void Directory_FileProcessor::writeRoot(FilePath &File, const std::vector<std::s
         }
         else
         {
-            std::cerr << "directory_fileProcessor()-Error:File Not Exist";
+            std::cerr << "directory_fileProcessor()-Error:File Not Exist: "<<sPath.string()<<"\n";
         }
 
         fs::path rootPath = File.getFilePathToScan(); // 获取根目录
 
-        // 1. 先写入根目录(或文件)自身（手动构造）
+        //先写入根目录(或文件)自身（手动构造）
 
         std::string rootName = rootPath.filename().string();
         FileNameSize_uint rootNameSize = rootName.size();
