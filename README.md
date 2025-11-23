@@ -2,4 +2,4 @@
 # 有没有什么好的创意呢？
 # Our practice project is still in progress... 
 # Do you have any good ideas?
-- 仓库已挂载镜像至github：https://github.com/KAIDO-YONAGI/Noobs-Compressor
+- github：https://github.com/KAIDO-YONAGI/Noobs-Compressor
