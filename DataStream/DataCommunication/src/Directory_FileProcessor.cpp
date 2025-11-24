@@ -40,9 +40,9 @@ void Directory_FileProcessor::scanFlow(FilePath &File, std::ofstream &outFile)
 {
 
     QueueInterface queue;
-    BinaryIO_Reader IO;
+    BinaryIO_Reader BIO;
 
-    IO.scanner(File, queue, outFile); //添加当前目录到队列以启动整个BFS递推
+    BIO.scanner(File, queue, outFile); //添加当前目录到队列以启动整个BFS递推
 
     while (!queue.fileQueue.empty())
     {
@@ -50,7 +50,7 @@ void Directory_FileProcessor::scanFlow(FilePath &File, std::ofstream &outFile)
         FileDetails &details = (queue.fileQueue.front()).first;
         File.setFilePathToScan(details.getFullPath());
 
-        IO.scanner(File, queue, outFile);
+        BIO.scanner(File, queue, outFile);
 
         queue.fileQueue.pop();
     }
