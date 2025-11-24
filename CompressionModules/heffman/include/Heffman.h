@@ -48,7 +48,8 @@ public:
     void gen_hefftree();
     void save_code_inTab();
 
-    const Heffmap& getHashtab();
+    const Heffmap* getHashtab();
+    void receiveHashtab(const Heffmap*);
 
 private:
     using Datablk_ptr = sfc::block_t*;
@@ -66,7 +67,6 @@ private:
     std::unique_ptr<Minheap> gen_minheap();
     void run_save_code_inTab(Hefftreenode* root);
     void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
-    void output_codeTab();
 
 };
 

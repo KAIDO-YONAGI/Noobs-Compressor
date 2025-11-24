@@ -8,8 +8,6 @@
 #include "../include/Heffman.h"
 #include "../../../ThreadPool/ThreadPool.h"
 
-//FIXME: 分开为.h与.cpp文件
-
 /**
  * 赫夫曼统计字符频率的功能模块
  * 类内组合的heffman是在堆上唯一的
