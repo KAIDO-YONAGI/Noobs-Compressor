@@ -8,7 +8,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     {
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
-    //文件头
+    // 文件头
     CompressStrategy_uint strategySize = 0;
     CompressorVersion_uint versionSize = 0;
     HeaderOffsetSize_uint headerOffsetSize = 0;
@@ -19,8 +19,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     numWriter.write_binary_le(outFile, headerOffsetSize);
     numWriter.write_binary_le(outFile, directoryOffsetSize);
 
-    //回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile, sizeof(MagicNum)); //定位到魔数头后
+    // 回填偏移量并重定位指针至回填前的位置
+    locator.offsetLocator(outFile, sizeof(MagicNum)); // 定位到魔数头后
     HeaderOffsetSize_uint headerOffset = locator.getFileSize(fullOutPath);
     locator.offsetLocator(outFile, headerOffset - sizeof(DirectoryOffsetSize_uint) - sizeof(HeaderOffsetSize_uint));
     numWriter.write_binary_le(outFile, headerOffset);
@@ -35,7 +35,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     Directory_FileProcessor begin;
     begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot, outFile);
 
-    //回填偏移量并重定位指针至回填前的位置
+    // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, sizeof(MagicNum) + sizeof(CompressStrategy_uint) + sizeof(CompressorVersion_uint) + sizeof(HeaderOffsetSize_uint));
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath);
     numWriter.write_binary_le(outFile, directoryOffset);
@@ -64,14 +64,14 @@ void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::s
         try
         {
 
-            //写入表示文件起始的4字节魔数
+            // 写入表示文件起始的4字节魔数
             numWriter.appendMagicStatic(outFile);
-            headerWriter.writeHeader(outFile, fullOutPath); //文件头结束--包含魔数一共11字节(已回填)
+            headerWriter.writeHeader(outFile, fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
 
             numWriter.appendMagicStatic(outFile);
 
-            //目录信息
-            headerWriter.writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); //目录区结束（已回填）
+            // 目录信息
+            headerWriter.writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
 
             numWriter.appendMagicStatic(outFile);
         }

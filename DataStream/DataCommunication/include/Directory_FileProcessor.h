@@ -6,7 +6,7 @@
 #include "../include/FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
-class BinaryIO_Reader; //类的前向声明
+class BinaryIO_Reader; // 类的前向声明
 class Directory_FileProcessor;
 
 class Directory_FileProcessor
@@ -26,7 +26,7 @@ public:
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
 };
 
-class BinaryIO_Reader //接触二进制文件及其处理的相关IO的函数的封装
+class BinaryIO_Reader // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
     scanner()扫描指定路径（单层）的文件及其子文件夹的函数
@@ -45,7 +45,7 @@ public:
     template <typename T>
     void write_binary_le(std::ofstream &outFile, T value)
     {
-        outFile.write(reinterpret_cast<char *>(&value), //不做类型检查，直接进行类型转换
+        outFile.write(reinterpret_cast<char *>(&value), // 不做类型检查，直接进行类型转换
                       sizeof(T));
     }
 };

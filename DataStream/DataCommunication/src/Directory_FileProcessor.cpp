@@ -4,7 +4,7 @@
 void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot, std::ofstream &outFile)
 {
     Transfer transfer;
-    FilePath File; //创建各个工具类的对象
+    FilePath File; // 创建各个工具类的对象
 
     fs::path oPath = fullOutPath;
     fs::path sPath;
@@ -15,8 +15,8 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
     {
         FileCount_uint length = filePathToScan.size();
 
-        writeLogicalRoot(File, logicalRoot, length, outFile); //写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
-        writeRoot(File, filePathToScan, outFile);             //写入文件根目录
+        writeLogicalRoot(File, logicalRoot, length, outFile); // 写入逻辑根节点的文件数目（默认创建一个根节点，用户可以选择是否命名）
+        writeRoot(File, filePathToScan, outFile);             // 写入文件根目录
 
         for (FileCount_uint i = 0; i < length; i++)
         {
@@ -42,7 +42,7 @@ void Directory_FileProcessor::scanFlow(FilePath &File, std::ofstream &outFile)
     QueueInterface queue;
     BinaryIO_Reader BIO;
 
-    BIO.scanner(File, queue, outFile); //添加当前目录到队列以启动整个BFS递推
+    BIO.scanner(File, queue, outFile); // 添加当前目录到队列以启动整个BFS递推
 
     while (!queue.fileQueue.empty())
     {
@@ -76,7 +76,7 @@ void BinaryIO_Reader::scanner(FilePath &File, QueueInterface &queue, std::ofstre
                 sizeOfName,
                 fileSize,
                 isRegularFile,
-                fullPath); //创建details
+                fullPath); // 创建details
             writeBinaryStandard(outFile, details, queue);
         }
     }
@@ -97,20 +97,20 @@ void BinaryIO_Reader::writeBinaryStandard(std::ofstream &outFile, FileDetails &d
         Directory_FileProcessor reader;
         FileCount_uint countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
 
-        queue.fileQueue.push({details, countOfThisHeader}); //如果是目录则存入其details到队列中备用
+        queue.fileQueue.push({details, countOfThisHeader}); // 如果是目录则存入其details到队列中备用
         writeHeaderStandard(outFile, details, countOfThisHeader);
     }
 }
 
 void BinaryIO_Reader::writeFileStandard(std::ofstream &outFile, FileDetails &details)
 {
-    BinaryIO_Reader BIO; 
+    BinaryIO_Reader BIO;
     FileNameSize_uint sizeOfName = details.getSizeOfName();
-    outFile.write("1", 1);                                //先写文件标
-    BIO.write_binary_le(outFile, sizeOfName);             //写入文件名偏移量
-    outFile.write(details.getName().c_str(), sizeOfName); //写入文件名
-    BIO.write_binary_le(outFile, details.getFileSize());  //写入文件大小
-    BIO.write_binary_le(outFile, FileSize_uint(0));       //预留大小
+    outFile.write("1", 1);                                // 先写文件标
+    BIO.write_binary_le(outFile, sizeOfName);             // 写入文件名偏移量
+    outFile.write(details.getName().c_str(), sizeOfName); // 写入文件名
+    BIO.write_binary_le(outFile, details.getFileSize());  // 写入文件大小
+    BIO.write_binary_le(outFile, FileSize_uint(0));       // 预留大小
 }
 
 void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count)
@@ -120,7 +120,7 @@ void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &d
     outFile.write("0", 1);
     BIO.write_binary_le(outFile, sizeOfName);
     outFile.write(details.getName().c_str(), sizeOfName);
-    BIO.write_binary_le(outFile, count); //写入文件数目
+    BIO.write_binary_le(outFile, count); // 写入文件数目
 }
 
 void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile)
@@ -130,13 +130,13 @@ void Directory_FileProcessor::writeLogicalRoot(FilePath &File, const std::string
     outFile.write("0", 1);
     BIO.write_binary_le(outFile, rootLength);
     outFile.write(logicalRoot.c_str(), rootLength);
-    BIO.write_binary_le(outFile, count); //写文件数
+    BIO.write_binary_le(outFile, count); // 写文件数
 }
 void Directory_FileProcessor::writeRoot(FilePath &File, const std::vector<std::string> &filePathToScan, std::ofstream &outFile)
 {
     Transfer transfer;
     Directory_FileProcessor reader;
-    BinaryIO_Reader BIO;//创建各个工具类的对象
+    BinaryIO_Reader BIO; // 创建各个工具类的对象
 
     FileCount_uint length = filePathToScan.size();
     for (FileCount_uint i = 0; i < length; i++)
@@ -150,12 +150,12 @@ void Directory_FileProcessor::writeRoot(FilePath &File, const std::vector<std::s
         }
         else
         {
-            throw("directory_fileProcessor()-Error:File Not Exist: "+sPath.string()+"\n") ;
+            throw("directory_fileProcessor()-Error:File Not Exist: " + sPath.string() + "\n");
         }
 
         fs::path rootPath = File.getFilePathToScan(); // 获取根目录
 
-        //先写入根目录(或文件)自身（手动构造）
+        // 先写入根目录(或文件)自身（手动构造）
 
         std::string rootName = rootPath.filename().string();
         FileNameSize_uint rootNameSize = rootName.size();
