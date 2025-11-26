@@ -117,12 +117,12 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
     delete result;
 }
 
-const Heffmap* Heffman::getHashtab()
+Hefftreenode* Heffman::getTreeRoot()
 {
-    return &hashtab;
+    return treeroot;
 }
 
-void Heffman::receiveHashtab(const Heffmap* hefftab)
+void Heffman::receiveTreRroot(Hefftreenode* root)
 {
-    hashtab = *hefftab;
+    treeroot = root;
 }

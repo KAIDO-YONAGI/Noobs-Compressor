@@ -34,7 +34,6 @@
  *     
  */
 
-
 class Heffman {
 
 public:
@@ -48,26 +47,23 @@ public:
     void gen_hefftree();
     void save_code_inTab();
 
-    const Heffmap* getHashtab();
-    void receiveHashtab(const Heffmap*);
+    Hefftreenode* getTreeRoot();
+    void receiveTreRroot(Hefftreenode*);
 
 private:
     using Datablk_ptr = sfc::block_t*;
 
     uint64_t bytecount;
 
-    //sfc::blocks_t* data_blocks;
-    //sfc::blocks_t* data_blocks_out; 
     Heffmaps thread_tabs;
     Heffmap hashtab;
     Hefftreenode* treeroot;
     PathStack pathStack;
 
-
     std::unique_ptr<Minheap> gen_minheap();
     void run_save_code_inTab(Hefftreenode* root);
     void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
-
+    //FIXME: 销毁树的方法，每个文件结束后需要调用
 };
 
 #endif //HEFFMAN_H
