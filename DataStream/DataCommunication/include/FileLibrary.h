@@ -21,6 +21,11 @@ using FileNameSize_uint = uint16_t; // 文件名长度类型
 
 // 常量改用 constexpr（类型安全）
 constexpr uint32_t MagicNum = 0xDEADBEEF; // 文件标识魔数
+constexpr uint32_t BufferSize=8192;
+
+constexpr const char* HeaderFlag="0";
+constexpr const char* FileFlag="1";
+constexpr const char* SeparatedFlag="2";
 
 // 压缩相关配置
 using CompressStrategy_uint = uint8_t;     // 压缩策略
