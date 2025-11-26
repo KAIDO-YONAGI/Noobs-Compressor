@@ -41,13 +41,13 @@ class MagicNumWriter
 public:
     MagicNumWriter() = default;
     template <typename T>
-    void write_binary_le(std::ofstream &file, T value)
+    void writeBinary(std::ofstream &file, T value)
     {
         file.write(reinterpret_cast<char *>(&value), sizeof(T)); // 不做类型检查，直接进行类型转换
     }
     void appendMagicStatic(std::ofstream &outFile)
     {
-        write_binary_le(outFile, MagicNum);
+        writeBinary(outFile, MagicNum);
     }
 };
 
@@ -147,16 +147,16 @@ class Locator
 {
 public:
     Locator() = default;
-    void offsetLocator(std::ofstream &File, FileSize_uint offset)
+    void offsetLocator(std::ofstream &file, FileSize_uint offset)
     {
-        File.seekp(static_cast<std::streamoff>(offset), File.beg);
+        file.seekp(static_cast<std::streamoff>(offset), file.beg);
     }
-    void offsetLocator(std::ifstream &File, FileSize_uint offset)
+    void offsetLocator(std::ifstream &file, FileSize_uint offset)
     {
-        File.seekg(static_cast<std::streamoff>(offset), File.beg);
+        file.seekg(static_cast<std::streamoff>(offset), file.beg);
     }
 
-    void offsetLocator(std::fstream &File, FileSize_uint offset) = delete;
+    void offsetLocator(std::fstream &file, FileSize_uint offset) = delete;
 
     FileSize_uint getFileSize(const fs::path &filePathToScan)
     {

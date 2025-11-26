@@ -19,9 +19,9 @@ class Directory_FileProcessor
     */
 public:
     Directory_FileProcessor() = default;
-    void writeLogicalRoot(FilePath &File, const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile);
-    void writeRoot(FilePath &File, const std::vector<std::string> &filePathToScan, std::ofstream &outFile);
-    void scanFlow(FilePath &File, std::ofstream &outFile);
+    void writeLogicalRoot(FilePath &file, const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile);
+    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, std::ofstream &outFile);
+    void scanFlow(FilePath &file, std::ofstream &outFile,DirectoryOffsetSize_uint &tempOffset);
     void directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot, std::ofstream &outFile);
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
 };
@@ -30,20 +30,22 @@ class BinaryIO_Reader // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
     scanner()扫描指定路径（单层）的文件及其子文件夹的函数
-    writeBinaryStandard()分发当前处理的路径上的目录/文件到：目录标准写入/文件标准写入
+    writeStorageStandard()分发当前处理的路径上的目录/文件到：目录标准写入/文件标准写入
     writeHeaderStandard()目录标准写入
     writeFileStandard()文件标准写入
     */
 public:
     BinaryIO_Reader() = default;
-    FileSize_uint getFileSize(fs::path &filePathToScan);
-    void scanner(FilePath &File, QueueInterface &queue, std::ofstream &outFile);
-    void writeBinaryStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue);
+    FileSize_uint getFileSize(const fs::path &filePathToScan);
+    void scanner(FilePath &file, QueueInterface &queue, std::ofstream &outFile,DirectoryOffsetSize_uint &tempOffset);
+    void writeStorageStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue,FilePath &file,DirectoryOffsetSize_uint &tempOffset);
+
     void writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count);
     void writeFileStandard(std::ofstream &outFile, FileDetails &details);
+    void writeSeparatedStandard(std::ofstream &outFile, FilePath &file,DirectoryOffsetSize_uint &tempOffset,DirectoryOffsetSize_uint offset);
 
     template <typename T>
-    void write_binary_le(std::ofstream &outFile, T value)
+    void writeBinary(std::ofstream &outFile, T value)
     {
         outFile.write(reinterpret_cast<char *>(&value), // 不做类型检查，直接进行类型转换
                       sizeof(T));

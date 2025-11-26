@@ -14,16 +14,16 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     HeaderOffsetSize_uint headerOffsetSize = 0;
     DirectoryOffsetSize_uint directoryOffsetSize = 0;
 
-    numWriter.write_binary_le(outFile, strategySize);
-    numWriter.write_binary_le(outFile, versionSize);
-    numWriter.write_binary_le(outFile, headerOffsetSize);
-    numWriter.write_binary_le(outFile, directoryOffsetSize);
+    numWriter.writeBinary(outFile, strategySize);
+    numWriter.writeBinary(outFile, versionSize);
+    numWriter.writeBinary(outFile, headerOffsetSize);
+    numWriter.writeBinary(outFile, directoryOffsetSize);
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, sizeof(MagicNum)); // 定位到魔数头后
     HeaderOffsetSize_uint headerOffset = locator.getFileSize(fullOutPath);
     locator.offsetLocator(outFile, headerOffset - sizeof(DirectoryOffsetSize_uint) - sizeof(HeaderOffsetSize_uint));
-    numWriter.write_binary_le(outFile, headerOffset);
+    numWriter.writeBinary(outFile, headerOffset);
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
@@ -38,7 +38,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, sizeof(MagicNum) + sizeof(CompressStrategy_uint) + sizeof(CompressorVersion_uint) + sizeof(HeaderOffsetSize_uint));
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath);
-    numWriter.write_binary_le(outFile, directoryOffset);
+    numWriter.writeBinary(outFile, directoryOffset);
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
