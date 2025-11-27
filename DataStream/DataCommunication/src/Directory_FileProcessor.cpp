@@ -97,12 +97,12 @@ void BinaryIO_Reader::scanner(FilePath &file, QueueInterface &queue, std::ofstre
 void BinaryIO_Reader::writeStorageStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue, FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
     FileSize_uint basicSize = 0;
-    if (details.getIsFile())
+    if (details.getIsFile()) // 文件对应的处理
     {
         basicSize = FileStandardSize_Basic;
         writeFileStandard(outFile, details, tempOffset);
     }
-    else if (!details.getIsFile())
+    else if (!details.getIsFile()) // 目录对应的处理
     {
         Directory_FileProcessor reader;
         FileCount_uint countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
@@ -112,20 +112,20 @@ void BinaryIO_Reader::writeStorageStandard(std::ofstream &outFile, FileDetails &
         writeHeaderStandard(outFile, details, countOfThisHeader, tempOffset);
     }
 
-    if (tempOffset >= BufferSize)
+    if (tempOffset >= BufferSize) // 达到缓冲大小后写入分割标准
     {
 
         BinaryIO_Reader BIO;
         writeSeparatedStandard(outFile, file, tempOffset, offset);
         offset += tempOffset;
-        tempOffset = 0;
+        // 写入完毕后将当前相对位置（用多个存储协议偏移量累加维护的tempOffset）加到文件的总偏移量offset上，以维护整个偏移逻辑
+        tempOffset = 0; // 相对位置归零
 
         // 预留下一次回填的位置
         outFile.write(SeparatedFlag, FlagSize);
         BIO.writeBinary(outFile, DirectoryOffsetSize_uint(0));
 
-        offset += SeparatedStandardSize;
-
+        offset += SeparatedStandardSize; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
     }
 }
 void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)

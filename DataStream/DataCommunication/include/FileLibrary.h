@@ -26,7 +26,11 @@ using DirectoryOffsetSize_uint = uint32_t; // 目录偏移大小
 
 // 常量改用 constexpr（类型安全）
 constexpr uint32_t MagicNum = 0xDEADBEEF; // 文件标识魔数
-constexpr uint32_t BufferSize = 64;//需要确保大于文件头大小HeaderSize
+
+constexpr uint32_t BufferSize = 8192; // 偏移量缓冲需要确保大于文件头大小HeaderSize
+// 此处采用软件层动态维护tempOffect来实现，避免了ofstream等文件流的默认缓冲导致依赖文件大小的偏移量读取困难问题
+//会在数据区作为首选的管理方案来使用
+
 // 文件协议相关
 constexpr const char *HeaderFlag = "0";
 constexpr const char *FileFlag = "1";
