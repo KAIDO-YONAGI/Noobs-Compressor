@@ -124,9 +124,8 @@ void BinaryIO_Reader::writeStorageStandard(std::ofstream &outFile, FileDetails &
         outFile.write(SeparatedFlag, FlagSize);
         BIO.writeBinary(outFile, DirectoryOffsetSize_uint(0));
 
-        tempOffset += SeparatedStandardSize;
+        offset += SeparatedStandardSize;
 
-        offset += tempOffset;
     }
 }
 void BinaryIO_Reader::writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
@@ -162,8 +161,6 @@ void BinaryIO_Reader::writeSeparatedStandard(std::ofstream &outFile, FilePath &f
     locator.offsetLocator(outFile, offset + FlagSize);
     BIO.writeBinary(outFile, tempOffset);
     outFile.seekp(0, std::ios::end);
-
-    tempOffset += SeparatedStandardSize;
 }
 void Directory_FileProcessor::writeLogicalRoot(FilePath &file, const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset)
 {

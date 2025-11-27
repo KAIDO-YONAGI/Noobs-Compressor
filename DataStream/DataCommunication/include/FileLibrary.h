@@ -26,7 +26,7 @@ using DirectoryOffsetSize_uint = uint32_t; // 目录偏移大小
 
 // 常量改用 constexpr（类型安全）
 constexpr uint32_t MagicNum = 0xDEADBEEF; // 文件标识魔数
-constexpr uint32_t BufferSize = 64;
+constexpr uint32_t BufferSize = 64;//需要确保大于文件头大小HeaderSize
 // 文件协议相关
 constexpr const char *HeaderFlag = "0";
 constexpr const char *FileFlag = "1";
