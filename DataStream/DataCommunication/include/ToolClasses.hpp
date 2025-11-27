@@ -43,6 +43,13 @@ public:
     template <typename T>
     void writeBinary(std::ofstream &file, T value)
     {
+        // 编译时检查
+        static_assert(std::is_trivially_copyable_v<T>,
+                      "Cannot write non-trivially-copyable type");
+        static_assert(!std::is_pointer_v<T>,
+                      "Cannot safely write raw pointers");
+        static_assert(!std::is_polymorphic_v<T>,
+                      "Cannot safely write polymorphic types");
         file.write(reinterpret_cast<char *>(&value), sizeof(T)); // 不做类型检查，直接进行类型转换
     }
     void appendMagicStatic(std::ofstream &outFile)
@@ -158,12 +165,12 @@ public:
 
     void offsetLocator(std::fstream &file, FileSize_uint offset) = delete;
 
-    FileSize_uint getFileSize(const fs::path &filePathToScan,std::ofstream &outFile)
+    FileSize_uint getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
     {
         try
         {
             outFile.flush();
-            
+
             return fs::file_size(filePathToScan);
         }
         catch (fs::filesystem_error &e)

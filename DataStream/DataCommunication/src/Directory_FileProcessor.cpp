@@ -20,7 +20,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
         DirectoryOffsetSize_uint offset = HeaderSize;
 
-        outFile.write(SeparatedFlag, FlagSize);
+        outFile.write(SeparatedFlag, FlagSize);//写入第一个分隔标准
         BIO.writeBinary(outFile, DirectoryOffsetSize_uint(0));
 
         writeLogicalRoot(file, logicalRoot, length, outFile, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
@@ -96,10 +96,8 @@ void BinaryIO_Reader::scanner(FilePath &file, QueueInterface &queue, std::ofstre
 
 void BinaryIO_Reader::writeStorageStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue, FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
-    FileSize_uint basicSize = 0;
     if (details.getIsFile()) // 文件对应的处理
     {
-        basicSize = FileStandardSize_Basic;
         writeFileStandard(outFile, details, tempOffset);
     }
     else if (!details.getIsFile()) // 目录对应的处理
@@ -107,11 +105,9 @@ void BinaryIO_Reader::writeStorageStandard(std::ofstream &outFile, FileDetails &
         Directory_FileProcessor reader;
         FileCount_uint countOfThisHeader = reader.countFilesInDirectory(details.getFullPath());
 
-        basicSize = DirectoryrStandardSize_Basic;
         queue.fileQueue.push({details, countOfThisHeader}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
         writeDirectoryStandard(outFile, details, countOfThisHeader, tempOffset);
     }
-
     if (tempOffset >= BufferSize) // 达到缓冲大小后写入分割标准
     {
 

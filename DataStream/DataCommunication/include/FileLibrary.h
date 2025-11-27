@@ -29,32 +29,39 @@ constexpr uint32_t MagicNum = 0xDEADBEEF; // 文件标识魔数
 
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
 constexpr uint32_t BufferSize = 8192; // 偏移量缓冲需要确保大于文件头大小HeaderSize
-// 此处采用软件层动态维护tempOffect来实现，避免了ofstream等文件流的默认缓冲导致依赖文件大小的偏移量读取困难问题
+// 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题
 // 分割标准上的偏移量不包含分割标准本身的大小，便于随取随用
-// 会在数据区作为首选的管理方案来使用
+// 会在数据区作为首选的偏移量管理方案来使用，比如按照数据块对象提供的size()方法获取块大小，而不是依赖上述文件流提供的方法
 
 // 文件协议相关
+
 constexpr const char *HeaderFlag = "0";
 constexpr const char *FileFlag = "1";
 constexpr const char *SeparatedFlag = "2";
 constexpr const uint8_t FlagSize = 1;
 
+//注意直接使用sizeof返回的参数进行运算时，小于uint64_t的类型会被自动类型转换为ULL，需要按需强制转换后再参与运算
+
+// 目录标准的基础大小（不含变长的文件名，需要自行维护）
 constexpr const uint8_t DirectoryrStandardSize_Basic =
     FlagSize +
     sizeof(FileNameSize_uint) +
-    // 此处应为变长文件名，无法预先定义,需按情况处理
+    // 此行应为变长文件名，无法预先定义,需按情况处理
     sizeof(FileCount_uint);
 
+// 文件标准的基础大小（不含变长的文件名，需要自行维护）
 constexpr const uint8_t FileStandardSize_Basic =
     FlagSize +
     sizeof(FileNameSize_uint) +
-    // 此处应为变长文件名，无法预先定义,需按情况处理
+    // 此行应为变长文件名，无法预先定义,需按情况处理
     sizeof(FileSize_uint) * 2;
 
+// 分割标准的基础大小
 constexpr const uint8_t SeparatedStandardSize =
     FlagSize +
     sizeof(DirectoryOffsetSize_uint);
 
+// 文件头的大小
 constexpr const uint8_t HeaderSize =
     sizeof(MagicNum) +                 // 4B
     sizeof(CompressStrategy_uint) +    // 1B
