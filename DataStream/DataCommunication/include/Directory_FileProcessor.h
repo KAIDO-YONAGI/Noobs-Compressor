@@ -31,7 +31,7 @@ class BinaryIO_Reader // 接触二进制文件及其处理的相关IO的函数的封装
     /*
     scanner()扫描指定路径（单层）的文件及其子文件夹的函数
     writeStorageStandard()分发当前处理的路径上的目录/文件到：目录标准写入/文件标准写入
-    writeHeaderStandard()目录标准写入
+    writeDirectoryStandard()目录标准写入
     writeFileStandard()文件标准写入
     */
 public:
@@ -40,7 +40,7 @@ public:
     void scanner(FilePath &file, QueueInterface &queue, std::ofstream &outFile,DirectoryOffsetSize_uint &tempOffset,DirectoryOffsetSize_uint &offset);
     void writeStorageStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue,FilePath &file,DirectoryOffsetSize_uint &tempOffset,DirectoryOffsetSize_uint &offset);
 
-    void writeHeaderStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
+    void writeDirectoryStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeFileStandard(std::ofstream &outFile, FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     void writeSeparatedStandard(std::ofstream &outFile, FilePath &file,DirectoryOffsetSize_uint &tempOffset,DirectoryOffsetSize_uint offset);
 
