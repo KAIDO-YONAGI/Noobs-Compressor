@@ -158,10 +158,12 @@ public:
 
     void offsetLocator(std::fstream &file, FileSize_uint offset) = delete;
 
-    FileSize_uint getFileSize(const fs::path &filePathToScan)
+    FileSize_uint getFileSize(const fs::path &filePathToScan,std::ofstream &outFile)
     {
         try
         {
+            outFile.flush();
+            
             return fs::file_size(filePathToScan);
         }
         catch (fs::filesystem_error &e)

@@ -20,9 +20,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     numWriter.writeBinary(outFile, directoryOffsetSize);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile, sizeof(MagicNum)); // 定位到魔数头后
-    HeaderOffsetSize_uint headerOffset = locator.getFileSize(fullOutPath);
-    locator.offsetLocator(outFile, headerOffset - sizeof(DirectoryOffsetSize_uint) - sizeof(HeaderOffsetSize_uint));
+    HeaderOffsetSize_uint headerOffset = locator.getFileSize(fullOutPath,outFile);
+    locator.offsetLocator(outFile, HeaderSize-sizeof(MagicNum)-sizeof(DirectoryOffsetSize_uint));
     numWriter.writeBinary(outFile, headerOffset);
     outFile.seekp(0, std::ios::end);
 }
@@ -37,8 +36,8 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, sizeof(MagicNum) + sizeof(CompressStrategy_uint) + sizeof(CompressorVersion_uint) + sizeof(HeaderOffsetSize_uint));
-    DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath);
-    numWriter.writeBinary(outFile, directoryOffset);
+    DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath,outFile);
+    numWriter.writeBinary(outFile, directoryOffset+sizeof(MagicNum));//sizeof(MagicNum)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
