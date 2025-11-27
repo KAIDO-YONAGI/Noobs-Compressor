@@ -19,7 +19,7 @@ class Directory_FileProcessor
     */
 public:
     Directory_FileProcessor() = default;
-    void writeLogicalRoot(FilePath &file, const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset);
+    void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset);
     void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset);
     void scanFlow(FilePath &file, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
     void directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot, std::ofstream &outFile);
@@ -38,11 +38,11 @@ public:
     BinaryIO_Reader() = default;
     FileSize_uint getFileSize(const fs::path &filePathToScan, std::ofstream &outFile);
     void scanner(FilePath &file, QueueInterface &queue, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
-    void writeStorageStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue, FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void writeStorageStandard(std::ofstream &outFile, FileDetails &details, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
     void writeDirectoryStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeFileStandard(std::ofstream &outFile, FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
-    void writeSeparatedStandard(std::ofstream &outFile, FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
+    void writeSeparatedStandard(std::ofstream &outFile,DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
 
     template <typename T>
     void writeBinary(std::ofstream &outFile, T value)

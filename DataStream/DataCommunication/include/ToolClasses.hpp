@@ -41,7 +41,7 @@ class MagicNumWriter
 public:
     MagicNumWriter() = default;
     template <typename T>
-    void writeBinary(std::ofstream &file, T value)
+    void writeBinary(std::ofstream &outFile, T value)
     {
         // 编译时检查
         static_assert(std::is_trivially_copyable_v<T>,
@@ -50,7 +50,7 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        file.write(reinterpret_cast<char *>(&value), sizeof(T)); // 不做类型检查，直接进行类型转换
+        outFile.write(reinterpret_cast<char *>(&value), sizeof(T)); // 不做类型检查，直接进行类型转换
     }
     void appendMagicStatic(std::ofstream &outFile)
     {
@@ -154,13 +154,13 @@ class Locator
 {
 public:
     Locator() = default;
-    void offsetLocator(std::ofstream &file, FileSize_uint offset)
+    void offsetLocator(std::ofstream &outFile, FileSize_uint offset)
     {
-        file.seekp(static_cast<std::streamoff>(offset), file.beg);
+        outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
     }
-    void offsetLocator(std::ifstream &file, FileSize_uint offset)
+    void offsetLocator(std::ifstream &inFile, FileSize_uint offset)
     {
-        file.seekg(static_cast<std::streamoff>(offset), file.beg);
+        inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
     }
 
     void offsetLocator(std::fstream &file, FileSize_uint offset) = delete;
