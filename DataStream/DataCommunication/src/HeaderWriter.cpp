@@ -14,14 +14,14 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     HeaderOffsetSize_uint headerOffsetSize = 0;
     DirectoryOffsetSize_uint directoryOffsetSize = 0;
 
-    numWriter.writeBinary(outFile, strategySize);
-    numWriter.writeBinary(outFile, versionSize);
-    numWriter.writeBinary(outFile, headerOffsetSize);
-    numWriter.writeBinary(outFile, directoryOffsetSize);
+    numWriter.writeBinaryNums(outFile, strategySize);
+    numWriter.writeBinaryNums(outFile, versionSize);
+    numWriter.writeBinaryNums(outFile, headerOffsetSize);
+    numWriter.writeBinaryNums(outFile, directoryOffsetSize);
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, HeaderSize-sizeof(MagicNum)-sizeof(DirectoryOffsetSize_uint)-sizeof(headerOffsetSize));
-    numWriter.writeBinary(outFile, HeaderSize);
+    numWriter.writeBinaryNums(outFile, HeaderSize);
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
@@ -36,7 +36,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, HeaderSize-sizeof(MagicNum)-sizeof(DirectoryOffsetSize_uint));
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath,outFile);
-    numWriter.writeBinary(outFile, directoryOffset+DirectoryOffsetSize_uint(sizeof(MagicNum)));//sizeof(MagicNum)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    numWriter.writeBinaryNums(outFile, directoryOffset+DirectoryOffsetSize_uint(sizeof(MagicNum)));//sizeof(MagicNum)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)

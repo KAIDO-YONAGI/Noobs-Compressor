@@ -20,11 +20,11 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
         DirectoryOffsetSize_uint offset = HeaderSize;
 
-        outFile.write(SeparatedFlag, FlagSize);//写入第一个分隔标准
-        BIO.writeBinary(outFile, DirectoryOffsetSize_uint(0));
+        outFile.write(SeparatedFlag, FlagSize); // 写入第一个分隔标准
+        BIO.writeBinaryNums(outFile, DirectoryOffsetSize_uint(0));
 
         writeLogicalRoot(logicalRoot, length, outFile, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
-        writeRoot(file, filePathToScan, outFile, tempOffset);             // 写入文件根目录
+        writeRoot(file, filePathToScan, outFile, tempOffset);       // 写入文件根目录
 
         for (FileCount_uint i = 0; i < length; i++)
         {
@@ -85,7 +85,7 @@ void BinaryIO_Reader::scanner(FilePath &file, QueueInterface &queue, std::ofstre
                 isRegularFile,
                 fullPath); // 创建details
 
-            writeStorageStandard(outFile, details, queue,tempOffset, offset);
+            writeStorageStandard(outFile, details, queue, tempOffset, offset);
         }
     }
     catch (fs::filesystem_error &e)
@@ -119,7 +119,7 @@ void BinaryIO_Reader::writeStorageStandard(std::ofstream &outFile, FileDetails &
 
         // 预留下一次回填的位置
         outFile.write(SeparatedFlag, FlagSize);
-        BIO.writeBinary(outFile, DirectoryOffsetSize_uint(0));
+        BIO.writeBinaryNums(outFile, DirectoryOffsetSize_uint(0));
 
         offset += SeparatedStandardSize; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
     }
@@ -132,9 +132,9 @@ void BinaryIO_Reader::writeDirectoryStandard(std::ofstream &outFile, FileDetails
     tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
 
     outFile.write(HeaderFlag, FlagSize);
-    BIO.writeBinary(outFile, sizeOfName);
+    BIO.writeBinaryNums(outFile, sizeOfName);
     outFile.write(details.getName().c_str(), sizeOfName);
-    BIO.writeBinary(outFile, count); // 写入文件数目
+    BIO.writeBinaryNums(outFile, count); // 写入文件数目
 }
 void BinaryIO_Reader::writeFileStandard(std::ofstream &outFile, FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
@@ -144,21 +144,22 @@ void BinaryIO_Reader::writeFileStandard(std::ofstream &outFile, FileDetails &det
     tempOffset += FileStandardSize_Basic + sizeOfName;
 
     outFile.write(FileFlag, FlagSize);                    // 先写文件标
-    BIO.writeBinary(outFile, sizeOfName);                 // 写入文件名偏移量
+    BIO.writeBinaryNums(outFile, sizeOfName);             // 写入文件名偏移量
     outFile.write(details.getName().c_str(), sizeOfName); // 写入文件名
-    BIO.writeBinary(outFile, details.getFileSize());      // 写入文件大小
-    BIO.writeBinary(outFile, FileSize_uint(0));           // 预留大小
+    BIO.writeBinaryNums(outFile, details.getFileSize());  // 写入文件大小
+    BIO.writeBinaryNums(outFile, FileSize_uint(0));       // 预留大小
 }
 
 void BinaryIO_Reader::writeSeparatedStandard(std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
 {
     Locator locator;
     BinaryIO_Reader BIO;
+
     locator.offsetLocator(outFile, offset + FlagSize);
-    BIO.writeBinary(outFile, tempOffset);
+    BIO.writeBinaryNums(outFile, tempOffset);
     outFile.seekp(0, std::ios::end);
 }
-void Directory_FileProcessor::writeLogicalRoot( const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset)
+void Directory_FileProcessor::writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset)
 {
     BinaryIO_Reader BIO;
     FileNameSize_uint sizeOfName = logicalRoot.size();
@@ -166,9 +167,9 @@ void Directory_FileProcessor::writeLogicalRoot( const std::string &logicalRoot, 
     tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
 
     outFile.write(HeaderFlag, FlagSize);
-    BIO.writeBinary(outFile, sizeOfName);
+    BIO.writeBinaryNums(outFile, sizeOfName);
     outFile.write(logicalRoot.c_str(), sizeOfName);
-    BIO.writeBinary(outFile, count); // 写文件数
+    BIO.writeBinaryNums(outFile, count); // 写文件数
 }
 void Directory_FileProcessor::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset)
 {

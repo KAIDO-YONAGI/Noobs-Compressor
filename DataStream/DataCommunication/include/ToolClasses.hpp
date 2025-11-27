@@ -41,7 +41,7 @@ class MagicNumWriter
 public:
     MagicNumWriter() = default;
     template <typename T>
-    void writeBinary(std::ofstream &outFile, T value)
+    void writeBinaryNums(std::ofstream &outFile, T value)
     {
         // ±‡“Î ±ºÏ≤È
         static_assert(std::is_trivially_copyable_v<T>,
@@ -54,7 +54,7 @@ public:
     }
     void appendMagicStatic(std::ofstream &outFile)
     {
-        writeBinary(outFile, MagicNum);
+        writeBinaryNums(outFile, MagicNum);
     }
 };
 

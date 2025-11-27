@@ -42,10 +42,10 @@ public:
 
     void writeDirectoryStandard(std::ofstream &outFile, FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeFileStandard(std::ofstream &outFile, FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
-    void writeSeparatedStandard(std::ofstream &outFile,DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
+    void writeSeparatedStandard(std::ofstream &outFile, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
 
     template <typename T>
-    void writeBinary(std::ofstream &outFile, T value)
+    void writeBinaryNums(std::ofstream &outFile, T value)
     {
         // ±‡“Î ±ºÏ≤È
         static_assert(std::is_trivially_copyable_v<T>,
