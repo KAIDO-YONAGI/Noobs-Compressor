@@ -1,6 +1,8 @@
 #include "../include/Aes.h"
 
-
+void Aes::setKey(const char* key) {
+    extendKey(key); // 内部调用密钥扩展
+}
 int Aes::getLeft4Bit(int num) {
     int left = num & 0x000000f0;
     return left >> 4;
