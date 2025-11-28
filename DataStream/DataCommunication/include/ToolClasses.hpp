@@ -29,7 +29,7 @@ public:
         return ws;
     }
 
-    fs::path _getPath(const std::string &p)
+    fs::path transPath(const std::string &p)
     {
         std::wstring wPath = convertToWString(p);
         return fs::path(wPath);
@@ -54,7 +54,7 @@ public:
     }
     void appendMagicStatic(std::ofstream &outFile)
     {
-        writeBinaryNums(outFile, MagicNum);
+        writeBinaryNums(outFile, magicNum);
     }
 };
 

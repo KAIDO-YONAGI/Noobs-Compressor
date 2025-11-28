@@ -26,7 +26,4 @@ int main()
 }
 
 // HeaderLoaderµÄµ÷ÊÔ
-//  #include"../include/HeaderLoader.h"
-//  int main(){
-
-// }
+#include"../include/HeaderLoader.h"

@@ -23,22 +23,25 @@ using CompressStrategy_uint = uint8_t;     // 压缩策略
 using CompressorVersion_uint = uint8_t;    // 压缩器版本
 using HeaderOffsetSize_uint = uint8_t;     // 头部偏移大小
 using DirectoryOffsetSize_uint = uint32_t; // 目录偏移大小
+using UpSizeOfBuffer_uint = uint32_t;      // 分块的大小
+using SizeOfMagicNum_uint = uint32_t;      // 魔数大小
+using SizeOfFlag_uint = uint8_t;           // 文件标大小
 
 // 常量改用 constexpr（类型安全）
-constexpr uint32_t MagicNum = 0xDEADBEEF; // 文件标识魔数
+constexpr SizeOfMagicNum_uint magicNum = 0xDEADBEEF; // 文件标识魔数
 
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
-constexpr uint32_t BufferSize = 8192; // 偏移量缓冲需要确保大于文件头大小HeaderSize
+constexpr UpSizeOfBuffer_uint bufferSize = 8192; // 偏移量缓冲需要确保大于文件头大小HeaderSize
 // 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题。此外，频繁地进行flush()可能导致数据丢失
 // 分割标准上的偏移量不包含分割标准本身的大小，便于随取随用
 // 会在数据区作为首选的偏移量管理方案来使用，比如按照数据块对象提供的size()方法获取块大小，而不是依赖上述存在更新延迟的文件流提供的size方法
 
 // 文件协议相关
-
+constexpr const SizeOfFlag_uint FlagSize = 1;
 constexpr const char *HeaderFlag = "0";
 constexpr const char *FileFlag = "1";
 constexpr const char *SeparatedFlag = "2";
-constexpr const uint8_t FlagSize = 1;
+
 
 // 注意直接使用sizeof返回的参数进行运算时，小于uint64_t的类型会被自动类型转换为ULL，需要按需强制转换后再参与运算
 
@@ -63,11 +66,11 @@ constexpr const uint8_t SeparatedStandardSize =
 
 // 文件头的大小
 constexpr const uint8_t HeaderSize =
-    sizeof(MagicNum) +                 // 4B
+    sizeof(magicNum) +                 // 4B
     sizeof(CompressStrategy_uint) +    // 1B
     sizeof(CompressorVersion_uint) +   // 1B
     sizeof(HeaderOffsetSize_uint) +    // 1B
     sizeof(DirectoryOffsetSize_uint) + // 4B
-    sizeof(MagicNum);                  // 4B
+    sizeof(magicNum);                  // 4B
 
 #endif
