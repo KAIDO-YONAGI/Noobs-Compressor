@@ -1,6 +1,5 @@
-#include "Aes.h"
+#include "../include/Aes.h"
 
-Aes::Aes(){}
 
 int Aes::getLeft4Bit(int num) {
     int left = num & 0x000000f0;
