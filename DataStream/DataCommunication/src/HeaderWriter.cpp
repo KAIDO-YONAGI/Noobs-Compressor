@@ -1,8 +1,8 @@
 #include "../include/HeaderWriter.h"
 
-void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
+void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 {
-    MagicNumWriter numWriter;
+    NumWriter numWriter(outFile);
     Locator locator;
     if (!outFile)
     {
@@ -14,20 +14,20 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     HeaderOffsetSize_uint headerOffsetSize = 0;
     DirectoryOffsetSize_uint directoryOffsetSize = 0;
 
-    numWriter.writeBinaryNums(outFile, strategySize);
-    numWriter.writeBinaryNums(outFile, versionSize);
-    numWriter.writeBinaryNums(outFile, headerOffsetSize);
-    numWriter.writeBinaryNums(outFile, directoryOffsetSize);
+    numWriter.writeBinaryNums(strategySize);
+    numWriter.writeBinaryNums(versionSize);
+    numWriter.writeBinaryNums(headerOffsetSize);
+    numWriter.writeBinaryNums(directoryOffsetSize);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile, HeaderSize - sizeof(magicNum) - sizeof(DirectoryOffsetSize_uint) - sizeof(headerOffsetSize));
-    numWriter.writeBinaryNums(outFile, HeaderSize);
+    locator.offsetLocator(outFile,HeaderSize - sizeof(magicNum) - sizeof(DirectoryOffsetSize_uint) - sizeof(headerOffsetSize));
+    numWriter.writeBinaryNums(HeaderSize);
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
-    MagicNumWriter numWriter;
+    NumWriter numWriter(outFile);
     Locator locator;
 
     Directory_FileProcessor begin(outFile);
@@ -36,14 +36,12 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, HeaderSize - sizeof(magicNum) - sizeof(DirectoryOffsetSize_uint));
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    numWriter.writeBinaryNums(outFile, directoryOffset + DirectoryOffsetSize_uint(sizeof(magicNum))); // sizeof(magicNum)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(magicNum))); // sizeof(magicNum)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
 {
     Transfer transfer;
-    MagicNumWriter numWriter;
-    HeaderWriter headerWriter;
 
     try
     {
@@ -61,17 +59,17 @@ void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::s
 
         try
         {
-
+            NumWriter numWriter(outFile);
             // 写入表示文件起始的4字节魔数
-            numWriter.appendMagicStatic(outFile);
-            headerWriter.writeHeader(outFile, fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
+            numWriter.appendMagicStatic();
+            writeHeader(outFile,fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
 
-            numWriter.appendMagicStatic(outFile);
+            numWriter.appendMagicStatic();
 
             // 目录信息
-            headerWriter.writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
+            writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
 
-            numWriter.appendMagicStatic(outFile);
+            numWriter.appendMagicStatic();
         }
         catch (const std::exception &e)
         {

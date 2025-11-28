@@ -36,14 +36,21 @@ public:
     }
 };
 
-class MagicNumWriter
+class NumWriter
 {
+private:
+    std::ofstream &outFile;
+
 public:
-    MagicNumWriter() = default;
+    NumWriter(std::ofstream &outFile) : outFile(outFile) {};
+
     template <typename T>
-    void writeBinaryNums(std::ofstream &outFile, T value)
+    void writeBinaryNums(T value)
     {
+        if (!outFile)
+            throw std::runtime_error("writeBinaryNums() Error-noFile");
         // 编译时检查
+
         static_assert(std::is_trivially_copyable_v<T>,
                       "Cannot write non-trivially-copyable type");
         static_assert(!std::is_pointer_v<T>,
@@ -52,9 +59,9 @@ public:
                       "Cannot safely write polymorphic types");
         outFile.write(reinterpret_cast<char *>(&value), sizeof(T)); // 不做类型检查，直接进行类型转换
     }
-    void appendMagicStatic(std::ofstream &outFile)
+    void appendMagicStatic()
     {
-        writeBinaryNums(outFile, magicNum);
+        writeBinaryNums(magicNum);
     }
 };
 
