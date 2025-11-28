@@ -20,8 +20,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
         DirectoryOffsetSize_uint offset = HeaderSize;
 
-        outFile.write(SeparatedFlag, FlagSize); // 写入第一个分隔标准
-        numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
+        BIO.makeSeparatedStandard(outFile);
 
         BIO.writeLogicalRoot(logicalRoot, length, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
         BIO.writeRoot(file, filePathToScan, tempOffset);       // 写入文件根目录
@@ -115,9 +114,7 @@ void BinaryIO_Reader::writeStorageStandard(FileDetails &details, QueueInterface 
         tempOffset = 0; // 相对位置归零
 
         // 预留下一次回填的位置
-        outFile.write(SeparatedFlag, FlagSize);
-        numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
-
+        makeSeparatedStandard(outFile);
         offset += SeparatedStandardSize; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
     }
 }
@@ -145,6 +142,7 @@ void BinaryIO_Reader::writeFileStandard(FileDetails &details, DirectoryOffsetSiz
     outFile.write(details.getName().c_str(), sizeOfName); // 写入文件名
     numWriter.writeBinaryNums(details.getFileSize());     // 写入文件大小
     numWriter.writeBinaryNums(FileSize_uint(0));          // 预留大小
+    numWriter.writeBinaryNums(IvSize_uint(0));
 }
 
 void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
@@ -155,6 +153,13 @@ void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffse
     locator.offsetLocator(outFile, offset + FlagSize);
     numWriter.writeBinaryNums(tempOffset);
     outFile.seekp(0, std::ios::end);
+}
+void BinaryIO_Reader::makeSeparatedStandard(std::ofstream &outFile)
+{
+    NumWriter numWriter(outFile);
+    outFile.write(SeparatedFlag, FlagSize);
+    numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
+    numWriter.writeBinaryNums(IvSize_uint(0));
 }
 void BinaryIO_Reader::writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {

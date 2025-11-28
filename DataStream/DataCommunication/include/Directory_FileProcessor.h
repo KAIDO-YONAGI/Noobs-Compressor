@@ -47,6 +47,7 @@ public:
     explicit BinaryIO_Reader(std::ofstream &outFile) : outFile(outFile) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
+    void makeSeparatedStandard(std::ofstream &outFile);
 
     void binaryIO_Reader(FilePath &file, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };
