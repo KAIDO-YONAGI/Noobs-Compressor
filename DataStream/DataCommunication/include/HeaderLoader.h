@@ -18,21 +18,23 @@ public:
 #pragma pack(1) // Ω˚”√ÃÓ≥‰£¨ΩÙ√‹∂¡»°
     struct Header
     {
-        SizeOfMagicNum_uint MagicNum = 0;
+        SizeOfMagicNum_uint magicNum_1 = 0;
         CompressStrategy_uint strategy = 0;
         CompressorVersion_uint version = 0;
         HeaderOffsetSize_uint headerOffset = 0;
         DirectoryOffsetSize_uint directoryOffset = 0;
-        
-        Header()=default;
-        Header(
-            SizeOfMagicNum_uint MagicNum,
-            CompressStrategy_uint strategy,
-            CompressorVersion_uint version,
-            HeaderOffsetSize_uint headerOffset,
-            DirectoryOffsetSize_uint directoryOffset)
-            : MagicNum(MagicNum), strategy(strategy), version(version),
-              headerOffset(headerOffset), directoryOffset(directoryOffset) {};
+        SizeOfMagicNum_uint magicNum_2 = 0;
+
+        // Header()=default;
+        // Header(
+        //     SizeOfMagicNum_uint magicNum_1,
+        //     CompressStrategy_uint strategy,
+        //     CompressorVersion_uint version,
+        //     HeaderOffsetSize_uint headerOffset,
+        //     DirectoryOffsetSize_uint directoryOffset,
+        //     SizeOfMagicNum_uint magicNum_2)
+        //     : magicNum_1(magicNum_1), strategy(strategy), version(version),
+        //       headerOffset(headerOffset), directoryOffset(directoryOffset),magicNum_2(magicNum_2) {};
     };
 
     struct DirectoryData
