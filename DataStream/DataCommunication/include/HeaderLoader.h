@@ -24,28 +24,9 @@ public:
         HeaderOffsetSize_uint headerOffset = 0;
         DirectoryOffsetSize_uint directoryOffset = 0;
         SizeOfMagicNum_uint magicNum_2 = 0;
-
-        // Header()=default;
-        // Header(
-        //     SizeOfMagicNum_uint magicNum_1,
-        //     CompressStrategy_uint strategy,
-        //     CompressorVersion_uint version,
-        //     HeaderOffsetSize_uint headerOffset,
-        //     DirectoryOffsetSize_uint directoryOffset,
-        //     SizeOfMagicNum_uint magicNum_2)
-        //     : magicNum_1(magicNum_1), strategy(strategy), version(version),
-        //       headerOffset(headerOffset), directoryOffset(directoryOffset),magicNum_2(magicNum_2) {};
     };
 
-    struct DirectoryData
-    {
-    };
-    struct FileData
-    {
-    };
-    struct SeparatedData
-    {
-    };
+
 };
 template <typename T>
 T read_binary_le(std::ifstream &file)

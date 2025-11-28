@@ -6,14 +6,14 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-#include <openssl/sha.h>
-
+#include <cstdint>
 using namespace std;
 
 
 class Aes {
 private:
     int w[44];
+    uint8_t iv[16];
     int getLeft4Bit(int num);
     int getRight4Bit(int num);
     int getNumFromSBox(int index);

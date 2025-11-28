@@ -15,17 +15,17 @@
 
 namespace fs = std::filesystem;
 
-using FileCount_uint = uint32_t;    // 文件计数类型
-using FileSize_uint = uint64_t;     // 文件大小类型
-using FileNameSize_uint = uint16_t; // 文件名长度类型
+using FileCount_uint = uint32_t;    // 文件计数
+using FileSize_uint = uint64_t;     // 文件大小
+using FileNameSize_uint = uint16_t; // 文件名长度，部分极端长度文件名可能有超过65535B大小的情况
 // 压缩相关配置
 using CompressStrategy_uint = uint8_t;     // 压缩策略
 using CompressorVersion_uint = uint8_t;    // 压缩器版本
-using HeaderOffsetSize_uint = uint8_t;     // 头部偏移大小
-using DirectoryOffsetSize_uint = uint32_t; // 目录偏移大小
-using UpSizeOfBuffer_uint = uint32_t;      // 分块的大小
-using SizeOfMagicNum_uint = uint32_t;      // 魔数大小
-using SizeOfFlag_uint = uint8_t;           // 文件标大小
+using HeaderOffsetSize_uint = uint8_t;     // 头部偏移长度
+using DirectoryOffsetSize_uint = uint32_t; // 目录偏移长度
+using UpSizeOfBuffer_uint = uint32_t;      // 分块的长度
+using SizeOfMagicNum_uint = uint32_t;      // 魔数长度
+using SizeOfFlag_uint = uint8_t;           // 文件标长度
 
 // 常量改用 constexpr（类型安全）
 constexpr SizeOfMagicNum_uint MagicNum = 0xDEADBEEF; // 文件标识魔数
