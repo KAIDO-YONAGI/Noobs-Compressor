@@ -43,20 +43,6 @@ private:
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
     FileSize_uint getFileSize(const fs::path &filePathToScan);
 
-    template <typename T>
-    void writeBinaryNums(T value)
-    {
-        // 编译时检查
-        static_assert(std::is_trivially_copyable_v<T>,
-                      "Cannot write non-trivially-copyable type");
-        static_assert(!std::is_pointer_v<T>,
-                      "Cannot safely write raw pointers");
-        static_assert(!std::is_polymorphic_v<T>,
-                      "Cannot safely write polymorphic types");
-        outFile.write(reinterpret_cast<char *>(&value), // 不做类型检查，直接进行类型转换
-                      sizeof(T));
-    }
-
 public:
     explicit BinaryIO_Reader(std::ofstream &outFile) : outFile(outFile) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);

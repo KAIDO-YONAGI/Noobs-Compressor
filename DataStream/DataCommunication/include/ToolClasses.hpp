@@ -61,7 +61,7 @@ public:
     }
     void appendMagicStatic()
     {
-        writeBinaryNums(magicNum);
+        writeBinaryNums(MagicNum);
     }
 };
 
