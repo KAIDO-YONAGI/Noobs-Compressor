@@ -196,8 +196,8 @@ int Aes::modeChoose() {
     // 清除敏感数据
     memset(aes_key, 0, sizeof(aes_key));
     
-    #ifdef _WIN32
+
     system("pause");
-    #endif
+
     return 1;
 }

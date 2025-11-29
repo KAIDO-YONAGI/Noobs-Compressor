@@ -26,4 +26,21 @@
 // }
 
 // HeaderLoader的调试
-// #include"../include/HeaderLoader.h"
+#include"../include/HeaderLoader.h"
+
+int main()
+{
+    Transfer transfer;
+
+    std::string inPath =
+        "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
+    fs::path loadPath = transfer.transPath(inPath);
+
+    std::ifstream inFile(loadPath, std::ios::binary);
+    std::vector<unsigned char> buffer(BufferSize + 1024);
+
+    BinaryIO_Loader loader(buffer, inFile);
+    loader.headerLoader();
+
+    system("pause");
+}

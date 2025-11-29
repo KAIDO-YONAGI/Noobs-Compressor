@@ -1,21 +1,5 @@
 #include "../include/HeaderLoader.h"
 
-int main()
-{
-    Transfer transfer;
-
-    std::string inPath =
-        "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
-    fs::path loadPath = transfer.transPath(inPath);
-
-    std::ifstream inFile(loadPath, std::ios::binary);
-    std::vector<unsigned char> buffer(BufferSize + 1024);
-
-    BinaryIO_Loader loader(buffer, inFile);
-    loader.headerLoader();
-
-    system("pause");
-}
 void BinaryIO_Loader::headerLoader()
 {
     try
@@ -74,7 +58,7 @@ void BinaryIO_Loader::headerLoader()
                 if (tempOffset == 0)
                     offset -= readed + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
 
-                std::cout << readed << " " << readSize << " " << offset << "\n";
+                // std::cout << readed << " " << readSize << " " << offset << "\n";
                 // std::cout << offset << "\n";// 调试代码
 
                 if (buffer.size() == 0)
