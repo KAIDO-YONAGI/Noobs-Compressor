@@ -83,10 +83,8 @@ private:
 public:
     BinaryIO_Loader(std::vector<unsigned char> &buffer, std::ifstream &inFile)
         : buffer(buffer), inFile(inFile)
-    {
-        if (!inFile)
-            throw std::runtime_error("Invalid input file stream");
-    }
+    {}
+    void fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed);
     void headerLoader(); // Ö÷Âß¼­º¯Êı
 
 #pragma pack(1) // ½ûÓÃÌî³ä£¬½ôÃÜ¶ÁÈ¡
