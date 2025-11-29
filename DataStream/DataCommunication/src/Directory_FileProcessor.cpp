@@ -142,7 +142,6 @@ void BinaryIO_Reader::writeFileStandard(FileDetails &details, DirectoryOffsetSiz
     outFile.write(details.getName().c_str(), sizeOfName); // 写入文件名
     numWriter.writeBinaryNums(details.getFileSize());     // 写入文件大小
     numWriter.writeBinaryNums(FileSize_uint(0));          // 预留大小
-    numWriter.writeBinaryNums(IvSize_uint(0));
 }
 
 void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
