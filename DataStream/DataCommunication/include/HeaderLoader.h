@@ -85,6 +85,7 @@ public:
         : buffer(buffer), inFile(inFile)
     {}
     void fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed);
+    void  loadBySepratedFlag(NumsReader &numsReader,DirectoryOffsetSize_uint &offset);
     void headerLoader(); // Ö÷Âß¼­º¯Êı
 
 #pragma pack(1) // ½ûÓÃÌî³ä£¬½ôÃÜ¶ÁÈ¡

@@ -29,45 +29,8 @@ void BinaryIO_Loader::headerLoader()
         {
             // std::cout << offset << "\n";
             // std::cout << inFile.tellg() << "\n"; // 调试代码
-
             buffer.clear();
-
-            unsigned char flag = numsReader.readBinaryNums<unsigned char>();
-
-            if (flag == '2')
-            {
-
-                // 读取块偏移量
-                DirectoryOffsetSize_uint tempOffset = numsReader.readBinaryNums<DirectoryOffsetSize_uint>();
-                // 读取iv头
-                IvSize_uint ivNum = numsReader.readBinaryNums<IvSize_uint>();
-
-                offset -= (SeparatedStandardSize + tempOffset); // 偏移量检测，同样用于检测退出（注意三目运算符的优先级）
-
-                // 读取数据到vector后在内存中操作，对最后一个未达到写入分割标准大小的块引入特殊处理
-                DirectoryOffsetSize_uint readSize = (tempOffset == 0 ? (offset - sizeof(SizeOfMagicNum_uint)) : tempOffset);
-
-                // 按偏移量读取数据块
-                buffer.resize(readSize); // clear后resize确保空间可写入，不改变capacity 
-                if (!inFile.read(reinterpret_cast<char *>(buffer.data()), readSize) && tempOffset != 0)
-                {
-                    throw std::runtime_error("Failed to read buffer");
-                }
-
-                DirectoryOffsetSize_uint readed = inFile.gcount();
-                if (tempOffset == 0)
-                    offset -= readed + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
-
-                // std::cout << readed << " " << readSize << " " << offset << "\n";
-                // std::cout << offset << "\n";// 调试代码
-
-                if (buffer.size() == 0)
-                    break; // 为零则已经读完，退出循环，避免以下操作vector越界
-
-                DirectoryOffsetSize_uint bufferPtr = 0;
-
-                fileParser(tempOffset,bufferPtr,readed);
-            }
+            loadBySepratedFlag(numsReader, offset);
         }
         // std::cout << countForTest << "\n";
 
@@ -83,7 +46,44 @@ void BinaryIO_Loader::headerLoader()
         throw;
     }
 }
-void BinaryIO_Loader:: fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed)
+void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset)
+{
+
+    unsigned char flag = numsReader.readBinaryNums<unsigned char>();
+
+    if (flag == '2')
+    {
+
+        // 读取块偏移量
+        DirectoryOffsetSize_uint tempOffset = numsReader.readBinaryNums<DirectoryOffsetSize_uint>();
+        // 读取iv头
+        IvSize_uint ivNum = numsReader.readBinaryNums<IvSize_uint>();
+
+        offset -= (SeparatedStandardSize + tempOffset); // 偏移量检测，同样用于检测退出（注意三目运算符的优先级）
+
+        // 读取数据到vector后在内存中操作，对最后一个未达到写入分割标准大小的块引入特殊处理
+        DirectoryOffsetSize_uint readSize = (tempOffset == 0 ? (offset - sizeof(SizeOfMagicNum_uint)) : tempOffset);
+
+        // 按偏移量读取数据块
+        buffer.resize(readSize); // clear后resize确保空间可写入，不改变capacity
+        if (!inFile.read(reinterpret_cast<char *>(buffer.data()), readSize) && tempOffset != 0)
+        {
+            throw std::runtime_error("Failed to read buffer");
+        }
+
+        DirectoryOffsetSize_uint readed = inFile.gcount();
+        if (tempOffset == 0)
+            offset -= readed + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
+
+        std::cout << readed << " " << readSize << " " << offset << "\n";
+        // std::cout << offset << "\n";// 调试代码
+
+        DirectoryOffsetSize_uint bufferPtr = 0;
+
+        fileParser(tempOffset, bufferPtr, readed);
+    }
+}
+void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed)
 {
     while (tempOffset > bufferPtr || readed > 0) //(可提取为函数)
     {
