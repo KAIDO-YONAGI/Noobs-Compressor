@@ -12,9 +12,35 @@ private:
     fs::path outPutFilePath;
     fs::path filePathToScan;
 };
+
 class BinaryIO_Loader
 {
+private:
+    std::vector<char> &buffer;
+    std::ifstream &inFile;
+
+    template <typename T>
+    void fileNameSizeParser(
+        T &fileNameSize,
+        std::string &fileName,
+        DirectoryOffsetSize_uint &bufferPtr)
+    {
+        memcpy(&fileNameSize, buffer.data() + bufferPtr, sizeof(T));
+        bufferPtr += sizeof(T);
+        memcpy(&fileName, buffer.data() + bufferPtr, fileNameSize);
+        bufferPtr += fileName.size();
+    }
+    template <typename T>
+    T numsParser(T &num, DirectoryOffsetSize_uint &bufferPtr)
+    {
+        memcpy(&num, buffer.data() + bufferPtr, sizeof(T));
+        bufferPtr += sizeof(T);
+    }
+
 public:
+    BinaryIO_Loader(std::vector<char> &buffer, std::ifstream &inFile) : buffer(buffer), inFile(inFile) {};
+    void headerLoader();//Ö÷Âß¼­º¯Êý
+
 #pragma pack(1) // ½ûÓÃÌî³ä£¬½ôÃÜ¶ÁÈ¡
     struct Header
     {
@@ -25,15 +51,6 @@ public:
         DirectoryOffsetSize_uint directoryOffset = 0;
         SizeOfMagicNum_uint magicNum_2 = 0;
     };
-
-
 };
-template <typename T>
-T read_binary_le(std::ifstream &file)
-{
-    T value;
-    file.read(reinterpret_cast<char *>(&value), sizeof(T));
-    return value;
-}
 
 #endif

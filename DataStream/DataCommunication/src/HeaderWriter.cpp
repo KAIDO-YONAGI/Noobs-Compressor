@@ -2,7 +2,7 @@
 
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 {
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     Locator locator;
     if (!outFile)
     {
@@ -27,7 +27,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     Locator locator;
 
     Directory_FileProcessor begin(outFile);
@@ -59,7 +59,7 @@ void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::s
 
         try
         {
-            NumWriter numWriter(outFile);
+            NumsWriter numWriter(outFile);
             // 写入表示文件起始的4字节魔数
             numWriter.appendMagicStatic();
             writeHeader(outFile,fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)

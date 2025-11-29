@@ -5,7 +5,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
 {
     FilePath file; // 创建各个工具类的对象
     BinaryIO_Reader BIO(outFile);
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
 
     fs::path oPath = fullOutPath;
     fs::path sPath;
@@ -93,7 +93,7 @@ void BinaryIO_Reader::binaryIO_Reader(FilePath &file, QueueInterface &queue, Dir
 
 void BinaryIO_Reader::writeStorageStandard(FileDetails &details, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     if (details.getIsFile()) // 文件对应的处理
     {
         writeFileStandard(details, tempOffset);
@@ -120,7 +120,7 @@ void BinaryIO_Reader::writeStorageStandard(FileDetails &details, QueueInterface 
 }
 void BinaryIO_Reader::writeDirectoryStandard(FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
     tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
@@ -132,7 +132,7 @@ void BinaryIO_Reader::writeDirectoryStandard(FileDetails &details, FileCount_uin
 }
 void BinaryIO_Reader::writeFileStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
     tempOffset += FileStandardSize_Basic + sizeOfName;
@@ -146,7 +146,7 @@ void BinaryIO_Reader::writeFileStandard(FileDetails &details, DirectoryOffsetSiz
 
 void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
 {
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     Locator locator;
 
     locator.offsetLocator(outFile, offset + FlagSize);
@@ -155,7 +155,7 @@ void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffse
 }
 void BinaryIO_Reader::makeSeparatedStandard(std::ofstream &outFile)
 {
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     outFile.write(SeparatedFlag, FlagSize);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
     numWriter.writeBinaryNums(IvSize_uint(0));
@@ -163,7 +163,7 @@ void BinaryIO_Reader::makeSeparatedStandard(std::ofstream &outFile)
 void BinaryIO_Reader::writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
     FileNameSize_uint sizeOfName = logicalRoot.size();
-    NumWriter numWriter(outFile);
+    NumsWriter numWriter(outFile);
     tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
 
     outFile.write(HeaderFlag, FlagSize);

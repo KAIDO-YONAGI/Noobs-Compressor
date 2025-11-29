@@ -26,7 +26,7 @@ using DirectoryOffsetSize_uint = uint32_t; // 目录偏移长度
 using UpSizeOfBuffer_uint = uint32_t;      // 分块的长度
 using SizeOfMagicNum_uint = uint32_t;      // 魔数长度
 using SizeOfFlag_uint = uint8_t;           // 文件标长度
-using IvSize_uint = __uint128_t;         // iv头长度
+using IvSize_uint = __uint128_t;           // iv头长度
 
 // 常量改用 constexpr（类型安全）
 constexpr SizeOfMagicNum_uint MagicNum = 0xDEADBEEF; // 文件标识魔数
@@ -62,7 +62,7 @@ constexpr const uint8_t FileStandardSize_Basic =
 // 分割标准的基础大小
 constexpr const uint8_t SeparatedStandardSize =
     FlagSize +
-    sizeof(DirectoryOffsetSize_uint)+
+    sizeof(DirectoryOffsetSize_uint) +
     sizeof(IvSize_uint);
 
 // 文件头的大小

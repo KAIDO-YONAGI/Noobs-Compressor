@@ -36,18 +36,18 @@ public:
     }
 };
 
-class NumWriter
+class NumsWriter
 {
 private:
-    std::ofstream &outFile;
+    std::ofstream &file;
 
 public:
-    NumWriter(std::ofstream &outFile) : outFile(outFile) {};
+    NumsWriter(std::ofstream &file) : file(file) {};
 
     template <typename T>
     void writeBinaryNums(T value)
     {
-        if (!outFile)
+        if (!file)
             throw std::runtime_error("writeBinaryNums() Error-noFile");
         // 编译时检查
 
@@ -57,11 +57,42 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        outFile.write(reinterpret_cast<char *>(&value), sizeof(T)); // 不做类型检查，直接进行类型转换
+        if (!file.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        {
+            throw std::runtime_error("writeBinaryNums()Error-Failed to write");
+        }
     }
+
     void appendMagicStatic()
     {
         writeBinaryNums(MagicNum);
+    }
+};
+class NumsReader
+{
+private:
+    std::ifstream &file;
+
+public:
+    NumsReader(std::ifstream &file) : file(file) {};
+    template <typename T>
+    T readBinaryNums()
+    {
+        if (!file)
+            throw std::runtime_error("readBinaryNums() Error-noFile");
+        T value;
+        static_assert(std::is_trivially_copyable_v<T>,
+                      "Cannot write non-trivially-copyable type");
+        static_assert(!std::is_pointer_v<T>,
+                      "Cannot safely write raw pointers");
+        static_assert(!std::is_polymorphic_v<T>,
+                      "Cannot safely write polymorphic types");
+
+        if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
+        {
+            throw std::runtime_error("readBinaryNums()Error-Failed to read");
+        }
+        return value;
     }
 };
 
