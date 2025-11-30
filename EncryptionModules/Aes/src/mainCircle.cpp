@@ -2,7 +2,6 @@
 
 using namespace std;
 
-// 与头文件声明完全匹配的实现
 void Aes::aes(char *p, int plen) {
     if (!p || plen <= 0) return;
 
@@ -45,7 +44,7 @@ void Aes::aes(char *p, int plen) {
     memset(feedback, 0, sizeof(feedback));
 }
 
-// 与头文件声明完全匹配的实现
+
 void Aes::deAes(char *c, int clen) {
     if (!c || clen <= 0) return;
 

@@ -1,6 +1,5 @@
 // FileDetails.h
-#ifndef FILEDETAILS_H
-#define FILEDETAILS_H
+#pragma once
 
 #include "../include/FileLibrary.h"
 
@@ -45,4 +44,3 @@ public:
     const fs::path &getOutPutFilePath() { return outPutFilePath; }
     const fs::path &getFilePathToScan() { return filePathToScan; }
 };
-#endif

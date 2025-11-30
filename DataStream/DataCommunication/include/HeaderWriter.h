@@ -1,6 +1,5 @@
 // Directory_FileWriter.h
-#ifndef FILEWRITER_H
-#define FILEWRITER_H
+#pragma once
 
 #include "../include/FileLibrary.h"
 #include "../include/Directory_FileProcessor.h"
@@ -50,4 +49,3 @@ public:
         writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };
 };
-#endif

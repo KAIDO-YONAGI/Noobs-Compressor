@@ -1,6 +1,5 @@
 // FileLibaray.h
-#ifndef FILELIBARAY_H
-#define FILELIBARAY_H
+#pragma once
 
 #include <filesystem> //编译时需要强制链接为静态库
 
@@ -73,5 +72,3 @@ constexpr const uint8_t HeaderSize =
     sizeof(HeaderOffsetSize_uint) +    // 1B
     sizeof(DirectoryOffsetSize_uint) + // 4B
     sizeof(MagicNum);                  // 4B
-
-#endif

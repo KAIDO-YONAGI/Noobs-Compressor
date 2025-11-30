@@ -1,7 +1,5 @@
 // HeaderLoader.h
-#ifndef HEADERLOADER_H
-#define HEADERLOADER_H
-
+#pragma once
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
 #include "../include/ToolClasses.hpp"
@@ -82,10 +80,9 @@ private:
 
 public:
     BinaryIO_Loader(std::vector<unsigned char> &buffer, std::ifstream &inFile)
-        : buffer(buffer), inFile(inFile)
-    {}
+        : buffer(buffer), inFile(inFile) {}
     void fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed);
-    void  loadBySepratedFlag(NumsReader &numsReader,DirectoryOffsetSize_uint &offset);
+    void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset);
     void headerLoader(); // Ö÷Âß¼­º¯Êý
 
 #pragma pack(1) // ½ûÓÃÌî³ä£¬½ôÃÜ¶ÁÈ¡
@@ -100,4 +97,3 @@ public:
     };
 };
 
-#endif

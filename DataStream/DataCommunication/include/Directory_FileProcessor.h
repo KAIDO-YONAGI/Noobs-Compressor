@@ -1,6 +1,5 @@
 // Directory_FileProcessor.h
-#ifndef DIRECTORY_FILEPROCESSOR_H
-#define DIRECTORY_FILEPROCESSOR_H
+#pragma once
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
@@ -52,4 +51,3 @@ public:
     void binaryIO_Reader(FilePath &file, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };
 
-#endif

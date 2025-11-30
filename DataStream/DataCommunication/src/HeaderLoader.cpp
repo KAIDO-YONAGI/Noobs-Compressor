@@ -31,6 +31,8 @@ void BinaryIO_Loader::headerLoader()
             // std::cout << inFile.tellg() << "\n"; // 调试代码
             buffer.clear();
             loadBySepratedFlag(numsReader, offset);
+
+            //最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
         }
         // std::cout << countForTest << "\n";
 

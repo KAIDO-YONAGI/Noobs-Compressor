@@ -1,6 +1,5 @@
 // ToolClasses.h
-#ifndef TOOLCLASSES_HPP
-#define TOOLCLASSES_HPP
+#pragma once
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
@@ -218,5 +217,3 @@ public:
         }
     }
 };
-
-#endif
