@@ -166,7 +166,7 @@ void BinaryIO_Reader::writeLogicalRoot(const std::string &logicalRoot, const Fil
     NumsWriter numWriter(outFile);
     tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
 
-    outFile.write(HeaderFlag, FlagSize);
+    outFile.write(LogicalRootFlag, FlagSize);
     numWriter.writeBinaryNums(sizeOfName);
     outFile.write(logicalRoot.c_str(), sizeOfName);
     numWriter.writeBinaryNums(count); // Ð´ÎÄ¼þÊý

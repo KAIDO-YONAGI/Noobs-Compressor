@@ -41,6 +41,7 @@ constexpr const SizeOfFlag_uint FlagSize = 1;
 constexpr const char *HeaderFlag = "0";
 constexpr const char *FileFlag = "1";
 constexpr const char *SeparatedFlag = "2";
+constexpr const char *LogicalRootFlag="3";
 
 // 注意直接使用sizeof返回的参数进行运算时，小于uint64_t的类型会被自动类型转换为ULL，需要按需强制转换后再参与运算
 

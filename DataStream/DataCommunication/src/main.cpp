@@ -26,21 +26,26 @@
 // }
 
 // HeaderLoader的调试
-#include"../include/HeaderLoader.h"
+#include "../include/HeaderLoader.h"
 
 int main()
 {
     Transfer transfer;
+    std::vector<std::string> filePathToScan;
+    std::string outPutFilePath, logicalRoot,inPath;
 
-    std::string inPath =
-        "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
+    filePathToScan.push_back("D:\\1gal");
+    filePathToScan.push_back("D:\\1gal\\TEST\\我挚爱的时光");
+    filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
+    outPutFilePath = "挚爱的时光.bin";
+    logicalRoot = "YONAGI";
+    inPath ="C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
+
     fs::path loadPath = transfer.transPath(inPath);
-
     std::ifstream inFile(loadPath, std::ios::binary);
     std::vector<unsigned char> buffer(BufferSize + 1024);
-
     BinaryIO_Loader loader(buffer, inFile);
-    loader.headerLoader();
+    loader.headerLoader(filePathToScan);
 
     system("pause");
 }

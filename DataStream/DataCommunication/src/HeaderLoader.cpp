@@ -1,6 +1,6 @@
 #include "../include/HeaderLoader.h"
 
-void BinaryIO_Loader::headerLoader()
+void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
 {
     try
     {
@@ -30,11 +30,10 @@ void BinaryIO_Loader::headerLoader()
             // std::cout << offset << "\n";
             // std::cout << inFile.tellg() << "\n"; // 调试代码
             buffer.clear();
-            loadBySepratedFlag(numsReader, offset);
+            loadBySepratedFlag(numsReader, offset, filePathToScan);
 
-            //最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
+            // 最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
         }
-        // std::cout << countForTest << "\n";
 
         // 读末尾魔数并且检验
         SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
@@ -48,7 +47,7 @@ void BinaryIO_Loader::headerLoader()
         throw;
     }
 }
-void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan)
 {
 
     unsigned char flag = numsReader.readBinaryNums<unsigned char>();
@@ -78,58 +77,119 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
             offset -= readed + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
 
         std::cout << readed << " " << readSize << " " << offset << "\n";
-        // std::cout << offset << "\n";// 调试代码
 
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        fileParser(tempOffset, bufferPtr, readed);
+        parser(tempOffset, bufferPtr, readed, filePathToScan);
+        
     }
 }
-void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed)
+void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed, std::vector<std::string> &filePathToScan)
 {
-    while (tempOffset > bufferPtr || readed > 0) //(可提取为函数)
+    while (tempOffset > bufferPtr || readed > 0)
     {
-
-        // 解析flag
         unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
-
-        if (D_F_flag == '1') // 解析文件
+        switch (D_F_flag)
         {
-            // 解析文件名偏移量(可提取为函数)
-            // 解析文件名，后续拼接为绝对路径之后交给数据读取类读取数据块
-            FileNameSize_uint fileNameSize = 0;
-            std::string fileName;
-            fileNameSizeParser(fileNameSize, fileName, bufferPtr);
-
-            // 解析文件原大小
-            FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
-
-            // 记录等会需要回填的位置
-            FileSize_uint compressedSizeOffset = bufferPtr;
-            bufferPtr += sizeof(FileSize_uint);
-
-            readed -= FileStandardSize_Basic + fileNameSize;
-            // countForTest++;
+        case '1':
+        {
+            fileParser(bufferPtr, readed);
+            break;
         }
-        else if (D_F_flag == '0') // 解析目录
+        case '0':
         {
-            // 解析目录名偏移量(可提取为函数)
-            // 解析目录名，后续拼接为绝对路径之后入队
+            directoryParser(bufferPtr, readed);
+            break;
+        }
+        case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
+        {
+            logicalRootParser(bufferPtr, readed, filePathToScan);
+            break;
+        }
+
+        default:
+        {
+            throw std::runtime_error("Failed to read flag");
+            break;
+        }
+        }
+    }
+}
+void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed)
+{
+    // 解析文件名偏移量
+    // 解析文件名，后续拼接为绝对路径之后交给数据读取类读取数据块
+    FileNameSize_uint fileNameSize = 0;
+    std::string fileName;
+    fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
+
+    // 解析文件原大小
+    FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
+
+    // 记录等会需要回填的位置
+    FileSize_uint compressedSizeOffset = bufferPtr;
+    bufferPtr += sizeof(FileSize_uint);
+
+    readed -= FileStandardSize_Basic + fileNameSize;
+}
+void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed)
+{
+    // 解析目录名偏移量
+    // 解析目录名，后续拼接为绝对路径之后入队
+    FileNameSize_uint directoryNameSize = 0;
+    std::string directoryName;
+    fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
+    readed -= DirectoryrStandardSize_Basic + directoryNameSize;
+
+    // 解析下级文件数量
+    FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+
+    // 需要入队（BFS）
+    fs::path lastPath = queue.front().first.getFullPath();
+    fs::path newPath = lastPath / directoryName;
+    FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, newPath);
+    queue.push({directoryDetails, count});
+}
+
+void BinaryIO_Loader::logicalRootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed, std::vector<std::string> &filePathToScan)
+{
+    Transfer transfer;
+    FileNameSize_uint directoryNameSize = 0;
+    std::string directoryName;
+    fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
+    readed -= DirectoryrStandardSize_Basic + directoryNameSize;
+    // 解析下级文件数量
+    FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+
+    if (count != filePathToScan.size()) // 检验数量
+        throw std::runtime_error("logicalRootParser()-Error:Failed to match RootDirectory nums");
+
+    for (std::string &path : filePathToScan)
+    {
+        fs::path fullPath = transfer.transPath(path);
+        if (fs::is_regular_file(fullPath))
+        {
+            bufferPtr += sizeof(SizeOfFlag_uint);
+            fileParser(bufferPtr, readed); // 遇到文件直接处理，调用fileParser}
+        }
+        else if (fs::is_directory(fullPath))
+        {
+            bufferPtr += sizeof(SizeOfFlag_uint);
             FileNameSize_uint directoryNameSize = 0;
             std::string directoryName;
-            fileNameSizeParser(directoryNameSize, directoryName, bufferPtr);
-
+            fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
+            readed -= DirectoryrStandardSize_Basic + directoryNameSize;
             // 解析下级文件数量
             FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
-            readed -= DirectoryrStandardSize_Basic + directoryNameSize;
-
-            // 需要入队（BFS）
-
-            // countForTest++;
+            FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
+            queue.push({directoryDetails, count});
         }
-
-        else
-            throw std::runtime_error("Failed to read flag");
     }
+}
+void dataLoaderForHuffmanCompression(fs::path inParh)
+{
+    std::ifstream inFile(inParh, std::ios::binary);
+    if (!inFile)
+        throw std::runtime_error("dataLoaderForHuffmanCompression()-Error:Failed to open inFile");
 }

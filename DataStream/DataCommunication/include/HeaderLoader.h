@@ -16,6 +16,7 @@ class BinaryIO_Loader
 private:
     std::vector<unsigned char> &buffer;
     std::ifstream &inFile;
+    FileQueue queue;
 
     // 检查 buffer 是否足够读取指定大小
     inline void checkBounds(DirectoryOffsetSize_uint pos, size_t requiredSize) const
@@ -31,7 +32,7 @@ private:
     }
 
     template <typename T>
-    void fileNameSizeParser(
+    void fileName_fileSizeParser(
         T &fileNameSize,
         std::string &fileName,
         DirectoryOffsetSize_uint &bufferPtr)
@@ -53,7 +54,7 @@ private:
         catch (const std::exception &e)
         {
             throw std::runtime_error(
-                "fileNameSizeParser failed at offset " +
+                "fileName_fileSizeParser failed at offset " +
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
@@ -77,13 +78,16 @@ private:
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
+    void parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed, std::vector<std::string> &filePathToScan);
+    void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan);
+    void fileParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed);
+    void directoryParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed);
+    void logicalRootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed,std::vector<std::string> &filePathToScan);
 
 public:
     BinaryIO_Loader(std::vector<unsigned char> &buffer, std::ifstream &inFile)
         : buffer(buffer), inFile(inFile) {}
-    void fileParser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed);
-    void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset);
-    void headerLoader(); // 主逻辑函数
+    void headerLoader(std::vector<std::string> &filePathToScan); // 主逻辑函数
 
 #pragma pack(1) // 禁用填充，紧密读取
     struct Header
@@ -96,4 +100,3 @@ public:
         SizeOfMagicNum_uint magicNum_2 = 0;
     };
 };
-
