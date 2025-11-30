@@ -78,11 +78,11 @@ private:
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
-    void parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed, std::vector<std::string> &filePathToScan);
+    void parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed, std::vector<std::string> &filePathToScan,FileCount_uint &countOfDirectory);
     void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan);
     void fileParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed);
     void directoryParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed);
-    void logicalRootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed,std::vector<std::string> &filePathToScan);
+    void rootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed,std::vector<std::string> &filePathToScan);
 
 public:
     BinaryIO_Loader(std::vector<unsigned char> &buffer, std::ifstream &inFile)

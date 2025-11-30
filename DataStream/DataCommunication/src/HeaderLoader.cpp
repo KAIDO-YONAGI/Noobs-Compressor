@@ -79,41 +79,50 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
         std::cout << readed << " " << readSize << " " << offset << "\n";
 
         DirectoryOffsetSize_uint bufferPtr = 0;
-
-        parser(tempOffset, bufferPtr, readed, filePathToScan);
-        
+        FileCount_uint countOfDirectory = 0;
+        while (tempOffset > bufferPtr || readed > 0)
+        {
+            parser(tempOffset, bufferPtr, readed, filePathToScan, countOfDirectory);
+        }
     }
 }
-void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed, std::vector<std::string> &filePathToScan)
+void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint readed, std::vector<std::string> &filePathToScan, FileCount_uint &countOfDirectory)
 {
-    while (tempOffset > bufferPtr || readed > 0)
-    {
-        unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
-        switch (D_F_flag)
-        {
-        case '1':
-        {
-            fileParser(bufferPtr, readed);
-            break;
-        }
-        case '0':
-        {
-            directoryParser(bufferPtr, readed);
-            break;
-        }
-        case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
-        {
-            logicalRootParser(bufferPtr, readed, filePathToScan);
-            break;
-        }
 
-        default:
-        {
-            throw std::runtime_error("Failed to read flag");
-            break;
-        }
-        }
+    unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
+    switch (D_F_flag)
+    {
+    case '1':
+    {
+        fileParser(bufferPtr, readed);
+        break;
     }
+    case '0':
+    {
+        directoryParser(bufferPtr, readed);
+        break;
+    }
+    case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
+    {
+        rootParser(bufferPtr, readed, filePathToScan);
+        countOfDirectory = queue.front().second;
+        break;
+    }
+
+    default:
+    {
+        throw std::runtime_error("Failed to read flag");
+        break;
+    }
+    }
+
+    while (countOfDirectory--)
+    {
+        parser(tempOffset, bufferPtr, readed, filePathToScan, countOfDirectory);
+    }
+    // std::cout<<queue.back().first.getName();
+    queue.pop();
+    countOfDirectory = queue.front().second;
 }
 void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed)
 {
@@ -151,7 +160,7 @@ void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr, Direc
     queue.push({directoryDetails, count});
 }
 
-void BinaryIO_Loader::logicalRootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed, std::vector<std::string> &filePathToScan)
+void BinaryIO_Loader::rootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &readed, std::vector<std::string> &filePathToScan)
 {
     Transfer transfer;
     FileNameSize_uint directoryNameSize = 0;
@@ -162,7 +171,7 @@ void BinaryIO_Loader::logicalRootParser(DirectoryOffsetSize_uint &bufferPtr, Dir
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
     if (count != filePathToScan.size()) // 检验数量
-        throw std::runtime_error("logicalRootParser()-Error:Failed to match RootDirectory nums");
+        throw std::runtime_error("rootParser()-Error:Failed to match RootDirectory nums");
 
     for (std::string &path : filePathToScan)
     {
