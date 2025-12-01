@@ -37,7 +37,6 @@ private:
     Hefftreenode *root;
     sfc::blocks_t *in_blocks;
 
-    //TODO: 根据uchar序列生成树
     Hefftreenode* spawn_tree(sfc::block_t&);
     bool connectNode(Hefftreenode*, Hefftreenode*);
 };
