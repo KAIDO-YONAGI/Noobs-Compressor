@@ -4,7 +4,9 @@
 #include "../include/FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
-static int countOfDirec=0;
+static int countOfDirec = 0;//临时全局变量
+
+
 class FilePath_Loader
 {
 private:
@@ -18,6 +20,7 @@ private:
     std::vector<unsigned char> &buffer;
     std::ifstream &inFile;
     FileQueue queue;
+    Transfer transfer;
 
     // 检查 buffer 是否足够读取指定大小
     void checkBounds(DirectoryOffsetSize_uint pos, size_t requiredSize) const
@@ -79,11 +82,11 @@ private:
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
-    void parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint unReadedSize, std::vector<std::string> &filePathToScan,FileCount_uint &countOfKidDirectory);
-    void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan,FileCount_uint &countOfKidDirectory);
-    void fileParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &unReadedSize);
-    void directoryParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &unReadedSize);
-    void rootParser(DirectoryOffsetSize_uint &bufferPtr, DirectoryOffsetSize_uint &unReadedSize,std::vector<std::string> &filePathToScan);
+    void parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
+    void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
+    void fileParser(DirectoryOffsetSize_uint &bufferPtr);
+    void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
+    void rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan);
 
 public:
     BinaryIO_Loader(std::vector<unsigned char> &buffer, std::ifstream &inFile)

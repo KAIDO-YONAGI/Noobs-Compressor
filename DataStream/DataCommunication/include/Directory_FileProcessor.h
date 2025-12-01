@@ -14,6 +14,7 @@ class Directory_FileProcessor
 private:
     Transfer transfer;
     std::ofstream &outFile;
+    QueueInterface queue;
     void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
 public:

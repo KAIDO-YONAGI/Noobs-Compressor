@@ -32,9 +32,10 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
             if (!fs::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
-                scanFlow(file, tempOffset, offset);
+                BIO.binaryIO_Reader(file, queue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
             }
         }
+        scanFlow(file,tempOffset,offset);
     }
     catch (const std::exception &e)
     {
@@ -44,10 +45,9 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
 
 void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
-
-    QueueInterface queue;
+    
     BinaryIO_Reader BIO(outFile);
-    BIO.binaryIO_Reader(file, queue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
+    
 
     while (!queue.fileQueue.empty())
     {
