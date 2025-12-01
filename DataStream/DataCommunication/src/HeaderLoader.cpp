@@ -167,7 +167,7 @@ void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     // 解析下级文件数量
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
-    // 需要入队（BFS）
+    // 需要入队（BFS） 
     fs::path lastPath;
     fs::path newPath;
     if (!queue.empty())
