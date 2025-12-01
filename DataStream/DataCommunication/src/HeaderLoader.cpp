@@ -47,7 +47,8 @@ void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
 }
 void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
 {
-
+    if (offset == 0)
+        return;
     unsigned char flag = numsReader.readBinaryNums<unsigned char>();
 
     if (flag == '2')
@@ -70,42 +71,44 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
             throw std::runtime_error("Failed to read buffer");
         }
 
-        if (tempOffset == 0)
-            offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
-
-        std::cout<< readSize << " " << offset << "\n";
-
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        while (tempOffset > bufferPtr)
+        while (tempOffset > bufferPtr || readSize < BufferSize && readSize > 0) //(readSize<BufferSize)表示末尾块
         {
             while (countOfKidDirectory > 0 || bufferPtr == 0)
             {
-                if (tempOffset <= bufferPtr)
+                if (readSize <= bufferPtr)
                     return;
-                parser(tempOffset, bufferPtr,  filePathToScan, countOfKidDirectory);
+                parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
 
-                int a = 0;
-                if (tempOffset == 8193 && countOfDirec==7)
-                    a++;
+                // int a = 0;
+                // if (countOfDirec == 1166)
+                //     a++;
             }
 
             if (!queue.empty())
             {
-                countOfDirec++;//临时全局变量
-                std::cout << queue.front().first.getFullPath() <<" " <<countOfDirec<<" ";
+
+                // countOfDirec++; // 临时全局变量
+                // std::cout << queue.front().first.getName() << " " << countOfDirec << " " << queue.size() << " ";
+
                 queue.pop();
-                // if (!queue.empty()&&countOfKidDirectory==0)
-                countOfKidDirectory = queue.front().second;
+                if (!queue.empty())
+                    countOfKidDirectory = queue.front().second;
             }
+            else break;
         }
+        if (tempOffset == 0)
+            offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
+        // std::cout << "\n"
+        //           << readSize << " " << offset << "\n";
     }
     else
-        throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read flag");
+        throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
 }
-void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr,  std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
+void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
 {
-    if (tempOffset <= bufferPtr)
+    if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
     unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
@@ -125,7 +128,7 @@ void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffs
     }
     case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
     {
-        rootParser(bufferPtr,  filePathToScan);
+        rootParser(bufferPtr, filePathToScan);
         countOfKidDirectory = queue.front().second; // 启动递推
         break;
     }
@@ -152,7 +155,6 @@ void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &bufferPtr)
     // 记录等会需要回填的位置
     FileSize_uint compressedSizeOffset = bufferPtr;
     bufferPtr += sizeof(FileSize_uint);
-
 }
 void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
 {
@@ -173,13 +175,13 @@ void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
         lastPath = queue.front().first.getFullPath();
         newPath = lastPath / directoryName;
     }
-    // if (fs::exists(newPath))
-    // {
-    FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, newPath);
-    queue.push({directoryDetails, count});
-    // }
-    // else
-    //     throw std::runtime_error("directoryParser()-Error:No such path");
+    if (fs::exists(newPath))
+    {
+        FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, newPath);
+        queue.push({directoryDetails, count});
+    }
+    else
+        throw std::runtime_error("directoryParser()-Error:No such path");
 }
 
 void BinaryIO_Loader::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
@@ -200,7 +202,7 @@ void BinaryIO_Loader::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vecto
         if (fs::is_regular_file(fullPath))
         {
             bufferPtr += sizeof(SizeOfFlag_uint); // 步过文件标
-            fileParser(bufferPtr);  // 遇到文件直接处理，调用fileParser}
+            fileParser(bufferPtr);                // 遇到文件直接处理，调用fileParser}
         }
         else if (fs::is_directory(fullPath))
         {

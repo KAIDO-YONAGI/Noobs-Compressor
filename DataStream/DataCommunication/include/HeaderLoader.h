@@ -4,7 +4,7 @@
 #include "../include/FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
-static int countOfDirec = 0;//临时全局变量
+// static int countOfDirec = 0;//临时全局变量
 
 
 class FilePath_Loader
