@@ -11,7 +11,6 @@
 #include <queue>
 #include <map>
 
-//TODO: 需要维护当前线程数，并有返回线程数量的方法
 //TODO: 考虑日志与异常处理。
 
 /**
@@ -26,6 +25,7 @@
  * 该类封装了自定义线程类。提供对线程命名的功能。
  * 任务队列在线程类内部，使用管程封装。
  * 请在堆上创建并使用这个线程池
+ * 若一个线程池由多个线程管理，则get_thread_nums()不可用！
  * 
  * 变量:
  *     私有变量：
@@ -40,12 +40,13 @@
  *     new_thread(trd_name)：创建一个命名线程
  *     del_thread(trd_name)：销毁一个命名线程
  *     add_task(trd_name, task)：为命名线程添加任务
+ *     get_thread_nums(): 返回当前池内线程数量
  */
 
 class ThreadPool
 {
 public:
-    ThreadPool(int);
+    ThreadPool();
     ~ThreadPool();
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator=(const ThreadPool&) = delete;
@@ -63,7 +64,7 @@ public:
     void new_thread(const std::string& trd_name);
     void del_thread(const std::string& trd_name);
     template<typename T> void add_task(std::string trd_name, T&& task);
-
+    int get_thread_nums();
 };
 
 template<typename T>

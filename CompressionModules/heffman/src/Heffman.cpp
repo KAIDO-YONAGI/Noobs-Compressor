@@ -77,7 +77,7 @@ void Heffman::run_save_code_inTab(Hefftreenode* root){
     pathStack.pop();
 }
 
-void Heffman::encode(const int& thread_id, sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput = BitHandler()){
+void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput = BitHandler()){
     
     for(auto& c: in_block){
         bitoutput.handle(hashtab[c].code, hashtab[c].codelen, out_block);
@@ -98,7 +98,7 @@ void Heffman::findchar(Hefftreenode* now, unsigned char* result, uint8_t toward)
     }
 }
 
-void Heffman::decode(const int& thread_id, sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput = BitHandler()){
+void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput = BitHandler()){
     Hefftreenode *now = treeroot;
     std::vector<uint8_t> treepath(8);
     unsigned char *result = new unsigned char(NULL); 
@@ -115,4 +115,14 @@ void Heffman::decode(const int& thread_id, sfc::block_t& in_block, sfc::block_t&
         treepath.clear();
     }
     delete result;
+}
+
+Hefftreenode* Heffman::getTreeRoot()
+{
+    return treeroot;
+}
+
+void Heffman::receiveTreRroot(Hefftreenode* root)
+{
+    treeroot = root;
 }

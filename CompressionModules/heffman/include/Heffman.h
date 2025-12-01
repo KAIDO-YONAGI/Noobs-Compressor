@@ -1,7 +1,7 @@
 #ifndef HEFFMAN_H
 #define HEFFMAN_H
 
-#include "../hefftype/Heffman_type.h"
+#include "../../hefftype/Heffman_type.h"
 #include "../../Schedule/include/Worker.h"
 #include <memory>
 
@@ -34,7 +34,6 @@
  *     
  */
 
-
 class Heffman {
 
 public:
@@ -42,30 +41,29 @@ public:
     ~Heffman();
 
     void statistic_freq(const int& thread_id, sfc::block_t&);
-    void encode(const int&, sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
-    void decode(const int&, sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
+    void encode(const sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
+    void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
+    void merge_ttabs();
+    void gen_hefftree();
+    void save_code_inTab();
+
+    Hefftreenode* getTreeRoot();
+    void receiveTreRroot(Hefftreenode*);
 
 private:
     using Datablk_ptr = sfc::block_t*;
 
     uint64_t bytecount;
 
-    //sfc::blocks_t* data_blocks;
-    //sfc::blocks_t* data_blocks_out; 
     Heffmaps thread_tabs;
     Heffmap hashtab;
     Hefftreenode* treeroot;
     PathStack pathStack;
 
-    void merge_ttabs();
-
-    void gen_hefftree();
     std::unique_ptr<Minheap> gen_minheap();
-    void save_code_inTab();
     void run_save_code_inTab(Hefftreenode* root);
     void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
-    void output_codeTab();
-
+    //FIXME: 销毁树的方法，每个文件结束后需要调用
 };
 
 #endif //HEFFMAN_H
