@@ -73,7 +73,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
 
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        while (tempOffset > bufferPtr || readSize < BufferSize && readSize > 0) //(readSize<BufferSize)表示末尾块
+        while (readSize>bufferPtr) //(readSize<BufferSize)表示末尾块
         {
             while (countOfKidDirectory > 0 || bufferPtr == 0)
             {
@@ -90,7 +90,9 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
             {
 
                 // countOfDirec++; // 临时全局变量
-                // std::cout << queue.front().first.getName() << " " << countOfDirec << " " << queue.size() << " ";
+                std::cout << queue.front().first.getName() << " " <<
+                //  countOfDirec <<
+                  " " << queue.size() << " ";
 
                 queue.pop();
                 if (!queue.empty())
