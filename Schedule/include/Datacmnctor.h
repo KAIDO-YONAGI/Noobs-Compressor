@@ -23,17 +23,17 @@
  * 
  * get_input_blocks()：获取输入块列表的指针，只读
  * get_output_blocks()：获取输出块列表的指针，可写
- * ready_put_value()：某模块准备输出时调用
- * get_value()：获取擦除类型，转型后可得到数据结构的指针，作读或写
+ * done()：算法模块完成对数据的读写后可调用，以善后或为
+ *         后续工作作准备
  */
 class Datacmnctor 
 {
 public:
     virtual ~Datacmnctor() = default;
 
-    //FIXME: get_input_blocks返回值改为只读
-    virtual const sfc::blocks_t* get_input_blocks() = 0;
+    virtual sfc::blocks_t* get_input_blocks() = 0;
     virtual sfc::blocks_t* get_output_blocks() = 0;
+    virtual void done() = 0;
     //virtual void ready_put_value() = 0;
     //virtual Type& get_value() = 0;
 };
