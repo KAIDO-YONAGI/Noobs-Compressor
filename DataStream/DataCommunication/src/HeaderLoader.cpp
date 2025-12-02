@@ -82,17 +82,19 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
                 parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
 
                 // int a = 0;
-                // if (countOfDirec == 1166)
+                // if (countOfDirec == 300)
                 //     a++;
             }
 
             if (!queue.empty())
             {
 
-                // // countOfDirec++; // 临时全局变量
-                // std::cout << queue.front().first.getName() << " " <<
-                //     //  countOfDirec <<
-                //     " " << queue.size() << " ";
+                // countOfDirec++; // 临时全局变量
+                // std::cout
+                // << queue.front().first.getFullPath()
+                // << " " << countOfDirec
+                // << " " << queue.size()
+                // << "\n";
 
                 queue.pop();
                 if (!queue.empty())
@@ -103,8 +105,11 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
         }
         if (tempOffset == 0)
             offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
-        // std::cout << "\n"
-        //           << readSize << " " << offset << "\n";//调试
+        // std::cout
+        //     << "\n"
+        //     << readSize
+        //     << " " << offset 
+        //     << "\n"; // 调试
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
@@ -158,6 +163,9 @@ void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &bufferPtr)
     // 记录等会需要回填的位置
     FileSize_uint compressedSizeOffset = bufferPtr;
     bufferPtr += sizeof(FileSize_uint);
+    // std::cout<<fileName<<"  ";
+    // if(fileName=="AirDroid.lnk")
+    //     return;
 }
 void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
 {
