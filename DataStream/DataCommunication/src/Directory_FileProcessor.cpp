@@ -20,7 +20,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
         DirectoryOffsetSize_uint offset = HeaderSize;
 
-        BIO.makeSeparatedStandard(outFile);
+        BIO.blankSeparatedStandard(outFile);
 
         BIO.writeLogicalRoot(logicalRoot, length, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
         BIO.writeRoot(file, filePathToScan, tempOffset);       // 写入文件根目录
@@ -65,21 +65,35 @@ void BinaryIO_Reader::binaryIO_Reader(FilePath &file, QueueInterface &queue, Dir
     try
     {
 
-        for (auto &entry : fs::directory_iterator(file.getFilePathToScan()))
+        for (const fs::directory_entry &entry : fs::directory_iterator(file.getFilePathToScan()))
         {
-            bool FileOrDirec;
+            bool FileOrDirec = true;
+            std::string name;
+            fs::path fullPath;
+            FileNameSize_uint sizeOfName;
+            FileSize_uint fileSize;
             if (entry.is_regular_file())
+            {
                 FileOrDirec = true;
+                fileSize = entry.file_size();
+            }
+
             else if (entry.is_directory())
+            {
                 FileOrDirec = false;
+                fileSize = 0;
+            }
+
+            else if (entry.is_symlink())
+            {
+                FileOrDirec = false;
+                fileSize = 1; // 大小为一，仅表示是符号链接
+            }
             else
-                continue;//禁用两个基本文件类型之外的文件类型
-            std::string name = entry.path().filename().string();
-            auto fullPath = entry.path();
-            FileNameSize_uint sizeOfName = name.size();
-
-            FileSize_uint fileSize = FileOrDirec ? entry.file_size() : 0;
-
+                continue; // 禁用三个基本文件类型之外的文件类型
+            name = entry.path().filename().string();
+            fullPath = entry.path();
+            sizeOfName = name.size();
             FileDetails details(
                 name,
                 sizeOfName,
@@ -95,7 +109,7 @@ void BinaryIO_Reader::binaryIO_Reader(FilePath &file, QueueInterface &queue, Dir
         std::cerr << "binaryIO_Reader()-Error: " << e.what() << "\n";
     }
 }
-
+// 识别存储标准并且分发到各个写入函数
 void BinaryIO_Reader::writeStorageStandard(FileDetails &details, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
     NumsWriter numWriter(outFile);
@@ -103,26 +117,31 @@ void BinaryIO_Reader::writeStorageStandard(FileDetails &details, QueueInterface 
     {
         writeFileStandard(details, tempOffset);
     }
-    else if (!details.getIsFile()) // 目录对应的处理
+    else if ((!details.getIsFile()) && (details.getFileSize() == 0)) // 目录对应的处理
     {
         FileCount_uint countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
         queue.fileQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
         writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
     }
+    else if ((!details.getIsFile()) && (details.getFileSize() == 1))
+    {
+        writeSymbolLinkStandard(details, tempOffset);
+    }
     if (tempOffset >= BufferSize) // 达到缓冲大小后写入分割标准
     {
 
         writeSeparatedStandard(tempOffset, offset);
         offset += tempOffset;
-        // 写入完毕后将当前相对位置（用多个存储协议偏移量累加维护的tempOffset）加到文件的总偏移量offset上，以维护整个偏移逻辑
+        // 写入完毕后将当前相对位置（用多个存储标准偏移量累加维护的tempOffset）加到文件的总偏移量offset上，以维护整个偏移逻辑
         tempOffset = 0; // 相对位置归零
 
         // 预留下一次回填的位置
-        makeSeparatedStandard(outFile);
+        blankSeparatedStandard(outFile);
         offset += SeparatedStandardSize; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
     }
 }
+// 目录标准写入函数
 void BinaryIO_Reader::writeDirectoryStandard(FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
     NumsWriter numWriter(outFile);
@@ -135,6 +154,7 @@ void BinaryIO_Reader::writeDirectoryStandard(FileDetails &details, FileCount_uin
     outFile.write(details.getName().c_str(), sizeOfName);
     numWriter.writeBinaryNums(count); // 写入文件数目
 }
+// 文件标准写入函数
 void BinaryIO_Reader::writeFileStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
     NumsWriter numWriter(outFile);
@@ -148,7 +168,7 @@ void BinaryIO_Reader::writeFileStandard(FileDetails &details, DirectoryOffsetSiz
     numWriter.writeBinaryNums(details.getFileSize());     // 写入文件大小
     numWriter.writeBinaryNums(FileSize_uint(0));          // 预留大小
 }
-
+// 分割标准写入函数（回填）
 void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
 {
     NumsWriter numWriter(outFile);
@@ -158,12 +178,30 @@ void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffse
     numWriter.writeBinaryNums(tempOffset);
     outFile.seekp(0, std::ios::end);
 }
-void BinaryIO_Reader::makeSeparatedStandard(std::ofstream &outFile)
+// 空分割标准写入函数
+void BinaryIO_Reader::blankSeparatedStandard(std::ofstream &outFile)
 {
     NumsWriter numWriter(outFile);
     outFile.write(SeparatedFlag, FlagSize);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
     numWriter.writeBinaryNums(IvSize_uint(0));
+}
+// 符号链接标准写入函数
+void BinaryIO_Reader::writeSymbolLinkStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
+{
+    NumsWriter numWriter(outFile);
+    FileNameSize_uint sizeOfName = details.getSizeOfName();
+    FileNameSize_uint sizeOfPath = details.getFullPath().string().size();
+
+    tempOffset += SymbolLinkStandardSize_Basic + sizeOfName + sizeOfPath;
+
+    outFile.write(SymbolLinkFlag, FlagSize);
+
+    numWriter.writeBinaryNums(sizeOfName);
+    numWriter.writeBinaryNums(sizeOfPath);
+
+    outFile.write(details.getName().c_str(), sizeOfName);
+    outFile.write(details.getFullPath().string().c_str(), sizeOfPath);
 }
 void BinaryIO_Reader::writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
@@ -210,14 +248,20 @@ void BinaryIO_Reader::writeRoot(FilePath &file, const std::vector<std::string> &
             rootPath      // 完整路径
         );
         BinaryIO_Reader BIO(outFile);
-        if (!rootDetails.getIsFile())
+        const fs::directory_entry entry(rootPath);
+        if (entry.is_regular_file())
+        {
+            BIO.writeFileStandard(rootDetails, tempOffset);
+        }
+        else if (entry.is_directory())
         {
             FileCount_uint count = BIO.countFilesInDirectory(rootPath);
             BIO.writeDirectoryStandard(rootDetails, count, tempOffset);
         }
-        else if (rootDetails.getIsFile())
+        else if (entry.is_symlink())
         {
-            BIO.writeFileStandard(rootDetails, tempOffset);
+            rootDetails.setFileSize(1);
+            BIO.writeSymbolLinkStandard(rootDetails, tempOffset);
         }
     }
 }
