@@ -1,23 +1,16 @@
-#include "../include/DoEncode.h"
+#include "../include/GetFreq.h"
 
-DoEncode::DoEncode(Heffman* heffcore):
-heffman(heffcore), in_blocks(NULL), out_blocks(NULL),
-tpool(new ThreadPool())
+inline GetFreq::GetFreq(Heffman* heffcore):
+    heffman(heffcore), tpool(new ThreadPool())
 { }
 
-DoEncode::~DoEncode()
+inline GetFreq::~GetFreq()
 { }
 
-void DoEncode::work(Datacmnctor* datacmnctor)
+void GetFreq::work(Datacmnctor *datacmnctor)
 {
     in_blocks = datacmnctor->get_input_blocks();
-    out_blocks = datacmnctor->get_output_blocks();
     if(in_blocks == NULL)
-    {
-        //TODO: 异常处理
-        return;
-    }
-    if(out_blocks == NULL)
     {
         //TODO: 异常处理
         return;
@@ -29,9 +22,10 @@ void DoEncode::work(Datacmnctor* datacmnctor)
     }
 
     if(in_blocks->size() == 1)
-        heffman->encode(in_blocks->at(0), out_blocks->at(0));
-    else
+        heffman->statistic_freq(0, in_blocks->at(0));
+    else 
     {
+        //多线程（需要阻塞主线程）
         std::vector<std::future<void>> results;
         std::vector<ptask_t> tasks;
         check_tpool();
@@ -42,14 +36,14 @@ void DoEncode::work(Datacmnctor* datacmnctor)
             results.push_back(task->get_future());
             tpool->add_task(std::to_string(i), task);
         }
-        for(auto& result: results)
+        for(auto& result : results)
         {
             result.get();
         }
     }
 }
 
-void DoEncode::check_tpool()
+void GetFreq::check_tpool()
 {
     int thread_nums = tpool->get_thread_nums();
     if(in_blocks->size() == thread_nums)
@@ -70,15 +64,15 @@ void DoEncode::check_tpool()
     }
 }
 
-void DoEncode::work(const int& thread_id)
+void GetFreq::work(const int& i)
 {
-    heffman->encode(in_blocks->at(thread_id), out_blocks->at(thread_id));
+    heffman->statistic_freq(i, in_blocks->at(i)); 
 }
 
-DoEncode::ptask_t DoEncode::gen_task(const int& thread_id)
+GetFreq::ptask_t GetFreq::gen_task(const int& i)
 {
     std::packaged_task<void()> *task_ptr = new std::packaged_task<void()>(
-        [this, thread_id] { this->work(thread_id); }
+        [this, i] { this->work(i); }
     );
     ptask_t task(task_ptr);
     return task;
