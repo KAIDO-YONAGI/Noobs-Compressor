@@ -35,7 +35,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
                 BIO.binaryIO_Reader(file, queue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
             }
         }
-        scanFlow(file,tempOffset,offset);
+        scanFlow(file, tempOffset, offset);
     }
     catch (const std::exception &e)
     {
@@ -45,9 +45,8 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
 
 void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
-    
+
     BinaryIO_Reader BIO(outFile);
-    
 
     while (!queue.fileQueue.empty())
     {
@@ -68,18 +67,24 @@ void BinaryIO_Reader::binaryIO_Reader(FilePath &file, QueueInterface &queue, Dir
 
         for (auto &entry : fs::directory_iterator(file.getFilePathToScan()))
         {
+            bool FileOrDirec;
+            if (entry.is_regular_file())
+                FileOrDirec = true;
+            else if (entry.is_directory())
+                FileOrDirec = false;
+            else
+                continue;//禁用两个基本文件类型之外的文件类型
             std::string name = entry.path().filename().string();
-
             auto fullPath = entry.path();
             FileNameSize_uint sizeOfName = name.size();
-            bool isRegularFile = entry.is_regular_file();
-            FileSize_uint fileSize = isRegularFile ? entry.file_size() : 0;
+
+            FileSize_uint fileSize = FileOrDirec ? entry.file_size() : 0;
 
             FileDetails details(
                 name,
                 sizeOfName,
                 fileSize,
-                isRegularFile,
+                FileOrDirec,
                 fullPath); // 创建details
 
             writeStorageStandard(details, queue, tempOffset, offset);
@@ -100,10 +105,10 @@ void BinaryIO_Reader::writeStorageStandard(FileDetails &details, QueueInterface 
     }
     else if (!details.getIsFile()) // 目录对应的处理
     {
-        FileCount_uint countOfThisHeader = countFilesInDirectory(details.getFullPath());
+        FileCount_uint countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
-        queue.fileQueue.push({details, countOfThisHeader}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
-        writeDirectoryStandard(details, countOfThisHeader, tempOffset);
+        queue.fileQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
+        writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
     }
     if (tempOffset >= BufferSize) // 达到缓冲大小后写入分割标准
     {
@@ -194,15 +199,15 @@ void BinaryIO_Reader::writeRoot(FilePath &file, const std::vector<std::string> &
 
         std::string rootName = rootPath.filename().string();
         FileNameSize_uint rootNameSize = rootName.size();
-        bool isRegularFile = fs::is_regular_file(rootPath);
-        FileSize_uint fileSize = isRegularFile ? fs::file_size(rootPath) : 0;
+        bool FileOrDirec = fs::is_regular_file(rootPath);
+        FileSize_uint fileSize = FileOrDirec ? fs::file_size(rootPath) : 0;
 
         FileDetails rootDetails(
-            rootName,      // 目录名 (如 "Folder")
-            rootNameSize,  // 名称长度
-            fileSize,      // 文件大小(如果是文件)
-            isRegularFile, // 是否为常规文件
-            rootPath       // 完整路径
+            rootName,     // 目录名 (如 "Folder")
+            rootNameSize, // 名称长度
+            fileSize,     // 文件大小(如果是文件)
+            FileOrDirec,  // 是否为常规文件
+            rootPath      // 完整路径
         );
         BinaryIO_Reader BIO(outFile);
         if (!rootDetails.getIsFile())

@@ -28,8 +28,8 @@ void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
 
             buffer.clear();
             loadBySepratedFlag(numsReader, offset, filePathToScan, countOfKidDirectory);
-            if (1)
-                continue;
+            // if (1)
+            //     continue;//调试
             // 最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
         }
 
@@ -73,7 +73,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
 
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        while (readSize>bufferPtr) //(readSize<BufferSize)表示末尾块
+        while (readSize > bufferPtr) //(readSize<BufferSize)表示末尾块
         {
             while (countOfKidDirectory > 0 || bufferPtr == 0)
             {
@@ -89,21 +89,22 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
             if (!queue.empty())
             {
 
-                // countOfDirec++; // 临时全局变量
-                std::cout << queue.front().first.getName() << " " <<
-                //  countOfDirec <<
-                  " " << queue.size() << " ";
+                // // countOfDirec++; // 临时全局变量
+                // std::cout << queue.front().first.getName() << " " <<
+                //     //  countOfDirec <<
+                //     " " << queue.size() << " ";
 
                 queue.pop();
                 if (!queue.empty())
                     countOfKidDirectory = queue.front().second;
             }
-            else break;
+            else
+                break;
         }
         if (tempOffset == 0)
             offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
         // std::cout << "\n"
-        //           << readSize << " " << offset << "\n";
+        //           << readSize << " " << offset << "\n";//调试
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
@@ -169,7 +170,7 @@ void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     // 解析下级文件数量
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
-    // 需要入队（BFS） 
+    // 需要入队（BFS）
     fs::path lastPath;
     fs::path newPath;
     if (!queue.empty())
