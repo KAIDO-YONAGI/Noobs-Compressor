@@ -81,6 +81,6 @@ void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::s
     catch (const std::exception &e)
     {
         std::cerr << e.what() << std::endl;
-        throw; // 重新抛出异常以便上层处理
+        throw (e.what()); // 重新抛出异常以便上层处理
     }
 }

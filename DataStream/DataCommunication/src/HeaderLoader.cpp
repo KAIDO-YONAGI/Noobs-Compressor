@@ -90,11 +90,11 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
             {
 
                 // countOfDirec++; // 临时全局变量
-                // std::cout
-                // << queue.front().first.getFullPath()
+                std::cout
+                << queue.front().first.getFullPath()
                 // << " " << countOfDirec
-                // << " " << queue.size()
-                // << "\n";
+                << " " << queue.size()
+                << "\n";
 
                 queue.pop();
                 if (!queue.empty())
@@ -126,6 +126,7 @@ void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffs
     {
         fileParser(bufferPtr);
         countOfKidDirectory--;
+        // countOfDirec++;
         break;
     }
     case '0':
@@ -143,7 +144,6 @@ void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffs
 
     default:
     {
-
         throw std::runtime_error("parser()-Error:Failed to read flag");
         break;
     }
@@ -213,7 +213,7 @@ void BinaryIO_Loader::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vecto
         if (fs::is_regular_file(fullPath))
         {
             bufferPtr += sizeof(SizeOfFlag_uint); // 步过文件标
-            fileParser(bufferPtr);                // 遇到文件直接处理，调用fileParser}
+            fileParser(bufferPtr);                // 遇到文件直接处理，调用fileParser
         }
         else if (fs::is_directory(fullPath))
         {
@@ -228,10 +228,4 @@ void BinaryIO_Loader::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vecto
             queue.push({directoryDetails, count});
         }
     }
-}
-void dataLoaderForHuffmanCompression(fs::path inParh)
-{
-    std::ifstream inFile(inParh, std::ios::binary);
-    if (!inFile)
-        throw std::runtime_error("dataLoaderForHuffmanCompression()-Error:Failed to open inFile");
 }

@@ -7,9 +7,12 @@
 //     std::string outPutFilePath, logicalRoot;
 
 //     // 假装是gui获取的，多个文件（目录）
-//     filePathToScan.push_back("D:\\1gal");
-//     filePathToScan.push_back("D:\\1gal\\TEST");
-//     filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
+//     // filePathToScan.push_back("D:\\1gal");
+//     // filePathToScan.push_back("D:\\1gal\\TEST");
+//     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
+//     filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
+//     filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\Secure Files Compressor");
+
 //     outPutFilePath = "挚爱的时光.bin";
 //     logicalRoot = "YONAGI";
 
@@ -32,14 +35,16 @@ int main()
 {
     Transfer transfer;
     std::vector<std::string> filePathToScan;
-    std::string outPutFilePath, logicalRoot,inPath;
+    std::string outPutFilePath, logicalRoot, inPath;
 
-    filePathToScan.push_back("D:\\1gal");
-    filePathToScan.push_back("D:\\1gal\\TEST");
-    filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
+    // filePathToScan.push_back("D:\\1gal");
+    // filePathToScan.push_back("D:\\1gal\\TEST");
+    // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
+    filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
+    filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\Secure Files Compressor");
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
-    inPath ="C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
+    inPath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
 
     fs::path loadPath = transfer.transPath(inPath);
     std::ifstream inFile(loadPath, std::ios::binary);
