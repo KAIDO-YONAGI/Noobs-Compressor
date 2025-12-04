@@ -1,5 +1,5 @@
 #include "../include/HeaderLoader.h"
-
+#include "../include/Parser.hpp"
 void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
 {
     try
@@ -49,7 +49,10 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
 {
     if (offset == 0)
         return;
+
+    Parser paserForLoader(buffer,queue);
     unsigned char flag = numsReader.readBinaryNums<unsigned char>();
+
 
     if (flag == '2')
     {
@@ -79,22 +82,23 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
             {
                 if (readSize <= bufferPtr)
                     return;
-                parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
-
+                std::pair<fs::path, char> result=paserForLoader.parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
+                //bufferPtr只在parser内自增，tempOffset需要调用模块自行管理
+                // std::cout<<result.first<<result.second<<countOfD_F++;
                 // int a = 0;
-                // if (countOfDirec == 300)
+                // if (countOfD_F == 300)
                 //     a++;
             }
 
             if (!queue.empty())
             {
 
-                // countOfDirec++; // 临时全局变量
+                // countOfD_F++; // 临时全局变量
                 std::cout
-                << queue.front().first.getFullPath()
-                // << " " << countOfDirec
-                << " " << queue.size()
-                << "\n";
+                    << queue.front().first.getFullPath()
+                    // << " " << countOfD_F
+                    << " " << queue.size()
+                    << "\n";
 
                 queue.pop();
                 if (!queue.empty())
@@ -108,124 +112,9 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
         // std::cout
         //     << "\n"
         //     << readSize
-        //     << " " << offset 
+        //     << " " << offset
         //     << "\n"; // 调试
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
-}
-void BinaryIO_Loader::parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
-{
-    if (tempOffset <= bufferPtr && tempOffset != 0)
-        return;
-
-    unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
-    switch (D_F_flag)
-    {
-    case '1':
-    {
-        fileParser(bufferPtr);
-        countOfKidDirectory--;
-        // countOfDirec++;
-        break;
-    }
-    case '0':
-    {
-        directoryParser(bufferPtr);
-        countOfKidDirectory--;
-        break;
-    }
-    case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
-    {
-        rootParser(bufferPtr, filePathToScan);
-        countOfKidDirectory = queue.front().second; // 启动递推
-        break;
-    }
-
-    default:
-    {
-        throw std::runtime_error("parser()-Error:Failed to read flag");
-        break;
-    }
-    }
-}
-void BinaryIO_Loader::fileParser(DirectoryOffsetSize_uint &bufferPtr)
-{
-    // 解析文件名偏移量
-    // 解析文件名，后续拼接为绝对路径之后交给数据读取类读取数据块
-    FileNameSize_uint fileNameSize = 0;
-    std::string fileName;
-    fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
-
-    // 解析文件原大小
-    FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
-
-    // 记录等会需要回填的位置
-    FileSize_uint compressedSizeOffset = bufferPtr;
-    bufferPtr += sizeof(FileSize_uint);
-    // std::cout<<fileName<<"  ";
-    // if(fileName=="AirDroid.lnk")
-    //     return;
-}
-void BinaryIO_Loader::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
-{
-    // 解析目录名偏移量
-    // 解析目录名，后续拼接为绝对路径之后入队
-    FileNameSize_uint directoryNameSize = 0;
-    std::string directoryName;
-    fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
-
-    // 解析下级文件数量
-    FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
-
-    // 需要入队（BFS）
-    fs::path lastPath;
-    fs::path newPath;
-    if (!queue.empty())
-    {
-        lastPath = queue.front().first.getFullPath();
-        newPath = lastPath / directoryName;
-    }
-    if (fs::exists(newPath))
-    {
-        FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, newPath);
-        queue.push({directoryDetails, count});
-    }
-    else
-        throw std::runtime_error("directoryParser()-Error:No such path");
-}
-
-void BinaryIO_Loader::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
-{
-
-    FileNameSize_uint directoryNameSize = 0;
-    std::string directoryName;
-    fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
-    // 解析下级文件数量
-    FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
-
-    if (count != filePathToScan.size()) // 检验数量
-        throw std::runtime_error("rootParser()-Error:Failed to match RootDirectory nums");
-
-    for (std::string &path : filePathToScan)
-    {
-        fs::path fullPath = transfer.transPath(path);
-        if (fs::is_regular_file(fullPath))
-        {
-            bufferPtr += sizeof(SizeOfFlag_uint); // 步过文件标
-            fileParser(bufferPtr);                // 遇到文件直接处理，调用fileParser
-        }
-        else if (fs::is_directory(fullPath))
-        {
-            bufferPtr += sizeof(SizeOfFlag_uint); // 步过文件标
-            FileNameSize_uint directoryNameSize = 0;
-            std::string directoryName;
-            fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
-            // 解析下级文件数量
-            FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
-
-            FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
-            queue.push({directoryDetails, count});
-        }
-    }
 }
