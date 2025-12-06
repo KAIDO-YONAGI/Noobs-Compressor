@@ -14,6 +14,7 @@ using namespace std;
 class Aes {
 private:
     int w[44];
+    uint8_t iv[16];
     int getLeft4Bit(int num);
     int getRight4Bit(int num);
     int getNumFromSBox(int index);
@@ -38,14 +39,15 @@ private:
     void addRoundTowArray(int aArray[4][4], int bArray[4][4]);
     void getArrayFrom4W(int i, int array[4][4]);
     void hash_to_16bytes(const char* input, uint8_t output[16]);
-
+    void aes(char *p, int plen);
+    void deAes(char *c, int clen);
 public:
-    Aes();
+    Aes()=default;
+    void setKey(const char* key);
     int modeChoose();
     void processFileAES(const string& inputFile, const string& outputFile, 
                        const char* aes_key, bool encrypt);
-    void aes(char *p, int plen, const char *key);
-    void deAes(char *c, int clen, const char *key);
+    
 };
 
 

@@ -1,6 +1,5 @@
 // ToolClasses.h
-#ifndef TOOLCLASSES_HPP
-#define TOOLCLASSES_HPP
+#pragma once
 
 #include "../include/FileLibrary.h"
 #include "../include/FileDetails.h"
@@ -29,25 +28,70 @@ public:
         return ws;
     }
 
-    fs::path _getPath(const std::string &p)
+    fs::path transPath(const std::string &p)
     {
         std::wstring wPath = convertToWString(p);
         return fs::path(wPath);
     }
 };
 
-class MagicNumWriter
+class NumsWriter
 {
+private:
+    std::ofstream &file;
+
 public:
-    MagicNumWriter() = default;
+    NumsWriter(std::ofstream &file) : file(file) {};
+
     template <typename T>
-    void write_binary_le(std::ofstream &file, T value)
+    void writeBinaryNums(T value)
     {
-        file.write(reinterpret_cast<char *>(&value), sizeof(T)); //不做类型检查，直接进行类型转换
+        if (!file)
+            throw std::runtime_error("writeBinaryNums() Error-noFile");
+        // 编译时检查
+
+        static_assert(std::is_trivially_copyable_v<T>,
+                      "Cannot write non-trivially-copyable type");
+        static_assert(!std::is_pointer_v<T>,
+                      "Cannot safely write raw pointers");
+        static_assert(!std::is_polymorphic_v<T>,
+                      "Cannot safely write polymorphic types");
+        if (!file.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        {
+            throw std::runtime_error("writeBinaryNums()Error-Failed to write");
+        }
     }
-    void appendMagicStatic(std::ofstream &outFile)
+
+    void appendMagicStatic()
     {
-        write_binary_le(outFile, MagicNum);
+        writeBinaryNums(MagicNum);
+    }
+};
+class NumsReader
+{
+private:
+    std::ifstream &file;
+
+public:
+    NumsReader(std::ifstream &file) : file(file) {};
+    template <typename T>
+    T readBinaryNums()
+    {
+        if (!file)
+            throw std::runtime_error("readBinaryNums() Error-noFile");
+        T value;
+        static_assert(std::is_trivially_copyable_v<T>,
+                      "Cannot write non-trivially-copyable type");
+        static_assert(!std::is_pointer_v<T>,
+                      "Cannot safely write raw pointers");
+        static_assert(!std::is_polymorphic_v<T>,
+                      "Cannot safely write polymorphic types");
+
+        if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
+        {
+            throw std::runtime_error("readBinaryNums()Error-Failed to read");
+        }
+        return value;
     }
 };
 
@@ -147,21 +191,23 @@ class Locator
 {
 public:
     Locator() = default;
-    void offsetLocator(std::ofstream &File, FileSize_uint offset)
+    void offsetLocator(std::ofstream &outFile, FileSize_uint offset)
     {
-        File.seekp(static_cast<std::streamoff>(offset), File.beg);
+        outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
     }
-    void offsetLocator(std::ifstream &File, FileSize_uint offset)
+    void offsetLocator(std::ifstream &inFile, FileSize_uint offset)
     {
-        File.seekg(static_cast<std::streamoff>(offset), File.beg);
+        inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
     }
 
-    void offsetLocator(std::fstream &File, FileSize_uint offset) = delete;
+    void offsetLocator(std::fstream &file, FileSize_uint offset) = delete;
 
-    FileSize_uint getFileSize(const fs::path &filePathToScan)
+    FileSize_uint getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
     {
         try
         {
+            outFile.flush();
+
             return fs::file_size(filePathToScan);
         }
         catch (fs::filesystem_error &e)
@@ -171,5 +217,3 @@ public:
         }
     }
 };
-
-#endif

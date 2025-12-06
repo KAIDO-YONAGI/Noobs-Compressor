@@ -1,6 +1,5 @@
 // Directory_FileWriter.h
-#ifndef FILEWRITER_H
-#define FILEWRITER_H
+#pragma once
 
 #include "../include/FileLibrary.h"
 #include "../include/Directory_FileProcessor.h"
@@ -31,7 +30,7 @@ public:
 
 class HeaderWriter
 {
-    std::unique_ptr<HeaderWriter_Interface> writer; //智能指针，支持运行时切换模式
+    std::unique_ptr<HeaderWriter_Interface> writer; // 智能指针，支持运行时切换模式
 
 public:
     HeaderWriter() : writer(std::make_unique<HeaderWriter_v0>()) {} // 默认使用 v0 版本
@@ -50,4 +49,3 @@ public:
         writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };
 };
-#endif

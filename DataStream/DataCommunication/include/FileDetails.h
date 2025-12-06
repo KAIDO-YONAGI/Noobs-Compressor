@@ -1,6 +1,5 @@
 // FileDetails.h
-#ifndef FILEDETAILS_H
-#define FILEDETAILS_H
+#pragma once
 
 #include "../include/FileLibrary.h"
 
@@ -14,15 +13,14 @@ private:
     fs::path fullPath;
 
 public:
-    FileDetails() = default;
+    FileDetails(std::string name, FileNameSize_uint sizeOfName, FileSize_uint fileSize, bool isFile, fs::path &fullPath)
+        : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
     const std::string &getName() { return name; }
     const fs::path &getFullPath() { return fullPath; }
     const FileNameSize_uint getSizeOfName() { return sizeOfName; }
     const FileSize_uint getFileSize() { return fileSize; }
     const bool getIsFile() { return isFile; }
-
-    FileDetails(std::string name, FileNameSize_uint sizeOfName, FileSize_uint fileSize, bool isFile, fs::path &fullPath)
-        : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
+    void setFileSize(FileSize_uint fileSize) { this->fileSize = fileSize; }
 };
 
 class FilePath
@@ -45,4 +43,3 @@ public:
     const fs::path &getOutPutFilePath() { return outPutFilePath; }
     const fs::path &getFilePathToScan() { return filePathToScan; }
 };
-#endif
