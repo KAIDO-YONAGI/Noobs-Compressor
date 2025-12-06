@@ -24,7 +24,9 @@ namespace sfc
         block_t& at(int);
         void clear();
         std::vector<block_t>::iterator begin();
+        std::vector<block_t>::const_iterator cbegin();
         std::vector<block_t>::iterator end();
+        std::vector<block_t>::const_iterator cend();
         void check_and_fix();
 
     private:

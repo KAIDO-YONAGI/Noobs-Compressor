@@ -7,7 +7,6 @@
 #include "../../hefftype/Heffman_type.h"
 #include "../../../Schedule/include/Datacmnctor.h"
 #include "../../Schedule/include/Worker.h"
-#include "../../../namespace/namespace_sfc.h"
 
 /**
  * 赫夫曼功能模块之一：生成编码表。
