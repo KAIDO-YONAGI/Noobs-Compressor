@@ -11,24 +11,29 @@
  * 含一组sfc::block_t
  * TODO: 可以决定是否返回const块
  */
-class DataBlocks
+namespace sfc
 {
-public:
-    DataBlocks(int);
-    ~DataBlocks();
+    using block_t = std::vector<unsigned char>;
+    class DataBlocks
+    {
+    public:
+        DataBlocks(int);
+        ~DataBlocks();
 
-    int size();
-    sfc::block_t& at(int);
-    void clear();
-    std::vector<sfc::block_t>::iterator begin();
-    std::vector<sfc::block_t>::iterator end();
-    void check_and_fix();
+        int size();
+        block_t& at(int);
+        void clear();
+        std::vector<block_t>::iterator begin();
+        std::vector<block_t>::iterator end();
+        void check_and_fix();
 
-private:
-    std::vector<sfc::block_t> blocks;
-    
-};
+    private:
+        std::vector<block_t> blocks;
+        
+    };
 
+    using blocks_t = DataBlocks;
+}
 /**
  * 比特流数据块列表管理者
  * 包含两个块列表，轮转in块和out块的属性
@@ -45,7 +50,7 @@ public:
     void done() override;
 
 private:
-    DataBlocks blockss[2];
+    sfc::DataBlocks blockss[2];
     uint8_t which_out;
 
     void rotate_io();

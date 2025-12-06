@@ -39,8 +39,8 @@ Hefftreenode* LoadHeffcodeTab::spawn_tree(sfc::block_t& in_block)
         }
         else if(*iter_ib == 'l')
         {
-            node = new Hefftreenode(*++iter_ib, 0, true);      
-            while(connectNode(stack.top(), node))
+            node = new Hefftreenode(*++iter_ib, 0, true);
+            while(!stack.empty() && connectNode(stack.top(), node))
             {
                 stack.pop();
             }
@@ -49,6 +49,7 @@ Hefftreenode* LoadHeffcodeTab::spawn_tree(sfc::block_t& in_block)
         {
             //TODO: 解析编码表异常，创建节点失败
         }
+        ++iter_ib;
     }
 
     while(stack.size() != 1)

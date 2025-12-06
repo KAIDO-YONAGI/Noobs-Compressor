@@ -101,16 +101,15 @@ void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out
    }
 }
 
-void BitHandler::handle(unsigned char byte, std::vector<uint8_t> path){
-   uint8_t gopath = 0;
+void BitHandler::handle(unsigned char byte_in, std::vector<uint8_t>& path){
    uint8_t valbit = 7;
    if(bytecount == 1){
-      valbit = valued_bits;
+      valbit = valued_bits - 1;
    }
-   for(int i=valbit; i>=0; --i)
+   for(int i = valbit; i >= 0; --i)
    {
-      gopath = gopath | (byte >> i);
-      path.push_back(gopath);
+      uint8_t bit = (byte_in >> i) & 1;
+      path.push_back(bit);
    }
    --bytecount;
 }
