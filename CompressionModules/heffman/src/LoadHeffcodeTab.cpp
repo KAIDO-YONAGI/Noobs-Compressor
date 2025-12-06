@@ -4,9 +4,6 @@ LoadHeffcodeTab::LoadHeffcodeTab(Heffman* heffcore):
 heffman(heffcore)
 { }
 
-LoadHeffcodeTab::~LoadHeffcodeTab()
-{ }
-
 void LoadHeffcodeTab::work(Datacmnctor* datacmnctor)
 {
     in_blocks = datacmnctor->get_input_blocks();

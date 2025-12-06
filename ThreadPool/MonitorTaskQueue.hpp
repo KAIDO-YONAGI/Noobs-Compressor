@@ -1,10 +1,10 @@
 #ifndef MONITORTASKQUEUE_H
 #define MONITORTASKQUEUE_H
 
-#include "../namespace/namespace_sfc.h"
-
+#include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 
 namespace sfc
 {
@@ -52,7 +52,7 @@ template<typename T>
 void MonitorTaskQueue::add_task(T&& task)
 {
     std::unique_lock<std::mutex> lock(mtx);
-    taskqueue.push(std::function<void>(std::forward<T>(task)));
+    taskqueue.push(std::function<void()>(std::forward<T>(task)));
     condition.notify_one();
 }
 

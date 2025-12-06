@@ -4,9 +4,6 @@ GenHeffcodeTab::GenHeffcodeTab(Heffman* heffcore):
 heffman(heffcore)
 { }
 
-GenHeffcodeTab::~GenHeffcodeTab()
-{ }
-
 void GenHeffcodeTab::work(Datacmnctor* datacmnctor)
 {
     out_blocks = datacmnctor->get_output_blocks();    

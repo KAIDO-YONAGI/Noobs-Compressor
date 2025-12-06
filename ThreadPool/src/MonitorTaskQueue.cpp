@@ -1,5 +1,9 @@
 #include "../MonitorTaskQueue.hpp"
 
+MonitorTaskQueue::~MonitorTaskQueue()
+{
+}
+
 std::function<void()> MonitorTaskQueue::get_task()
 {
     std::unique_lock<std::mutex> lock(mtx);

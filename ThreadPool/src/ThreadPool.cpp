@@ -3,6 +3,9 @@
 ThreadPool::ThreadPool()
 { }
 
+ThreadPool::~ThreadPool()
+{
+}
 
 void ThreadPool::new_thread(const std::string& trd_name)
 {

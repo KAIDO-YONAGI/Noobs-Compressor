@@ -1,10 +1,10 @@
 #include "../include/GetFreq.h"
 
-inline GetFreq::GetFreq(Heffman* heffcore):
+GetFreq::GetFreq(Heffman* heffcore):
     heffman(heffcore), tpool(new ThreadPool())
 { }
 
-inline GetFreq::~GetFreq()
+GetFreq::~GetFreq()
 { }
 
 void GetFreq::work(Datacmnctor *datacmnctor)
@@ -34,7 +34,7 @@ void GetFreq::work(Datacmnctor *datacmnctor)
             auto task = gen_task(i);
             tasks.push_back(task);
             results.push_back(task->get_future());
-            tpool->add_task(std::to_string(i), task);
+            tpool->add_task(std::to_string(i), [task]() { (*task)(); });
         }
         for(auto& result : results)
         {
