@@ -3,6 +3,7 @@
 
 #include "../../hefftype/Heffman_type.h"
 #include "../../Schedule/include/Worker.h"
+#include "../../../DataBlocks/DataBlocksManage.h"
 #include <memory>
 
 /**
@@ -62,8 +63,8 @@ private:
 
     std::unique_ptr<Minheap> gen_minheap();
     void run_save_code_inTab(Hefftreenode* root);
-    void findchar(Hefftreenode* now, unsigned char* result, uint8_t toward);
-    //FIXME: 销毁树的方法，每个文件结束后需要调用
+    void findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward);
+    void destroy_tree(Hefftreenode* node);
 };
 
 #endif //HEFFMAN_H

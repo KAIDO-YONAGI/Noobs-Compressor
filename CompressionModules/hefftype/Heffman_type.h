@@ -6,8 +6,7 @@
 #include <map>
 #include <vector>
 #include <cstdint>
-
-#include "../../namespace/namespace_sfc.h"
+#include "../../../DataBlocks/DataBlocksManage.h"
 
 using freq_t = uint64_t;
 using codelen_t = uint8_t;
@@ -91,8 +90,8 @@ struct Hefftreenode{
 
 struct CompareHeap
 {
-    bool operator()(const Hefftreenode& n1, const Hefftreenode& n2){
-        return n1.freq < n2.freq;
+    bool operator()(const Hefftreenode* n1, const Hefftreenode* n2){
+        return n1->freq < n2->freq;
     }
 };
 
@@ -132,8 +131,10 @@ struct BitHandler
     uint64_t bytecount;
     int valued_bits;
 
+    BitHandler() : byte(0), bitlen(0), bytecount(0), valued_bits(0) { }
+
     void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t&);
-    void handle(unsigned char, std::vector<uint8_t>);
+    void handle(unsigned char, std::vector<uint8_t>&);
     void handle_last();
 };
 

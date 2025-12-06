@@ -2,27 +2,27 @@
 
 //method of Chardata
 
-inline Chardata::Chardata(){
+Chardata::Chardata(){
    freq = 0;
    codelen = 0;
 }
 
-inline void Chardata::add(){
+void Chardata::add(){
    ++freq;
 }
 
-inline void Chardata::add(const Chardata& othercd){
+void Chardata::add(const Chardata& othercd){
    freq += othercd.freq;
 }
 
 //method of Hefftreenode
 
-inline Hefftreenode::Hefftreenode(
-   const unsigned char data, 
-   freq_t freq, 
-   struct Hefftreenode* left, 
-   struct Hefftreenode* right, 
-   bool isleaf=false
+Hefftreenode::Hefftreenode(
+   const unsigned char data,
+   freq_t freq,
+   struct Hefftreenode* left,
+   struct Hefftreenode* right,
+   bool isleaf
 ):
    data(data), freq(freq), left(left), right(right), isleaf(isleaf) { }
 
@@ -40,15 +40,26 @@ inline Hefftreenode::Hefftreenode(
 //method of pathStack
 
 void PathStack::push(int bit){
-   auto codeblock = codeblocks.at(codelen / 8);
-   codeblock = codeblock | (bit << (7 - codelen % 8));
+   // 确保codeblocks足够大
+   size_t index = codelen / 8;
+   if(index >= codeblocks.size()){
+      codeblocks.resize(index + 1, 0);
+   }
+
+   codeblocks[index] = codeblocks[index] | (bit << (7 - codelen % 8));
    ++codelen;
 }
 
 void PathStack::pop(){
-   auto codeblock = codeblocks.at(codelen / 8);
-   int offset = 9 - codelen % 8;
-   codeblock = codeblock >> offset << offset;
+   if(codelen == 0) return;
+
+   size_t index = (codelen - 1) / 8;
+   if(index < codeblocks.size()){
+      int offset = 9 - (codelen % 8);
+      if(offset <= 8){
+         codeblocks[index] = codeblocks[index] >> offset << offset;
+      }
+   }
    --codelen;
 }
 
@@ -62,38 +73,52 @@ void PathStack::writecode(Chardata& cdata){
 //method of BitHandler
 
 void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out_block){
-   for(auto codeblock: codeblocks)
-   {
-      while (codelen > 0)
-      {
-         uint8_t offset = 8 - bitlen;
-         if(codelen - offset >= 0){
-            byte = byte | (codeblock >> bitlen);
-            codeblock = codeblock << offset;
-            bitlen += offset;
-         } else {
-            byte = byte | (codeblock >> bitlen);
-            bitlen += offset - codelen;
-         }
-         codelen -= offset;
-         if(bitlen == 8){
+   uint8_t remaining_bits = codelen;  // 剩余比特数
+   uint8_t bit_pos = 0;  // 当前处理的比特位置（从codeblock中）
+
+   for(size_t i = 0; i < codeblocks.size() && remaining_bits > 0; ++i) {
+      uint8_t codeblock = codeblocks[i];
+      uint8_t bits_in_block = (i == codeblocks.size() - 1) ? remaining_bits : 8;
+
+      // 处理当前字节的比特
+      for(uint8_t bit_idx = 0; bit_idx < bits_in_block && remaining_bits > 0; ++bit_idx) {
+         // 从codeblock中提取比特（从高位到低位）
+         uint8_t bit = (codeblock >> (7 - bit_idx)) & 1;
+
+         // 将比特放入当前输出字节
+         byte = (byte << 1) | bit;
+         bitlen++;
+         remaining_bits--;
+
+         // 当输出字节满8位时，写出
+         if(bitlen == 8) {
             out_block.push_back(byte);
+            byte = 0;
+            bitlen = 0;
             ++bytecount;
          }
-      }      
+      }
    }
 }
 
-void BitHandler::handle(unsigned char byte, std::vector<uint8_t> path){
-   uint8_t gopath = 0;
+void BitHandler::handle(unsigned char byte_in, std::vector<uint8_t>& path){
    uint8_t valbit = 7;
    if(bytecount == 1){
-      valbit = valued_bits;
+      valbit = valued_bits - 1;
    }
-   for(int i=valbit; i>=0; --i)
+   for(int i = valbit; i >= 0; --i)
    {
-      gopath = gopath | (byte >> i);
-      path.push_back(gopath);
+      uint8_t bit = (byte_in >> i) & 1;
+      path.push_back(bit);
    }
    --bytecount;
+}
+
+void BitHandler::handle_last(){
+   // 处理最后不足8位的字节
+   if(bitlen > 0) {
+      // 将剩余的位左移补齐到8位
+      byte = byte << (8 - bitlen);
+      valued_bits = bitlen;
+   }
 }
