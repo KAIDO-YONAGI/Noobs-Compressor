@@ -6,6 +6,11 @@
 #include <mutex>
 #include <condition_variable>
 
+namespace sfc
+{
+    using task_queue = std::queue< std::function<void()> >;
+}
+
 /**
  * 任务队列的管程。
  * 封装了线程池每个线程的任务队列，以及

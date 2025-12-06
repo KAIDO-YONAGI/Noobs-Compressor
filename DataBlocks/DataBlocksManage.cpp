@@ -1,4 +1,5 @@
 #include "DataBlocksManage.h"
+using namespace sfc;
 
 DataBlocks::DataBlocks(int blocks_nums):
 blocks(blocks_nums)

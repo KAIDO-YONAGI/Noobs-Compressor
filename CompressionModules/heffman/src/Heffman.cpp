@@ -4,21 +4,26 @@
 //TODO: 检查方法中in_block使用完是否清空
 
 Heffman::Heffman(int thread_nums):
-    treeroot(NULL) 
-    { 
-        
+    treeroot(NULL)
+    {
+
     }
 
-void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
-{    
-    try {
-        Heffmap &threadTab = thread_tabs.at(thread_id);
-        for(auto& c: in_block)
-        {
-            threadTab[c].freq++;
-        }
-    } catch (std::out_of_range) {
+Heffman::~Heffman() {
+    destroy_tree(treeroot);
+}
 
+void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
+{
+    // 确保thread_tabs足够大
+    if (thread_id >= (int)thread_tabs.size()) {
+        thread_tabs.resize(thread_id + 1);
+    }
+
+    Heffmap &threadTab = thread_tabs[thread_id];
+    for(auto& c: in_block)
+    {
+        threadTab[c].freq++;
     }
 }
 
@@ -32,9 +37,10 @@ void Heffman::merge_ttabs(){
         while (iter != ttabend)
         {
             hashtab[iter->first].add(iter->second);
+            ++iter;  // 必须递增迭代器，否则会无限循环
         }
+        ++iter_ttabs;  // 递增外层迭代器
     }
-    
 }
 
 std::unique_ptr<Minheap> Heffman::gen_minheap(){
@@ -65,6 +71,8 @@ void Heffman::save_code_inTab(){
 }
 
 void Heffman::run_save_code_inTab(Hefftreenode* root){
+    if(root == NULL) return;
+
     if(root->isleaf == true){
         pathStack.writecode(hashtab[root->data]);
         pathStack.pop();
@@ -77,44 +85,49 @@ void Heffman::run_save_code_inTab(Hefftreenode* root){
     pathStack.pop();
 }
 
-void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput = BitHandler()){
-    
+void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput){
+
     for(auto& c: in_block){
         bitoutput.handle(hashtab[c].code, hashtab[c].codelen, out_block);
     }
+
+    // 处理最后不足8位的字节
+    bitoutput.handle_last();
+    if(bitoutput.bitlen > 0) {
+        out_block.push_back(bitoutput.byte);
+    }
 }
 
-void Heffman::findchar(Hefftreenode* now, unsigned char* result, uint8_t toward){
+void Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward){
     if(toward == 0){
         now = now->left;
     } else {
         now = now->right;
     }
-    if(now->isleaf == true){
-        *result = now->data;
+    if(now != NULL && now->isleaf == true){
+        result = now->data;
         now = treeroot;
-    } else {
-        result = NULL;
     }
 }
 
-void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput = BitHandler()){
+void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput){
     Hefftreenode *now = treeroot;
     std::vector<uint8_t> treepath(8);
-    unsigned char *result = new unsigned char(NULL); 
+    unsigned char result = 0;
     for(auto& c: in_block)
     {
         bitinput.handle(c, treepath);
         for(auto toward: treepath)
         {
+            if(now == NULL) break;
             findchar(now, result, toward);
-            if(result != NULL){
-                out_block.push_back(*result);
+            if(now->isleaf == true){
+                out_block.push_back(result);
+                now = treeroot;
             }
         }
         treepath.clear();
     }
-    delete result;
 }
 
 Hefftreenode* Heffman::getTreeRoot()
@@ -125,4 +138,11 @@ Hefftreenode* Heffman::getTreeRoot()
 void Heffman::receiveTreRroot(Hefftreenode* root)
 {
     treeroot = root;
+}
+
+void Heffman::destroy_tree(Hefftreenode* node) {
+    if(node == NULL) return;
+    destroy_tree(node->left);
+    destroy_tree(node->right);
+    delete node;
 }
