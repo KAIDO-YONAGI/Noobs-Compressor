@@ -91,8 +91,8 @@ struct Hefftreenode{
 
 struct CompareHeap
 {
-    bool operator()(const Hefftreenode& n1, const Hefftreenode& n2){
-        return n1.freq < n2.freq;
+    bool operator()(const Hefftreenode* n1, const Hefftreenode* n2){
+        return n1->freq < n2->freq;
     }
 };
 
