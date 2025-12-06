@@ -21,9 +21,4 @@ public:
     virtual void work(Datacmnctor*) = 0;
 };
 
-Worker::Worker()
-{
-
-}
-
 #endif //WORKER_H_INTERFACE
