@@ -40,7 +40,8 @@ void DoEncode::work(Datacmnctor* datacmnctor)
             auto task = gen_task(i);
             tasks.push_back(task);
             results.push_back(task->get_future());
-            tpool->add_task(std::to_string(i), task);
+            // 创建一个可调用的包装器
+            tpool->add_task(std::to_string(i), [task]() { (*task)(); });
         }
         for(auto& result: results)
         {

@@ -1,6 +1,12 @@
 #ifndef DATACOMUNICATOR_H_INTERFACE
 #define DATACOMUNICATOR_H_INTERFACE
 
+// 前向声明
+namespace sfc {
+    class DataBlocks;
+    using blocks_t = DataBlocks;
+}
+
 /**
  * 用于类型擦除的基类
  * 当需要传输特定类型的数据结构时，可以使用继承该类的派生类

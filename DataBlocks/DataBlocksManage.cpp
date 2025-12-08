@@ -10,7 +10,7 @@ DataBlocks::~DataBlocks()
 
 int DataBlocks::size()
 {
-    int result;
+    int result = 0;  // 初始化为0
     for(auto& block: blocks)
     {
         if(block.size() != 0)
@@ -37,9 +37,19 @@ std::vector<sfc::block_t>::iterator DataBlocks::begin()
     return blocks.begin();
 }
 
+std::vector<block_t>::const_iterator DataBlocks::cbegin()
+{
+    return blocks.cbegin();
+}
+
 std::vector<sfc::block_t>::iterator DataBlocks::end()
 {
     return blocks.end();
+}
+
+std::vector<block_t>::const_iterator DataBlocks::cend()
+{
+    return blocks.cend();
 }
 
 void DataBlocks::check_and_fix()
