@@ -180,12 +180,14 @@ public:
         {
             fileParser(bufferPtr);
             countOfKidDirectory--;
+            break;
             // countOfD_F++;
         }
         case '0':
         {
             directoryParser(bufferPtr);
             countOfKidDirectory--;
+            break;
         }
         case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
         {

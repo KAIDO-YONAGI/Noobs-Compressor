@@ -21,16 +21,24 @@ void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
         }
         NumsReader numsReader(inFile);
         offset = header->directoryOffset - HeaderSize;
-        FileCount_uint countOfKidDirectory = 0;
+        countOfKidDirectory = 0;
 
         while (offset / BufferSize > 0 || offset % BufferSize > 0)
         {
 
             buffer.clear();
             loadBySepratedFlag(numsReader, offset, filePathToScan, countOfKidDirectory);
+            if (offset == 0 || !fileQueue.empty())
+                break;
             // if (1)
             //     continue;//调试
             // 最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
+        }
+        if (offset == sizeof(SizeOfMagicNum_uint))
+        {
+            SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
+            if (magicNum != MagicNum)
+                throw std::runtime_error("Invalid MagicNum");
         }
     }
     catch (const std::exception &e)
@@ -70,7 +78,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
 
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        if (readSize > bufferPtr) //(readSize<BufferSize)表示末尾块
+        if (readSize <= bufferPtr) //(readSize<BufferSize)表示末尾块
             return;
         while (countOfKidDirectory > 0 || bufferPtr == 0)
         {
@@ -96,6 +104,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
                 << directoryQueue.front().first.getFullPath()
                 // << " " << countOfD_F
                 << " " << directoryQueue.size()
+                // << " " << fileQueue.size()
                 << "\n";
 
             directoryQueue.pop();
@@ -107,11 +116,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
 
         if (tempOffset == 0)
         {
-            offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量
-
-            SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
-            if (magicNum != MagicNum)
-                throw std::runtime_error("Invalid MagicNum");
+            offset -= readSize; // tempOffset为零，说明到末尾，减去对应偏移量,不含魔数大小
 
             return;
         }

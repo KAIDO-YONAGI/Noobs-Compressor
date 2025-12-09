@@ -20,7 +20,7 @@ private:
     std::vector<unsigned char> &buffer;
     Directory_FileQueue directoryQueue;
     Directory_FileQueue fileQueue;
-
+    FileCount_uint countOfKidDirectory;
     DirectoryOffsetSize_uint offset;
 
     std::ifstream inFile;
@@ -43,7 +43,7 @@ public:
         {
             inFile.close();
         }
-    }  
+    }
     void headerLoader(std::vector<std::string> &filePathToScan); // 主逻辑函数
 
 #pragma pack(1) // 禁用填充，紧密读取
