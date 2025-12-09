@@ -20,7 +20,7 @@ void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
             throw std::runtime_error("Invalid file format");
         }
         NumsReader numsReader(inFile);
-        DirectoryOffsetSize_uint offset = header->directoryOffset - HeaderSize;
+        offset = header->directoryOffset - HeaderSize;
         FileCount_uint countOfKidDirectory = 0;
 
         while (offset / BufferSize > 0 || offset % BufferSize > 0)
@@ -32,17 +32,12 @@ void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
             //     continue;//调试
             // 最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
         }
-
-        // 读末尾魔数并且检验
-        SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
-        if (magicNum != MagicNum)
-            throw std::runtime_error("Invalid MagicNum");
     }
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
         // 清理资源或重新抛出异常
-        throw;
+        throw e.what();
     }
 }
 void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
@@ -50,9 +45,8 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
     if (offset == 0)
         return;
 
-    Parser paserForLoader(buffer,queue);
-    unsigned char flag = numsReader.readBinaryNums<unsigned char>();
-
+    Parser paserForLoader(buffer, directoryQueue, fileQueue);
+    char flag = numsReader.readBinaryNums<char>();
 
     if (flag == '2')
     {
@@ -76,41 +70,52 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
 
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        while (readSize > bufferPtr) //(readSize<BufferSize)表示末尾块
+        if (readSize > bufferPtr) //(readSize<BufferSize)表示末尾块
+            return;
+        while (countOfKidDirectory > 0 || bufferPtr == 0)
         {
-            while (countOfKidDirectory > 0 || bufferPtr == 0)
-            {
-                if (readSize <= bufferPtr)
-                    return;
-                std::pair<fs::path, char> result=paserForLoader.parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
+            if (readSize <= bufferPtr)
+                return;
+            paserForLoader.parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
 
-                
-                //bufferPtr只在parser内自增，tempOffset需要调用模块自行管理
-                // std::cout<<result.first<<result.second<<countOfD_F++;
-                // int a = 0;
-                // if (countOfD_F == 300)
-                //     a++;
-            }
+            // DataLoader dataLoader(result.first);
+            // std::vector<char> fileData = dataLoader.dataLoader();
 
-            if (!queue.empty())
-            {
-
-                // countOfD_F++; // 临时全局变量
-                std::cout
-                    << queue.front().first.getFullPath()
-                    // << " " << countOfD_F
-                    << " " << queue.size()
-                    << "\n";
-
-                queue.pop();
-                if (!queue.empty())
-                    countOfKidDirectory = queue.front().second;
-            }
-            else
-                break;
+            // bufferPtr只在parser内自增，tempOffset需要调用模块自行管理
+            //  std::cout<<result.first<<result.second<<countOfD_F++;
+            //  int a = 0;
+            //  if (countOfD_F == 300)
+            //      a++;
         }
+
+        if (!directoryQueue.empty())
+        {
+
+            // countOfD_F++; // 临时全局变量
+            std::cout
+                << directoryQueue.front().first.getFullPath()
+                // << " " << countOfD_F
+                << " " << directoryQueue.size()
+                << "\n";
+
+            directoryQueue.pop();
+            if (!directoryQueue.empty())
+                countOfKidDirectory = directoryQueue.front().second;
+        }
+        else
+            return;
+
         if (tempOffset == 0)
-            offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量，包含魔数大小是为了结束循环
+        {
+            offset -= readSize + sizeof(MagicNum); // tempOffset为零，说明到末尾，减去对应偏移量
+
+            SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
+            if (magicNum != MagicNum)
+                throw std::runtime_error("Invalid MagicNum");
+
+            return;
+        }
+
         // std::cout
         //     << "\n"
         //     << readSize
@@ -119,4 +124,5 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
+    return;
 }

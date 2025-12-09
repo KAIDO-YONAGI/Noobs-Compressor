@@ -1,10 +1,11 @@
 // HeaderLoader.h
 #pragma once
 #include "../include/FileLibrary.h"
-#include "../include/FileDetails.h"
+#include "../include/Directory_FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
-static int countOfD_F = 0;//临时全局变量
+#include "../include/DataLoader.h"
+// static int countOfD_F = 0;//临时全局变量
 
 class FilePath_Loader
 {
@@ -17,16 +18,32 @@ class BinaryIO_Loader
 {
 private:
     std::vector<unsigned char> &buffer;
-    FileQueue queue;
-    std::ifstream &inFile;
+    Directory_FileQueue directoryQueue;
+    Directory_FileQueue fileQueue;
+
+    DirectoryOffsetSize_uint offset;
+
+    std::ifstream inFile;
     Transfer transfer;
 
     // 检查 buffer 是否足够读取指定大小
     void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
 
 public:
-    BinaryIO_Loader(std::vector<unsigned char> &buffer, std::ifstream &inFile)
-        : buffer(buffer), inFile(inFile) {}
+    BinaryIO_Loader(std::vector<unsigned char> &buffer, std::string inPath)
+        : buffer(buffer)
+    {
+        fs::path loadPath = transfer.transPath(inPath);
+        std::ifstream inFile(loadPath, std::ios::binary);
+        this->inFile = std::move(inFile);
+    }
+    ~BinaryIO_Loader()
+    {
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+    }  
     void headerLoader(std::vector<std::string> &filePathToScan); // 主逻辑函数
 
 #pragma pack(1) // 禁用填充，紧密读取

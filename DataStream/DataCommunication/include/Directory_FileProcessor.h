@@ -2,7 +2,7 @@
 #pragma once
 
 #include "../include/FileLibrary.h"
-#include "../include/FileDetails.h"
+#include "../include/Directory_FileDetails.h"
 #include "../include/ToolClasses.hpp"
 
 class Directory_FileProcessor
@@ -14,7 +14,7 @@ class Directory_FileProcessor
 private:
     Transfer transfer;
     std::ofstream &outFile;
-    QueueInterface queue;
+    directoryQueueInterface directoryQueue;
 
     void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
@@ -37,12 +37,12 @@ private:
     Transfer transfer;
     std::ofstream &outFile;
 
-    void writeDirectoryStandard(FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
-    void writeFileStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
+    void writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
+    void writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     void writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
-    void writeStorageStandard(FileDetails &details, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
-    FileDetails &readDetails(const fs::directory_entry &entry);
-    void writeSymbolLinkStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
+    void writeStorageStandard(Directory_FileDetails &details, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    Directory_FileDetails &readDetails(const fs::directory_entry &entry);
+    void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
     FileSize_uint getFileSize(const fs::path &filePathToScan);
 
@@ -52,5 +52,5 @@ public:
     void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
     void blankSeparatedStandard(std::ofstream &outFile);
 
-    void binaryIO_Reader(FilePath &file, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void binaryIO_Reader(FilePath &file, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

@@ -1,6 +1,6 @@
 #pragma once
 #include "FileLibrary.h"
-#include "FileDetails.h"
+#include "Directory_FileDetails.h"
 #include "ToolClasses.hpp"
 
 class HeaderBlockIterator {
@@ -8,7 +8,7 @@ public:
     enum class State { BEFORE_START, IN_PROGRESS, COMPLETED };
 
     HeaderBlockIterator(std::vector<unsigned char>& buf, 
-                       FileQueue& q,
+                       DirectoryQueue& q,
                        std::vector<std::string>& paths)
         : m_buffer(buf), m_queue(q), 
           m_filePathToScan(paths) { 
@@ -55,7 +55,7 @@ private:
 
     // 成员变量
     std::vector<unsigned char>& m_buffer;
-    FileQueue& m_queue;
+    DirectoryQueue& m_queue;
     std::vector<std::string>& m_filePathToScan;
     fs::path m_rootPath;
     size_t m_bufferPtr = 0;

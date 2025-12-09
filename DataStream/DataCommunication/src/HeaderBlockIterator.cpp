@@ -29,7 +29,7 @@ bool HeaderBlockIterator::move_next() {
             m_rootEntries = parse_num<FileCount_uint>();
             
             // 创建虚拟根目录项
-            FileDetails root("ROOT:" + rootName, 0, 0, false, m_rootPath);
+            Directory_FileDetails root("ROOT:" + rootName, 0, 0, false, m_rootPath);
             m_queue.push({root, m_rootEntries});
             
             m_state = State::IN_PROGRESS;
@@ -60,7 +60,7 @@ bool HeaderBlockIterator::move_next() {
                 : m_queue.front().first.getFullPath() / dirName;
             
             // 添加到队列
-            FileDetails dirDetails(dirName, 0, 0, false, fullPath);
+            Directory_FileDetails dirDetails(dirName, 0, 0, false, fullPath);
             m_queue.push({dirDetails, childCount});
             
             m_current = {fullPath, '0'};

@@ -46,10 +46,9 @@ int main()
     logicalRoot = "YONAGI";
     inPath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\Ö¿°®µÄÊ±¹â.bin";
 
-    fs::path loadPath = transfer.transPath(inPath);
-    std::ifstream inFile(loadPath, std::ios::binary);
+
     std::vector<unsigned char> buffer(BufferSize + 1024);
-    BinaryIO_Loader loader(buffer, inFile);
+    BinaryIO_Loader loader(buffer, inPath);
     loader.headerLoader(filePathToScan);
 
     system("pause");

@@ -2,11 +2,11 @@
 #pragma once
 
 #include "../include/FileLibrary.h"
-#include "../include/FileDetails.h"
+#include "../include/Directory_FileDetails.h"
 /*
 Transfer类：为filesystem的fs::path类型提供宽字符转换方案（主要处理中文路径问题），且仅在自行创建fs::path时使用，用于输入需要SFC处理的路径
 MagicNumWriter类：写魔数的
-FileQueue：目录路径存取特化的队列
+Directory_FileQueue：目录路径存取特化的队列
 Locator：使用偏移量的定位器
 */
 class Transfer
@@ -95,14 +95,14 @@ public:
     }
 };
 
-class FileQueue
+class Directory_FileQueue
 {
 private:
     struct Node
     {
-        std::pair<FileDetails, FileCount_uint> data;
+        std::pair<Directory_FileDetails, FileCount_uint> data;
         Node *next;
-        Node(const std::pair<const FileDetails, FileCount_uint> &val)
+        Node(const std::pair<const Directory_FileDetails, FileCount_uint> &val)
             : data(val), next(nullptr) {}
     };
 
@@ -111,8 +111,8 @@ private:
     size_t count;
 
 public:
-    FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
-    ~FileQueue()
+    Directory_FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
+    ~Directory_FileQueue()
     {
         while (frontNode)
         { // 循环直到链表为空
@@ -123,7 +123,7 @@ public:
         rearNode = nullptr; // 重置尾指针
         count = 0;          // 重置计数器
     }
-    void push(std::pair<FileDetails, FileCount_uint> val)
+    void push(std::pair<Directory_FileDetails, FileCount_uint> val)
     {
         Node *newNode = new Node(val);
         if (rearNode)
@@ -153,20 +153,20 @@ public:
         count--;
     }
 
-    std::pair<FileDetails, FileCount_uint> &front()
+    std::pair<Directory_FileDetails, FileCount_uint> &front()
     {
         if (empty())
         {
-            throw std::runtime_error("Accessing front of empty queue");
+            throw std::runtime_error("Accessing front of empty directoryQueue");
         }
         return frontNode->data;
     }
 
-    std::pair<FileDetails, FileCount_uint> &back()
+    std::pair<Directory_FileDetails, FileCount_uint> &back()
     {
         if (empty())
         {
-            throw std::runtime_error("Accessing back of empty queue");
+            throw std::runtime_error("Accessing back of empty directoryQueue");
         }
         return rearNode->data;
     }
@@ -181,10 +181,10 @@ public:
         return count;
     }
 };
-class QueueInterface
+class directoryQueueInterface
 {
 public:
-    FileQueue fileQueue;
+    Directory_FileQueue Directory_FileQueue;
 };
 
 class Locator

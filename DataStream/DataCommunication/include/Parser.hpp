@@ -2,12 +2,13 @@
 #pragma once
 
 #include "../include/FileLibrary.h"
-#include "../include/FileDetails.h"
+#include "../include/Directory_FileDetails.h"
 #include "../include/ToolClasses.hpp"
 class Parser
 {
 private:
-    FileQueue &queue;
+    Directory_FileQueue &directoryQueue;
+    Directory_FileQueue &fileQueue;
     std::vector<unsigned char> &buffer;
     Transfer transfer;
 
@@ -74,16 +75,16 @@ private:
     {
 
         fs::path pathToProcess;
-        if (!queue.empty())
+        if (!directoryQueue.empty())
         {
-            fs::path lastPath = queue.front().first.getFullPath();
+            fs::path lastPath = directoryQueue.front().first.getFullPath();
             pathToProcess = lastPath / fileName;
         }
         else
-            throw("queue is empty");
+            throw("directoryQueue is empty");
         return pathToProcess;
     }
-    fs::path fileParser(DirectoryOffsetSize_uint &bufferPtr)
+    void fileParser(DirectoryOffsetSize_uint &bufferPtr)
     {
         // 解析文件名偏移量
         // 解析文件名，后续拼接为绝对路径之后交给数据读取类读取数据块
@@ -103,9 +104,15 @@ private:
         std::cout << pathToProcess << "  ";
         // if(fileName=="AirDroid.lnk")
         //     return;
-        return pathToProcess;
+        Directory_FileDetails fileDetails(
+            fileName,
+            fileNameSize,
+            originSize,
+            true,
+            pathToProcess);
+        fileQueue.push({fileDetails, compressedSizeOffset});
     }
-    fs::path directoryParser(DirectoryOffsetSize_uint &bufferPtr)
+    void directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     {
         // 解析目录名偏移量
         // 解析目录名，后续拼接为绝对路径之后入队
@@ -118,10 +125,8 @@ private:
 
         fs::path pathToProcess = pathConnector(directoryName);
 
-        FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, pathToProcess);
-        queue.push({directoryDetails, count});
-
-        return pathToProcess;
+        Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, pathToProcess);
+        directoryQueue.push({directoryDetails, count});
     }
 
     void rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
@@ -153,41 +158,39 @@ private:
                 // 解析下级文件数量
                 FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
-                FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
-                queue.push({directoryDetails, count});
+                Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
+                directoryQueue.push({directoryDetails, count});
             }
         }
     }
 
 public:
-    Parser(std::vector<unsigned char> &buffer, FileQueue &queue)
-        : buffer(buffer), queue(queue) {}
-    std::pair<fs::path, char> parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
+    Parser(std::vector<unsigned char> &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue)
+        : buffer(buffer), directoryQueue(directoryQueue), fileQueue(fileQueue) {}
+    void parser(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
     {
 
         if (tempOffset <= bufferPtr && tempOffset != 0)
-            return {};
+            return;
 
         unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
         switch (D_F_flag)
         {
         case '1':
         {
-            fs::path fullpath = fileParser(bufferPtr);
+            fileParser(bufferPtr);
             countOfKidDirectory--;
-            return {fullpath, D_F_flag};
             // countOfD_F++;
         }
         case '0':
         {
-            fs::path fullpath = directoryParser(bufferPtr);
+            directoryParser(bufferPtr);
             countOfKidDirectory--;
-            return {fullpath, D_F_flag};
         }
         case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
         {
             rootParser(bufferPtr, filePathToScan);
-            countOfKidDirectory = queue.front().second; // 启动递推
+            countOfKidDirectory = directoryQueue.front().second; // 启动递推
             break;
         }
 
@@ -197,6 +200,6 @@ public:
             break;
         }
         }
-        return {};
+        return;
     }
 };

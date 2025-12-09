@@ -1,13 +1,20 @@
 #include "../include/DataLoader.h"
 
-
-void DataLoader::dataLoaderForHuffmanCompression(fs::path& inPath)
+std::vector<char> DataLoader::dataLoader()
 {
-    std::ifstream inFile(inPath, std::ios::binary);
-    if (!inFile)
-        throw std::runtime_error("dataLoaderForHuffmanCompression()-Error:Failed to open inFile");
-}
+    std::vector<char> buffer(BufferSize);
+    try
+    {
+        inFile.read(buffer.data(), BufferSize);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
 
-void dataLoader(){
-
+    if (buffer.size() == 0)
+    {
+        done();
+    }
+    return buffer;
 }
