@@ -4,8 +4,8 @@
 #include <memory>
 #include <stack>
 #include "heffman.h"
-#include "../../Schedule/include/Datacmnctor.h"
-#include "../../Schedule/include/Worker.h"
+#include "../../../Schedule/include/Datacmnctor.h"
+#include "../../../Schedule/include/Worker.h"
 #include "../../hefftype/Heffman_type.h"
 
 /**

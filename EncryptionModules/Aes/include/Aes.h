@@ -1,5 +1,4 @@
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
@@ -7,8 +6,7 @@
 #include <iomanip>
 #include <vector>
 #include <openssl/sha.h>
-
-using namespace std;
+#include <openssl/rand.h>
 
 class Aes
 {
@@ -36,7 +34,8 @@ private:
     void deMixColumns(int array[4][4]);
     void addRoundTowArray(int aArray[4][4], int bArray[4][4]);
     void getArrayFrom4W(int i, int array[4][4]);
-    uint8_t* hash_to_16bytes(const char *input);
+    void hash_to_16bytes(const char *input, uint8_t *output);
+    std::vector<char> processDataAES(const std::vector<char> &inputBuffer, bool encrypt);
 
     void aes(char *p, int plen);
     void deAes(char *c, int clen);
@@ -45,18 +44,25 @@ private:
     int w[44];
     uint8_t iv[16];
     const char *aes_key;
-    const uint8_t* aes_key_16bytes;
+    uint8_t aes_key_16bytes[16];
+    std::vector<char> buffer;
 
 public:
     Aes(const char *aes_key)
     {
-        aes_key_16bytes=hash_to_16bytes(aes_key);
+        hash_to_16bytes(aes_key, aes_key_16bytes);
         extendKey(reinterpret_cast<const char *>(aes_key_16bytes));
         memset(iv, 0, sizeof(iv));
     }
-    int modeChoose(int mode);
-    void processFileAES(const string &inputFile, const string &outputFile,
-                        const char *aes_key, bool encrypt);
+    ~Aes()
+    {
+        // 安全清除密钥
+        memset(const_cast<uint8_t *>(aes_key_16bytes), 0, 16);
+        memset(&aes_key, 0, sizeof(aes_key));
+        delete[] aes_key;
+        aes_key = nullptr;
+    }
+    std::vector<char> runAES(int mode, const std::vector<char> &inputBuffer);
 };
 
 const size_t BUFFER_SIZE = 8192;
