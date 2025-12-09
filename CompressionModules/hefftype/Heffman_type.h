@@ -6,7 +6,7 @@
 #include <map>
 #include <vector>
 #include <cstdint>
-#include "../../DataBlocks/DataBlocksManage.h"
+#include "../../../DataBlocks/DataBlocksManage.h"
 
 using freq_t = uint64_t;
 using codelen_t = uint8_t;

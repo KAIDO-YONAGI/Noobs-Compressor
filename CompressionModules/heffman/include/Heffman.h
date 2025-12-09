@@ -2,7 +2,7 @@
 #define HEFFMAN_H
 
 #include "../../hefftype/Heffman_type.h"
-#include "../../../Schedule/include/Worker.h"
+#include "../../Schedule/include/Worker.h"
 #include "../../../DataBlocks/DataBlocksManage.h"
 #include <memory>
 

@@ -3,7 +3,7 @@
 
 #include <memory>
 #include "Heffman.h"
-#include "../../../Schedule/include/Worker.h"
+#include "../../Schedule/include/Worker.h"
 #include "../../../ThreadPool/ThreadPool.h"
 
 /**

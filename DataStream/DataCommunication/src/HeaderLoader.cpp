@@ -83,6 +83,8 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
                 if (readSize <= bufferPtr)
                     return;
                 std::pair<fs::path, char> result=paserForLoader.parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
+
+                
                 //bufferPtr只在parser内自增，tempOffset需要调用模块自行管理
                 // std::cout<<result.first<<result.second<<countOfD_F++;
                 // int a = 0;

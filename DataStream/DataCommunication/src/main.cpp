@@ -10,8 +10,8 @@
 //     // filePathToScan.push_back("D:\\1gal");
 //     // filePathToScan.push_back("D:\\1gal\\TEST");
 //     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
-//     filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
-//     filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\Secure Files Compressor");
+//     // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
+//     filePathToScan.push_back("D:\\1gal\\1h\\Tool");
 
 //     outPutFilePath = "挚爱的时光.bin";
 //     logicalRoot = "YONAGI";
@@ -40,8 +40,8 @@ int main()
     // filePathToScan.push_back("D:\\1gal");
     // filePathToScan.push_back("D:\\1gal\\TEST");
     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
-    filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
-    filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\Secure Files Compressor");
+    // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
+    filePathToScan.push_back("D:\\1gal\\1h\\Tool");
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
     inPath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
