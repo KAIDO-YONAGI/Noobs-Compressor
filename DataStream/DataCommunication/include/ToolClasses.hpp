@@ -114,6 +114,10 @@ public:
     Directory_FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
     ~Directory_FileQueue()
     {
+        clear();
+    }
+    void clear()
+    {
         while (frontNode)
         { // 循环直到链表为空
             Node *temp = frontNode;
@@ -217,4 +221,3 @@ public:
         }
     }
 };
-

@@ -28,11 +28,9 @@ class BinaryIO_Loader
 {
 private:
     std::vector<unsigned char> &buffer;
-    bool isDone=false;
+    bool isDone = false;
     Header header;
 
-    Directory_FileQueue directoryQueue;
-    Directory_FileQueue fileQueue;
     FileCount_uint countOfKidDirectory;
     DirectoryOffsetSize_uint offset;
 
@@ -41,15 +39,19 @@ private:
 
     // 检查 buffer 是否足够读取指定大小
     void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
-    void done(){
+    void done()
+    {
         if (inFile.is_open())
         {
             inFile.close();
         }
-        isDone=true;
+        isDone = true;
     }
-    
+
 public:
+    Directory_FileQueue fileQueue;
+    Directory_FileQueue directoryQueue;
+
     BinaryIO_Loader(std::vector<unsigned char> &buffer, std::string inPath)
         : buffer(buffer)
     {

@@ -30,11 +30,10 @@ void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
         while (offset / BufferSize > 0 || offset % BufferSize > 0)
         {
             buffer.clear();
-            if (offset == 0
-                // || !fileQueue.empty()
-            )
+            if (offset == 0)
                 break;
-
+            if (!fileQueue.empty())
+                return;
             loadBySepratedFlag(numsReader, offset, filePathToScan, countOfKidDirectory);
 
             // if (1)
@@ -117,16 +116,15 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
                 // << " " << fileQueue.size()
                 << "\n";
 
-            if (directoryQueue.front().first.getFullPath() == "D:\\1gal\\1h\\Tool\\locales\\SpcPeImageData.js")
-            {
-                int a = 0;
-            }
+            // if (directoryQueue.front().first.getFullPath() == "D:\\1gal\\1h\\Tool\\locales\\SpcPeImageData.js")
+            // {
+            //     int a = 1;
+            // }
 
             directoryQueue.pop();
             if (!directoryQueue.empty())
                 countOfKidDirectory = directoryQueue.front().second;
         }
-
 
         if (tempOffset == 0)
         {

@@ -49,7 +49,21 @@ int main()
 
     std::vector<unsigned char> buffer(BufferSize + 1024);
     BinaryIO_Loader loader(buffer, inPath);
+
+    loader.headerLoader(filePathToScan);//filePathToScan只在第一次循环会使用
+    loader.fileQueue.clear();
     loader.headerLoader(filePathToScan);
-    // loader.headerLoader(filePathToScan);
+    loader.fileQueue.clear();
+    loader.headerLoader(filePathToScan);
+    loader.fileQueue.clear();
+    loader.headerLoader(filePathToScan);
+    loader.fileQueue.clear();
+    loader.headerLoader(filePathToScan);
+    loader.fileQueue.clear();
+    loader.headerLoader(filePathToScan);
+    loader.fileQueue.clear();
+
+
+
     system("pause");
 }
