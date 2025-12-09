@@ -50,6 +50,6 @@ int main()
     std::vector<unsigned char> buffer(BufferSize + 1024);
     BinaryIO_Loader loader(buffer, inPath);
     loader.headerLoader(filePathToScan);
-
+    // loader.headerLoader(filePathToScan);
     system("pause");
 }

@@ -199,7 +199,6 @@ public:
         default:
         {
             throw std::runtime_error("parser()-Error:Failed to read flag");
-            break;
         }
         }
         return;

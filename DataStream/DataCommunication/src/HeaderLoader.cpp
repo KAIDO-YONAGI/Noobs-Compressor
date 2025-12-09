@@ -2,43 +2,53 @@
 #include "../include/Parser.hpp"
 void BinaryIO_Loader::headerLoader(std::vector<std::string> &filePathToScan)
 {
+    if (isDone)
+        return;
     try
     {
 
         // 读取Header
-        if (!inFile.read(reinterpret_cast<char *>(buffer.data()), HeaderSize))
+        if (inFile.tellg() == std::streampos(0))
         {
-            throw std::runtime_error("Failed to read header");
+            if (!inFile.read(reinterpret_cast<char *>(buffer.data()), HeaderSize))
+            {
+                throw std::runtime_error("Failed to read header");
+            }
+            // 解释Header
+            std::memcpy(&header, buffer.data(), sizeof(Header));
+            // 验证魔数
+            if (header.magicNum_1 != MagicNum ||
+                header.magicNum_2 != MagicNum)
+            {
+                throw std::runtime_error("Invalid file format");
+            }
+            offset = header.directoryOffset - HeaderSize;
         }
-        // 解释Header
-        const BinaryIO_Loader::Header *header =
-            reinterpret_cast<const BinaryIO_Loader::Header *>(buffer.data());
-        // 验证魔数
-        if (header->magicNum_1 != MagicNum ||
-            header->magicNum_2 != MagicNum)
-        {
-            throw std::runtime_error("Invalid file format");
-        }
+
         NumsReader numsReader(inFile);
-        offset = header->directoryOffset - HeaderSize;
-        countOfKidDirectory = 0;
 
         while (offset / BufferSize > 0 || offset % BufferSize > 0)
         {
-
             buffer.clear();
-            loadBySepratedFlag(numsReader, offset, filePathToScan, countOfKidDirectory);
-            if (offset == 0 || !fileQueue.empty())
+            if (offset == 0
+                // || !fileQueue.empty()
+            )
                 break;
+
+            loadBySepratedFlag(numsReader, offset, filePathToScan, countOfKidDirectory);
+
             // if (1)
             //     continue;//调试
             // 最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
         }
-        if (offset == sizeof(SizeOfMagicNum_uint))
+        if (offset == 0)
         {
             SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
             if (magicNum != MagicNum)
                 throw std::runtime_error("Invalid MagicNum");
+            std::cout << "All headers loaded successfully.\n";
+            done();
+            return;
         }
     }
     catch (const std::exception &e)
@@ -83,7 +93,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
         while (countOfKidDirectory > 0 || bufferPtr == 0)
         {
             if (readSize <= bufferPtr)
-                return;
+                break;
             paserForLoader.parser(tempOffset, bufferPtr, filePathToScan, countOfKidDirectory);
 
             // DataLoader dataLoader(result.first);
@@ -107,16 +117,20 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, DirectoryOffset
                 // << " " << fileQueue.size()
                 << "\n";
 
+            if (directoryQueue.front().first.getFullPath() == "D:\\1gal\\1h\\Tool\\locales\\SpcPeImageData.js")
+            {
+                int a = 0;
+            }
+
             directoryQueue.pop();
             if (!directoryQueue.empty())
                 countOfKidDirectory = directoryQueue.front().second;
         }
-        else
-            return;
+
 
         if (tempOffset == 0)
         {
-            offset -= readSize; // tempOffset为零，说明到末尾，减去对应偏移量,不含魔数大小
+            offset -= readSize + sizeof(SizeOfMagicNum_uint); // tempOffset为零，说明到末尾，减去对应偏移量
 
             return;
         }
