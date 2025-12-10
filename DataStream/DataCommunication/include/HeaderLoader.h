@@ -4,7 +4,6 @@
 #include "../include/Directory_FileDetails.h"
 #include "../include/ToolClasses.hpp"
 #include "../include/Parser.hpp"
-// static int countOfD_F = 0;//临时全局变量
 
 class FilePath_Loader
 {

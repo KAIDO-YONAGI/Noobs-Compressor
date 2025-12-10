@@ -5,7 +5,6 @@ void BinaryIO_Loader::headerLoader()
         return;
     try
     {
-
         // 读取Header
         if (inFile.tellg() == std::streampos(0))
         {
@@ -93,49 +92,24 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
             while ((countOfKidDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
             {
                 parserForLoader->parser(bufferPtr, filePathToScan, countOfKidDirectory);
-
-                // bufferPtr只在parser内自增，tempOffset需要调用模块自行管理
-                //  std::cout<<result.first<<result.second<<countOfD_F++;
-                //  int a = 0;
-                //  if (countOfD_F == 300)
-                //      a++;
             }
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)
             {
 
-                // countOfD_F++; // 临时全局变量
-                // std::cout
-                //     << directoryQueue.front().first.getFullPath()
-                //     // << " " << countOfD_F
-                //     << " " << directoryQueue.size()
-                //     // << " " << fileQueue.size()
-                //     << "\n";
-
-                // if (directoryQueue.front().first.getFullPath() == "D:\\1gal\\1h\\Tool\\vulkan-1.dll")
-                // {
-                //     int a = 1;
-                // }
-
                 directoryQueue.pop();
                 if (!directoryQueue.empty())
                     countOfKidDirectory = directoryQueue.front().second;
             }
-
-            // std::cout
-            //     << "\n"
-            //     << readSize
-            //     << " " << offset
-            //     << "\n"; // 调试
         }
-        if (readSize == bufferPtr)
-            return;
         if (tempOffset == 0)
         {
             offset -= readSize + sizeof(SizeOfMagicNum_uint); // tempOffset为零，说明到末尾，减去对应偏移量
 
             return;
         }
+        if (readSize == bufferPtr)
+            return;
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
