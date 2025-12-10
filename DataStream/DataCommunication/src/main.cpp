@@ -31,6 +31,19 @@
 // HeaderLoader的调试
 #include "../include/HeaderLoader.h"
 
+void print(BinaryIO_Loader &loader)
+{
+    if(loader.loopIsDone()&&loader.fileQueue.empty())
+    {
+        std::cout<<"Loader is done.\n";
+        return;
+    }
+    while (loader.fileQueue.empty() == false)
+    {
+        std::cout << loader.fileQueue.front().first.getFullPath() << " " << loader.fileQueue.front().second << "\n";
+        loader.fileQueue.pop();
+    }
+}
 int main()
 {
     Transfer transfer;
@@ -50,26 +63,28 @@ int main()
 
     loader.headerLoader(); // filePathToScan只在第一次循环会使用
 
-    while (loader.fileQueue.empty() == false)
-    {
-        std::cout << loader.fileQueue.front().first.getFullPath()<<" "<<loader.fileQueue.front().second << "\n";
-        loader.fileQueue.pop();
-    }
+    loader.headerLoader();
 
-    // loader.headerLoader();
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
+    loader.headerLoader();
+    print(loader);
 
-    // loader.fileQueue.clear();
-    // loader.headerLoader();
-    // loader.fileQueue.clear();
-    // loader.headerLoader();
-    // loader.fileQueue.clear();
-    // loader.headerLoader();
-    // loader.fileQueue.clear();
-    // loader.headerLoader();
-    // loader.fileQueue.clear();
-    // loader.headerLoader();
-    // loader.fileQueue.clear();
-    // loader.headerLoader();
-    // loader.fileQueue.clear();
     system("pause");
 }

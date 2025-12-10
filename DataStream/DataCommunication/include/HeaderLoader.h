@@ -4,7 +4,6 @@
 #include "../include/Directory_FileDetails.h"
 #include "../include/ToolClasses.hpp"
 #include "../include/Parser.hpp"
-#include "../include/DataLoader.h"
 // static int countOfD_F = 0;//临时全局变量
 
 class FilePath_Loader
@@ -17,19 +16,20 @@ private:
 class BinaryIO_Loader
 {
 private:
-    std::vector<unsigned char> buffer = std::vector<unsigned char>(BUFFER_SIZE + 1024);
-    std::vector<std::string> filePathToScan;
-    bool isDone = false;
-    Header header;
+    std::vector<unsigned char> buffer =
+        std::vector<unsigned char>(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
+    std::vector<std::string> filePathToScan;            // 构造时初始化，而且只使用一次
+    Header header;                                      // 私有化存储当前文件头信息
 
-    FileCount_uint countOfKidDirectory;
-    DirectoryOffsetSize_uint offset;
-    DirectoryOffsetSize_uint tempOffset ;
+    FileCount_uint countOfKidDirectory;  // 当前处理中或退出时目录下子目录或文件数量
+    DirectoryOffsetSize_uint offset;     // 当前剩余字节数
+    DirectoryOffsetSize_uint tempOffset; // 当前处理块的大小（偏移）
 
     std::ifstream inFile;
+
     Transfer transfer;
-    Parser *parserForLoader;
-    // 检查 buffer 是否足够读取指定大小
+    Parser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
+
     void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
     void done()
     {
@@ -41,8 +41,9 @@ private:
     }
 
 public:
-    Directory_FileQueue fileQueue;
-    Directory_FileQueue directoryQueue;
+    Directory_FileQueue fileQueue;//文件队列
+    Directory_FileQueue directoryQueue;//目录队列
+    bool isDone = false; // 标记是否完成所有目录读取
 
     BinaryIO_Loader(std::string inPath, std::vector<std::string> filePathToScan = {})
     {
@@ -50,14 +51,16 @@ public:
         std::ifstream inFile(loadPath, std::ios::binary);
         this->inFile = std::move(inFile);
         this->filePathToScan = filePathToScan;
-        this->parserForLoader = new Parser(buffer, directoryQueue, fileQueue, header, offset,tempOffset);
+        this->parserForLoader = new Parser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
     }
     ~BinaryIO_Loader()
     {
-        if (inFile.is_open())
-        {
-            inFile.close();
-        }
+        done();
+        delete parserForLoader;
+    }
+    bool loopIsDone()
+    {
+        return isDone;
     }
 
     void headerLoader(); // 主逻辑函数

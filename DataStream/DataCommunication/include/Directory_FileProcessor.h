@@ -41,7 +41,6 @@ private:
     void writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     void writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
     void writeStorageStandard(Directory_FileDetails &details, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
-    Directory_FileDetails &readDetails(const fs::directory_entry &entry);
     void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
     FileSize_uint getFileSize(const fs::path &filePathToScan);

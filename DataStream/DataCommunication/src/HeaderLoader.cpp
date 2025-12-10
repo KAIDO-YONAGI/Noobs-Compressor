@@ -45,8 +45,6 @@ void BinaryIO_Loader::headerLoader()
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
-            std::cout << "All headers loaded successfully.\n";
-
             done();
             return;
         }
@@ -63,7 +61,6 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
     if (offset == 0)
         return;
 
-    
     char flag = numsReader.readBinaryNums<char>();
 
     if (flag == '2')

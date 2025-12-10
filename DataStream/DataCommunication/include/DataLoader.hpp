@@ -45,5 +45,23 @@ public:
             inFile.close();
         }
     }
-    std::vector<char> dataLoader();
+        std::vector<char> dataLoader()
+    {
+        std::vector<char> buffer(BUFFER_SIZE);
+        try
+        {
+            inFile.read(buffer.data(), BUFFER_SIZE);
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << '\n';
+        }
+
+        if (inFile.gcount() == 0)
+        {
+            done();
+            return {};
+        }
+        return buffer;
+    }
 };
