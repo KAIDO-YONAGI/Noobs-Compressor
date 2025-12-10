@@ -161,7 +161,7 @@ public:
     {
         if (empty())
         {
-            throw std::runtime_error("Accessing front of empty directoryQueue");
+            throw std::runtime_error("Accessing front of empty Directory_FileQueue");
         }
         return frontNode->data;
     }
@@ -170,7 +170,7 @@ public:
     {
         if (empty())
         {
-            throw std::runtime_error("Accessing back of empty directoryQueue");
+            throw std::runtime_error("Accessing back of empty Directory_FileQueue");
         }
         return rearNode->data;
     }

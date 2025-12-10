@@ -84,8 +84,6 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
         DirectoryOffsetSize_uint bufferPtr = 0;
 
-        // if (readSize <= bufferPtr) //(readSize<BUFFER_SIZE)表示末尾块
-        //     return;
         while (readSize > bufferPtr)
         {
 
@@ -102,14 +100,13 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                     countOfKidDirectory = directoryQueue.front().second;
             }
         }
-        if (tempOffset == 0)
+        if (tempOffset == 0) // tempOffset为零，说明到末尾，减去对应偏移量
         {
-            offset -= readSize + sizeof(SizeOfMagicNum_uint); // tempOffset为零，说明到末尾，减去对应偏移量
+            offset -= readSize + sizeof(SizeOfMagicNum_uint);
 
             return;
         }
-        if (readSize == bufferPtr)
-            return;
+
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");

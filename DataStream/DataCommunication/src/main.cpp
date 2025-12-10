@@ -32,7 +32,7 @@
 #include "DataLoader.hpp"
 #include "DataExporter.hpp"
 
-int count =0;
+int count = 0;
 void print(BinaryIO_Loader &loader)
 {
     if (loader.loaderLoopIsDone() && loader.fileQueue.empty())
@@ -40,9 +40,9 @@ void print(BinaryIO_Loader &loader)
         std::cout << "Loader is done.\n";
         return;
     }
-    while (loader.fileQueue.empty() == false)
+    while (!loader.fileQueue.empty())
     {
-        std::cout << loader.fileQueue.front().first.getFullPath() << " " << loader.fileQueue.front().second <<" "<<++count<< "\n";
+        std::cout << loader.fileQueue.front().first.getFullPath() << " " << loader.fileQueue.front().second << " " << ++count << "\n";
         loader.fileQueue.pop();
     }
 }
@@ -50,7 +50,7 @@ int main()
 {
     Transfer transfer;
     std::vector<std::string> filePathToScan;
-    std::string outPutFilePath, logicalRoot, inPath;
+    std::string outPutFilePath, logicalRoot, compressionFilePath;
 
     // filePathToScan.push_back("D:\\1gal\\TEST");
     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
@@ -58,40 +58,31 @@ int main()
     filePathToScan.push_back("D:\\1gal\\1h\\Tool");
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
-    inPath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
+    compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
 
-    BinaryIO_Loader loader(inPath, filePathToScan);
+//初始化加载器
+    BinaryIO_Loader loader(compressionFilePath, filePathToScan);
+    loader.headerLoader();//执行第一次操作，把根目录载入
+    DataExporter dataExporter(transfer.transPath(compressionFilePath));
+    DataLoader dataLoader(loader.fileQueue.front().first.getFullPath());
 
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
-    loader.headerLoader();
-    print(loader);
+    while (!loader.fileQueue.empty())
+    {
+    
+        dataLoader.dataLoader();
+        dataExporter.exportDataToFile_Encryption(dataLoader.getBlock());
+        if (dataLoader.isDone()&& !loader.fileQueue.empty())
+        {
+            std::cout << "Loaded file: " << loader.fileQueue.front().first.getFullPath() << "\n";
+            loader.fileQueue.pop();
+            if(!loader.fileQueue.empty())
+            dataLoader.reset(loader.fileQueue.front().first.getFullPath());//更新下一个文件路径
+        }
 
-    // while (!loader.fileQueue.empty())
-    // {
-    //     DataLoader dataLoader(loader.fileQueue.front().first.getFullPath());
-    //     dataLoader.dataLoader();
-    //     DataExporter dataExporter(transfer.transPath(inPath));
-    //     dataExporter.exportDataToFile_Encryption(dataLoader.getBlock());
-    //     loader.fileQueue.pop();
-    //     if(loader.fileQueue.empty()&&!loader.loaderLoopIsDone()){
-    //         loader.headerLoader();
-    //     }
-
-    // }
+        if (loader.fileQueue.empty() && !loader.loaderLoopIsDone())
+        {
+            loader.headerLoader();
+        }
+    }
     system("pause");
 }
