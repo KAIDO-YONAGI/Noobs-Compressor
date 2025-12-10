@@ -64,7 +64,7 @@ public:
 
     void appendMagicStatic()
     {
-        writeBinaryNums(MagicNum);
+        writeBinaryNums(MAGIC_NUM);
     }
 };
 class NumsReader

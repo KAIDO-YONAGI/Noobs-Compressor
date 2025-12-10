@@ -18,7 +18,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
 
         // 预留回填偏移量的字节位置
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
-        DirectoryOffsetSize_uint offset = HeaderSize;
+        DirectoryOffsetSize_uint offset = HEADER_SIZE;
 
         BIO.blankSeparatedStandard(outFile);
 
@@ -128,7 +128,7 @@ void BinaryIO_Reader::writeStorageStandard(Directory_FileDetails &details, direc
     {
         writeSymbolLinkStandard(details, tempOffset);
     }
-    if (tempOffset >= BufferSize) // 达到缓冲大小后写入分割标准
+    if (tempOffset >= BUFFER_SIZE) // 达到缓冲大小后写入分割标准
     {
 
         writeSeparatedStandard(tempOffset, offset);
@@ -138,7 +138,7 @@ void BinaryIO_Reader::writeStorageStandard(Directory_FileDetails &details, direc
 
         // 预留下一次回填的位置
         blankSeparatedStandard(outFile);
-        offset += SeparatedStandardSize; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
+        offset += SEPARATED_STANDARD_SIZE; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
     }
 }
 // 目录标准写入函数
@@ -147,9 +147,9 @@ void BinaryIO_Reader::writeDirectoryStandard(Directory_FileDetails &details, Fil
     NumsWriter numWriter(outFile);
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
-    tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
+    tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(HeaderFlag, FlagSize);
+    outFile.write(HEADER_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(sizeOfName);
     outFile.write(details.getName().c_str(), sizeOfName);
     numWriter.writeBinaryNums(count); // 写入文件数目
@@ -160,9 +160,9 @@ void BinaryIO_Reader::writeFileStandard(Directory_FileDetails &details, Director
     NumsWriter numWriter(outFile);
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
-    tempOffset += FileStandardSize_Basic + sizeOfName;
+    tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(FileFlag, FlagSize);                    // 先写文件标
+    outFile.write(FILE_FLAG, FLAG_SIZE);                    // 先写文件标
     numWriter.writeBinaryNums(sizeOfName);                // 写入文件名偏移量
     outFile.write(details.getName().c_str(), sizeOfName); // 写入文件名
     numWriter.writeBinaryNums(details.getFileSize());     // 写入文件大小
@@ -174,7 +174,7 @@ void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffse
     NumsWriter numWriter(outFile);
     Locator locator;
 
-    locator.offsetLocator(outFile, offset + FlagSize);
+    locator.offsetLocator(outFile, offset + FLAG_SIZE);
     numWriter.writeBinaryNums(tempOffset);
     outFile.seekp(0, std::ios::end);
 }
@@ -182,7 +182,7 @@ void BinaryIO_Reader::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffse
 void BinaryIO_Reader::blankSeparatedStandard(std::ofstream &outFile)
 {
     NumsWriter numWriter(outFile);
-    outFile.write(SeparatedFlag, FlagSize);
+    outFile.write(SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
     numWriter.writeBinaryNums(IvSize_uint(0));
 }
@@ -193,9 +193,9 @@ void BinaryIO_Reader::writeSymbolLinkStandard(Directory_FileDetails &details, Di
     FileNameSize_uint sizeOfName = details.getSizeOfName();
     FileNameSize_uint sizeOfPath = details.getFullPath().string().size();
 
-    tempOffset += SymbolLinkStandardSize_Basic + sizeOfName + sizeOfPath;
+    tempOffset += SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
 
-    outFile.write(SymbolLinkFlag, FlagSize);
+    outFile.write(SYMBOL_LINK_FLAG, FLAG_SIZE);
 
     numWriter.writeBinaryNums(sizeOfName);
     numWriter.writeBinaryNums(sizeOfPath);
@@ -207,9 +207,9 @@ void BinaryIO_Reader::writeLogicalRoot(const std::string &logicalRoot, const Fil
 {
     FileNameSize_uint sizeOfName = logicalRoot.size();
     NumsWriter numWriter(outFile);
-    tempOffset += DirectoryrStandardSize_Basic + sizeOfName;
+    tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(LogicalRootFlag, FlagSize);
+    outFile.write(LOGICAL_ROOT_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(sizeOfName);
     outFile.write(logicalRoot.c_str(), sizeOfName);
     numWriter.writeBinaryNums(count); // 写文件数

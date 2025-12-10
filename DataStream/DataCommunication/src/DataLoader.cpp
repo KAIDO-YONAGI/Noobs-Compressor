@@ -2,10 +2,10 @@
 
 std::vector<char> DataLoader::dataLoader()
 {
-    std::vector<char> buffer(BufferSize);
+    std::vector<char> buffer(BUFFER_SIZE);
     try
     {
-        inFile.read(buffer.data(), BufferSize);
+        inFile.read(buffer.data(), BUFFER_SIZE);
     }
     catch (const std::exception &e)
     {

@@ -3,7 +3,7 @@
 #include "../include/FileLibrary.h"
 #include "../include/Directory_FileDetails.h"
 #include "../include/ToolClasses.hpp"
-
+#include "../include/Parser.hpp"
 #include "../include/DataLoader.h"
 // static int countOfD_F = 0;//临时全局变量
 
@@ -13,32 +13,24 @@ private:
     fs::path outPutFilePath;
     fs::path filePathToScan;
 };
-#pragma pack(1) // 禁用填充，紧密读取
-struct Header
-{
-    SizeOfMagicNum_uint magicNum_1 = 0;
-    CompressStrategy_uint strategy = 0;
-    CompressorVersion_uint version = 0;
-    HeaderOffsetSize_uint headerOffset = 0;
-    DirectoryOffsetSize_uint directoryOffset = 0;
-    SizeOfMagicNum_uint magicNum_2 = 0;
-};
 
 class BinaryIO_Loader
 {
 private:
-    std::vector<unsigned char> &buffer;
+    std::vector<unsigned char> buffer = std::vector<unsigned char>(BUFFER_SIZE + 1024);
+    std::vector<std::string> filePathToScan;
     bool isDone = false;
     Header header;
 
     FileCount_uint countOfKidDirectory;
     DirectoryOffsetSize_uint offset;
+    DirectoryOffsetSize_uint tempOffset ;
 
     std::ifstream inFile;
     Transfer transfer;
-
+    Parser *parserForLoader;
     // 检查 buffer 是否足够读取指定大小
-    void loadBySepratedFlag(NumsReader &numsReader, DirectoryOffsetSize_uint &offset, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
+    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
     void done()
     {
         if (inFile.is_open())
@@ -52,12 +44,13 @@ public:
     Directory_FileQueue fileQueue;
     Directory_FileQueue directoryQueue;
 
-    BinaryIO_Loader(std::vector<unsigned char> &buffer, std::string inPath)
-        : buffer(buffer)
+    BinaryIO_Loader(std::string inPath, std::vector<std::string> filePathToScan = {})
     {
         fs::path loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
         this->inFile = std::move(inFile);
+        this->filePathToScan = filePathToScan;
+        this->parserForLoader = new Parser(buffer, directoryQueue, fileQueue, header, offset,tempOffset);
     }
     ~BinaryIO_Loader()
     {
@@ -67,5 +60,5 @@ public:
         }
     }
 
-    void headerLoader(std::vector<std::string> &filePathToScan); // 主逻辑函数
+    void headerLoader(); // 主逻辑函数
 };

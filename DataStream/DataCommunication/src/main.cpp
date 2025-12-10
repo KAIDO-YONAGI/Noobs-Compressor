@@ -46,24 +46,30 @@ int main()
     logicalRoot = "YONAGI";
     inPath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
 
+    BinaryIO_Loader loader(inPath, filePathToScan);
 
-    std::vector<unsigned char> buffer(BufferSize + 1024);
-    BinaryIO_Loader loader(buffer, inPath);
+    loader.headerLoader(); // filePathToScan只在第一次循环会使用
 
-    loader.headerLoader(filePathToScan);//filePathToScan只在第一次循环会使用
-    loader.fileQueue.clear();
-    loader.headerLoader(filePathToScan);
-    loader.fileQueue.clear();
-    loader.headerLoader(filePathToScan);
-    loader.fileQueue.clear();
-    loader.headerLoader(filePathToScan);
-    loader.fileQueue.clear();
-    loader.headerLoader(filePathToScan);
-    loader.fileQueue.clear();
-    loader.headerLoader(filePathToScan);
-    loader.fileQueue.clear();
+    while (loader.fileQueue.empty() == false)
+    {
+        std::cout << loader.fileQueue.front().first.getFullPath()<<" "<<loader.fileQueue.front().second << "\n";
+        loader.fileQueue.pop();
+    }
 
+    // loader.headerLoader();
 
-
+    // loader.fileQueue.clear();
+    // loader.headerLoader();
+    // loader.fileQueue.clear();
+    // loader.headerLoader();
+    // loader.fileQueue.clear();
+    // loader.headerLoader();
+    // loader.fileQueue.clear();
+    // loader.headerLoader();
+    // loader.fileQueue.clear();
+    // loader.headerLoader();
+    // loader.fileQueue.clear();
+    // loader.headerLoader();
+    // loader.fileQueue.clear();
     system("pause");
 }
