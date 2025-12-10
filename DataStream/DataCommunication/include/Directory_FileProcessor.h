@@ -23,7 +23,7 @@ public:
     void directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot);
 };
 
-class BinaryIO_Reader // 接触二进制文件及其处理的相关IO的函数的封装
+class BinaryIO_Writter // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
     binaryIO_Reader()主函数。扫描指定路径（单层）的文件及其子文件夹的函数
@@ -46,10 +46,10 @@ private:
     FileSize_uint getFileSize(const fs::path &filePathToScan);
 
 public:
-    explicit BinaryIO_Reader(std::ofstream &outFile) : outFile(outFile) {};
+    explicit BinaryIO_Writter(std::ofstream &outFile) : outFile(outFile) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
-    void blankSeparatedStandard(std::ofstream &outFile);
-
+    void writeBlankSeparatedStandard(std::ofstream &outFile);
+    void writeBlankSeparatedStandardForEncryption(std::ofstream &outFile);
     void binaryIO_Reader(FilePath &file, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

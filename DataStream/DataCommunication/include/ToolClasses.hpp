@@ -1,4 +1,4 @@
-// ToolClasses.h
+// ToolClasses.hpp
 #pragma once
 
 #include "../include/FileLibrary.h"

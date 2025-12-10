@@ -1,4 +1,4 @@
-// DataLoader.h
+// DataLoader.hpp
 #pragma once
 
 #include "../include/FileLibrary.h"
@@ -6,6 +6,8 @@
 class DataLoader
 {
 private:
+    std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
+
     std::ifstream inFile;
     void done()
     {
@@ -16,26 +18,30 @@ private:
     }
 
 public:
+    const std::vector<char>& getBlock(){
+        return buffer;
+    }
     bool isDone()
     {
         return !inFile.is_open();
     }
-    void reset(fs::path &inPath)
+    void reset(fs::path inPath)
     {
-        if (inFile.is_open())
+        if (isDone())
         {
-            inFile.close();
+            std::ifstream newInFile(inPath, std::ios::binary);
+            if (!newInFile)
+                throw std::runtime_error("reset()-Error:Failed to open inFile");
+            this->inFile = std::move(newInFile);
         }
-        std::ifstream newInFile(inPath, std::ios::binary);
-        if (!newInFile)
-            throw std::runtime_error("reset()-Error:Failed to open inFile");
-        this->inFile = std::move(newInFile);
+        else
+            throw std::runtime_error("reset()-Error:inFile is already open");
     }
-    DataLoader(fs::path &inPath)
+    DataLoader(const fs::path &inPath)
     {
         std::ifstream inFile(inPath, std::ios::binary);
         if (!inFile)
-            throw std::runtime_error("DataLoader()-Error:Failed to open inFile");
+            throw std::runtime_error("DataLoader()-Error:Failed to open inFile"+inPath.string());
         this->inFile = std::move(inFile);
     };
     ~DataLoader()
@@ -45,9 +51,8 @@ public:
             inFile.close();
         }
     }
-        std::vector<char> dataLoader()
+    void dataLoader()
     {
-        std::vector<char> buffer(BUFFER_SIZE);
         try
         {
             inFile.read(buffer.data(), BUFFER_SIZE);
@@ -60,8 +65,6 @@ public:
         if (inFile.gcount() == 0)
         {
             done();
-            return {};
         }
-        return buffer;
     }
 };

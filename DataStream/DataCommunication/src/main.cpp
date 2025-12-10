@@ -7,7 +7,6 @@
 //     std::string outPutFilePath, logicalRoot;
 
 //     // 假装是gui获取的，多个文件（目录）
-//     // filePathToScan.push_back("D:\\1gal");
 //     // filePathToScan.push_back("D:\\1gal\\TEST");
 //     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
 //     // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
@@ -30,17 +29,20 @@
 
 // HeaderLoader的调试
 #include "../include/HeaderLoader.h"
+#include "DataLoader.hpp"
+#include "DataExporter.hpp"
 
+int count =0;
 void print(BinaryIO_Loader &loader)
 {
-    if(loader.loopIsDone()&&loader.fileQueue.empty())
+    if (loader.loaderLoopIsDone() && loader.fileQueue.empty())
     {
-        std::cout<<"Loader is done.\n";
+        std::cout << "Loader is done.\n";
         return;
     }
     while (loader.fileQueue.empty() == false)
     {
-        std::cout << loader.fileQueue.front().first.getFullPath() << " " << loader.fileQueue.front().second << "\n";
+        std::cout << loader.fileQueue.front().first.getFullPath() << " " << loader.fileQueue.front().second <<" "<<++count<< "\n";
         loader.fileQueue.pop();
     }
 }
@@ -50,7 +52,6 @@ int main()
     std::vector<std::string> filePathToScan;
     std::string outPutFilePath, logicalRoot, inPath;
 
-    // filePathToScan.push_back("D:\\1gal");
     // filePathToScan.push_back("D:\\1gal\\TEST");
     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
     // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
@@ -61,12 +62,6 @@ int main()
 
     BinaryIO_Loader loader(inPath, filePathToScan);
 
-    loader.headerLoader(); // filePathToScan只在第一次循环会使用
-
-    loader.headerLoader();
-
-    loader.headerLoader();
-    print(loader);
     loader.headerLoader();
     print(loader);
     loader.headerLoader();
@@ -86,5 +81,17 @@ int main()
     loader.headerLoader();
     print(loader);
 
+    // while (!loader.fileQueue.empty())
+    // {
+    //     DataLoader dataLoader(loader.fileQueue.front().first.getFullPath());
+    //     dataLoader.dataLoader();
+    //     DataExporter dataExporter(transfer.transPath(inPath));
+    //     dataExporter.exportDataToFile_Encryption(dataLoader.getBlock());
+    //     loader.fileQueue.pop();
+    //     if(loader.fileQueue.empty()&&!loader.loaderLoopIsDone()){
+    //         loader.headerLoader();
+    //     }
+
+    // }
     system("pause");
 }

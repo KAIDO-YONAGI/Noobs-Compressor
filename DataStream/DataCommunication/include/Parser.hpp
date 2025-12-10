@@ -13,7 +13,7 @@ private:
     Transfer transfer;
     const Header &header;
     const DirectoryOffsetSize_uint &offset;
-    const DirectoryOffsetSize_uint &tempOffset ;
+    const DirectoryOffsetSize_uint &tempOffset;
 
     void checkBounds(DirectoryOffsetSize_uint pos, size_t requiredSize) const
     {
@@ -99,14 +99,15 @@ private:
         FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
 
         // 记录等会需要回填的位置
-        FileSize_uint compressedSizeOffset = header.directoryOffset - (offset+tempOffset) + bufferPtr;
+        FileSize_uint compressedSizeOffset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
         bufferPtr += sizeof(FileSize_uint);
 
         fs::path pathToProcess = pathConnector(fileName);
 
         // std::cout << pathToProcess << "  ";
-        // if(fileName=="AirDroid.lnk")
-        //     return;
+        if (fileName == "pnacl_public_x86_64_crtbegin_for_eh_o")
+            int a = 1;
+
         Directory_FileDetails fileDetails(
             fileName,
             fileNameSize,
@@ -168,7 +169,7 @@ private:
     }
 
 public:
-    Parser(std::vector<unsigned char> &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue, const Header &header, const DirectoryOffsetSize_uint &offset,const DirectoryOffsetSize_uint &tempOffset )
+    Parser(std::vector<unsigned char> &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue, const Header &header, const DirectoryOffsetSize_uint &offset, const DirectoryOffsetSize_uint &tempOffset)
         : buffer(buffer), directoryQueue(directoryQueue), fileQueue(fileQueue), header(header), offset(offset), tempOffset(tempOffset) {}
     void parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
     {
@@ -183,6 +184,7 @@ public:
         {
             fileParser(bufferPtr);
             countOfKidDirectory--;
+
             break;
             // countOfD_F++;
         }
