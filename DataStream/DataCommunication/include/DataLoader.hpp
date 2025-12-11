@@ -15,6 +15,7 @@ private:
         {
             inFile.close();
         }
+        buffer.clear();
     }
 
 public:
@@ -55,7 +56,9 @@ public:
     {
         try
         {
+            buffer.resize(BUFFER_SIZE);
             inFile.read(buffer.data(), BUFFER_SIZE);
+            buffer.resize(inFile.gcount());//避免空数据问题
         }
         catch (const std::exception &e)
         {

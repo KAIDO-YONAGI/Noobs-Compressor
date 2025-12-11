@@ -10,7 +10,7 @@
 //     // filePathToScan.push_back("D:\\1gal\\TEST");
 //     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
 //     // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
-//     filePathToScan.push_back("D:\\1gal\\1h\\Tool");
+//     filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
 
 //     outPutFilePath = "挚爱的时光.bin";
 //     logicalRoot = "YONAGI";
@@ -55,28 +55,34 @@ int main()
     // filePathToScan.push_back("D:\\1gal\\TEST");
     // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
     // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
-    filePathToScan.push_back("D:\\1gal\\1h\\Tool");
+    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
 
-//初始化加载器
+    // 初始化加载器
     BinaryIO_Loader loader(compressionFilePath, filePathToScan);
-    loader.headerLoader();//执行第一次操作，把根目录载入
-    DataExporter dataExporter(transfer.transPath(compressionFilePath));
+    loader.headerLoader(); // 执行第一次操作，把根目录载入
+    Locator locator;
     DataLoader dataLoader(loader.fileQueue.front().first.getFullPath());
 
+    int count = 0;
     while (!loader.fileQueue.empty())
     {
-    
+        DataExporter dataExporter(transfer.transPath(compressionFilePath));
         dataLoader.dataLoader();
-        dataExporter.exportDataToFile_Encryption(dataLoader.getBlock());
-        if (dataLoader.isDone()&& !loader.fileQueue.empty())
+
+        if (dataLoader.isDone() && !loader.fileQueue.empty())
         {
-            std::cout << "Loaded file: " << loader.fileQueue.front().first.getFullPath() << "\n";
+
+            std::cout << "Loaded file: " << loader.fileQueue.front().first.getFullPath() << " " << ++count << "\n";
             loader.fileQueue.pop();
-            if(!loader.fileQueue.empty())
-            dataLoader.reset(loader.fileQueue.front().first.getFullPath());//更新下一个文件路径
+            if (!loader.fileQueue.empty())
+                dataLoader.reset(loader.fileQueue.front().first.getFullPath()); // 更新下一个文件路径
+        }
+        else if (!dataLoader.isDone())
+        {
+            dataExporter.exportDataToFile_Encryption(dataLoader.getBlock(), (dataLoader.isDone() ? loader.fileQueue.front().second : 0));
         }
 
         if (loader.fileQueue.empty() && !loader.loaderLoopIsDone())
