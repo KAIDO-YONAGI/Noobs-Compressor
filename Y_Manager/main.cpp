@@ -44,7 +44,7 @@ int main()
     filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
     outPutFilePath = "挚爱的时光.bin";
     logicalRoot = "YONAGI";
-    compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
+    compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";
 
     // 初始化加载器
     BinaryIO_Loader headerLoader(compressionFilePath, filePathToScan);

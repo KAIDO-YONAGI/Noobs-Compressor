@@ -1,6 +1,6 @@
 #ifndef DATABLOCKSMANAGE_H
 #define DATABLOCKSMANAGE_H
-
+#include <string>
 #include <cstdint>
 #include <vector>
 #include <algorithm>
