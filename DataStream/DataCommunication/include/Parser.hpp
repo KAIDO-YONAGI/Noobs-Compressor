@@ -105,9 +105,10 @@ private:
         fs::path pathToProcess = pathConnector(fileName);
 
         // std::cout << pathToProcess << "  ";
-        if (fileName == "pnacl_public_x86_64_crtbegin_for_eh_o")
+        if (fileName == "index.d.ts")
             int a = 1;
-
+        if (bufferPtr > 8191)
+            int a = 1;
         Directory_FileDetails fileDetails(
             fileName,
             fileNameSize,

@@ -32,17 +32,17 @@ public:
         {
             std::ifstream newInFile(inPath, std::ios::binary);
             if (!newInFile)
-                throw std::runtime_error("reset()-Error:Failed to open inFile");
+                throw std::runtime_error("reset()-Error:Failed to open inFile Path:"+inPath.string());
             this->inFile = std::move(newInFile);
         }
         else
-            throw std::runtime_error("reset()-Error:inFile is already open");
+            return;
     }
     DataLoader(const fs::path &inPath)
     {
         std::ifstream inFile(inPath, std::ios::binary);
         if (!inFile)
-            throw std::runtime_error("DataLoader()-Error:Failed to open inFile"+inPath.string());
+            throw std::runtime_error("DataLoader()-Error:Failed to open inFile Path:"+inPath.string());
         this->inFile = std::move(inFile);
     };
     ~DataLoader()

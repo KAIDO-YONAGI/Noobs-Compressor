@@ -28,7 +28,7 @@ private:
 public:
     DataExporter(const fs::path &outPath)
     {
-        std::ofstream outFile(outPath, std::ios::binary |std::ios::out| std::ios::app);
+        std::ofstream outFile(outPath, std::ios::binary | std::ios::out| std::ios::app);
         if (!outFile)
         {
             throw std::runtime_error("DataExporter()-Error:Failed to open outFile");
@@ -59,7 +59,8 @@ public:
         processedFileSize += blockSize;
         thisBlockIsDone(blockSize);
 
-        if(offsetToFill!=0){
+        if (offsetToFill != 0)
+        {
             thisFileIsDone(offsetToFill);
         }
     }

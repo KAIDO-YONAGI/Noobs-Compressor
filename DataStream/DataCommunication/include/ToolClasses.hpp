@@ -87,9 +87,13 @@ public:
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
 
+        if (file.eof())
+        {
+            return T();
+        }
         if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
         {
-            throw std::runtime_error("readBinaryNums()Error-Failed to read");
+            throw std::runtime_error("readBinaryNums()Error-Failed to read"+file.eof() ? " - End of File reached" : "");
         }
         return value;
     }

@@ -32,20 +32,6 @@
 #include "DataLoader.hpp"
 #include "DataExporter.hpp"
 
-int count = 0;
-void print(BinaryIO_Loader &loader)
-{
-    if (loader.loaderLoopIsDone() && loader.fileQueue.empty())
-    {
-        std::cout << "Loader is done.\n";
-        return;
-    }
-    while (!loader.fileQueue.empty())
-    {
-        std::cout << loader.fileQueue.front().first.getFullPath() << " " << loader.fileQueue.front().second << " " << ++count << "\n";
-        loader.fileQueue.pop();
-    }
-}
 int main()
 {
     Transfer transfer;
@@ -61,33 +47,35 @@ int main()
     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin";
 
     // 初始化加载器
-    BinaryIO_Loader loader(compressionFilePath, filePathToScan);
-    loader.headerLoader(); // 执行第一次操作，把根目录载入
+    BinaryIO_Loader headerLoader(compressionFilePath, filePathToScan);
+    headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
     Locator locator;
-    DataLoader dataLoader(loader.fileQueue.front().first.getFullPath());
+    fs::path loadPath = transfer.transPath(compressionFilePath);
+    DataLoader dataLoader(loadPath);
 
     int count = 0;
-    while (!loader.fileQueue.empty())
+    while (!headerLoader.fileQueue.empty())
     {
         DataExporter dataExporter(transfer.transPath(compressionFilePath));
         dataLoader.dataLoader();
 
-        if (dataLoader.isDone() && !loader.fileQueue.empty())
+        if (dataLoader.isDone() && !headerLoader.fileQueue.empty())
         {
-
-            std::cout << "Loaded file: " << loader.fileQueue.front().first.getFullPath() << " " << ++count << "\n";
-            loader.fileQueue.pop();
-            if (!loader.fileQueue.empty())
-                dataLoader.reset(loader.fileQueue.front().first.getFullPath()); // 更新下一个文件路径
+            std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath() << " " << ++count << "\n";
+            headerLoader.fileQueue.pop();
+            if (!headerLoader.fileQueue.empty())
+                dataLoader.reset(headerLoader.fileQueue.front().first.getFullPath()); // 更新下一个文件路径
         }
         else if (!dataLoader.isDone())
         {
-            dataExporter.exportDataToFile_Encryption(dataLoader.getBlock(), (dataLoader.isDone() ? loader.fileQueue.front().second : 0));
+            size_t offsetToFill = headerLoader.fileQueue.front().second;
+            dataExporter.exportDataToFile_Encryption(dataLoader.getBlock(), (dataLoader.isDone() ?: 0));
         }
 
-        if (loader.fileQueue.empty() && !loader.loaderLoopIsDone())
+        if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone())
         {
-            loader.headerLoader();
+            headerLoader.restartLoader();
+            headerLoader.headerLoader();
         }
     }
     system("pause");

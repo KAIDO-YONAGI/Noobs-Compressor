@@ -1,7 +1,7 @@
 #include "../include/HeaderLoader.h"
 void BinaryIO_Loader::headerLoader()
 {
-    if (isDone)
+    if (loaderRequestIsDone() || allLoopIsDone())
         return;
     try
     {
@@ -20,32 +20,28 @@ void BinaryIO_Loader::headerLoader()
             {
                 throw std::runtime_error("Invalid file format");
             }
+            if(header.directoryOffset==0)
+                throw std::runtime_error("Invalid directory offset in header");
             offset = header.directoryOffset - HEADER_SIZE;
         }
 
         NumsReader numsReader(inFile);
-
+        if (offset == sizeof(SizeOfMagicNum_uint))
+        {
+            SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
+            if (magicNum != MAGIC_NUM)
+                throw std::runtime_error("Invalid MAGIC_NUM");
+            allLoopDone();
+            return;
+        }
         while (offset / BUFFER_SIZE > 0 || offset % BUFFER_SIZE > 0)
         {
             buffer.clear();
             if (offset == 0)
                 break;
-            if (!fileQueue.empty())
+            if (loaderRequestIsDone() || allLoopIsDone())
                 return;
             loadBySepratedFlag(numsReader, countOfKidDirectory);
-
-            // if (1)
-            //     continue;//调试
-            // 最后把目录数据块覆写回原位置（已经回填偏移量。如果有加密，则加密后再填，并且要在分割处写入iv头）
-        }
-        if (offset == 0)
-        {
-            SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
-            if (magicNum != MAGIC_NUM)
-                throw std::runtime_error("Invalid MAGIC_NUM");
-
-            done();
-            return;
         }
     }
     catch (const std::exception &e)
@@ -100,13 +96,12 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                     countOfKidDirectory = directoryQueue.front().second;
             }
         }
+        requesetDone();
         if (tempOffset == 0) // tempOffset为零，说明到末尾，减去对应偏移量
         {
             offset -= readSize + sizeof(SizeOfMagicNum_uint);
-
             return;
         }
-
     }
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");

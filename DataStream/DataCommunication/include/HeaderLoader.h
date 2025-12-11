@@ -18,26 +18,36 @@ private:
     std::vector<unsigned char> buffer =
         std::vector<unsigned char>(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
     std::vector<std::string> filePathToScan;            // 构造时初始化，而且只使用一次
-    bool isDone = false;                                // 标记是否完成所有目录读取
-    Header header;                                      // 私有化存储当前文件头信息
+    bool blockIsDone = false;
+    bool allDone = false; // 标记是否完成所有目录读取
+    Header header;        // 私有化存储当前文件头信息
 
-    FileCount_uint countOfKidDirectory=0;  // 当前处理中或退出时目录下子目录或文件数量
-    DirectoryOffsetSize_uint offset=0;     // 当前剩余字节数
-    DirectoryOffsetSize_uint tempOffset=0; // 当前处理块的大小（偏移）
+    FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
+    DirectoryOffsetSize_uint offset = 0;     // 当前剩余字节数
+    DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
 
+    fs::path loadPath;
     std::ifstream inFile;
 
     Transfer transfer;
     Parser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
 
     void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
-    void done()
+    void requesetDone()
     {
         if (inFile.is_open())
         {
             inFile.close();
         }
-        isDone = true;
+        blockIsDone = true;
+    }
+    void allLoopDone()
+    {
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+        allDone = true;
     }
 
 public:
@@ -46,20 +56,44 @@ public:
 
     BinaryIO_Loader(std::string inPath, std::vector<std::string> filePathToScan = {})
     {
-        fs::path loadPath = transfer.transPath(inPath);
+        this->loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
+           if(!inFile)
+            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile"+inPath);
+        
         this->inFile = std::move(inFile);
         this->filePathToScan = filePathToScan;
         this->parserForLoader = new Parser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
     }
     ~BinaryIO_Loader()
     {
-        done();
+        allLoopDone();
         delete parserForLoader;
     }
-    bool loaderLoopIsDone()
+    void restartLoader()
     {
-        return isDone;
+        if (!allLoopIsDone())
+        {
+            std::ifstream newInFile(loadPath, std::ios::binary);
+            if (!newInFile)
+                throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
+
+            size_t offsetToRestart = header.directoryOffset - offset;
+
+            newInFile.seekg(offsetToRestart, std::ios::beg);
+            this->inFile = std::move(newInFile);
+            blockIsDone = false;
+        }
+        else
+            return;
+    }
+    bool allLoopIsDone()
+    {
+        return allDone;
+    }
+    bool loaderRequestIsDone()
+    {
+        return blockIsDone;
     }
 
     void headerLoader(); // 主逻辑函数
