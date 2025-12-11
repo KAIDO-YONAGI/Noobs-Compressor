@@ -28,9 +28,9 @@
 // }
 
 // HeaderLoaderµÄµ÷ÊÔ
-#include "../include/HeaderLoader.h"
-#include "DataLoader.hpp"
-#include "DataExporter.hpp"
+#include "../DataStream/DataCommunication/include/HeaderLoader.h"
+#include "../DataStream/DataCommunication/include/DataLoader.hpp"
+#include "../DataStream/DataCommunication/include/DataExporter.hpp"
 
 int main()
 {
