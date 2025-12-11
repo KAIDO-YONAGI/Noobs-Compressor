@@ -50,7 +50,8 @@ int main()
     BinaryIO_Loader headerLoader(compressionFilePath, filePathToScan);
     headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
     Locator locator;
-    fs::path loadPath = transfer.transPath(compressionFilePath);
+
+    fs::path loadPath = headerLoader.fileQueue.front().first.getFullPath();
     DataLoader dataLoader(loadPath);
 
     int count = 0;
