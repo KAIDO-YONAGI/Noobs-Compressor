@@ -35,7 +35,7 @@ class BinaryIO_Writter // 接触二进制文件及其处理的相关IO的函数的封装
     */
 private:
     Transfer transfer;
-    std::ofstream &outFile;
+    std::ofstream outFile;
 
     void writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
@@ -46,10 +46,10 @@ private:
     FileSize_uint getFileSize(const fs::path &filePathToScan);
 
 public:
-    explicit BinaryIO_Writter(std::ofstream &outFile) : outFile(outFile) {};
+    explicit BinaryIO_Writter(std::ofstream outFile) : outFile(std::move(outFile)) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
-    void writeBlankSeparatedStandard(std::ofstream &outFile);
-    void writeBlankSeparatedStandardForEncryption(std::ofstream &outFile);
+    void writeBlankSeparatedStandard();
+    void writeBlankSeparatedStandardForEncryption(std::fstream &File);
     void binaryIO_Reader(FilePath &file, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

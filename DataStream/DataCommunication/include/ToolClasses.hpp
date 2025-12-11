@@ -61,6 +61,24 @@ public:
             throw std::runtime_error("writeBinaryNums()Error-Failed to write");
         }
     }
+    template <typename T>
+    void writeBinaryNums(T value, std::fstream &fstream)//针对写入fstream的重载
+    {
+        if (!fstream)
+            throw std::runtime_error("writeBinaryNums() Error-noFile");
+        // 编译时检查
+
+        static_assert(std::is_trivially_copyable_v<T>,
+                      "Cannot write non-trivially-copyable type");
+        static_assert(!std::is_pointer_v<T>,
+                      "Cannot safely write raw pointers");
+        static_assert(!std::is_polymorphic_v<T>,
+                      "Cannot safely write polymorphic types");
+        if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        {
+            throw std::runtime_error("writeBinaryNums()Error-Failed to write");
+        }
+    }
 
     void appendMagicStatic()
     {
@@ -93,7 +111,7 @@ public:
         }
         if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
         {
-            throw std::runtime_error("readBinaryNums()Error-Failed to read"+file.eof() ? " - End of File reached" : "");
+            throw std::runtime_error("readBinaryNums()Error-Failed to read" + file.eof() ? " - End of File reached" : "");
         }
         return value;
     }

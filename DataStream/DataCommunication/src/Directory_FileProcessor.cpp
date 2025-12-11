@@ -4,7 +4,7 @@
 void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
     FilePath file; // 创建各个工具类的对象
-    BinaryIO_Writter BIO(outFile);
+    BinaryIO_Writter BIO(std::move(outFile));
     NumsWriter numWriter(outFile);
 
     fs::path oPath = fullOutPath;
@@ -20,7 +20,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
         DirectoryOffsetSize_uint offset = HEADER_SIZE;
 
-        BIO.writeBlankSeparatedStandard(outFile);
+        BIO.writeBlankSeparatedStandard();
 
         BIO.writeLogicalRoot(logicalRoot, length, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
         BIO.writeRoot(file, filePathToScan, tempOffset);       // 写入文件根目录
@@ -46,7 +46,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
 void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
 
-    BinaryIO_Writter BIO(outFile);
+    BinaryIO_Writter BIO(std::move(outFile));
 
     while (!directoryQueue.Directory_FileQueue.empty())
     {
@@ -137,7 +137,7 @@ void BinaryIO_Writter::writeStorageStandard(Directory_FileDetails &details, dire
         tempOffset = 0; // 相对位置归零
 
         // 预留下一次回填的位置
-        writeBlankSeparatedStandard(outFile);
+        writeBlankSeparatedStandard();
         offset += SEPARATED_STANDARD_SIZE; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
     }
 }
@@ -179,7 +179,7 @@ void BinaryIO_Writter::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffs
     outFile.seekp(0, std::ios::end);
 }
 // 空分割标准写入函数
-void BinaryIO_Writter::writeBlankSeparatedStandard(std::ofstream &outFile)
+void BinaryIO_Writter::writeBlankSeparatedStandard()
 {
     NumsWriter numWriter(outFile);
     outFile.write(SEPARATED_FLAG, FLAG_SIZE);
@@ -187,10 +187,10 @@ void BinaryIO_Writter::writeBlankSeparatedStandard(std::ofstream &outFile)
     numWriter.writeBinaryNums(IvSize_uint(0));
 }
 //由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
-void BinaryIO_Writter::writeBlankSeparatedStandardForEncryption(std::ofstream &outFile){
+void BinaryIO_Writter::writeBlankSeparatedStandardForEncryption(std::fstream &File){
     NumsWriter numWriter(outFile);
-    outFile.write(SEPARATED_FLAG, FLAG_SIZE);
-    numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0));
+    File.write(SEPARATED_FLAG, FLAG_SIZE);
+    numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0),File);
 }
 // 符号链接标准写入函数
 void BinaryIO_Writter::writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
@@ -253,7 +253,7 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
             File_Direc,  // 是否为常规文件
             rootPath      // 完整路径
         );
-        BinaryIO_Writter BIO(outFile);
+        BinaryIO_Writter BIO(std::move(outFile));
         const fs::directory_entry entry(rootPath);
         if (entry.is_regular_file())
         {
