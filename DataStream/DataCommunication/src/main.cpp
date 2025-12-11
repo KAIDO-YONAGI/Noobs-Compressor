@@ -53,15 +53,17 @@ int main()
 
     fs::path loadPath = headerLoader.fileQueue.front().first.getFullPath();
     DataLoader dataLoader(loadPath);
-
+    DataExporter dataExporter(transfer.transPath(compressionFilePath));
     int count = 0;
     while (!headerLoader.fileQueue.empty())
     {
-        DataExporter dataExporter(transfer.transPath(compressionFilePath));
+
         dataLoader.dataLoader();
 
         if (dataLoader.isDone() && !headerLoader.fileQueue.empty())
         {
+            size_t offsetToFill = headerLoader.fileQueue.front().second;
+            dataExporter.thisFileIsDone(offsetToFill);
             std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath() << " " << ++count << "\n";
             headerLoader.fileQueue.pop();
             if (!headerLoader.fileQueue.empty())
@@ -69,8 +71,7 @@ int main()
         }
         else if (!dataLoader.isDone())
         {
-            size_t offsetToFill = headerLoader.fileQueue.front().second;
-            dataExporter.exportDataToFile_Encryption(dataLoader.getBlock(), (dataLoader.isDone() ?: 0));
+            dataExporter.exportDataToFile_Encryption(dataLoader.getBlock());
         }
 
         if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone())
