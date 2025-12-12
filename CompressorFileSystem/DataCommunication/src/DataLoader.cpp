@@ -19,7 +19,7 @@ void DataLoader::reset(fs::path inPath)
         this->inFile = std::move(newInFile);
     }
     else
-        return;
+        throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:"+inPath.string());
 }
 
 void DataLoader::dataLoader()
@@ -28,7 +28,7 @@ void DataLoader::dataLoader()
     {
         buffer.resize(BUFFER_SIZE);
         inFile.read(buffer.data(), BUFFER_SIZE);
-        buffer.resize(inFile.gcount());//¡À?????????????
+        buffer.resize(inFile.gcount());
     }
     catch (const std::exception &e)
     {
