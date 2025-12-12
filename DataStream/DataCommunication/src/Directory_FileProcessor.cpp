@@ -59,7 +59,7 @@ void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint 
     }
 }
 
-void BinaryIO_Writter::binaryIO_Reader(FilePath &file, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Writter::binaryIO_Reader(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
 
     try
@@ -110,7 +110,7 @@ void BinaryIO_Writter::binaryIO_Reader(FilePath &file, directoryQueueInterface &
     }
 }
 // 识别存储标准并且分发到各个写入函数
-void BinaryIO_Writter::writeStorageStandard(Directory_FileDetails &details, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Writter::writeStorageStandard(Directory_FileDetails &details, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
     NumsWriter numWriter(outFile);
     if (details.getIsFile()) // 文件对应的处理

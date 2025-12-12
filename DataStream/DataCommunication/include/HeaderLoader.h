@@ -1,9 +1,9 @@
 // HeaderLoader.h
 #pragma once
-#include "../include/FileLibrary.h"
-#include "../include/Directory_FileDetails.h"
-#include "../include/ToolClasses.hpp"
-#include "../include/Parser.hpp"
+#include "FileLibrary.h"
+#include "Directory_FileDetails.h"
+#include "ToolClasses.h"
+#include "Directory_FileParser.h"
 
 class FilePath_Loader
 {
@@ -30,7 +30,7 @@ private:
     std::ifstream inFile;
 
     Transfer transfer;
-    Parser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
+    Directory_FileParser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
 
     void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
     void requesetDone()
@@ -63,7 +63,7 @@ public:
         
         this->inFile = std::move(inFile);
         this->filePathToScan = filePathToScan;
-        this->parserForLoader = new Parser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
+        this->parserForLoader = new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
     }
     ~BinaryIO_Loader()
     {

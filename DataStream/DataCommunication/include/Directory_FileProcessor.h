@@ -1,9 +1,9 @@
 // Directory_FileProcessor.h
 #pragma once
 
-#include "../include/FileLibrary.h"
-#include "../include/Directory_FileDetails.h"
-#include "../include/ToolClasses.hpp"
+#include "FileLibrary.h"
+#include "Directory_FileDetails.h"
+#include "ToolClasses.h"
 
 class Directory_FileProcessor
 {
@@ -14,7 +14,7 @@ class Directory_FileProcessor
 private:
     Transfer transfer;
     std::ofstream &outFile;
-    directoryQueueInterface directoryQueue;
+    Directory_FIleQueueInterface directoryQueue;
 
     void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
@@ -40,7 +40,7 @@ private:
     void writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
     void writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     void writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
-    void writeStorageStandard(Directory_FileDetails &details, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void writeStorageStandard(Directory_FileDetails &details, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
     void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
     FileSize_uint getFileSize(const fs::path &filePathToScan);
@@ -51,5 +51,5 @@ public:
     void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
     void writeBlankSeparatedStandard();
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
-    void binaryIO_Reader(FilePath &file, directoryQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void binaryIO_Reader(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

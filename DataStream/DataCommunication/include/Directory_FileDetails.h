@@ -1,7 +1,7 @@
 // Directory_FileDetails.h
 #pragma once
 
-#include "../include/FileLibrary.h"
+#include "FileLibrary.h"
 
 class Directory_FileDetails
 {
