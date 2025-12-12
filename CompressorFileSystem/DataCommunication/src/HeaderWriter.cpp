@@ -2,7 +2,7 @@
 
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 {
-    NumsWriter numWriter(outFile);
+    NumsWriter numWriter;
     Locator locator;
     if (!outFile)
     {
@@ -14,20 +14,20 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     HeaderOffsetSize_uint headerOffsetSize = 0;
     DirectoryOffsetSize_uint directoryOffsetSize = 0;
 
-    numWriter.writeBinaryNums(strategySize);
-    numWriter.writeBinaryNums(versionSize);
-    numWriter.writeBinaryNums(headerOffsetSize);
-    numWriter.writeBinaryNums(directoryOffsetSize);
+    numWriter.writeBinaryNums(strategySize,outFile);
+    numWriter.writeBinaryNums(versionSize,outFile);
+    numWriter.writeBinaryNums(headerOffsetSize,outFile);
+    numWriter.writeBinaryNums(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint) - sizeof(headerOffsetSize));
-    numWriter.writeBinaryNums(HEADER_SIZE);
+    numWriter.writeBinaryNums(HEADER_SIZE,outFile);
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
-    NumsWriter numWriter(outFile);
+    NumsWriter numWriter;
     Locator locator;
 
     Directory_FileProcessor begin(outFile);
@@ -36,7 +36,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     // 回填偏移量并重定位指针至回填前的位置
     locator.offsetLocator(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint));
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM))); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
@@ -59,17 +59,17 @@ void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::s
 
         try
         {
-            NumsWriter numWriter(outFile);
+            NumsWriter numWriter;
             // 写入表示文件起始的4字节魔数
-            numWriter.appendMagicStatic();
+            numWriter.appendMagicStatic(outFile);
             writeHeader(outFile,fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
 
-            numWriter.appendMagicStatic();
+            numWriter.appendMagicStatic(outFile);
 
             // 目录信息
             writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
 
-            numWriter.appendMagicStatic();
+            numWriter.appendMagicStatic(outFile); // 文件末尾魔数
         }
         catch (const std::exception &e)
         {

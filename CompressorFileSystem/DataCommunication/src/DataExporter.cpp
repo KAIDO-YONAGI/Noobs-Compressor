@@ -4,7 +4,7 @@ void DataExporter::thisBlockIsDone(DirectoryOffsetSize_uint dataSize)
 {
     std::streamoff offsetToFill = outFile.tellp() - static_cast<std::streamoff>(dataSize + sizeof(DirectoryOffsetSize_uint));
     outFile.seekp(offsetToFill, std::ios::beg);
-    NumsWriter numWriter(tempFilePtr);
+    NumsWriter numWriter;
     numWriter.writeBinaryNums(dataSize, outFile);
     outFile.seekp(0, std::ios::end);
 }
@@ -12,7 +12,7 @@ void DataExporter::thisBlockIsDone(DirectoryOffsetSize_uint dataSize)
 void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
 {
     outFile.seekp(offsetToFill, std::ios::beg);
-    NumsWriter numWriter(tempFilePtr);
+    NumsWriter numWriter;
     numWriter.writeBinaryNums(processedFileSize, outFile);
     outFile.seekp(0, std::ios::end);
 

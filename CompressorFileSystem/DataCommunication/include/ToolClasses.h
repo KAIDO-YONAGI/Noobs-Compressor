@@ -18,14 +18,9 @@ public:
 
 class NumsWriter
 {
-private:
-    std::ofstream &file;
-
 public:
-    NumsWriter(std::ofstream &file) : file(file) {};
-
     template <typename T>
-    void writeBinaryNums(T value)
+    void writeBinaryNums(T value, std::ofstream &file)
     {
         if (!file)
             throw std::runtime_error("writeBinaryNums() Error-noFile");
@@ -43,10 +38,10 @@ public:
         }
     }
     template <typename T>
-    void writeBinaryNums(T value, std::fstream &fstream)//针对写入fstream的重载
+    void writeBinaryNums(T value, std::fstream &fstream) // 针对写入fstream的重载
     {
         if (!fstream)
-            throw std::runtime_error("writeBinaryNums() Error-noFile");
+            throw std::runtime_error("1writeBinaryNums() Error-noFile");
         // 编译时检查
 
         static_assert(std::is_trivially_copyable_v<T>,
@@ -57,11 +52,11 @@ public:
                       "Cannot safely write polymorphic types");
         if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
-            throw std::runtime_error("writeBinaryNums()Error-Failed to write");
+            throw std::runtime_error("1writeBinaryNums()Error-Failed to write");
         }
     }
 
-    void appendMagicStatic();
+    void appendMagicStatic(std::ofstream &outFile);
 };
 
 class NumsReader

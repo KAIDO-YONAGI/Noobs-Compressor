@@ -3,7 +3,7 @@
 //加密8KB数据块示例
 // int main() {
 //     std::vector<char> inputBuffer(BUFFER_SIZE); // 初始化8KB大小的缓冲区
-//     std::ifstream file("C:\\Users\\12248\\Desktop\\Secure Files Compressor\\DataStream\\DataCommunication\\bin\\挚爱的时光.bin", 
+//     std::ifstream file("C:\\Users\\12248\\Desktop\\Secure Files Compressor\\CompressorFileSystem\\DataCommunication\\bin\\挚爱的时光.bin", 
 //                       std::ios::binary);
     
 //     if (!file) {
