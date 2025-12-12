@@ -16,7 +16,7 @@ int DataBlocks::size()
         if(block.size() != 0)
             ++result;
     }
-    return result;
+    return result; 
 }
 
 sfc::block_t& DataBlocks::at(int pos)
