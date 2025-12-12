@@ -7,7 +7,7 @@
 #include <vector>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
-
+#include"../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 class Aes
 {
 private:
@@ -35,7 +35,7 @@ private:
     void addRoundTowArray(int aArray[4][4], int bArray[4][4]);
     void getArrayFrom4W(int i, int array[4][4]);
     void hash_to_16bytes(const char *input, uint8_t *output);
-    std::vector<char> processDataAES(const std::vector<char> &inputBuffer, bool encrypt);
+    DataBlock processDataAES(const DataBlock &inputBuffer, int  mode);
 
     void aes(char *p, int plen);
     void deAes(char *c, int clen);
@@ -45,15 +45,17 @@ private:
     uint8_t iv[16];
     const char *aes_key;
     uint8_t aes_key_16bytes[16];
-    std::vector<char> buffer;
+    DataBlock buffer;
 
 public:
+    Aes() {};
     Aes(const char *aes_key)
     {
         hash_to_16bytes(aes_key, aes_key_16bytes);
         extendKey(reinterpret_cast<const char *>(aes_key_16bytes));
         memset(iv, 0, sizeof(iv));
     }
+
     ~Aes()
     {
         // 安全清除密钥
@@ -62,7 +64,7 @@ public:
         delete[] aes_key;
         aes_key = nullptr;
     }
-    void doAes(int mode, const std::vector<char> &inputBuffer);
+    void doAes(int mode, const DataBlock &inputBuffer,DataBlock &outputBuffer);
 };
 
 static const unsigned int Rcon[10] = {

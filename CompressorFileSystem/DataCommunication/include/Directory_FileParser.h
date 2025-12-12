@@ -9,7 +9,7 @@ class Directory_FileParser
 private:
     Directory_FileQueue &directoryQueue;
     Directory_FileQueue &fileQueue;
-    std::vector<unsigned char> &buffer;
+    DataBlock &buffer;
     Transfer transfer;
     const Header &header;
     const DirectoryOffsetSize_uint &offset;
@@ -68,10 +68,10 @@ private:
 
     void fileParser(DirectoryOffsetSize_uint &bufferPtr);
     void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
-    void rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan);
+    void rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan);
 
 public:
-    Directory_FileParser(std::vector<unsigned char> &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue, const Header &header, const DirectoryOffsetSize_uint &offset, const DirectoryOffsetSize_uint &tempOffset)
+    Directory_FileParser(DataBlock &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue, const Header &header, const DirectoryOffsetSize_uint &offset, const DirectoryOffsetSize_uint &tempOffset)
         : buffer(buffer), directoryQueue(directoryQueue), fileQueue(fileQueue), header(header), offset(offset), tempOffset(tempOffset) {}
-    void parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
+    void parser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
 };

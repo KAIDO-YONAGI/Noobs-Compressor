@@ -19,7 +19,7 @@ void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
     processedFileSize = 0;
 }
 
-void DataExporter::exportDataToFile_Encryption(const std::vector<char> &data)
+void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
 {
     if (!outFile)
     {

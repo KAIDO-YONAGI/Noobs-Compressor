@@ -1,10 +1,10 @@
 #include "../include/Aes.h"
-std::vector<char> Aes::processDataAES(const std::vector<char> &inputBuffer, bool encrypt)
+DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
 {
-    std::vector<char> outputBuffer;
+    DataBlock outputBuffer;
 
     // 处理IV
-    if (encrypt)
+    if (mode==1)
     { // 加密
         // 生成随机IV
         if (RAND_priv_bytes(iv, sizeof(iv)) != 1)
@@ -18,7 +18,7 @@ std::vector<char> Aes::processDataAES(const std::vector<char> &inputBuffer, bool
         // 准备要加密的数据
         buffer = inputBuffer;
     }
-    else
+    else if(mode ==2)
     { // 解密
         // 检查输入是否足够包含IV
         if (inputBuffer.size() < sizeof(iv))
@@ -35,11 +35,11 @@ std::vector<char> Aes::processDataAES(const std::vector<char> &inputBuffer, bool
 
     // 处理数据
     size_t bytesToProcess = buffer.size();
-    if (encrypt)
+    if (mode==1)
     {
         aes(buffer.data(), static_cast<int>(bytesToProcess)); // 加密
     }
-    else
+    else if (mode==2)
     {
         deAes(buffer.data(), static_cast<int>(bytesToProcess)); // 解密
     }
@@ -50,7 +50,7 @@ std::vector<char> Aes::processDataAES(const std::vector<char> &inputBuffer, bool
     return outputBuffer;
 }
 //mode 1: 加密 2: 解密
-void Aes::doAes(int mode, const std::vector<char> &inputBuffer)
+void Aes::doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer)
 {
 
     if (mode != 1 && mode != 2)
@@ -60,7 +60,7 @@ void Aes::doAes(int mode, const std::vector<char> &inputBuffer)
 
     try
     {
-        processDataAES(inputBuffer, mode == 1);
+        outputBuffer=processDataAES(inputBuffer, mode == 1);
     }
     catch (const std::exception &e)
     {

@@ -1,7 +1,7 @@
 // Directory_FileProcessor.cpp
 #include "../include/Directory_FileProcessor.h"
 
-void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
     fs::path oPath = fullOutPath;
@@ -209,7 +209,7 @@ void BinaryIO_Writter::writeLogicalRoot(const std::string &logicalRoot, const Fi
     outFile.write(logicalRoot.c_str(), sizeOfName);
     numWriter.writeBinaryNums(count, outFile); // Ð´ÎÄ¼þÊý
 }
-void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset)
+void BinaryIO_Writter::writeRoot(FilePath &file, const  std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset)
 {
     FileCount_uint length = filePathToScan.size();
     for (FileCount_uint i = 0; i < length; i++)

@@ -33,7 +33,7 @@ private:
 public:
     explicit BinaryIO_Writter(std::ofstream &outFile) : outFile(outFile) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
-    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
+    void writeRoot(FilePath &file, const  std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
     void writeBlankSeparatedStandard();
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
     void binaryIO_Reader(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
@@ -43,7 +43,7 @@ class Directory_FileProcessor
 {
     /*
     scanFlow()按BFS（层序遍历）扫描指定目录下所有文件的函数。包含了队列逻辑，用于处理binaryIO_Reader()的循环扫描到的目录
-    directory_fileProcessor()主函数。参数const std::vector<std::string> &filePathToScan，用于处理多文件（目录）任务
+    directory_fileProcessor()主函数。参数const const std::vector<std::string> &filePathToScan，用于处理多文件（目录）任务
     */
 private:
     Transfer transfer;
@@ -64,5 +64,5 @@ public:
     {
         delete BIO;
     };
-    void directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot);
+    void directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot);
 };

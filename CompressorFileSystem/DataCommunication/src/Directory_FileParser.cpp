@@ -74,7 +74,7 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     directoryQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
+void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan)
 {
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
@@ -85,7 +85,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::
     if (count != filePathToScan.size()) // ºÏ—È ˝¡ø
         throw std::runtime_error("rootParser()-Error:Failed to match RootDirectory nums");
 
-    for (std::string &path : filePathToScan)
+    for (const std::string &path : filePathToScan)
     {
         fs::path fullPath = transfer.transPath(path);
         if (fs::is_regular_file(fullPath))
@@ -122,7 +122,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::
     }
 }
 
-void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
+void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
 {
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;

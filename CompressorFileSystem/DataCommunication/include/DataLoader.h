@@ -6,13 +6,13 @@
 class DataLoader
 {
 private:
-    std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
+    DataBlock buffer =DataBlock(BUFFER_SIZE);
 
     std::ifstream inFile;
     void done();
 
 public:
-    const std::vector<char>& getBlock(){
+    const DataBlock& getBlock(){
         return buffer;
     }
     bool isDone()

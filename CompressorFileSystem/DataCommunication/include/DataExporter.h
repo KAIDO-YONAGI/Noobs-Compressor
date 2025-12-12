@@ -17,7 +17,7 @@ private:
 public:
     DataExporter(const fs::path &outPath)
     {
-        std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in);
+        std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in);//避免截断，只能使用fstream输出
         if (!outFile)
         {
             throw std::runtime_error("DataExporter()-Error:Failed to open outFile");
@@ -32,5 +32,5 @@ public:
         }
     }
     void thisFileIsDone(FileSize_uint offsetToFill);
-    void exportDataToFile_Encryption(const std::vector<char> &data);
+    void exportDataToFile_Encryption(const DataBlock &data);
 };

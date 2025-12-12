@@ -27,6 +27,8 @@ using SizeOfMagicNum_uint = uint32_t;      // 魔数长度
 using SizeOfFlag_uint = uint8_t;           // 文件标长度
 using IvSize_uint = __uint128_t;           // iv头长度
 using FlagType = char;                     // 标志类型
+using DataBlock = std::vector<char>;       // 数据块类型
+
 // 常量改用 constexpr（类型安全）
 constexpr SizeOfMagicNum_uint MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 
@@ -76,13 +78,13 @@ constexpr const uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
 
 // 文件头的大小
 constexpr const uint8_t HEADER_SIZE =
-    sizeof(MAGIC_NUM) +                 // 4B
+    sizeof(MAGIC_NUM) +                // 4B
     sizeof(CompressStrategy_uint) +    // 1B
     sizeof(CompressorVersion_uint) +   // 1B
     sizeof(HeaderOffsetSize_uint) +    // 1B
     sizeof(DirectoryOffsetSize_uint) + // 4B
-    sizeof(MAGIC_NUM);                  // 4B
-#pragma pack(1) // 禁用填充，紧密读取
+    sizeof(MAGIC_NUM);                 // 4B
+#pragma pack(1)                        // 禁用填充，紧密读取
 struct Header
 {
     SizeOfMagicNum_uint magicNum_1 = 0;

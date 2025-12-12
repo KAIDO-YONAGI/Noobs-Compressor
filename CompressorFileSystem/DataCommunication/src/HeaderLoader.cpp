@@ -1,6 +1,6 @@
 #include "../include/HeaderLoader.h"
 
-void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath,const std::vector<std::string> filePathToScan)
+void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath, const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化加载器
     BinaryIO_Loader_Compression headerLoader(compressionFilePath, filePathToScan);
@@ -13,7 +13,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     }
 
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
-    // int count = 0;
+    DataBlock encryptedBlock;
     while (!headerLoader.fileQueue.empty())
     {
 
@@ -21,7 +21,10 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
 
         if (!dataLoader->isDone()) // 避免读到空数据块
         {
-            dataExporter.exportDataToFile_Encryption(dataLoader->getBlock()); // 读取的数据传输给exporter
+            encryptedBlock.resize(BUFFER_SIZE+sizeof(IvSize_uint));
+            aes.doAes(1,dataLoader->getBlock(),encryptedBlock);
+            dataExporter.exportDataToFile_Encryption(encryptedBlock); // 读取的数据传输给exporter
+            encryptedBlock.clear();
         }
         else if (dataLoader->isDone() && !headerLoader.fileQueue.empty())
         {

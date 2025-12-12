@@ -13,9 +13,9 @@
 class BinaryIO_Loader_Compression
 {
 private:
-    std::vector<unsigned char> buffer =
-        std::vector<unsigned char>(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
-    std::vector<std::string> filePathToScan;            // 构造时初始化，而且只使用一次
+    DataBlock buffer =
+        DataBlock(BUFFER_SIZE + 1024);       // 私有buffer,预留1024字节防止溢出
+    std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
     bool blockIsDone = false;
     bool allDone = false; // 标记是否完成所有目录读取
     Header header;        // 私有化存储当前文件头信息
@@ -29,8 +29,6 @@ private:
 
     Transfer transfer;
     Directory_FileParser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
-
-    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
     void requesetDone()
     {
         if (inFile.is_open())
@@ -47,12 +45,16 @@ private:
         }
         allDone = true;
     }
+    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
 
 public:
     Directory_FileQueue fileQueue;      // 文件队列
     Directory_FileQueue directoryQueue; // 目录队列
 
-    BinaryIO_Loader_Compression(const std::string inPath, const std::vector<std::string> filePathToScan = {})
+    void headerLoader(); // 主逻辑函数
+
+    BinaryIO_Loader_Compression() {};
+    BinaryIO_Loader_Compression(const std::string inPath, std::vector<std::string> filePathToScan = {})
     {
         this->loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
@@ -63,7 +65,7 @@ public:
         this->filePathToScan = filePathToScan;
         this->parserForLoader = new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
     }
-    BinaryIO_Loader_Compression() {};
+
     ~BinaryIO_Loader_Compression()
     {
         allLoopDone();
@@ -94,32 +96,25 @@ public:
     {
         return blockIsDone;
     }
-
-    void headerLoader(); // 主逻辑函数
 };
 
 class BinaryIO_Loader_Decompression : public BinaryIO_Loader_Compression
 {
 private:
-    Aes *aes;
     std::string inPath;
 
 public:
     Directory_FileQueue directoryQueue_ready;
-    BinaryIO_Loader_Decompression(const std::string inPath, const char *aes_key) : inPath(inPath)
-    {
-        aes = new Aes(aes_key);
-    };
+    BinaryIO_Loader_Decompression(const std::string inPath) : inPath(inPath) {}
 };
 class HeaderLoader_Compression
 {
 private:
     Transfer transfer;
-    fs::path loadPath = {};
+    fs::path loadPath;
     Locator locator;
     DataLoader *dataLoader;
 
 public:
-    void headerLoader(const std::string compressionFilePath,const  std::vector<std::string> filePathToScan);
-    
+    void headerLoader(const std::string compressionFilePath, const std::vector<std::string> &filePathToScan, Aes &aes);
 };

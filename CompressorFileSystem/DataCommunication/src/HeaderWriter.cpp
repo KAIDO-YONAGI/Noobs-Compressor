@@ -24,7 +24,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     numWriter.writeBinaryNums(HEADER_SIZE,outFile);
     outFile.seekp(0, std::ios::end);
 }
-void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
     NumsWriter numWriter;
@@ -39,7 +39,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
-void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
+void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
 {
     Transfer transfer;
 
