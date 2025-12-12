@@ -146,3 +146,92 @@ void Heffman::destroy_tree(Hefftreenode* node) {
     destroy_tree(node->right);
     delete node;
 }
+
+//序列化编码树并输出
+void Heffman::tree_to_plat_uchar(sfc::block_t& out_block)
+{
+    std::stack<Hefftreenode*> stack;
+    auto root = treeroot;
+    stack.push(root);
+    out_block.push_back('F');
+    while(stack.empty() == false)
+    {
+        auto cur = stack.top();
+        stack.pop();
+        if(cur->isleaf == false)
+        {
+            out_block.push_back('r');
+            if(cur->right==NULL || cur->left==NULL)
+            {
+                //TODO: 树错误
+            }
+            stack.push(cur->right);
+            stack.push(cur->left);
+        }
+        else
+            out_block.push_back('l');
+        out_block.push_back(cur->data);    
+    }
+}
+
+//解析编码表并加载树
+void Heffman::spawn_tree(sfc::block_t& in_block)
+{
+    std::stack<Hefftreenode*> stack;
+
+    auto iter_ib = in_block.cbegin();
+    if(*iter_ib != 'F')
+    {
+        //TODO: 解析编码表异常，验证错误
+    }
+    ++iter_ib;
+    while(iter_ib != in_block.cend())
+    {
+        Hefftreenode *node = NULL;
+        if(iter_ib + 1 == in_block.cend())
+        {
+            //TODO: 解析编码表异常，数据缺失
+        }
+        if(*iter_ib == 'r')
+        {
+            node = new Hefftreenode(*++iter_ib, 0, false);
+            stack.push(node);
+        }
+        else if(*iter_ib == 'l')
+        {
+            node = new Hefftreenode(*++iter_ib, 0, true);
+            while(!stack.empty() && connectNode(stack.top(), node))
+            {
+                stack.pop();
+            }
+        }
+        if(node == NULL)
+        {
+            //TODO: 解析编码表异常，创建节点失败
+        }
+        ++iter_ib;
+    }
+
+    while(stack.size() != 1)
+        stack.pop();
+    treeroot = stack.top();
+}
+
+bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)
+{
+    if(p == NULL || c == NULL)
+    {
+        //TODO: 空指针异常
+    }
+    if(p->left == NULL)
+    {
+        p->left = c;
+        return true;
+    }
+    if(p->right == NULL)
+    {
+        p->right = c;
+        return true;
+    }
+    return false;
+}
