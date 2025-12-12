@@ -25,7 +25,7 @@ void DataExporter::exportDataToFile_Encryption(const std::vector<char> &data)
     {
         throw std::runtime_error("exportDataToFile()-Error:Failed to open outFile");
     }
-    BinaryIO_Writter processor(std::move(tempFilePtr)); // 此处只传入不使用(使用禁止)
+    BinaryIO_Writter processor(tempFilePtr); // 此处只传入不使用(使用禁止)
 
     // TODO:此处需要回填偏移量
     outFile.seekp(0, std::ios::end);

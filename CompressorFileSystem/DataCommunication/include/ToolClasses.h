@@ -20,9 +20,9 @@ class NumsWriter
 {
 public:
     template <typename T>
-    void writeBinaryNums(T value, std::ofstream &file)
+    void writeBinaryNums(T value, std::ofstream &ofstream)
     {
-        if (!file)
+        if (!ofstream)
             throw std::runtime_error("writeBinaryNums() Error-noFile");
         // 编译时检查
 
@@ -32,7 +32,7 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!file.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
             throw std::runtime_error("writeBinaryNums()Error-Failed to write");
         }
