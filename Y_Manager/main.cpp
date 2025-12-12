@@ -46,7 +46,7 @@
 //     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";
 
 //     // 初始化加载器
-//     BinaryIO_Loader headerLoader(compressionFilePath, filePathToScan);
+//     BinaryIO_Loader_Compression headerLoader(compressionFilePath, filePathToScan);
 //     headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
 //     Locator locator;
 
@@ -70,7 +70,7 @@
 //             std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath() << " " << ++count << "\n";
 //             headerLoader.fileQueue.pop();
 //             if (!headerLoader.fileQueue.empty())// 更新下一个文件路径，生成编码表时可以调用reset（原目录）读两轮
-//                 dataLoader.reset(headerLoader.fileQueue.front().first.getFullPath()); 
+//                 dataLoader.reset(headerLoader.fileQueue.front().first.getFullPath());
 //         }
 
 //         if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone())// 队列空但整体未完成，请求下一轮读取对队列进行填充
@@ -81,7 +81,7 @@
 //     }
 //     system("pause");
 // }
-//完整Loop
+// 完整Loop
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderLoader.h"
 
@@ -94,10 +94,11 @@ int main()
     std::vector<std::string> filePathToScan;
     std::string logicalRoot, compressionFilePath;
 
-    filePathToScan.push_back("D:\\1gal\\TEST");
-    filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
-    filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
-    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
+    // filePathToScan.push_back("D:\\1gal\\TEST");
+    // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
+    filePathToScan.push_back("D:\\1gal\\TEST\\我");
+    // filePathToScan.push_back("C:\\Users\\12248\\Desktop\\SFC Things\\practise");
+    // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
     logicalRoot = "YONAGI";
     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";
 
@@ -110,39 +111,48 @@ int main()
     headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
 
     // 初始化加载器
-    BinaryIO_Loader headerLoader(compressionFilePath, filePathToScan);
-    headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
+    BinaryIO_Loader_Compression headerLoader(compressionFilePath, filePathToScan);
+    fs::path loadPath={};
     Locator locator;
+    DataLoader *dataLoader;
+    headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
+    if (!headerLoader.fileQueue.empty())
+    {
+        loadPath = headerLoader.fileQueue.front().first.getFullPath();
+        dataLoader = new DataLoader(loadPath);
+    }
 
-    fs::path loadPath = headerLoader.fileQueue.front().first.getFullPath();
-    DataLoader dataLoader(loadPath);
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
-    int count = 0;
+    // int count = 0;
     while (!headerLoader.fileQueue.empty())
     {
 
-        dataLoader.dataLoader();
+        dataLoader->dataLoader();
 
-        if (!dataLoader.isDone()) // 避免读到空数据块
+        if (!dataLoader->isDone()) // 避免读到空数据块
         {
-            dataExporter.exportDataToFile_Encryption(dataLoader.getBlock()); // 读取的数据传输给exporter
+            dataExporter.exportDataToFile_Encryption(dataLoader->getBlock()); // 读取的数据传输给exporter
         }
-        else if (dataLoader.isDone() && !headerLoader.fileQueue.empty())
+        else if (dataLoader->isDone() && !headerLoader.fileQueue.empty())
         {
             FileNameSize_uint offsetToFill = headerLoader.fileQueue.front().second;
-            dataExporter.thisFileIsDone(offsetToFill);//可在此前插入一个编码表写入再调用done
-            std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath() << " " << ++count << "\n";
+            dataExporter.thisFileIsDone(offsetToFill); // 可在此前插入一个编码表写入再调用done
+            std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath().filename() <<
+                // " " <<
+                // ++count <<
+                "\n";
 
             headerLoader.fileQueue.pop();
-            if (!headerLoader.fileQueue.empty())// 更新下一个文件路径，生成编码表时可以调用reset（原目录）读两轮
-                dataLoader.reset(headerLoader.fileQueue.front().first.getFullPath()); 
+            if (!headerLoader.fileQueue.empty()) // 更新下一个文件路径，生成编码表时可以调用reset（原目录）读两轮
+                dataLoader->reset(headerLoader.fileQueue.front().first.getFullPath());
         }
 
-        if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone())// 队列空但整体未完成，请求下一轮读取对队列进行填充
+        if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
         {
             headerLoader.restartLoader();
             headerLoader.headerLoader();
         }
     }
+    delete dataLoader;
     system("pause");
 }

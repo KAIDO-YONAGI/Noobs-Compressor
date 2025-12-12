@@ -1,5 +1,5 @@
 #include "../include/HeaderLoader.h"
-void BinaryIO_Loader::headerLoader()
+void BinaryIO_Loader_Compression::headerLoader()
 {
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
@@ -51,7 +51,7 @@ void BinaryIO_Loader::headerLoader()
         throw e.what();
     }
 }
-void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory)
+void BinaryIO_Loader_Compression::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory)
 {
     if (offset == 0)
         return;

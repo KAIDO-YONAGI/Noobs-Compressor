@@ -3,9 +3,6 @@
 
 void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
-    FilePath file; // 创建各个工具类的对象
-    BinaryIO_Writter BIO(outFile);
-    NumsWriter numWriter;
 
     fs::path oPath = fullOutPath;
     fs::path sPath;
@@ -20,10 +17,10 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
         DirectoryOffsetSize_uint offset = HEADER_SIZE;
 
-        BIO.writeBlankSeparatedStandard();
+        BIO->writeBlankSeparatedStandard();
 
-        BIO.writeLogicalRoot(logicalRoot, length, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
-        BIO.writeRoot(file, filePathToScan, tempOffset,BIO);       // 写入文件根目录
+        BIO->writeLogicalRoot(logicalRoot, length, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
+        BIO->writeRoot(file, filePathToScan, tempOffset);  // 写入文件根目录
 
         for (FileCount_uint i = 0; i < length; i++)
         {
@@ -32,7 +29,7 @@ void Directory_FileProcessor::directory_fileProcessor(const std::vector<std::str
             if (!fs::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
-                BIO.binaryIO_Reader(file, directoryQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
+                BIO->binaryIO_Reader(file, directoryQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
             }
         }
         scanFlow(file, tempOffset, offset);
@@ -112,7 +109,7 @@ void BinaryIO_Writter::binaryIO_Reader(FilePath &file, Directory_FIleQueueInterf
 // 识别存储标准并且分发到各个写入函数
 void BinaryIO_Writter::writeStorageStandard(Directory_FileDetails &details, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
-    NumsWriter numWriter;
+    
     if (details.getIsFile()) // 文件对应的处理
     {
         writeFileStandard(details, tempOffset);
@@ -144,7 +141,6 @@ void BinaryIO_Writter::writeStorageStandard(Directory_FileDetails &details, Dire
 // 目录标准写入函数
 void BinaryIO_Writter::writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
-    NumsWriter numWriter;
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
@@ -157,7 +153,6 @@ void BinaryIO_Writter::writeDirectoryStandard(Directory_FileDetails &details, Fi
 // 文件标准写入函数
 void BinaryIO_Writter::writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
-    NumsWriter numWriter;
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
@@ -171,9 +166,6 @@ void BinaryIO_Writter::writeFileStandard(Directory_FileDetails &details, Directo
 // 分割标准写入函数（回填）
 void BinaryIO_Writter::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
 {
-    NumsWriter numWriter;
-    Locator locator;
-
     locator.offsetLocator(outFile, offset + FLAG_SIZE);
     numWriter.writeBinaryNums(tempOffset, outFile);
     outFile.seekp(0, std::ios::end);
@@ -181,7 +173,6 @@ void BinaryIO_Writter::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffs
 // 空分割标准写入函数
 void BinaryIO_Writter::writeBlankSeparatedStandard()
 {
-    NumsWriter numWriter;
     outFile.write(SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), outFile);
     numWriter.writeBinaryNums(IvSize_uint(0), outFile);
@@ -189,14 +180,12 @@ void BinaryIO_Writter::writeBlankSeparatedStandard()
 // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
 void BinaryIO_Writter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
 {
-    NumsWriter numWriter;
     File.write(SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), File);
 }
 // 符号链接标准写入函数
 void BinaryIO_Writter::writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
-    NumsWriter numWriter;
     FileNameSize_uint sizeOfName = details.getSizeOfName();
     FileNameSize_uint sizeOfPath = details.getFullPath().string().size();
 
@@ -213,7 +202,6 @@ void BinaryIO_Writter::writeSymbolLinkStandard(Directory_FileDetails &details, D
 void BinaryIO_Writter::writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
     FileNameSize_uint sizeOfName = logicalRoot.size();
-    NumsWriter numWriter;
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
     outFile.write(LOGICAL_ROOT_FLAG, FLAG_SIZE);
@@ -221,7 +209,7 @@ void BinaryIO_Writter::writeLogicalRoot(const std::string &logicalRoot, const Fi
     outFile.write(logicalRoot.c_str(), sizeOfName);
     numWriter.writeBinaryNums(count, outFile); // 写文件数
 }
-void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset, BinaryIO_Writter &BIO)
+void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset)
 {
     FileCount_uint length = filePathToScan.size();
     for (FileCount_uint i = 0; i < length; i++)
@@ -257,17 +245,17 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
         const fs::directory_entry entry(rootPath);
         if (entry.is_regular_file())
         {
-            BIO.writeFileStandard(rootDetails, tempOffset);
+            writeFileStandard(rootDetails, tempOffset);
         }
         else if (entry.is_directory())
         {
-            FileCount_uint count = BIO.countFilesInDirectory(rootPath);
-            BIO.writeDirectoryStandard(rootDetails, count, tempOffset);
+            FileCount_uint count = countFilesInDirectory(rootPath);
+            writeDirectoryStandard(rootDetails, count, tempOffset);
         }
         else if (entry.is_symlink())
         {
             rootDetails.setFileSize(1);
-            BIO.writeSymbolLinkStandard(rootDetails, tempOffset);
+            writeSymbolLinkStandard(rootDetails, tempOffset);
         }
     }
 }

@@ -34,7 +34,7 @@ void DataExporter::exportDataToFile_Encryption(const std::vector<char> &data)
 
     outFile.write(data.data(), dataSize);
     processedFileSize += dataSize;
-    std::cout << "FileProcessedSize:" << processedFileSize << "\n";
+    // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
 
     thisBlockIsDone(dataSize);
 }

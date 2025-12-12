@@ -5,14 +5,7 @@
 #include "ToolClasses.h"
 #include "Directory_FileParser.h"
 
-class FilePath_Loader
-{
-private:
-    fs::path outPutFilePath;
-    fs::path filePathToScan;
-};
-
-class BinaryIO_Loader
+class BinaryIO_Loader_Compression
 {
 private:
     std::vector<unsigned char> buffer =
@@ -54,18 +47,19 @@ public:
     Directory_FileQueue fileQueue;      // 文件队列
     Directory_FileQueue directoryQueue; // 目录队列
 
-    BinaryIO_Loader(std::string inPath, std::vector<std::string> filePathToScan = {})
+    BinaryIO_Loader_Compression(const std::string inPath,const std::vector<std::string> filePathToScan = {})
     {
         this->loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
-           if(!inFile)
-            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile"+inPath);
-        
+        if (!inFile)
+            throw std::runtime_error("BinaryIO_Loader_Compression()-Error:Failed to open inFile" + inPath);
+
         this->inFile = std::move(inFile);
         this->filePathToScan = filePathToScan;
         this->parserForLoader = new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
     }
-    ~BinaryIO_Loader()
+    BinaryIO_Loader_Compression() {};
+    ~BinaryIO_Loader_Compression()
     {
         allLoopDone();
         delete parserForLoader;
@@ -97,4 +91,14 @@ public:
     }
 
     void headerLoader(); // 主逻辑函数
+};
+
+class BinaryIO_Loader_Decompression : public BinaryIO_Loader_Compression
+{
+private:
+    std::string inPath;
+
+public:
+    Directory_FileQueue directoryQueue_ready;
+    BinaryIO_Loader_Decompression(const std::string inPath) : inPath(inPath) {};
 };

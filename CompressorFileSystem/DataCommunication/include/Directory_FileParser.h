@@ -15,7 +15,7 @@ private:
     const DirectoryOffsetSize_uint &offset;
     const DirectoryOffsetSize_uint &tempOffset;
 
-    void checkBounds(DirectoryOffsetSize_uint pos, size_t requiredSize) const;
+    void checkBounds(DirectoryOffsetSize_uint pos, FileNameSize_uint equiredSize) const;
 
     template <typename T>
     void fileName_fileSizeParser(
@@ -31,7 +31,7 @@ private:
             bufferPtr += sizeof(T);
 
             // 2. 读取字符串内容,安全构造 std::string,防止未初始化的越界报错
-            checkBounds(bufferPtr, static_cast<size_t>(fileNameSize));
+            checkBounds(bufferPtr, static_cast<FileNameSize_uint>(fileNameSize));
             fileName.assign(
                 buffer.data() + bufferPtr,
                 buffer.data() + bufferPtr + fileNameSize);
