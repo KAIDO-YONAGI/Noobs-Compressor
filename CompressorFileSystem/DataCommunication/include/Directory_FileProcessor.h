@@ -1,9 +1,9 @@
 // Directory_FileProcessor.h
 #pragma once
 
-#include "../include/FileLibrary.h"
-#include "../include/FileDetails.h"
-#include "../include/ToolClasses.hpp"
+#include "FileLibrary.h"
+#include "Directory_FileDetails.h"
+#include "ToolClasses.h"
 
 class Directory_FileProcessor
 {
@@ -14,7 +14,7 @@ class Directory_FileProcessor
 private:
     Transfer transfer;
     std::ofstream &outFile;
-    QueueInterface queue;
+    Directory_FIleQueueInterface directoryQueue;
 
     void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
@@ -23,7 +23,7 @@ public:
     void directory_fileProcessor(const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot);
 };
 
-class BinaryIO_Reader // 接触二进制文件及其处理的相关IO的函数的封装
+class BinaryIO_Writter // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
     binaryIO_Reader()主函数。扫描指定路径（单层）的文件及其子文件夹的函数
@@ -37,20 +37,19 @@ private:
     Transfer transfer;
     std::ofstream &outFile;
 
-    void writeDirectoryStandard(FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
-    void writeFileStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
+    void writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
+    void writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     void writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
-    void writeStorageStandard(FileDetails &details, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
-    FileDetails &readDetails(const fs::directory_entry &entry);
-    void writeSymbolLinkStandard(FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
+    void writeStorageStandard(Directory_FileDetails &details, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
     FileCount_uint countFilesInDirectory(const fs::path &filePathToScan);
     FileSize_uint getFileSize(const fs::path &filePathToScan);
 
 public:
-    explicit BinaryIO_Reader(std::ofstream &outFile) : outFile(outFile) {};
+    explicit BinaryIO_Writter(std::ofstream &outFile) : outFile(outFile) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
-    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
-    void blankSeparatedStandard(std::ofstream &outFile);
-
-    void binaryIO_Reader(FilePath &file, QueueInterface &queue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset,BinaryIO_Writter &BIO);
+    void writeBlankSeparatedStandard();
+    void writeBlankSeparatedStandardForEncryption(std::fstream &File);
+    void binaryIO_Reader(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

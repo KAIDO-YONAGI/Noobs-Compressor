@@ -1,8 +1,6 @@
 #include "../include/Aes.h"
 
-void Aes::setKey(const char* key) {
-    extendKey(key); // 内部调用密钥扩展
-}
+
 int Aes::getLeft4Bit(int num) {
     int left = num & 0x000000f0;
     return left >> 4;
@@ -232,7 +230,7 @@ void Aes::getArrayFrom4W(int i, int array[4][4]) {
     }
 }
 
-void Aes::hash_to_16bytes(const char* input, uint8_t output[16]) {
+void Aes::hash_to_16bytes(const char* input, uint8_t* output) {
     uint8_t hash[SHA256_DIGEST_LENGTH];
     SHA256((const uint8_t*)input, strlen(input), hash);
     memcpy(output, hash, 16);

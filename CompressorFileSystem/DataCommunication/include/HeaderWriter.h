@@ -1,8 +1,8 @@
 // Directory_FileWriter.h
 #pragma once
 
-#include "../include/FileLibrary.h"
-#include "../include/Directory_FileProcessor.h"
+#include "FileLibrary.h"
+#include "Directory_FileProcessor.h"
 
 class HeaderWriter_Interface
 {

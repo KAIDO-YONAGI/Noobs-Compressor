@@ -1,10 +1,10 @@
 #ifndef DATABLOCKSMANAGE_H
 #define DATABLOCKSMANAGE_H
-
+#include <string>
 #include <cstdint>
 #include <vector>
 #include <algorithm>
-#include "../Schedule/include/Datacmnctor.h"
+#include "../Schedule/include/Datacmnctor.h" 
 
 /**
  * 数据块列表类

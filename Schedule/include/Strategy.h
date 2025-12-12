@@ -3,7 +3,7 @@
 
 #include "Worker.h"
 #include "Datacmnctor.h"
-
+#include <vector>
 /**
  * 为策略模式设计的策略接口
  * 具体的策略算法类继承该类，以便

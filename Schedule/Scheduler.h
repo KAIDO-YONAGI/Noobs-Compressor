@@ -5,7 +5,7 @@
 #include "include/Strategy.h"
 #include "include/Worker.h"
 #include <vector>
-
+#include "include/Strategy.h"
 class Scheduler
 {
 public:
@@ -23,7 +23,7 @@ public:
 
 Scheduler::Scheduler(/* args */)
 {
-
+ 
 }
 
 Scheduler::~Scheduler()
