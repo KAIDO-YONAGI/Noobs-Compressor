@@ -5,6 +5,11 @@
 #include "ToolClasses.h"
 #include "Directory_FileParser.h"
 
+#include "../CompressorFileSystem/DataCommunication/include/DataLoader.h"
+#include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
+
+#include "../EncryptionModules/Aes/include/Aes.h"
+
 class BinaryIO_Loader_Compression
 {
 private:
@@ -47,7 +52,7 @@ public:
     Directory_FileQueue fileQueue;      // 文件队列
     Directory_FileQueue directoryQueue; // 目录队列
 
-    BinaryIO_Loader_Compression(const std::string inPath,const std::vector<std::string> filePathToScan = {})
+    BinaryIO_Loader_Compression(const std::string inPath, const std::vector<std::string> filePathToScan = {})
     {
         this->loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
@@ -96,9 +101,25 @@ public:
 class BinaryIO_Loader_Decompression : public BinaryIO_Loader_Compression
 {
 private:
+    Aes *aes;
     std::string inPath;
 
 public:
     Directory_FileQueue directoryQueue_ready;
-    BinaryIO_Loader_Decompression(const std::string inPath) : inPath(inPath) {};
+    BinaryIO_Loader_Decompression(const std::string inPath, const char *aes_key) : inPath(inPath)
+    {
+        aes = new Aes(aes_key);
+    };
+};
+class HeaderLoader_Compression
+{
+private:
+    Transfer transfer;
+    fs::path loadPath = {};
+    Locator locator;
+    DataLoader *dataLoader;
+
+public:
+    void headerLoader(const std::string compressionFilePath,const  std::vector<std::string> filePathToScan);
+    
 };

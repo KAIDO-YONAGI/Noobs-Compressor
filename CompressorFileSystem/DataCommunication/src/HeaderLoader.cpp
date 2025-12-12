@@ -1,4 +1,50 @@
 #include "../include/HeaderLoader.h"
+
+void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath,const std::vector<std::string> filePathToScan)
+{
+    // 初始化加载器
+    BinaryIO_Loader_Compression headerLoader(compressionFilePath, filePathToScan);
+
+    headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
+    if (!headerLoader.fileQueue.empty())
+    {
+        loadPath = headerLoader.fileQueue.front().first.getFullPath();
+        dataLoader = new DataLoader(loadPath);
+    }
+
+    DataExporter dataExporter(transfer.transPath(compressionFilePath));
+    // int count = 0;
+    while (!headerLoader.fileQueue.empty())
+    {
+
+        dataLoader->dataLoader();
+
+        if (!dataLoader->isDone()) // 避免读到空数据块
+        {
+            dataExporter.exportDataToFile_Encryption(dataLoader->getBlock()); // 读取的数据传输给exporter
+        }
+        else if (dataLoader->isDone() && !headerLoader.fileQueue.empty())
+        {
+            FileNameSize_uint offsetToFill = headerLoader.fileQueue.front().second;
+            dataExporter.thisFileIsDone(offsetToFill); // 可在此前插入一个编码表写入再调用done
+            std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath().filename() <<
+                // " " <<
+                // ++count <<
+                "\n";
+
+            headerLoader.fileQueue.pop();
+            if (!headerLoader.fileQueue.empty()) // 更新下一个文件路径，生成编码表时可以调用reset（原目录）读两轮
+                dataLoader->reset(headerLoader.fileQueue.front().first.getFullPath());
+        }
+
+        if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
+        {
+            headerLoader.restartLoader();
+            headerLoader.headerLoader();
+        }
+    }
+}
+
 void BinaryIO_Loader_Compression::headerLoader()
 {
     if (loaderRequestIsDone() || allLoopIsDone())
@@ -20,7 +66,7 @@ void BinaryIO_Loader_Compression::headerLoader()
             {
                 throw std::runtime_error("Invalid file format");
             }
-            if(header.directoryOffset==0)
+            if (header.directoryOffset == 0)
                 throw std::runtime_error("Invalid directory offset in header");
             offset = header.directoryOffset - HEADER_SIZE;
         }

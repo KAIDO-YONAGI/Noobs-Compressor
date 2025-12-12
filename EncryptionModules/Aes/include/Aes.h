@@ -1,4 +1,4 @@
-
+#pragma once
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
@@ -62,10 +62,8 @@ public:
         delete[] aes_key;
         aes_key = nullptr;
     }
-    std::vector<char> runAES(int mode, const std::vector<char> &inputBuffer);
+    void doAes(int mode, const std::vector<char> &inputBuffer);
 };
-
-const size_t BUFFER_SIZE = 8192;
 
 static const unsigned int Rcon[10] = {
     0x01000000, 0x02000000,
