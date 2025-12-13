@@ -16,7 +16,7 @@ private:
     const DirectoryOffsetSize_uint &offset;
     const DirectoryOffsetSize_uint &tempOffset;
     void checkBounds(DirectoryOffsetSize_uint pos, FileNameSize_uint equiredSize) const;
-    int parserMode = 0; // 0：默认模式、1：压缩模式、2：解压模式
+    size_t parserMode = 0; // 0：默认模式、1：压缩模式、2：解压模式
 
     template <typename T>
     void fileName_fileSizeParser(
@@ -67,7 +67,7 @@ private:
     }
     fs::path pathConnector(std::string &fileName);
 
-    void fileParser(DirectoryOffsetSize_uint &bufferPtr, int mode);
+    void fileParser(DirectoryOffsetSize_uint &bufferPtr);
     void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
     void rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan);
 
