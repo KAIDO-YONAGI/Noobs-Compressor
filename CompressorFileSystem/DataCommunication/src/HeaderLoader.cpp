@@ -26,11 +26,9 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
         if (!dataLoader->isDone()) // 避免读到空数据块
         {
             system("cls");
-            std::cout << "Loading file: "
-                      << filename
-                      << " "
+            std::cout << "Processing file: " << filename << "\n"
                       << std::fixed << std::setw(6) << std::setprecision(2)
-                      << 100.0 * ++count / static_cast<double>(totalBlocks)
+                      << (100.0 * ++count) / totalBlocks
                       << "% \n";
             encryptedBlock.resize(BUFFER_SIZE + sizeof(IvSize_uint));
             aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
@@ -41,7 +39,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
         {
             FileNameSize_uint offsetToFill = headerLoader.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill); // 可在此前插入一个编码表写入再调用done
-            std::cout << "--------Done!--------";
+            std::cout << "--------Done!--------" << "\n";
 
             headerLoader.fileQueue.pop();
             if (!headerLoader.fileQueue.empty())
@@ -50,6 +48,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
                 dataLoader->reset(loadFile.getFullPath());
                 filename = loadFile.getFullPath().filename();
                 totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+                count = 0;
             }
         }
 
@@ -96,7 +95,7 @@ void BinaryIO_Loader::headerLoader()
             allLoopDone();
             return;
         }
-        while (offset / BUFFER_SIZE > 0 || offset % BUFFER_SIZE > 0)
+        while (offset > 0)
         {
             buffer.clear();
             if (offset == 0)
