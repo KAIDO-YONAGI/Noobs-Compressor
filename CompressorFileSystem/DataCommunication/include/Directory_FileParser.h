@@ -9,13 +9,12 @@ class Directory_FileParser
 private:
     Directory_FileQueue &directoryQueue;
     Directory_FileQueue &fileQueue;
-    std::vector<unsigned char> &buffer;
+    DataBlock &buffer;
     Transfer transfer;
     const Header &header;
     const DirectoryOffsetSize_uint &offset;
     const DirectoryOffsetSize_uint &tempOffset;
-
-    void checkBounds(DirectoryOffsetSize_uint pos, size_t requiredSize) const;
+    void checkBounds(DirectoryOffsetSize_uint pos, FileNameSize_uint equiredSize) const;
 
     template <typename T>
     void fileName_fileSizeParser(
@@ -31,7 +30,7 @@ private:
             bufferPtr += sizeof(T);
 
             // 2. 读取字符串内容,安全构造 std::string,防止未初始化的越界报错
-            checkBounds(bufferPtr, static_cast<size_t>(fileNameSize));
+            checkBounds(bufferPtr, static_cast<FileNameSize_uint>(fileNameSize));
             fileName.assign(
                 buffer.data() + bufferPtr,
                 buffer.data() + bufferPtr + fileNameSize);
@@ -71,7 +70,12 @@ private:
     void rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan);
 
 public:
-    Directory_FileParser(std::vector<unsigned char> &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue, const Header &header, const DirectoryOffsetSize_uint &offset, const DirectoryOffsetSize_uint &tempOffset)
+    std::string rootForDecompression;
+    void setRootForDecompression(std::string rootForDecompression)
+    {
+        this->rootForDecompression=rootForDecompression;
+    }
+    Directory_FileParser(DataBlock &buffer, Directory_FileQueue &directoryQueue, Directory_FileQueue &fileQueue, const Header &header, const DirectoryOffsetSize_uint &offset, const DirectoryOffsetSize_uint &tempOffset)
         : buffer(buffer), directoryQueue(directoryQueue), fileQueue(fileQueue), header(header), offset(offset), tempOffset(tempOffset) {}
     void parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory);
 };

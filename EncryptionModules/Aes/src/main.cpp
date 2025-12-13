@@ -1,4 +1,4 @@
-#include "../include/Aes.h"
+// #include "../include/Aes.h"
 
 //加密8KB数据块示例
 // int main() {
@@ -25,7 +25,7 @@
 //     );
 
 //     Aes aes("your_aes_key_here");
-//     std::vector<char> outputBuffer = aes.runAES(1, inputBuffer); // 示例调用
+//     std::vector<char> outputBuffer = aes.doAes(1, inputBuffer); // 示例调用
 
 //     outputFile.write(outputBuffer.data(), outputBuffer.size());
 //     outputFile.close();
@@ -59,7 +59,7 @@
 //    );
 //
 //    Aes aes("your_aes_key_here");
-//    std::vector<char> outputBuffer = aes.runAES(2, inputBuffer); // 示例调用
+//    std::vector<char> outputBuffer = aes.doAes(2, inputBuffer); // 示例调用
 //
 //    outputFile.write(outputBuffer.data(), outputBuffer.size());
 //    outputFile.close();
