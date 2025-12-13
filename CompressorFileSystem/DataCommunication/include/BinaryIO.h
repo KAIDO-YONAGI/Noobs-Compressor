@@ -4,6 +4,7 @@
 #include "ToolClasses.h"
 #include "Directory_FileDetails.h"
 #include "Directory_FileParser.h"
+
 class BinaryIO_Writter // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
@@ -78,7 +79,7 @@ public:
     Directory_FileQueue fileQueue;      // 文件队列
     Directory_FileQueue directoryQueue; // 目录队列
 
-    void headerLoader(); // 主逻辑函数
+    void headerLoaderIterator(); // 主逻辑函数
 
     BinaryIO_Loader() {};
     BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan = {})
