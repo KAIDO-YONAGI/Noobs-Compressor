@@ -4,10 +4,10 @@
 #include "Directory_FileDetails.h"
 #include "ToolClasses.h"
 
-#include "../CompressorFileSystem/DataCommunication/include/DataLoader.h"
-#include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
-
-#include "../EncryptionModules/Aes/include/Aes.h"
+#include "DataLoader.h"
+#include "DataExporter.h"
+#include "Aes.h"
+#include "BinaryIO.h"
 
 class HeaderLoader_Decompression : public BinaryIO_Loader
 {

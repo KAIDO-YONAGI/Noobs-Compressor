@@ -4,11 +4,136 @@
 #include "ToolClasses.h"
 #include "Directory_FileDetails.h"
 #include "Directory_FileParser.h"
+#include "Aes.h"
+
+class BinaryIO_Loader
+{
+private:
+    DataBlock buffer =
+        DataBlock(BUFFER_SIZE + 1024);       // 私有buffer,预留1024字节防止溢出
+    std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
+    bool blockIsDone = false;
+    bool allDone = false; // 标记是否完成所有目录读取
+    Header header;        // 私有化存储当前文件头信息
+
+    FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
+    DirectoryOffsetSize_uint offset = 0;     // 当前剩余字节数
+    DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
+
+    fs::path loadPath;
+    std::ifstream inFile;
+    std::fstream fstreamForRefill;
+
+    Transfer transfer;
+    Directory_FileParser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
+    void requesetDone()
+    {
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+        blockIsDone = true;
+    }
+    void allLoopDone()
+    {
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+        allDone = true;
+    }
+    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
+
+public:
+    Directory_FileQueue fileQueue;                            // 文件队列
+    Directory_FileQueue directoryQueue;                       // 目录队列
+    std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
+
+    void headerLoaderIterator(); // 主逻辑函数
+
+    BinaryIO_Loader() {};
+    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan = {})
+    {
+        this->loadPath = transfer.transPath(inPath);
+        std::ifstream inFile(loadPath, std::ios::binary);
+        std::fstream fstreamForRefill(loadPath, std::ios::binary | std::ios::in | std::ios::out);
+        if (!inFile)
+            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile" + inPath);
+        if (!fstreamForRefill)
+            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open fstreamForRefill" + inPath);
+
+        this->inFile = std::move(inFile);
+        this->fstreamForRefill = std::move(fstreamForRefill);
+        this->filePathToScan = filePathToScan;
+        this->parserForLoader = new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
+    }
+
+    ~BinaryIO_Loader()
+    {
+        allLoopDone();
+        delete parserForLoader;
+    }
+    bool allLoopIsDone()
+    {
+        return allDone;
+    }
+    bool loaderRequestIsDone()
+    {
+        return blockIsDone;
+    }
+    std::ifstream &getInFile()
+    {
+        return inFile;
+    }
+    void restartLoader()
+    {
+        if (!allLoopIsDone())
+        {
+            std::ifstream newInFile(loadPath, std::ios::binary);
+            if (!newInFile)
+                throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
+
+            size_t offsetToRestart = header.directoryOffset - offset;
+
+            newInFile.seekg(offsetToRestart, std::ios::beg);
+            this->inFile = std::move(newInFile);
+            blockIsDone = false;
+        }
+        else
+            return;
+    }
+    void encryptHeaderBlock(Aes &aes)
+    {
+        DataBlock inBlock;
+        DataBlock encryptedBlock;
+        DirectoryOffsetSize_uint startPos, blockSize;
+
+        for (auto blockPos : pos)
+        {
+            startPos = blockPos[0];
+            blockSize = blockPos[1];
+
+            inBlock.resize(blockSize);
+            encryptedBlock.resize(blockSize + sizeof(IvSize_uint));
+
+            fstreamForRefill.seekp(startPos, std::ios::beg);
+            fstreamForRefill.read(inBlock.data(), blockSize);
+
+            aes.doAes(1,inBlock,encryptedBlock);
+            fstreamForRefill.seekp(startPos-sizeof(IvSize_uint));
+            fstreamForRefill.write(encryptedBlock.data(),blockSize+sizeof(IvSize_uint));
+
+            inBlock.clear();
+            encryptedBlock.clear();
+        }
+        std::cout<<"encryptHeaderBlock-Done"<<"\n";
+    }
+};
 
 class BinaryIO_Writter // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
-    binaryIO_Reader()主函数。扫描指定路径（单层）的文件及其子文件夹的函数
+    binaryIO_Writer()主函数。扫描指定路径（单层）的文件及其子文件夹的函数
     writeStorageStandard()分发当前处理的路径上的目录/文件到：目录标准写入/文件标准写入
     writeDirectoryStandard()目录标准写入
     writeFileStandard()文件标准写入
@@ -32,99 +157,8 @@ private:
 public:
     explicit BinaryIO_Writter(std::ofstream &outFile) : outFile(outFile) {};
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
-    void writeRoot(FilePath &file, const  std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
+    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset);
     void writeBlankSeparatedStandard();
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
-    void binaryIO_Reader(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
-};
-
-class BinaryIO_Loader
-{
-private:
-    DataBlock buffer =
-        DataBlock(BUFFER_SIZE + 1024);       // 私有buffer,预留1024字节防止溢出
-    std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
-    bool blockIsDone = false;
-    bool allDone = false; // 标记是否完成所有目录读取
-    Header header;        // 私有化存储当前文件头信息
-
-    FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
-    DirectoryOffsetSize_uint offset = 0;     // 当前剩余字节数
-    DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
-
-    fs::path loadPath;
-    std::ifstream inFile;
-
-    Transfer transfer;
-    Directory_FileParser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
-    void requesetDone()
-    {
-        if (inFile.is_open())
-        {
-            inFile.close();
-        }
-        blockIsDone = true;
-    }
-    void allLoopDone()
-    {
-        if (inFile.is_open())
-        {
-            inFile.close();
-        }
-        allDone = true;
-    }
-    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory);
-
-public:
-    Directory_FileQueue fileQueue;      // 文件队列
-    Directory_FileQueue directoryQueue; // 目录队列
-
-    void headerLoaderIterator(); // 主逻辑函数
-
-    BinaryIO_Loader() {};
-    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan = {})
-    {
-        this->loadPath = transfer.transPath(inPath);
-        std::ifstream inFile(loadPath, std::ios::binary);
-        if (!inFile)
-            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile" + inPath);
-
-        this->inFile = std::move(inFile);
-        this->filePathToScan = filePathToScan;
-        this->parserForLoader = new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
-    }
-
-    ~BinaryIO_Loader()
-    {
-        allLoopDone();
-        delete parserForLoader;
-    }
-    void restartLoader()
-    {
-        if (!allLoopIsDone())
-        {
-            std::ifstream newInFile(loadPath, std::ios::binary);
-            if (!newInFile)
-                throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
-
-            size_t offsetToRestart = header.directoryOffset - offset;
-
-            newInFile.seekg(offsetToRestart, std::ios::beg);
-            this->inFile = std::move(newInFile);
-            blockIsDone = false;
-        }
-        else
-            return;
-    }
-    bool allLoopIsDone()
-    {
-        return allDone;
-    }
-    bool loaderRequestIsDone()
-    {
-        return blockIsDone;
-    }
-    std::ifstream &getInFile(){
-        return inFile;
-    }
+    void binaryIO_Writer(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

@@ -9,7 +9,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cassert>
-
+#include <array>
 // ÃüÃû¿Õ¼ä
 
 namespace fs = std::filesystem;

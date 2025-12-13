@@ -29,7 +29,7 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
             if (!fs::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
-                BIO->binaryIO_Reader(file, directoryQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
+                BIO->binaryIO_Writer(file, directoryQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
             }
         }
         scanFlow(file, tempOffset, offset);
@@ -50,7 +50,7 @@ void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint 
         Directory_FileDetails &details = (directoryQueue.Directory_FileQueue.front()).first;
         file.setFilePathToScan(details.getFullPath());
 
-        BIO.binaryIO_Reader(file, directoryQueue, tempOffset, offset);
+        BIO.binaryIO_Writer(file, directoryQueue, tempOffset, offset);
 
         directoryQueue.Directory_FileQueue.pop();
     }

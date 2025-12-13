@@ -60,7 +60,7 @@ void Aes::doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer)
 
     try
     {
-        outputBuffer=processDataAES(inputBuffer, mode == 1);
+        outputBuffer=processDataAES(inputBuffer, mode);
     }
     catch (const std::exception &e)
     {

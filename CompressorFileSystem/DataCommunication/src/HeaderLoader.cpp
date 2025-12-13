@@ -2,7 +2,7 @@
 
 void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath, const std::vector<std::string> &filePathToScan, Aes &aes)
 {
-    // 初始化加载器
+    // 初始化迭代器
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
     DataBlock encryptedBlock;
     FileSize_uint totalBlocks = 1, count = 0;
@@ -58,4 +58,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
             headerLoaderIterator.headerLoaderIterator();
         }
     }
+    headerLoaderIterator.encryptHeaderBlock(aes);//加密目录块并且回填
+
+    delete dataLoader;
 }

@@ -27,7 +27,6 @@ void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
     }
     BinaryIO_Writter processor(tempFilePtr); // 此处只传入不使用(使用禁止)
 
-    // TODO:此处需要回填偏移量
     outFile.seekp(0, std::ios::end);
     FileSize_uint dataSize = data.size();
     processor.writeBlankSeparatedStandardForEncryption(outFile);

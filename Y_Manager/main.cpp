@@ -1,6 +1,7 @@
 // ÕÍ’˚Loop
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderLoader.h"
+#include "../CompressorFileSystem/DataCommunication/include/BinaryIO.h"
 #include "../EncryptionModules/Aes/include/Aes.h"
 int main()
 {

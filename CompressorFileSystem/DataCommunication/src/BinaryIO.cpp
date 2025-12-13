@@ -71,6 +71,12 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
         // 读取数据到vector后在内存中操作，对最后一个未达到写入分割标准大小的块引入特殊处理
         DirectoryOffsetSize_uint readSize = (tempOffset == 0 ? (offset - sizeof(SizeOfMagicNum_uint)) : tempOffset);
 
+        std::array<DirectoryOffsetSize_uint, 2> blockPos = {
+            static_cast<DirectoryOffsetSize_uint>(inFile.tellg()), // 转换流位置
+            static_cast<DirectoryOffsetSize_uint>(readSize)        // 转换读取大小
+        };
+        pos.push_back(blockPos); // 保存此时数据块的位置，便于下游对数据块直接操作
+
         // 按偏移量读取数据块
         buffer.resize(readSize); // clear后resize确保空间可写入，不改变capacity
         if (!inFile.read(reinterpret_cast<char *>(buffer.data()), readSize) && tempOffset != 0)
@@ -108,7 +114,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
     return;
 }
 
-void BinaryIO_Writter::binaryIO_Reader(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Writter::binaryIO_Writer(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
 
     try
@@ -155,7 +161,7 @@ void BinaryIO_Writter::binaryIO_Reader(FilePath &file, Directory_FIleQueueInterf
     }
     catch (fs::filesystem_error &e)
     {
-        std::cerr << "binaryIO_Reader()-Error: " << e.what() << "\n";
+        std::cerr << "binaryIO_Writer()-Error: " << e.what() << "\n";
     }
 }
 // 识别存储标准并且分发到各个写入函数
