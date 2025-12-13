@@ -1,220 +1,168 @@
-#include "Aes.h"
+#include "../include/Aes.h"
+DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
+{
+    DataBlock outputBuffer;
 
-int Aes::modeChoose() {
-    string inputFile, outputFile;
-    string keyInput;
-    int mode;
+    // ¥¶¿ÌIV
+    if (mode==1)
+    { // º”√‹
+        // …˙≥…ÀÊª˙IV
+        if (RAND_priv_bytes(iv, sizeof(iv)) != 1)
+        {
+            throw std::runtime_error("Failed to generate random IV");
+        }
 
-    cout << "AES Encryption/Decryption" << endl;
-    cout << "1. Encryption" << endl;
-    cout << "2. Decryption" << endl;
-    cout << "Choose mode(1 or 2): ";
-    cin >> mode;
+        // ÃÌº”IVµΩ ‰≥ˆª∫≥Â«¯
+        outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));
 
-    if (mode != 1 && mode != 2) {
-        cerr << "FQ" << endl;
-        return 0;
+        // ◊º±∏“™º”√‹µƒ ˝æ›
+        buffer = inputBuffer;
+    }
+    else if(mode ==2)
+    { // Ω‚√‹
+        // ºÏ≤È ‰»Î «∑Ò◊„πª∞¸∫¨IV
+        if (inputBuffer.size() < sizeof(iv))
+        {
+            throw std::runtime_error("Input too short to contain IV");
+        }
+
+        // Ã·»°IV
+        memcpy(iv, inputBuffer.data(), sizeof(iv));
+
+        // ◊º±∏“™Ω‚√‹µƒ ˝æ›
+        buffer.assign(inputBuffer.begin() + sizeof(iv), inputBuffer.end());
     }
 
-    cout << "Pwd: ";
-    cin.ignore();
-    getline(cin, keyInput);
-    
-    uint8_t aes_key[16];
-    hash_to_16bytes(keyInput.c_str(), aes_key);
-    
-    cout << "Input" << (mode == 1 ? "Source" : "Encrypted Files") << ": ";
-    cin >> inputFile;
-
-    cout << "Output" << (mode == 1 ? "Encrypt Files" : "Decrypt Files") << ": ";
-    cin >> outputFile;
-
-    try {
-        processFileAES(inputFile, outputFile, (char*)aes_key, mode == 1);
-    } catch (const exception& e) {
-        cerr << "Error: " << e.what() << endl;
-        return 0;
+    // ¥¶¿Ì ˝æ›
+    size_t bytesToProcess = buffer.size();
+    if (mode==1)
+    {
+        aes(buffer.data(), static_cast<int>(bytesToProcess)); // º”√‹
     }
-    system("pause");
-    return 1;
+    else if (mode==2)
+    {
+        deAes(buffer.data(), static_cast<int>(bytesToProcess)); // Ω‚√‹
+    }
+
+    // ÃÌº”¥¶¿Ì∫Ûµƒ ˝æ›µΩ ‰≥ˆª∫≥Â«¯
+    outputBuffer.insert(outputBuffer.end(), buffer.begin(), buffer.end());
+
+    return outputBuffer;
 }
-void Aes::processFileAES(const string& inputFile, const string& outputFile, 
-                         const char* aes_key, bool encrypt) {
-<<<<<<<< HEAD:src/mainCircle.cpp
-ifstream inFile(inputFile, ios::binary);
-========
-    ifstream inFile(inputFile, ios::binary);
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
-    ofstream outFile(outputFile, ios::binary);
-    
-    if (!inFile || !outFile) {
-        cerr << "Can not open the file!" << endl;
+//mode 1: º”√‹ 2: Ω‚√‹
+void Aes::doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer)
+{
+
+    if (mode != 1 && mode != 2)
+    {
+        throw std::invalid_argument("Invalid mode. Use 1 for encryption and 2 for decryption.");
+    }
+
+    try
+    {
+        outputBuffer=processDataAES(inputBuffer, mode);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::runtime_error(std::string("AES processing failed: ") + e.what());
+    }
+
+    return;
+}
+void Aes::aes(char *p, int plen)
+{
+    if (!p || plen <= 0)
         return;
-    }
 
-<<<<<<<< HEAD:src/mainCircle.cpp
-    // Ëé∑ÂèñÊñá‰ª∂Â§ßÂ∞è
-========
-    // ªÒ»°Œƒº˛¥Û–°
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
-    inFile.seekg(0, ios::end);
-    size_t fileSize = inFile.tellg();
-    inFile.seekg(0, ios::beg);
+    uint8_t feedback[16];
+    memcpy(feedback, iv, 16);
 
-<<<<<<<< HEAD:src/mainCircle.cpp
-    // ËÆ°ÁÆóÈúÄË¶ÅÁöÑÂ§ÑÁêÜÂíåÂùóÂ§ßÂ∞è
-    size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;
-========
-    // º∆À„–Ë“™µƒ¥¶¿Ì∫ÕøÈ¥Û–°
-    size_t totalBlocks = (fileSize + BUFFER_SIZE - 1) / BUFFER_SIZE;//œÚ…œ»°’˚£¨»°¥˙¿‡–Õ◊™ªª
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
-    size_t remainingBytes = fileSize % BUFFER_SIZE;
-    if (remainingBytes == 0) remainingBytes = BUFFER_SIZE;
+    for (int offset = 0; offset < plen;)
+    {
+        int blockSize = std::min(16, plen - offset);
 
-    vector<char> buffer(BUFFER_SIZE);
-    size_t processedBytes = 0;
-    size_t blockCount = 0;
+        // º”√‹∑¥¿°ºƒ¥Ê∆˜
+        int tempArray[4][4];
+        convertToIntArray(reinterpret_cast<char *>(feedback), tempArray);
 
-    while (blockCount < totalBlocks) {
-        size_t currentBlockSize = (blockCount == totalBlocks - 1) ? remainingBytes : BUFFER_SIZE;
-        size_t paddedBlockSize = currentBlockSize; // ÂÆö‰πâpaddedBlockSizeÂπ∂ÂàùÂßãÂåñ‰∏∫ÂΩìÂâçÂùóÂ§ßÂ∞è
-        
-        // ËØªÂèñÊï∞ÊçÆÂùó
-        inFile.read(buffer.data(), currentBlockSize);
-        size_t bytesRead = inFile.gcount();
-        
-        if (bytesRead == 0) break;
+        // AESº”√‹¬÷¥Œ
+        addRoundKey(tempArray, 0);
+        for (int round = 1; round < 10; ++round)
+        {
+            subBytes(tempArray);
+            shiftRows(tempArray);
+            mixColumns(tempArray);
+            addRoundKey(tempArray, round);
+        }
+        subBytes(tempArray);
+        shiftRows(tempArray);
+        addRoundKey(tempArray, 10);
 
-        // Âä†ÂØÜÊó∂Ê∑ªÂä†Â°´ÂÖÖ
-        if (encrypt) {
-            if (bytesRead % 16 != 0) {
-                size_t paddingSize = 16 - (bytesRead % 16);
-                paddedBlockSize = bytesRead + paddingSize;
-                buffer.resize(paddedBlockSize);
-                memset(buffer.data() + bytesRead, paddingSize, paddingSize);  // PKCS#7Â°´ÂÖÖ
-            }
+        // ªÒ»°º”√‹Ω·π˚
+        char encryptedFeedback[16];
+        convertArrayToStr(tempArray, encryptedFeedback);
+
+        // ÷¥––XOR∫Õ∏¸–¬∑¥¿°
+        for (int i = 0; i < blockSize; ++i)
+        {
+            p[offset + i] ^= encryptedFeedback[i];
+            feedback[i] = p[offset + i];
         }
 
-        // ÊâßË°åÂä†ÂØÜ/Ëß£ÂØÜ
-        if (encrypt) {
-            aes(buffer.data(), paddedBlockSize, aes_key);
-        } else {
-            deAes(buffer.data(), paddedBlockSize, aes_key);
-            // Ëß£ÂØÜÂêéÂéªÈô§Â°´ÂÖÖ
-            if (blockCount == totalBlocks - 1) {
-                uint8_t paddingSize = static_cast<uint8_t>(buffer[paddedBlockSize - 1]);
-                if (paddingSize <= 16) {
-                    paddedBlockSize -= paddingSize;
-                }
-            }
+        offset += blockSize;
+    }
+
+    // ∞≤»´«Â≥˝
+    memset(feedback, 0, sizeof(feedback));
+}
+
+void Aes::deAes(char *c, int clen)
+{
+    if (!c || clen <= 0)
+        return;
+
+    uint8_t feedback[16];
+    memcpy(feedback, iv, 16);
+
+    for (int offset = 0; offset < clen;)
+    {
+        int blockSize = std::min(16, clen - offset);
+        uint8_t cipherBackup[16] = {0};
+        memcpy(cipherBackup, c + offset, blockSize);
+
+        // º”√‹∑¥¿°ºƒ¥Ê∆˜
+        int tempArray[4][4];
+        convertToIntArray(reinterpret_cast<char *>(feedback), tempArray);
+
+        // AESº”√‹¬÷¥Œ
+        addRoundKey(tempArray, 0);
+        for (int round = 1; round < 10; ++round)
+        {
+            subBytes(tempArray);
+            shiftRows(tempArray);
+            mixColumns(tempArray);
+            addRoundKey(tempArray, round);
+        }
+        subBytes(tempArray);
+        shiftRows(tempArray);
+        addRoundKey(tempArray, 10);
+
+        // ªÒ»°º”√‹Ω·π˚
+        char encryptedFeedback[16];
+        convertArrayToStr(tempArray, encryptedFeedback);
+
+        // ÷¥––XOR
+        for (int i = 0; i < blockSize; ++i)
+        {
+            c[offset + i] ^= encryptedFeedback[i];
         }
 
-        // ÂÜôÂÖ•Â§ÑÁêÜÂêéÁöÑÊï∞ÊçÆ
-        outFile.write(buffer.data(), paddedBlockSize);
-
-        processedBytes += bytesRead;
-        blockCount++;
-
-        // ÊòæÁ§∫ËøõÂ∫¶
-        int progress = static_cast<int>((processedBytes * 100) / fileSize);
-        cout << "\rProgress: " << progress << "%" << flush;
+        // ∏¸–¬∑¥¿°
+        memcpy(feedback, cipherBackup, blockSize);
+        offset += blockSize;
     }
 
-    cout << endl << "Done!" << endl;
-    inFile.close();
-    outFile.close();
+    // ∞≤»´«Â≥˝
+    memset(feedback, 0, sizeof(feedback));
 }
 
-void Aes::aes(char *p, int plen, const char *key) {
-int pArray[4][4];
-extendKey(key);for(int k = 0; k < plen; k += 16) {
-    convertToIntArray(p + k, pArray);
-    addRoundKey(pArray, 0);
-
-    for(int i = 1; i < 10; i++) {
-        subBytes(pArray);
-        shiftRows(pArray);
-        mixColumns(pArray);
-        addRoundKey(pArray, i);
-    }
-
-    subBytes(pArray);
-    shiftRows(pArray);
-    addRoundKey(pArray, 10);
-    convertArrayToStr(pArray, p + k);
-<<<<<<<< HEAD:src/mainCircle.cpp
-========
-}
-}
-
-void Aes::deAes(char *c, int clen, const char *key) {
-    int cArray[4][4];
-	int k;
-	extendKey(key);
-
-	for(k = 0; k < clen; k += 16) {
-		int i;
-		int wArray[4][4];
-
-		convertToIntArray(c + k, cArray);
-		addRoundKey(cArray, 10);
-
-		for(i = 9; i >= 1; i--) {
-			deSubBytes(cArray);
-
-			deShiftRows(cArray);
-
-			deMixColumns(cArray);
-			getArrayFrom4W(i, wArray);
-			deMixColumns(wArray);
-
-			addRoundTowArray(cArray, wArray);
-		}
-
-		deSubBytes(cArray);
-
-		deShiftRows(cArray);
-
-		addRoundKey(cArray, 0);
-
-		convertArrayToStr(cArray, c + k);
-
-	}
->>>>>>>> koharu:EncryptionModules/Aes/src/mainCircle.cpp
-}
-}
-
-void Aes::deAes(char *c, int clen, const char *key) {
-    int cArray[4][4];
-	int k;
-	extendKey(key);
-
-	for(k = 0; k < clen; k += 16) {
-		int i;
-		int wArray[4][4];
-
-		convertToIntArray(c + k, cArray);
-		addRoundKey(cArray, 10);
-
-		for(i = 9; i >= 1; i--) {
-			deSubBytes(cArray);
-
-			deShiftRows(cArray);
-
-			deMixColumns(cArray);
-			getArrayFrom4W(i, wArray);
-			deMixColumns(wArray);
-
-			addRoundTowArray(cArray, wArray);
-		}
-
-		deSubBytes(cArray);
-
-		deShiftRows(cArray);
-
-		addRoundKey(cArray, 0);
-
-		convertArrayToStr(cArray, c + k);
-
-	}
-}
