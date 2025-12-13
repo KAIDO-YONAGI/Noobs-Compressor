@@ -39,11 +39,10 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr, int m
     if (mode == 1)//for compression
     {
         compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-        bufferPtr += sizeof(FileSize_uint);
+        bufferPtr += sizeof(FileSize_uint);//skip compressedSize
     }
     else if (mode == 2)//for decompression
     {
-        bufferPtr += sizeof(FileSize_uint);
         compressedSize = numsParser<FileSize_uint>(bufferPtr);
     }
 
@@ -128,7 +127,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::
     }
 }
 
-void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
+void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount_uint &countOfKidDirectory)
 {
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
@@ -138,7 +137,7 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vect
     {
     case FILE_FLAG:
     {
-        fileParser(bufferPtr, 1);
+        fileParser(bufferPtr, parserMode);
         countOfKidDirectory--;
 
         break;

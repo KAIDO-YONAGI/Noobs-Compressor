@@ -102,7 +102,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
             while ((countOfKidDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
             {
-                parserForLoader->parser(bufferPtr, filePathToScan, countOfKidDirectory);
+                parserForLoader->parser(bufferPtr, countOfKidDirectory);
             }
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)
