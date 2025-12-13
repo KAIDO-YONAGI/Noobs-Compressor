@@ -43,11 +43,11 @@ constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 * 1024; // Æ«ÒÆÁ¿»º³åĞèÒªÈ·±£´óÓÚÎ
 
 // ÎÄ¼ş±ê×¼Ïà¹Ø
 constexpr const SizeOfFlag_uint FLAG_SIZE = 1;
-constexpr const char *HEADER_FLAG = "0";
-constexpr const char *FILE_FLAG = "1";
-constexpr const char *SEPARATED_FLAG = "2";
-constexpr const char *LOGICAL_ROOT_FLAG = "3";
-constexpr const char *SYMBOL_LINK_FLAG = "4";
+constexpr const char DIRECTORY_FLAG = '0';
+constexpr const char FILE_FLAG = '1';
+constexpr const char SEPARATED_FLAG = '2';
+constexpr const char LOGICAL_ROOT_FLAG = '3';
+constexpr const char SYMBOL_LINK_FLAG = '4';
 // ×¢ÒâÖ±½ÓÊ¹ÓÃsizeof·µ»ØµÄ²ÎÊı½øĞĞÔËËãÊ±£¬Ğ¡ÓÚuint64_tµÄÀàĞÍ»á±»×Ô¶¯ÀàĞÍ×ª»»ÎªULL£¬ĞèÒª°´ĞèÇ¿ÖÆ×ª»»ºóÔÙ²ÎÓëÔËËã
 
 // Ä¿Â¼±ê×¼µÄ»ù´¡´óĞ¡£¨²»º¬±ä³¤µÄÎÄ¼şÃû£¬ĞèÒª×ÔĞĞÎ¬»¤£©

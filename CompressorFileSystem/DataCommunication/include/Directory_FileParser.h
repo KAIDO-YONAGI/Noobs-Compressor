@@ -65,7 +65,7 @@ private:
     }
     fs::path pathConnector(std::string &fileName);
 
-    void fileParser(DirectoryOffsetSize_uint &bufferPtr);
+    void fileParser(DirectoryOffsetSize_uint &bufferPtr,int mode);
     void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
     void rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan);
 
