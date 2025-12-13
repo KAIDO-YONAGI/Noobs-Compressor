@@ -74,17 +74,22 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     directoryQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan)
+void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
 {
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
-
-    if (count != filePathToScan.size()) // 检验数量
-        throw std::runtime_error("rootParser()-Error:Failed to match RootDirectory nums");
-
+    if (filePathToScan.empty()) // 检测到传入空数组，说明是解压模式,把逻辑根写进数组后返回
+    {
+        fs::path root = transfer.transPath(rootForDecompression);
+        fs::path file=transfer.transPath(directoryName);
+        fs::path fullPath = root / file;
+        Directory_FileDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
+        directoryQueue.push({logicalRootDetails, count});
+        return;
+    }
     for (const std::string &path : filePathToScan)
     {
         fs::path fullPath = transfer.transPath(path);
@@ -122,7 +127,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
     }
 }
 
-void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
+void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
 {
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
@@ -147,8 +152,8 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr,const std:
     case '3': // 逻辑根本身不入队，入队接下来的几个根目录，并且处理文件
     {
         rootParser(bufferPtr, filePathToScan);
-        if(!directoryQueue.empty())
-        countOfKidDirectory = directoryQueue.front().second; // 启动递推
+        if (!directoryQueue.empty())
+            countOfKidDirectory = directoryQueue.front().second; // 启动递推
         break;
     }
 
