@@ -5,7 +5,4 @@
 bin/
 *.txt
 *.log
-
 src/main.cpp
-
-*.bin
