@@ -3,17 +3,21 @@
 void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath, const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化加载器
-    BinaryIO_Loader_Compression headerLoader(compressionFilePath, filePathToScan);
-
-    headerLoader.headerLoader(); // 执行第一次操作，把根目录载入
-    if (!headerLoader.fileQueue.empty())
+    BinaryIO_Loader headerLoader(compressionFilePath, filePathToScan);
+    DataBlock encryptedBlock;
+    FileSize_uint totalBlocks = 1, count = 0;
+    headerLoader.headerLoader();         // 执行第一次操作，把根目录载入
+    if (!headerLoader.fileQueue.empty()) // 单个文件特殊处理
     {
-        loadPath = headerLoader.fileQueue.front().first.getFullPath();
+        Directory_FileDetails &loadFile = headerLoader.fileQueue.front().first;
+        loadPath = loadFile.getFullPath();
         dataLoader = new DataLoader(loadPath);
+        totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
     }
 
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
-    DataBlock encryptedBlock;
+
+    fs::path filename = loadPath.filename();
     while (!headerLoader.fileQueue.empty())
     {
 
@@ -21,8 +25,15 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
 
         if (!dataLoader->isDone()) // 避免读到空数据块
         {
-            encryptedBlock.resize(BUFFER_SIZE+sizeof(IvSize_uint));
-            aes.doAes(1,dataLoader->getBlock(),encryptedBlock);
+            system("cls");
+            std::cout << "Loading file: "
+                      << filename
+                      << " "
+                      << std::fixed << std::setw(6) << std::setprecision(2)
+                      << 100.0 * ++count / static_cast<double>(totalBlocks)
+                      << "% \n";
+            encryptedBlock.resize(BUFFER_SIZE + sizeof(IvSize_uint));
+            aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
             dataExporter.exportDataToFile_Encryption(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
         }
@@ -30,14 +41,16 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
         {
             FileNameSize_uint offsetToFill = headerLoader.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill); // 可在此前插入一个编码表写入再调用done
-            std::cout << "Loaded file: " << headerLoader.fileQueue.front().first.getFullPath().filename() <<
-                // " " <<
-                // ++count <<
-                "\n";
+            std::cout << "--------Done!--------";
 
             headerLoader.fileQueue.pop();
-            if (!headerLoader.fileQueue.empty()) // 更新下一个文件路径，生成编码表时可以调用reset（原目录）读两轮
-                dataLoader->reset(headerLoader.fileQueue.front().first.getFullPath());
+            if (!headerLoader.fileQueue.empty())
+            { // 更新下一个文件路径，生成编码表时可以调用reset（原目录）读两轮
+                Directory_FileDetails &loadFile = headerLoader.fileQueue.front().first;
+                dataLoader->reset(loadFile.getFullPath());
+                filename = loadFile.getFullPath().filename();
+                totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+            }
         }
 
         if (headerLoader.fileQueue.empty() && !headerLoader.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
@@ -48,7 +61,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     }
 }
 
-void BinaryIO_Loader_Compression::headerLoader()
+void BinaryIO_Loader::headerLoader()
 {
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
@@ -100,7 +113,7 @@ void BinaryIO_Loader_Compression::headerLoader()
         throw e.what();
     }
 }
-void BinaryIO_Loader_Compression::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory)
+void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory)
 {
     if (offset == 0)
         return;

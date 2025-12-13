@@ -5,7 +5,7 @@ void Directory_FileParser::checkBounds(DirectoryOffsetSize_uint pos, FileNameSiz
     if (pos + requiredSize > buffer.size())
     {
         throw std::out_of_range(
-            "BinaryIO_Loader_Compression: Buffer overflow (pos=" +
+            "BinaryIO_Loader: Buffer overflow (pos=" +
             std::to_string(pos) + ", required=" +
             std::to_string(requiredSize) + ", buffer size=" +
             std::to_string(buffer.size()) + ")");
