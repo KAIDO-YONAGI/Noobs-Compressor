@@ -4,6 +4,8 @@
 #include "FileLibrary.h"
 #include "Directory_FileProcessor.h"
 #include "ToolClasses.h"
+#include "BinaryIO_Writer.h"
+
 class DataExporter
 {
 private:

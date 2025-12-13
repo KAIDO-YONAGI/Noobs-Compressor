@@ -1,14 +1,10 @@
 // HeaderLoader.h
 #pragma once
 #include "FileLibrary.h"
-#include "Directory_FileDetails.h"
-#include "ToolClasses.h"
-
 #include "DataLoader.h"
 #include "DataExporter.h"
-#include "Aes.h"
 #include "BinaryIO_Loader.h"
-
+#include "Aes.h"
 class HeaderLoader_Decompression : public BinaryIO_Loader
 {
 private:

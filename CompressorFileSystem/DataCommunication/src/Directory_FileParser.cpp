@@ -36,12 +36,12 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr, int m
     // 解析文件原大小
     FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
     FileSize_uint compressedSize;
-    if (mode == 1)
+    if (mode == 1)//for compression
     {
         compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
         bufferPtr += sizeof(FileSize_uint);
     }
-    else if (mode == 2)
+    else if (mode == 2)//for decompression
     {
         bufferPtr += sizeof(FileSize_uint);
         compressedSize = numsParser<FileSize_uint>(bufferPtr);
