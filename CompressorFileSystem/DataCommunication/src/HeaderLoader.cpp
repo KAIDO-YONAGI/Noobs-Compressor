@@ -6,7 +6,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
     DataBlock encryptedBlock;
     FileSize_uint totalBlocks = 1, count = 0;
-    headerLoaderIterator.headerLoaderIterator();         // 执行第一次操作，把根目录载入
+    headerLoaderIterator.headerLoaderIterator(aes);         // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty()) // 单个文件特殊处理
     {
         Directory_FileDetails &loadFile = headerLoaderIterator.fileQueue.front().first;
@@ -55,7 +55,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
         {
             headerLoaderIterator.restartLoader();
-            headerLoaderIterator.headerLoaderIterator();
+            headerLoaderIterator.headerLoaderIterator(aes);
         }
     }
     headerLoaderIterator.encryptHeaderBlock(aes);//加密目录块并且回填

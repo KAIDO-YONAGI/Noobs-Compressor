@@ -9,8 +9,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
     // ÎÄ¼þÍ·
-    CompressStrategy_uint strategySize = 0;
-    CompressorVersion_uint versionSize = 0;
+    CompressStrategy_uint strategySize = STRATEGY;
+    CompressorVersion_uint versionSize = VERSION;
     HeaderOffsetSize_uint headerOffsetSize = 0;
     DirectoryOffsetSize_uint directoryOffsetSize = 0;
 

@@ -4,7 +4,7 @@
 #include "FileLibrary.h"
 #include "Directory_FileDetails.h"
 #include "ToolClasses.h"
-#include "BinaryIO.h"
+#include "BinaryIO_Writer.h"
 class Directory_FileProcessor
 {
     /*
