@@ -11,7 +11,7 @@ public:
     virtual void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) = 0; //=0:标明是纯虚函数，必须重写，没有=0则可选择性重写
     virtual void writeDirectory(
         std::ofstream &outFile,
-        const std::vector<std::string> &filePathToScan,
+        const  std::vector<std::string> &filePathToScan,
         const fs::path &fullOutPath,
         const std::string &logicalRoot) = 0;
 };
@@ -23,7 +23,7 @@ public:
     void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) override;
     void writeDirectory(
         std::ofstream &outFile,
-        const std::vector<std::string> &filePathToScan,
+        const  std::vector<std::string> &filePathToScan,
         const fs::path &fullOutPath,
         const std::string &logicalRoot) override;
 };
@@ -34,7 +34,7 @@ class HeaderWriter
 
 public:
     HeaderWriter() : writer(std::make_unique<HeaderWriter_v0>()) {} // 默认使用 v0 版本
-    void headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot);
+    void headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot);
     // 支持指定版本
     explicit HeaderWriter(std::unique_ptr<HeaderWriter_Interface> impl)
         : writer(std::move(impl)) {}
@@ -44,7 +44,7 @@ public:
     {
         writer->writeHeader(outFile, fullOutPath);
     }
-    void writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+    void writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
     {
         writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };

@@ -9,8 +9,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
     // 文件头
-    CompressStrategy_uint strategySize = 0;
-    CompressorVersion_uint versionSize = 0;
+    CompressStrategy_uint strategySize = STRATEGY;
+    CompressorVersion_uint versionSize = VERSION;
     HeaderOffsetSize_uint headerOffsetSize = 0;
     DirectoryOffsetSize_uint directoryOffsetSize = 0;
 
@@ -24,7 +24,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     numWriter.writeBinaryNums(HEADER_SIZE,outFile);
     outFile.seekp(0, std::ios::end);
 }
-void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
     NumsWriter numWriter;
@@ -39,7 +39,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<s
     numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
-void HeaderWriter::headerWriter(std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
+void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
 {
     Transfer transfer;
 

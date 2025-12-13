@@ -19,22 +19,19 @@ void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
     processedFileSize = 0;
 }
 
-void DataExporter::exportDataToFile_Encryption(const std::vector<char> &data)
+void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
 {
-    if (!outFile)
-    {
-        throw std::runtime_error("exportDataToFile()-Error:Failed to open outFile");
-    }
+    std::ofstream tempFilePtr;
+
     BinaryIO_Writter processor(tempFilePtr); // 此处只传入不使用(使用禁止)
 
-    // TODO:此处需要回填偏移量
     outFile.seekp(0, std::ios::end);
     FileSize_uint dataSize = data.size();
     processor.writeBlankSeparatedStandardForEncryption(outFile);
 
     outFile.write(data.data(), dataSize);
     processedFileSize += dataSize;
-    std::cout << "FileProcessedSize:" << processedFileSize << "\n";
+    // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
 
     thisBlockIsDone(dataSize);
 }
