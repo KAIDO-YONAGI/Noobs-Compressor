@@ -1,4 +1,4 @@
-#include"../include/BinaryIO_Loader.h"
+#include "../include/BinaryIO_Loader.h"
 void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
 {
     if (loaderRequestIsDone() || allLoopIsDone())
@@ -84,7 +84,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
             throw std::runtime_error("Failed to read buffer");
         }
 
-        if (ivNum != 0)//仅在解压时会触发，将buffer解密后解析
+        if (ivNum != 0) // 仅在解压时会触发，将buffer解密后解析
         {
             DataBlock blockWithIv;
             DataBlock dencryptedBlock;
@@ -107,10 +107,24 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)
             {
+                //目录进入就绪队列的逻辑
+                const fs::path &directoryPath = directoryQueue.front().first.getFullPath();
+                if (!directoryQueue_ready.empty())
+                {
+                    if (directoryQueue_ready.back() != directoryPath)
+                    {
+                        directoryQueue_ready.push(directoryPath);
+                    }
+                }
+                else
+                    directoryQueue_ready.push(directoryPath);
                 
                 directoryQueue.pop();
                 if (!directoryQueue.empty())
-                    countOfKidDirectory = directoryQueue.front().second;
+                {
+                    countOfKidDirectory = directoryQueue.front().second;//更新子目录数量
+                    directoryQueue_ready.push(directoryQueue.front().first.getFullPath());//pop后直接将新目录入队，防止处理到一半，没有进入外层if
+                }
             }
         }
         requesetDone();      // 单次请求完成

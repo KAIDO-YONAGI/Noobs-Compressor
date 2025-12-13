@@ -21,10 +21,8 @@ void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
 
 void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
 {
-    if (!outFile)
-    {
-        throw std::runtime_error("exportDataToFile()-Error:Failed to open outFile");
-    }
+    std::ofstream tempFilePtr;
+
     BinaryIO_Writter processor(tempFilePtr); // 此处只传入不使用(使用禁止)
 
     outFile.seekp(0, std::ios::end);

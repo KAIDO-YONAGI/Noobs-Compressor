@@ -5,7 +5,7 @@
 #include "Directory_FileDetails.h"
 #include "Directory_FileParser.h"
 #include "Aes.h"
-
+#include <queue>
 class BinaryIO_Loader
 {
 private:
@@ -51,7 +51,7 @@ public:
     std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列
-    Directory_FileQueue directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
+    std::queue<fs::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
 
     void headerLoaderIterator(Aes &aes); // 主逻辑函数
 

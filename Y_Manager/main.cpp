@@ -32,5 +32,7 @@ int main()
     HeaderLoader_Compression headerLoader_Compression;
     headerLoader_Compression.headerLoader(compressionFilePath, filePathToScan, aes);
 
+    
+
     system("pause");
 }

@@ -8,7 +8,6 @@ class DataExporter
 {
 private:
     std::fstream outFile;
-    std::ofstream tempFilePtr;
     Locator locator;
     FileSize_uint processedFileSize = 0;
 
