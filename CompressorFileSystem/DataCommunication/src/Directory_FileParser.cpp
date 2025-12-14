@@ -74,7 +74,7 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     directoryQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan)
+void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan,FileCount_uint &countOfKidDirectory,bool &noDirec)
 {
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
@@ -82,6 +82,9 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const 
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+
+    countOfKidDirectory=count;
+
     if (parserMode == 2) // 解压模式,把逻辑根写进队列
     {
         fs::path root = transfer.transPath(rootForDecompression);
@@ -127,6 +130,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const 
                 directoryQueue.push({directoryDetails, count});
             }
         }
+        if(directoryQueue.empty())noDirec=true;
     }
 }
 
@@ -142,7 +146,6 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount
     {
         fileParser(bufferPtr);
         countOfKidDirectory--;
-
         break;
         // countOfD_F++;
     }
@@ -154,7 +157,9 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount
     }
     case LOGICAL_ROOT_FLAG:
     {
-        rootParser(bufferPtr, filePathToScan);
+        bool noDirec=false;
+        rootParser(bufferPtr, filePathToScan,countOfKidDirectory,noDirec);
+        if(!noDirec)
         countOfKidDirectory = directoryQueue.front().second; // 启动递推
         break;
     }

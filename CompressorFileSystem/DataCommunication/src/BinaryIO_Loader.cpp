@@ -123,6 +123,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 if (!directoryQueue.empty())
                 {
                     countOfKidDirectory = directoryQueue.front().second;//更新子目录数量
+                    if (!directoryQueue.empty())
                     directoryQueue_ready.push(directoryQueue.front().first.getFullPath());//pop后直接将新目录入队，防止处理到一半，没有进入外层if
                 }
             }

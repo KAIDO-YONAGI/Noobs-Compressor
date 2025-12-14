@@ -69,7 +69,7 @@ private:
 
     void fileParser(DirectoryOffsetSize_uint &bufferPtr);
     void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
-    void rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan);
+    void rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan,FileCount_uint &countOfKidDirectory,bool &noDirec);
 
 public:
     std::string rootForDecompression;

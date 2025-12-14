@@ -76,7 +76,6 @@ public:
     ~BinaryIO_Loader()
     {
         allLoopDone();
-        delete parserForLoader;
     }
     bool allLoopIsDone()
     {
