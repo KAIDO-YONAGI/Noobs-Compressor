@@ -1,7 +1,10 @@
 #include "../include/ToolClasses.h"
+#include <iostream>
+#include <cstdio>
 
 std::wstring Transfer::convertToWString(const std::string &s)
 {
+
     std::setlocale(LC_ALL, ""); // 使用本地化设置
     size_t len = s.size() + 1;
     wchar_t *wStr = new wchar_t[len];

@@ -70,7 +70,7 @@ public:
         this->fstreamForRefill = std::move(fstreamForRefill);
         this->filePathToScan = filePathToScan;
         this->parserForLoader =
-            new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset, filePathToScan);
+            new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
     }
 
     ~BinaryIO_Loader()
@@ -111,7 +111,7 @@ public:
     {
         DataBlock inBlock;
         DataBlock encryptedBlock;
-        DirectoryOffsetSize_uint startPos, blockSize;
+        DirectoryOffsetSize_uint startPos=0, blockSize=0;
 
         for (auto blockPos : pos)
         {

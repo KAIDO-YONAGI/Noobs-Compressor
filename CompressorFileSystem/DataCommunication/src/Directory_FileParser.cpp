@@ -74,7 +74,7 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     directoryQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
+void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan)
 {
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
