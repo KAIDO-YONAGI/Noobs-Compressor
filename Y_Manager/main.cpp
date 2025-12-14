@@ -13,8 +13,8 @@ int main()
     // filePathToScan.push_back("D:\\1gal\\TEST\\123Òâ514.txt");
     // filePathToScan.push_back("D:\\1gal\\TEST\\ÎÒ");
     // filePathToScan.push_back("D:\\1gal\\Goods\\°Î×÷µº\\2\\root.pfs.020");
-    // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
-    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\credits.html");
+    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
+    // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\credits.html");
 
 
 

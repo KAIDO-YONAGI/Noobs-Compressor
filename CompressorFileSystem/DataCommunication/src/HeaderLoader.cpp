@@ -64,6 +64,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
             // huffmanZip.encode(data_In, compressedData);
 
             // aes.doAes(1, compressedData, encryptedBlock);
+            
             aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
 
             dataExporter.exportDataToFile_Encryption(encryptedBlock); // 读取的数据传输给exporter
@@ -93,7 +94,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
             headerLoaderIterator.headerLoaderIterator(aes);
         }
     }
-    // headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填
+    headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填
 
     delete dataLoader;
 }
