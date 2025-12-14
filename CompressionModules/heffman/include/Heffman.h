@@ -5,6 +5,7 @@
 #include "../../Schedule/include/Worker.h"
 #include "../../../DataBlocks/DataBlocksManage.h"
 #include <memory>
+#include <stack>
 
 /**
  * Heffman类 压缩/解压处理模块
@@ -41,13 +42,19 @@ public:
     Heffman(int thread_nums);
     ~Heffman();
 
+    //压缩调用：statistic_freq、merge_ttabs、tree_to_plat_uchar↑、gen_hefftree、save_code_inTab、encode
+    //解压调用：spawn_tree、decode
     void statistic_freq(const int& thread_id, sfc::block_t&);
     void encode(const sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
     void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
     void merge_ttabs();
     void gen_hefftree();
     void save_code_inTab();
-
+    //序列化编码树并输出
+    void tree_to_plat_uchar(sfc::block_t& out_block);
+    //解析编码表并加载树
+    void spawn_tree(sfc::block_t& in_block);
+    
     Hefftreenode* getTreeRoot();
     void receiveTreRroot(Hefftreenode*);
 
@@ -64,6 +71,7 @@ private:
     std::unique_ptr<Minheap> gen_minheap();
     void run_save_code_inTab(Hefftreenode* root);
     void findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward);
+    bool connectNode(Hefftreenode*, Hefftreenode*);
     void destroy_tree(Hefftreenode* node);
 };
 
