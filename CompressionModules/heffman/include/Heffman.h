@@ -44,7 +44,7 @@ public:
 
     //压缩调用：statistic_freq、merge_ttabs、tree_to_plat_uchar↑、gen_hefftree、save_code_inTab、encode
     //解压调用：spawn_tree、decode
-    void statistic_freq(const int& thread_id, sfc::block_t&);
+    void statistic_freq(const int& thread_id, const sfc::block_t&);
     void encode(const sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
     void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
     void merge_ttabs();

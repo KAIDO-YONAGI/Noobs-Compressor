@@ -13,7 +13,7 @@ Heffman::~Heffman() {
     destroy_tree(treeroot);
 }
 
-void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
+void Heffman::statistic_freq(const int& thread_id, const sfc::block_t& in_block)
 {
     // 确保thread_tabs足够大
     if (thread_id >= (int)thread_tabs.size()) {
