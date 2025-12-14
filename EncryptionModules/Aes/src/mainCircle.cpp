@@ -1,5 +1,74 @@
 #include "../include/Aes.h"
+DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
+{
+    DataBlock outputBuffer;
 
+    // 处理IV
+    if (mode==1)
+    { // 加密
+        // 生成随机IV
+        if (RAND_priv_bytes(iv, sizeof(iv)) != 1)
+        {
+            throw std::runtime_error("Failed to generate random IV");
+        }
+
+        // 添加IV到输出缓冲区
+        outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));
+
+        // 准备要加密的数据
+        buffer = inputBuffer;
+    }
+    else if(mode ==2)
+    { // 解密
+        // 检查输入是否足够包含IV
+        if (inputBuffer.size() < sizeof(iv))
+        {
+            throw std::runtime_error("Input too short to contain IV");
+        }
+
+        // 提取IV
+        memcpy(iv, inputBuffer.data(), sizeof(iv));
+
+        // 准备要解密的数据
+        buffer.assign(inputBuffer.begin() + sizeof(iv), inputBuffer.end());
+    }
+
+    // 处理数据
+    size_t bytesToProcess = buffer.size();
+    if (mode==1)
+    {
+        aes(buffer.data(), static_cast<int>(bytesToProcess)); // 加密
+    }
+    else if (mode==2)
+    {
+        deAes(buffer.data(), static_cast<int>(bytesToProcess)); // 解密
+    }
+
+    // 添加处理后的数据到输出缓冲区
+    outputBuffer.insert(outputBuffer.end(), buffer.begin(), buffer.end());
+
+    return outputBuffer;
+}
+//mode 1: 加密 2: 解密
+void Aes::doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer)
+{
+
+    if (mode != 1 && mode != 2)
+    {
+        throw std::invalid_argument("Invalid mode. Use 1 for encryption and 2 for decryption.");
+    }
+
+    try
+    {
+        outputBuffer=processDataAES(inputBuffer, mode);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::runtime_error(std::string("AES processing failed: ") + e.what());
+    }
+
+    return;
+}
 void Aes::aes(char *p, int plen)
 {
     if (!p || plen <= 0)
@@ -96,78 +165,4 @@ void Aes::deAes(char *c, int clen)
     // 安全清除
     memset(feedback, 0, sizeof(feedback));
 }
-std::vector<char> Aes::processDataAES(const std::vector<char> &inputBuffer, bool encrypt)
-{
-    std::vector<char> outputBuffer;
 
-    // 处理IV
-    if (encrypt)
-    { // 加密
-        // 生成随机IV
-        if (RAND_priv_bytes(iv, sizeof(iv)) != 1)
-        {
-            throw std::runtime_error("Failed to generate random IV");
-        }
-
-        // 添加IV到输出缓冲区
-        outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));
-
-        // 准备要加密的数据
-        buffer = inputBuffer;
-    }
-    else
-    { // 解密
-        // 检查输入是否足够包含IV
-        if (inputBuffer.size() < sizeof(iv))
-        {
-            throw std::runtime_error("Input too short to contain IV");
-        }
-
-        // 提取IV
-        memcpy(iv, inputBuffer.data(), sizeof(iv));
-
-        // 准备要解密的数据
-        buffer.assign(inputBuffer.begin() + sizeof(iv), inputBuffer.end());
-    }
-
-    // 处理数据
-    size_t bytesToProcess = buffer.size();
-    if (encrypt)
-    {
-        aes(buffer.data(), static_cast<int>(bytesToProcess)); // 加密
-    }
-    else
-    {
-        deAes(buffer.data(), static_cast<int>(bytesToProcess)); // 解密
-    }
-
-    // 添加处理后的数据到输出缓冲区
-    outputBuffer.insert(outputBuffer.end(), buffer.begin(), buffer.end());
-
-    return outputBuffer;
-}
-std::vector<char> Aes::runAES(int mode, const std::vector<char> &inputBuffer)
-{
-
-    if (mode != 1 && mode != 2)
-    {
-        std::cerr << "无效模式选择!" << "\n";
-        return {};
-    }
-
-    // cout << "密码: ";
-    // cin.ignore();
-    // getline(cin, keyInput);
-
-    try
-    {
-        return processDataAES(inputBuffer, mode == 1);
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "错误: " << e.what() << "\n";
-        return {};
-    }
-
-    return {};
-}

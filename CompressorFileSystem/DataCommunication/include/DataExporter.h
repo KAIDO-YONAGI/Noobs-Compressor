@@ -4,11 +4,12 @@
 #include "FileLibrary.h"
 #include "Directory_FileProcessor.h"
 #include "ToolClasses.h"
+#include "BinaryIO_Writer.h"
+
 class DataExporter
 {
 private:
     std::fstream outFile;
-    std::ofstream tempFilePtr;
     Locator locator;
     FileSize_uint processedFileSize = 0;
 
@@ -17,7 +18,7 @@ private:
 public:
     DataExporter(const fs::path &outPath)
     {
-        std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in);
+        std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in);//避免截断，只能使用fstream输出
         if (!outFile)
         {
             throw std::runtime_error("DataExporter()-Error:Failed to open outFile");
@@ -32,5 +33,5 @@ public:
         }
     }
     void thisFileIsDone(FileSize_uint offsetToFill);
-    void exportDataToFile_Encryption(const std::vector<char> &data);
+    void exportDataToFile_Encryption(const DataBlock &data);
 };
