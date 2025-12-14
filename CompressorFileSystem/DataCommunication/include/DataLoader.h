@@ -15,6 +15,7 @@ private:
 public:
     const DataBlock &getBlock()
     {
+        // if (!isDone())
         return buffer;
     }
     bool isDone()
@@ -33,8 +34,9 @@ public:
         else
             throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + inPath.string());
     }
-    void setFileSize(FileSize_uint newSize){
-        fileSize=newSize;
+    void setFileSize(FileSize_uint newSize)
+    {
+        fileSize = newSize;
     }
     DataLoader(const fs::path &inPath)
     {

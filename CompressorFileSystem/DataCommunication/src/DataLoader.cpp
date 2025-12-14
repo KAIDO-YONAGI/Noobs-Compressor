@@ -14,7 +14,7 @@ void DataLoader::dataLoader()
     try
     {
         buffer.resize(BUFFER_SIZE);
-        inFile.read(buffer.data(), BUFFER_SIZE);
+        inFile.read(static_cast<char*>(static_cast<void*>(buffer.data())), BUFFER_SIZE);
         buffer.resize(inFile.gcount());
     }
     catch (const std::exception &e)
@@ -33,7 +33,7 @@ void DataLoader::dataLoader(FileSize_uint readSize)
     try
     {
         buffer.resize(readSize);
-        inFile.read(buffer.data(), readSize);
+        inFile.read(static_cast<char*>(static_cast<void*>(buffer.data())), readSize);
         buffer.resize(inFile.gcount());
     }
     catch (const std::exception &e)
