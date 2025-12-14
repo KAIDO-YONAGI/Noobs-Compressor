@@ -19,16 +19,16 @@ using FileCount_uint = uint32_t;    // 文件计数
 using FileSize_uint = uint64_t;     // 文件大小
 using FileNameSize_uint = uint32_t; // 文件名长度（也是符号链接的路径长度）
 // 压缩相关配置
-using CompressStrategy_uint = uint8_t;     // 压缩策略
-using CompressorVersion_uint = uint8_t;    // 压缩器版本
-using HeaderOffsetSize_uint = uint8_t;     // 头部偏移长度
-using DirectoryOffsetSize_uint = uint32_t; // 目录偏移长度
-using UpSizeOfBuffer_uint = uint32_t;      // 分块的长度
-using SizeOfMagicNum_uint = uint32_t;      // 魔数长度
-using SizeOfFlag_uint = uint8_t;           // 文件标长度
-using IvSize_uint = __uint128_t;           // iv头长度
-using FlagType = char;                     // 标志类型
-using DataBlock = std::vector<char>;       // 数据块类型
+using CompressStrategy_uint = uint8_t;        // 压缩策略
+using CompressorVersion_uint = uint8_t;       // 压缩器版本
+using HeaderOffsetSize_uint = uint8_t;        // 头部偏移长度
+using DirectoryOffsetSize_uint = uint32_t;    // 目录偏移长度
+using UpSizeOfBuffer_uint = uint32_t;         // 分块的长度
+using SizeOfMagicNum_uint = uint32_t;         // 魔数长度
+using SizeOfFlag_uint = uint8_t;              // 文件标长度
+using IvSize_uint = __uint128_t;              // iv头长度
+using FlagType = char;                        // 标志类型
+using DataBlock = std::vector<unsigned char>; // 数据块类型
 
 constexpr CompressStrategy_uint STRATEGY = 0; // 策略号
 

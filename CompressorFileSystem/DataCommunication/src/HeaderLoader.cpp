@@ -1,9 +1,10 @@
 #include "../include/HeaderLoader.h"
-
+#include "Heffman.h"
 void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath, const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化迭代器
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
+    Heffman huffmanZip(1);
     DataBlock encryptedBlock;
     FileSize_uint totalBlocks = 1, count = 0;
     headerLoaderIterator.headerLoaderIterator(aes);         // 执行第一次操作，把根目录载入
@@ -18,9 +19,21 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
 
     fs::path filename = loadPath.filename();
+    
     while (!headerLoaderIterator.fileQueue.empty())
     {
-
+        while(!dataLoader->isDone()){
+            huffmanZip.statistic_freq(0,dataLoader->getBlock());
+        }
+        huffmanZip.merge_ttabs();
+        huffmanZip.gen_hefftree();
+        huffmanZip.save_code_inTab();
+        DataBlock huffTree;
+        DataBlock huffTree_outPut;
+        huffmanZip.tree_to_plat_uchar(huffTree);
+        aes.doAes(1,huffTree,huffTree_outPut);
+        dataExporter.exportDataToFile_Encryption(huffTree_outPut);
+        
         dataLoader->dataLoader();
 
         if (!dataLoader->isDone()) // 避免读到空数据块

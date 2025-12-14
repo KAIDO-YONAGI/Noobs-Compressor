@@ -9,8 +9,6 @@ void DataLoader::done()
     buffer.clear();
 }
 
-
-
 void DataLoader::dataLoader()
 {
     try
@@ -30,8 +28,9 @@ void DataLoader::dataLoader()
         done();
     }
 }
-void DataLoader::dataLoader(FileSize_uint readSize){
-        try
+void DataLoader::dataLoader(FileSize_uint readSize)
+{
+    try
     {
         buffer.resize(readSize);
         inFile.read(buffer.data(), readSize);

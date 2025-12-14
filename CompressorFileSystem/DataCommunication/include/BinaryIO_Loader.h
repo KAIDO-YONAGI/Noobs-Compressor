@@ -122,11 +122,11 @@ public:
             encryptedBlock.resize(blockSize + sizeof(IvSize_uint));
 
             fstreamForRefill.seekp(startPos, std::ios::beg);
-            fstreamForRefill.read(inBlock.data(), blockSize);
+            fstreamForRefill.read(reinterpret_cast< char*>(inBlock.data()), blockSize);
 
             aes.doAes(1, inBlock, encryptedBlock);
             fstreamForRefill.seekp(startPos - sizeof(IvSize_uint));
-            fstreamForRefill.write(encryptedBlock.data(), blockSize + sizeof(IvSize_uint));
+            fstreamForRefill.write(reinterpret_cast<const char*>(encryptedBlock.data()), blockSize + sizeof(IvSize_uint));
 
             inBlock.clear();
             encryptedBlock.clear();

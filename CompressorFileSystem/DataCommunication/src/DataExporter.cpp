@@ -29,7 +29,7 @@ void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
     FileSize_uint dataSize = data.size();
     processor.writeBlankSeparatedStandardForEncryption(outFile);
 
-    outFile.write(data.data(), dataSize);
+    outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
     processedFileSize += dataSize;
     // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
 
