@@ -1,6 +1,4 @@
 #include "../include/ToolClasses.h"
-#include <iostream>
-#include <cstdio>
 
 std::wstring Transfer::convertToWString(const std::string &s)
 {

@@ -195,7 +195,7 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
         }
         else if (entry.is_symlink())
         {
-            rootDetails.setFileSize(1);
+            rootDetails.setFileSize(1);//利用大小区分符号链接
             writeSymbolLinkStandard(rootDetails, tempOffset);
         }
     }
