@@ -56,7 +56,7 @@ public:
     void headerLoaderIterator(Aes &aes); // Ö÷Âß¼­º¯Êý
 
     BinaryIO_Loader() {};
-    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan = {})
+    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan)
     {
         this->loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
@@ -69,7 +69,8 @@ public:
         this->inFile = std::move(inFile);
         this->fstreamForRefill = std::move(fstreamForRefill);
         this->filePathToScan = filePathToScan;
-        this->parserForLoader = new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset);
+        this->parserForLoader =
+            new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
     }
 
     ~BinaryIO_Loader()
@@ -110,7 +111,7 @@ public:
     {
         DataBlock inBlock;
         DataBlock encryptedBlock;
-        DirectoryOffsetSize_uint startPos, blockSize;
+        DirectoryOffsetSize_uint startPos=0, blockSize=0;
 
         for (auto blockPos : pos)
         {

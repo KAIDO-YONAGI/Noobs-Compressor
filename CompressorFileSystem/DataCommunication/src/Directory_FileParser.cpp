@@ -25,7 +25,7 @@ fs::path Directory_FileParser::pathConnector(std::string &fileName)
     return pathToProcess;
 }
 
-void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr, int mode)
+void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
 {
     // 解析文件名偏移量
     FileNameSize_uint fileNameSize = 0;
@@ -36,14 +36,13 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr, int m
     // 解析文件原大小
     FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
     FileSize_uint compressedSize;
-    if (mode == 1)//for compression
+    if (parserMode == 1) // for compression
     {
         compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-        bufferPtr += sizeof(FileSize_uint);
+        bufferPtr += sizeof(FileSize_uint); // skip compressedSize
     }
-    else if (mode == 2)//for decompression
+    else if (parserMode == 2) // for decompression
     {
-        bufferPtr += sizeof(FileSize_uint);
         compressedSize = numsParser<FileSize_uint>(bufferPtr);
     }
 
@@ -75,60 +74,63 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     directoryQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan)
+void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan)
 {
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
+    // 解析逻辑根
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
-    if (filePathToScan.empty()) // 检测到传入空数组，说明是解压模式,把逻辑根写进队列后返回
+    if (parserMode == 2) // 解压模式,把逻辑根写进队列
     {
         fs::path root = transfer.transPath(rootForDecompression);
         fs::path file = transfer.transPath(directoryName);
         fs::path fullPath = root / file;
         Directory_FileDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
         directoryQueue.push({logicalRootDetails, count});
-        return;
     }
-    for (const std::string &path : filePathToScan)
+    else if (parserMode == 1)
     {
-        fs::path fullPath = transfer.transPath(path);
-        const char D_F_flag = numsParser<char>(bufferPtr);
-
-        if (D_F_flag == FILE_FLAG)
+        for (const std::string &path : filePathToScan)
         {
-            FileNameSize_uint fileNameSize = 0;
-            std::string fileName;
-            fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
-            // 解析文件原大小
-            FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
-            // 记录等会需要回填的位置
-            FileSize_uint compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-            bufferPtr += sizeof(FileSize_uint);
-            Directory_FileDetails fileDetails(
-                fileName,
-                fileNameSize,
-                originSize,
-                true,
-                fullPath);
-            fileQueue.push({fileDetails, compressedSize});
-        }
-        else if (D_F_flag == DIRECTORY_FLAG)
-        {
-            FileNameSize_uint directoryNameSize = 0;
-            std::string directoryName;
-            fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
-            // 解析下级文件数量
-            FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+            fs::path fullPath = transfer.transPath(path);
+            const char D_F_flag = numsParser<char>(bufferPtr);
 
-            Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
-            directoryQueue.push({directoryDetails, count});
+            if (D_F_flag == FILE_FLAG)
+            {
+                FileNameSize_uint fileNameSize = 0;
+                std::string fileName;
+                fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
+                // 解析文件原大小
+                FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
+                // 记录等会需要回填的位置
+                FileSize_uint compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+                bufferPtr += sizeof(FileSize_uint);
+                Directory_FileDetails fileDetails(
+                    fileName,
+                    fileNameSize,
+                    originSize,
+                    true,
+                    fullPath);
+                fileQueue.push({fileDetails, compressedSize});
+            }
+            else if (D_F_flag == DIRECTORY_FLAG)
+            {
+                FileNameSize_uint directoryNameSize = 0;
+                std::string directoryName;
+                fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
+                // 解析下级文件数量
+                FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+
+                Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
+                directoryQueue.push({directoryDetails, count});
+            }
         }
     }
 }
 
-void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory)
+void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount_uint &countOfKidDirectory)
 {
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
@@ -138,7 +140,7 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vect
     {
     case FILE_FLAG:
     {
-        fileParser(bufferPtr, 1);
+        fileParser(bufferPtr);
         countOfKidDirectory--;
 
         break;
@@ -162,5 +164,4 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, std::vect
         throw std::runtime_error("parser()-Error:Failed to read flag");
     }
     }
-    return;
 }
