@@ -37,11 +37,11 @@ DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
     size_t bytesToProcess = buffer.size();
     if (mode==1)
     {
-        aes(static_cast<char*>(static_cast<void*>(buffer.data())), static_cast<int>(bytesToProcess)); // 加密
+        aes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 加密
     }
     else if (mode==2)
     {
-        deAes(static_cast<char*>(static_cast<void*>(buffer.data())), static_cast<int>(bytesToProcess)); // 解密
+        deAes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 解密
     }
 
     // 添加处理后的数据到输出缓冲区

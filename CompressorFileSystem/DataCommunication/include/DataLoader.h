@@ -8,7 +8,7 @@ class DataLoader
 private:
     DataBlock buffer = DataBlock(BUFFER_SIZE);
 
-    FileSize_uint fileSize;
+    FileSize_uint fileSize=0;
     std::ifstream inFile;
     void done();
 

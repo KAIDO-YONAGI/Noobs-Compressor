@@ -10,7 +10,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
-        Directory_FileDetails &loadFile = headerLoaderIterator.fileQueue.front().first;
+        Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
         dataLoader = new DataLoader(loadPath);
         totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
@@ -22,7 +22,6 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
 
     while (!headerLoaderIterator.fileQueue.empty())
     {
-        Directory_FileDetails &loadFile = headerLoaderIterator.fileQueue.front().first;
 
         while (!dataLoader->isDone())
         {
@@ -37,22 +36,31 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
         huffmanZip.tree_to_plat_uchar(huffTree);
         aes.doAes(1, huffTree, huffTree_outPut);
         dataExporter.exportDataToFile_Encryption(huffTree_outPut);
-
+        Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         dataLoader->reset(loadFile.getFullPath()); // 生成编码表后，调用reset（原目录）复读
-        
+
         while (!dataLoader->isDone())
         {
             dataLoader->dataLoader();
 
             if (!dataLoader->isDone()) // 避免读到空数据块
             {
+                if (filename == ".package-lock.json" && count == 2)
+                    int a = 1;
+
                 system("cls");
                 std::cout << "Processing file: " << filename << "\n"
                           << std::fixed << std::setw(6) << std::setprecision(2)
                           << (100.0 * ++count) / totalBlocks
                           << "% \n";
                 encryptedBlock.resize(BUFFER_SIZE + sizeof(IvSize_uint));
-                aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
+
+                DataBlock data_In = dataLoader->getBlock(); // 调用压缩
+                DataBlock compressedData;
+                huffmanZip.encode(data_In, compressedData);
+
+                aes.doAes(1, compressedData, encryptedBlock);
+
                 dataExporter.exportDataToFile_Encryption(encryptedBlock); // 读取的数据传输给exporter
                 encryptedBlock.clear();
             }
@@ -65,10 +73,10 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
                 headerLoaderIterator.fileQueue.pop();
                 if (!headerLoaderIterator.fileQueue.empty())
                 { // 更新下一个文件路径，
-                    loadFile = headerLoaderIterator.fileQueue.front().first;
-                    dataLoader->reset(loadFile.getFullPath());
-                    filename = loadFile.getFullPath().filename();
-                    totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+                    Directory_FileDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
+                    dataLoader->reset(newLoadFile.getFullPath());
+                    filename = newLoadFile.getFullPath().filename();
+                    totalBlocks = (newLoadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
                     count = 0;
                 }
             }
