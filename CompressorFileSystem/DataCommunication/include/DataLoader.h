@@ -31,6 +31,7 @@ public:
             if (!newInFile)
                 throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + inPath.string());
             this->inFile = std::move(newInFile);
+            loadIsDone=false;
         }
         else
             throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + inPath.string());

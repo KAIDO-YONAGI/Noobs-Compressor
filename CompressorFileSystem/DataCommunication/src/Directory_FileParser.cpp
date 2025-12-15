@@ -139,7 +139,7 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const char D_F_flag = numsParser<char>(bufferPtr);
+    const unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
     switch (D_F_flag)
     {
     case FILE_FLAG:

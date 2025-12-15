@@ -1,6 +1,5 @@
-#include "../include/HeaderLoader.h"
-#include "Heffman.h"
-void HeaderLoader_Compression ::headerLoader(const std::vector<std::string> &filePathToScan, Aes &aes)
+#include "MainLoop.h"
+void CompressionLoop ::headerLoader(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // ³õÊ¼»¯µü´úÆ÷
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
@@ -105,7 +104,7 @@ void HeaderLoader_Compression ::headerLoader(const std::vector<std::string> &fil
     delete dataLoader;
 }
 
-void HeaderLoader_Decompression::headerLoader(Aes &aes)
+void DecompressionLoop::headerLoader(Aes &aes)
 {
     std::vector<std::string> blank;
     BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank);

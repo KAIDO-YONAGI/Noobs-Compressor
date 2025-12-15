@@ -88,11 +88,13 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
         {
             DataBlock blockWithIv;
             DataBlock dencryptedBlock;
-
-            blockWithIv.push_back(ivNum);
+            blockWithIv.resize(sizeof(IvSize_uint));
+            std::memcpy(blockWithIv.data(),&ivNum,sizeof(IvSize_uint));
             blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
 
             aes.doAes(2, blockWithIv, dencryptedBlock);
+            buffer.clear();
+            buffer.resize(dencryptedBlock.size());
             buffer = dencryptedBlock;
         }
         DirectoryOffsetSize_uint bufferPtr = 0;
