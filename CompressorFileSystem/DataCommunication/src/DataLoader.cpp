@@ -22,7 +22,7 @@ void DataLoader::dataLoader()
     catch (const std::exception &e)
     {
         // std::cerr << e.what() << '\n';
-        throw std::runtime_error("Error-dataLaoder()");
+        throw std::runtime_error("Error-dataLaoder_compression()");
     }
 
     if (inFile.gcount() == 0)
@@ -41,6 +41,6 @@ void DataLoader::dataLoader(FileSize_uint readSize)
     catch (const std::exception &e)
     {
         // std::cerr << e.what() << '\n';
-        throw std::runtime_error("Error-dataLaoder()");
+        throw std::runtime_error("Error-dataLaoder_decompression()");
     }
 }

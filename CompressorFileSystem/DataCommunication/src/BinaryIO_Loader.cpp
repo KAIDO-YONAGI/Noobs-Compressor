@@ -117,14 +117,14 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 {
                     if (directoryQueue_ready.back() != directoryPath)
                     {
-                        directoryQueue_ready.push(directoryPath);
+                        directoryQueue_ready.push(rootPath / directoryPath);
                     }
                 }
-                else if(FirstReady){
-                    directoryQueue_ready.push(directoryPath);
-                    FirstReady=false;
+                else if (FirstReady)
+                {
+                    directoryQueue_ready.push(rootPath / directoryPath);
+                    FirstReady = false;
                 }
-                    
 
                 directoryQueue.pop();
                 if (!directoryQueue.empty())
@@ -135,7 +135,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 }
             }
         }
-        requesetDone();      // 单次请求完成
+        requestDone();       // 单次请求完成
         if (tempOffset == 0) // tempOffset为零，说明到末尾，减去对应偏移量
         {
             offset -= readSize;
@@ -145,4 +145,66 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
     else
         throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
     return;
+}
+void BinaryIO_Loader::requestDone()
+{
+    {
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+        blockIsDone = true;
+    }
+}
+void BinaryIO_Loader::allLoopDone()
+{
+    if (inFile.is_open())
+    {
+        inFile.close();
+    }
+    allDone = true;
+}
+void BinaryIO_Loader::restartLoader()
+{
+    if (!allLoopIsDone())
+    {
+        std::ifstream newInFile(loadPath, std::ios::binary);
+        if (!newInFile)
+            throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
+
+        size_t offsetToRestart = header.directoryOffset - offset;
+
+        newInFile.seekg(offsetToRestart, std::ios::beg);
+        this->inFile = std::move(newInFile);
+        blockIsDone = false;
+    }
+    else
+        return;
+}
+void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
+
+{
+    DataBlock inBlock;
+    DataBlock encryptedBlock;
+    DirectoryOffsetSize_uint startPos = 0, blockSize = 0;
+
+    for (auto blockPos : pos)
+    {
+        startPos = blockPos[0];
+        blockSize = blockPos[1];
+
+        inBlock.resize(blockSize);
+        encryptedBlock.resize(blockSize + sizeof(IvSize_uint));
+
+        fstreamForRefill.seekp(startPos, std::ios::beg);
+        fstreamForRefill.read(reinterpret_cast<char *>(inBlock.data()), blockSize);
+
+        aes.doAes(1, inBlock, encryptedBlock);
+        fstreamForRefill.seekp(startPos - sizeof(IvSize_uint));
+        fstreamForRefill.write(reinterpret_cast<const char *>(encryptedBlock.data()), blockSize + sizeof(IvSize_uint));
+
+        inBlock.clear();
+        encryptedBlock.clear();
+    }
+    std::cout << "encryptHeaderBlock-Done" << "\n";
 }

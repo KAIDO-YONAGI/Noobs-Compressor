@@ -2,7 +2,8 @@
 void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化迭代器
-    BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
+    fs::path blank;
+    BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
     Heffman huffmanZip(1);
     DataBlock encryptedBlock;
     FileSize_uint totalBlocks = 1, count = 0;
@@ -106,21 +107,24 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 void DecompressionLoop::decompressionLoop(Aes &aes)
 {
     std::vector<std::string> blank;
-    BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank);
+    BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank, rootPath);
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     while (!headerLoaderIterator.allLoopIsDone())
     {
-        while (!headerLoaderIterator.directoryQueue_ready.empty())
+        while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
         {
-            createDirectory(rootPath / headerLoaderIterator.directoryQueue_ready.front());
+            createDirectory(headerLoaderIterator.directoryQueue_ready.front());
             headerLoaderIterator.directoryQueue_ready.pop();
         }
 
         while (!headerLoaderIterator.fileQueue.empty())
         {
-            createFile(headerLoaderIterator.fileQueue.front().first.getFullPath());
+            createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // 重建文件
+            // 把已压缩块读进内存，处理，写入对应位置
+
             headerLoaderIterator.fileQueue.pop();
         }
+
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
         {
             headerLoaderIterator.restartLoader();
