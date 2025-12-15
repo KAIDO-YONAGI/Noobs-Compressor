@@ -19,7 +19,7 @@ void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
     processedFileSize = 0;
 }
 
-void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
+void DataExporter::exportDataToFile_Compression(const DataBlock &data)
 {
     std::ofstream tempFilePtr;
 
@@ -34,4 +34,14 @@ void DataExporter::exportDataToFile_Encryption(const DataBlock &data)
     // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
 
     thisBlockIsDone(dataSize);
+}
+void DataExporter::exportDataToFile_Decompression(const DataBlock &data)
+{
+    outFile.seekp(0, std::ios::end);
+    FileSize_uint dataSize = data.size();
+
+    outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
+    processedFileSize += dataSize;
+    // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
+
 }

@@ -66,10 +66,12 @@ public:
     }
 
     ~BinaryIO_Loader() { allLoopDone(); }
+    
+    HeaderOffsetSize_uint getHeaderSize() { return header.headerOffset; }
+
     bool allLoopIsDone() { return allDone; }
     bool loaderRequestIsDone() { return blockIsDone; }
-    std::ifstream &getInFile(){return inFile;}
+    std::ifstream &getInFile() { return inFile; }
     void restartLoader();
-
     void encryptHeaderBlock(Aes &aes);
 };

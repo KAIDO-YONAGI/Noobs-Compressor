@@ -33,6 +33,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
+            
             allLoopDone(); // 所有循环结束，紧接着return退出
             return;
         }

@@ -44,7 +44,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
         //     DataBlock huffTree_outPut;
         //     huffmanZip.tree_to_plat_uchar(huffTree);
         //     aes.doAes(1, huffTree, huffTree_outPut);
-        //     dataExporter.exportDataToFile_Encryption(huffTree_outPut);
+        //     dataExporter.exportDataToFile_Compression(huffTree_outPut);
         //     Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         //     dataLoader->reset(loadFile.getFullPath()); // 生成编码表后，调用reset（原目录）复读
         //     isGenerated = true;
@@ -54,8 +54,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
         if (!dataLoader->isDone()) // 避免读到空数据块
         {
-            if (filename == "deflater.js")
-                int a = 1;
 
             system("cls");
             std::cout << "Processing file: " << filename << "\n"
@@ -72,7 +70,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
 
-            dataExporter.exportDataToFile_Encryption(encryptedBlock); // 读取的数据传输给exporter
+            dataExporter.exportDataToFile_Compression(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
         }
         else if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty())
@@ -106,9 +104,13 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
 void DecompressionLoop::decompressionLoop(Aes &aes)
 {
+    NumsReader numReader(deCompressionFile);
+    DataLoader dataLoader;
     std::vector<std::string> blank;
     BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank, rootPath);
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
+    HeaderOffsetSize_uint dataOffset = headerLoaderIterator.getHeaderSize();
+
     while (!headerLoaderIterator.allLoopIsDone())
     {
         while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
@@ -116,11 +118,37 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             createDirectory(headerLoaderIterator.directoryQueue_ready.front());
             headerLoaderIterator.directoryQueue_ready.pop();
         }
-
         while (!headerLoaderIterator.fileQueue.empty())
         {
             createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // 重建文件
             // 把已压缩块读进内存，处理，写入对应位置
+            deCompressionFile.seekg(dataOffset, std::ios::beg);        // 定位到数据区（或已处理块后）
+            if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG)) // 检测分割标志
+                throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG");
+            fs::path filePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
+            fs:: path filename=filePath.filename();
+            
+            system("cls");
+            std::cout << "Processing file: " << filename << "\n";
+
+            DataExporter dataExporter(filePath);
+            FileSize_uint fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
+            while (fileCompressedSize > 0)
+            {
+                DirectoryOffsetSize_uint blockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
+
+                dataLoader.dataLoader(blockSize, deCompressionFile);
+
+                DataBlock rawData = dataLoader.getBlock(); // deAes
+                DataBlock dencryptedData(rawData.size());
+                aes.doAes(2, rawData, dencryptedData);
+
+                dataExporter.exportDataToFile_Decompression(dencryptedData);
+
+                fileCompressedSize -= blockSize;
+                dataOffset += blockSize; // 更新数据区位置
+            }
+            std::cout << "--------Done!--------" << "\n";
 
             headerLoaderIterator.fileQueue.pop();
         }

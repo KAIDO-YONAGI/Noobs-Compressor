@@ -11,6 +11,7 @@ Locator：使用偏移量的定位器
 */
 class Transfer
 {
+private:
     std::wstring convertToWString(const std::string &s);
 
 public:
