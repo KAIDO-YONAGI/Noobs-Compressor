@@ -26,12 +26,14 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
         }
 
         NumsReader numsReader(inFile);
+        // if (offset < 100)
+        //     int a = 1;
         if (offset == sizeof(SizeOfMagicNum_uint))
         {
             SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
-            allLoopDone();
+            allLoopDone(); // 所有循环结束，紧接着return退出
             return;
         }
         while (offset > 0)
@@ -89,7 +91,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
             DataBlock blockWithIv;
             DataBlock dencryptedBlock;
             blockWithIv.resize(sizeof(IvSize_uint));
-            std::memcpy(blockWithIv.data(),&ivNum,sizeof(IvSize_uint));
+            std::memcpy(blockWithIv.data(), &ivNum, sizeof(IvSize_uint));
             blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
 
             aes.doAes(2, blockWithIv, dencryptedBlock);
@@ -109,7 +111,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)
             {
-                //目录进入就绪队列的逻辑
+                // 目录进入就绪队列的逻辑
                 const fs::path &directoryPath = directoryQueue.front().first.getFullPath();
                 if (!directoryQueue_ready.empty())
                 {
@@ -118,22 +120,25 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                         directoryQueue_ready.push(directoryPath);
                     }
                 }
-                else
+                else if(FirstReady){
                     directoryQueue_ready.push(directoryPath);
-                
+                    FirstReady=false;
+                }
+                    
+
                 directoryQueue.pop();
                 if (!directoryQueue.empty())
                 {
-                    countOfKidDirectory = directoryQueue.front().second;//更新子目录数量
+                    countOfKidDirectory = directoryQueue.front().second; // 更新子目录数量
                     if (!directoryQueue.empty())
-                    directoryQueue_ready.push(directoryQueue.front().first.getFullPath());//pop后直接将新目录入队，防止处理到一半，没有进入外层if
+                        directoryQueue_ready.push(directoryQueue.front().first.getFullPath()); // pop后直接将新目录入队，防止处理到一半，没有进入外层if
                 }
             }
         }
         requesetDone();      // 单次请求完成
         if (tempOffset == 0) // tempOffset为零，说明到末尾，减去对应偏移量
         {
-            offset -= readSize + sizeof(SizeOfMagicNum_uint);
+            offset -= readSize;
             return;
         }
     }

@@ -29,11 +29,13 @@
 //     HeaderWriter headerWriter_v0;
 //     headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
 
-//     CompressionLoop headerLoader_Compression(compressionFilePath);
-//     headerLoader_Compression.headerLoader( filePathToScan, aes);
+//     CompressionLoop compressor(compressionFilePath);
+//     compressor.compressionLoop( filePathToScan, aes);
 
 //     system("pause");
 // }
+
+
 int main()
 {
     std::string deCompressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\Ö¿°®µÄÊ±¹â.bin";
@@ -41,8 +43,8 @@ int main()
 
     Aes aes(key);
 
-    DecompressionLoop headerLoader_Decompression(deCompressionFilePath);
-    headerLoader_Decompression.headerLoader(aes);
+    DecompressionLoop decompressor(deCompressionFilePath);
+    decompressor.decompressionLoop(aes);
 
     system("pause");
 }

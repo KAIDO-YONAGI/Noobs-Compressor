@@ -1,5 +1,5 @@
 #include "MainLoop.h"
-void CompressionLoop ::headerLoader(const std::vector<std::string> &filePathToScan, Aes &aes)
+void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化迭代器
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
@@ -103,21 +103,29 @@ void CompressionLoop ::headerLoader(const std::vector<std::string> &filePathToSc
     delete dataLoader;
 }
 
-void DecompressionLoop::headerLoader(Aes &aes)
+void DecompressionLoop::decompressionLoop(Aes &aes)
 {
     std::vector<std::string> blank;
     BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank);
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
-
-    while (!headerLoaderIterator.directoryQueue_ready.empty())
+    while (!headerLoaderIterator.allLoopIsDone())
     {
-        createDirectory(rootPath/headerLoaderIterator.directoryQueue_ready.front());
-        headerLoaderIterator.directoryQueue_ready.pop();
-    }
+        while (!headerLoaderIterator.directoryQueue_ready.empty())
+        {
+            createDirectory(rootPath / headerLoaderIterator.directoryQueue_ready.front());
+            headerLoaderIterator.directoryQueue_ready.pop();
+        }
 
-    while(!headerLoaderIterator.fileQueue.empty()){
-        createFile(headerLoaderIterator.fileQueue.front().first.getFullPath());
-        headerLoaderIterator.fileQueue.pop();
+        while (!headerLoaderIterator.fileQueue.empty())
+        {
+            createFile(headerLoaderIterator.fileQueue.front().first.getFullPath());
+            headerLoaderIterator.fileQueue.pop();
+        }
+        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
+        {
+            headerLoaderIterator.restartLoader();
+            headerLoaderIterator.headerLoaderIterator(aes);
+        }
     }
 }
 void DecompressionLoop::createDirectory(const fs::path &directoryPath)

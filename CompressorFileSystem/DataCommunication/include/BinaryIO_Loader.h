@@ -13,8 +13,9 @@ private:
         DataBlock(BUFFER_SIZE + 1024);       // 私有buffer,预留1024字节防止溢出
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
     bool blockIsDone = false;
-    bool allDone = false; // 标记是否完成所有目录读取
-    Header header;        // 私有化存储当前文件头信息
+    bool allDone = false;   // 标记是否完成所有目录读取
+    bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
+    Header header;          // 私有化存储当前文件头信息
 
     FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
     DirectoryOffsetSize_uint offset = 0;     // 当前剩余字节数
@@ -110,7 +111,7 @@ public:
     {
         DataBlock inBlock;
         DataBlock encryptedBlock;
-        DirectoryOffsetSize_uint startPos=0, blockSize=0;
+        DirectoryOffsetSize_uint startPos = 0, blockSize = 0;
 
         for (auto blockPos : pos)
         {
@@ -121,11 +122,11 @@ public:
             encryptedBlock.resize(blockSize + sizeof(IvSize_uint));
 
             fstreamForRefill.seekp(startPos, std::ios::beg);
-            fstreamForRefill.read(reinterpret_cast< char*>(inBlock.data()), blockSize);
+            fstreamForRefill.read(reinterpret_cast<char *>(inBlock.data()), blockSize);
 
             aes.doAes(1, inBlock, encryptedBlock);
             fstreamForRefill.seekp(startPos - sizeof(IvSize_uint));
-            fstreamForRefill.write(reinterpret_cast<const char*>(encryptedBlock.data()), blockSize + sizeof(IvSize_uint));
+            fstreamForRefill.write(reinterpret_cast<const char *>(encryptedBlock.data()), blockSize + sizeof(IvSize_uint));
 
             inBlock.clear();
             encryptedBlock.clear();

@@ -24,7 +24,7 @@ public:
         this->deCompressionFilePath = deCompressionFilePath;
         rootPath=transfer.transPath(deCompressionFilePath).parent_path();
     }
-    void headerLoader(Aes &aes);
+    void decompressionLoop(Aes &aes);
 };
 class CompressionLoop
 {
@@ -37,5 +37,5 @@ public:
     {
         this->compressionFilePath = compressionFilePath;
     }
-    void headerLoader(const std::vector<std::string> &filePathToScan, Aes &aes);
+    void compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes);
 };
