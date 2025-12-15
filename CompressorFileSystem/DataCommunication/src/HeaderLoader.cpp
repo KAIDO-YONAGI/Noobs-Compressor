@@ -1,12 +1,16 @@
 #include "../include/HeaderLoader.h"
 #include "Heffman.h"
-void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePath, const std::vector<std::string> &filePathToScan, Aes &aes)
+void HeaderLoader_Compression ::headerLoader(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化迭代器
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan);
     Heffman huffmanZip(1);
     DataBlock encryptedBlock;
     FileSize_uint totalBlocks = 1, count = 0;
+    fs::path loadPath;
+    DataLoader *dataLoader;
+
+
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
@@ -26,7 +30,9 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     {
         // if (!isGenerated)
         // {
-        //     std::cout<<"genTree"<<"\n";
+        //     std::cout << "genTree" << "\n";
+        //     // dataLoader->dataLoader();
+
         //     while (!dataLoader->isDone())
         //     {
         //         dataLoader->dataLoader();
@@ -64,7 +70,7 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
             // huffmanZip.encode(data_In, compressedData);
 
             // aes.doAes(1, compressedData, encryptedBlock);
-            
+
             aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
 
             dataExporter.exportDataToFile_Encryption(encryptedBlock); // 读取的数据传输给exporter
@@ -97,4 +103,11 @@ void HeaderLoader_Compression ::headerLoader(const std::string compressionFilePa
     headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填
 
     delete dataLoader;
+}
+
+void HeaderLoader_Decompression::headerLoader(Aes &aes)
+{
+    std::vector<std::string> blank;
+    BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank);
+    headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
 }

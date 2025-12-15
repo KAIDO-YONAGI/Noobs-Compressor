@@ -35,15 +35,15 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
 
     // 解析文件原大小
     FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
-    FileSize_uint compressedSize;
+    FileSize_uint compressedSize_or_Offset;
     if (parserMode == 1) // for compression
     {
-        compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+        compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
         bufferPtr += sizeof(FileSize_uint); // skip compressedSize
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize = numsParser<FileSize_uint>(bufferPtr);
+        compressedSize_or_Offset = numsParser<FileSize_uint>(bufferPtr);
     }
 
     pathToProcess = pathConnector(fileName);
@@ -54,7 +54,7 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
         originSize,
         true,
         pathToProcess);
-    fileQueue.push({fileDetails, compressedSize});
+    fileQueue.push({fileDetails, compressedSize_or_Offset});
 }
 
 void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
@@ -108,7 +108,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const 
                 // 解析文件原大小
                 FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
                 // 记录等会需要回填的位置
-                FileSize_uint compressedSize = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+                FileSize_uint compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
                 bufferPtr += sizeof(FileSize_uint);
                 Directory_FileDetails fileDetails(
                     fileName,
@@ -116,7 +116,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr,const 
                     originSize,
                     true,
                     fullPath);
-                fileQueue.push({fileDetails, compressedSize});
+                fileQueue.push({fileDetails, compressedSize_or_Offset});
             }
             else if (D_F_flag == DIRECTORY_FLAG)
             {

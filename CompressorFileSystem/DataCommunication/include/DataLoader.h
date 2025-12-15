@@ -8,8 +8,9 @@ class DataLoader
 private:
     DataBlock buffer = DataBlock(BUFFER_SIZE);
 
-    FileSize_uint fileSize=0;
+    FileSize_uint fileSize = 0;
     std::ifstream inFile;
+    bool loadIsDone= false;
     void done();
 
 public:
@@ -20,7 +21,7 @@ public:
     }
     bool isDone()
     {
-        return !inFile.is_open();
+        return loadIsDone;
     }
     void reset(fs::path inPath)
     {
@@ -34,10 +35,7 @@ public:
         else
             throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + inPath.string());
     }
-    void setFileSize(FileSize_uint newSize)
-    {
-        fileSize = newSize;
-    }
+
     DataLoader(const fs::path &inPath)
     {
         std::ifstream inFile(inPath, std::ios::binary);
@@ -53,5 +51,9 @@ public:
         }
     }
     void dataLoader();
+    void setFileSize(FileSize_uint newSize)
+    {
+        fileSize = newSize;
+    }
     void dataLoader(FileSize_uint readSize);
 };

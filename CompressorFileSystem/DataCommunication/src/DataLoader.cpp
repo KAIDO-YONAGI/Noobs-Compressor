@@ -6,6 +6,7 @@ void DataLoader::done()
     {
         inFile.close();
     }
+    loadIsDone=true;
     buffer.clear();
 }
 
@@ -41,10 +42,5 @@ void DataLoader::dataLoader(FileSize_uint readSize)
     {
         // std::cerr << e.what() << '\n';
         throw std::runtime_error("Error-dataLaoder()");
-    }
-
-    if (inFile.gcount() == 0)
-    {
-        done();
     }
 }

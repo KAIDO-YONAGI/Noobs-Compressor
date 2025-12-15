@@ -3,7 +3,6 @@
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderLoader.h"
 
-
 int main()
 {
     std::vector<std::string> filePathToScan;
@@ -16,9 +15,6 @@ int main()
     filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
     // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\credits.html");
 
-
-
-    
     logicalRoot = "YONAGI";
     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";
     key = "LOVEYONAGI";
@@ -33,10 +29,20 @@ int main()
     HeaderWriter headerWriter_v0;
     headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
 
-    HeaderLoader_Compression headerLoader_Compression;
-    headerLoader_Compression.headerLoader(compressionFilePath, filePathToScan, aes);
-
-    
+    HeaderLoader_Compression headerLoader_Compression(compressionFilePath);
+    headerLoader_Compression.headerLoader( filePathToScan, aes);
 
     system("pause");
 }
+// int main()
+// {
+//     std::string deCompressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";
+//     const char *key="LOVEYONAGI";
+
+//     Aes aes(key);
+
+//     HeaderLoader_Decompression headerLoader_Decompression(deCompressionFilePath);
+//     headerLoader_Decompression.headerLoader(aes);
+
+//     system("pause");
+// }
