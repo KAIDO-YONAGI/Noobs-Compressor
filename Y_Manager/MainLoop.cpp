@@ -9,7 +9,6 @@ void CompressionLoop ::headerLoader(const std::vector<std::string> &filePathToSc
     fs::path loadPath;
     DataLoader *dataLoader;
 
-
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
@@ -109,4 +108,54 @@ void DecompressionLoop::headerLoader(Aes &aes)
     std::vector<std::string> blank;
     BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank);
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
+
+    while (!headerLoaderIterator.directoryQueue_ready.empty())
+    {
+        createDirectory(rootPath/headerLoaderIterator.directoryQueue_ready.front());
+        headerLoaderIterator.directoryQueue_ready.pop();
+    }
+
+    while(!headerLoaderIterator.fileQueue.empty()){
+        createFile(headerLoaderIterator.fileQueue.front().first.getFullPath());
+        headerLoaderIterator.fileQueue.pop();
+    }
+}
+void DecompressionLoop::createDirectory(const fs::path &directoryPath)
+{
+    try
+    {
+        if (fs::exists(directoryPath))
+        {
+            std::cout << "directoryIsExist: " << directoryPath << " ,skipped to next \n"; // 可以优化用户选择覆盖机制
+        }
+        bool created = fs::create_directory(directoryPath);
+    }
+    catch (const std::exception &e)
+    {
+        throw std::runtime_error("createDirectory()-Error: " + directoryPath.string());
+    }
+}
+
+// 创建文件 (创建空文件)
+void DecompressionLoop::createFile(const fs::path &filePath)
+{
+    try
+    {
+        if (fs::exists(filePath))
+        {
+            std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
+        }
+
+        // 确保父目录存在
+        if (!filePath.parent_path().empty() && !fs::exists(filePath.parent_path()))
+        {
+            createDirectory(filePath.parent_path());
+        }
+
+        std::ofstream outfile(filePath);
+    }
+    catch (const fs::filesystem_error &e)
+    {
+        throw std::runtime_error("createDirectory()-Error: " + filePath.string());
+    }
 }
