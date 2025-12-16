@@ -1,6 +1,5 @@
 #include "../include/ToolClasses.h"
-// #include <unicode/ustring.h>
-// #include <unicode/uclean.h>
+
 std::wstring Transfer::convertToWString(const std::string &s)
 {
 
@@ -20,8 +19,7 @@ std::wstring Transfer::convertToWString(const std::string &s)
 
 fs::path Transfer::transPath(const std::string &p)
 {
-    std::wstring wPath = convertToWString(p);
-    return fs::path(wPath);
+    return fs::path(p);
 }
 
 void NumsWriter::appendMagicStatic(std::ofstream &outFile)

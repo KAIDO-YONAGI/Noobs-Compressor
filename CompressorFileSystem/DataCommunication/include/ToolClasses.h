@@ -3,6 +3,7 @@
 
 #include "FileLibrary.h"
 #include "Directory_FileDetails.h"
+
 /*
 Transfer类：为filesystem的fs::path类型提供宽字符转换方案（主要处理中文路径问题），且仅在自行创建fs::path时使用，用于输入需要SFC处理的路径
 MagicNumWriter类：写魔数的

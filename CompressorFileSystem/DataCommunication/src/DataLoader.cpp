@@ -47,8 +47,8 @@ void DataLoader::dataLoader(FileSize_uint readSize, std::ifstream &decompression
     try
     {
         data.resize(readSize);
-        inFile.read(reinterpret_cast<char *>((data.data())), readSize);
-        data.resize(inFile.gcount());
+        decompressionFile.read(reinterpret_cast<char *>((data.data())), readSize);
+        data.resize(decompressionFile.gcount());
     }
     catch (const std::exception &e)
     {

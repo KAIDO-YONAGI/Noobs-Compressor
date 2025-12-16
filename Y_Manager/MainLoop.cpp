@@ -1,5 +1,4 @@
 #include "MainLoop.h"
-#pragma pack(1) // 禁用填充，紧密读取
 
 void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
@@ -10,14 +9,14 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     DataBlock encryptedBlock;
     FileSize_uint totalBlocks = 1, count = 0;
     fs::path loadPath;
-    DataLoader *dataLoader;
+    std::unique_ptr<DataLoader> dataLoader;
 
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
         Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
-        dataLoader = new DataLoader(loadPath);
+        dataLoader = std::make_unique <DataLoader>(loadPath);
         totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
     }
 
@@ -100,8 +99,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
         }
     }
     headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填
-
-    delete dataLoader;
 }
 
 void DecompressionLoop::decompressionLoop(Aes &aes)
@@ -111,7 +108,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     BinaryIO_Loader headerLoaderIterator(fullPath.string(), blank, parentPath);
 
     std::ifstream &inFile = headerLoaderIterator.getInFile();//共享句柄，使用seek保证正确读取，不写入，避免数据缓冲区问题
-    std::unique_ptr<DataLoader> dataLoader;
+    std::unique_ptr<DataLoader> dataLoader = std::make_unique<DataLoader>();
     NumsReader numReader(inFile);
 
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
@@ -127,12 +124,17 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         while (!headerLoaderIterator.fileQueue.empty())
         {
             createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // 重建文件
-            
+
             // headerLoaderIterator.fileQueue.pop();
             // continue;
-            
+
             // 把已压缩块读进内存，处理，写入对应位置
+            inFile.clear(); // 清除可能的错误标志(如eof)，确保seek可以正常工作
             inFile.seekg(dataOffset, std::ios::beg);                   // 定位到数据区（或已处理块后）
+            if (!inFile.good())
+            {
+                throw std::runtime_error("decompressionLoop()-Error:Failed to seek to dataOffset " + std::to_string(dataOffset));
+            }
             if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG)) // 检测分割标志
                 throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG");
             fs::path filePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
@@ -143,8 +145,17 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
             DataExporter dataExporter(filePath);
             FileSize_uint fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
+            bool isFirstBlock = true;
             while (fileCompressedSize > 0)
             {
+                // 每个块前面都有 SEPARATED_FLAG，第一个块已经在循环外读过了
+                if (!isFirstBlock)
+                {
+                    if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
+                        throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG in loop");
+                }
+                isFirstBlock = false;
+
                 DirectoryOffsetSize_uint blockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
 
                 DirectoryOffsetSize_uint readSize = (blockSize != 0 ? blockSize : fileCompressedSize);
@@ -158,7 +169,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 dataExporter.exportDataToFile_Decompression(decryptedData);
 
                 fileCompressedSize -= readSize;
-                dataOffset += readSize; // 更新数据区位置
+                dataOffset += readSize+SEPARATED_STANDARD_SIZE-sizeof(IvSize_uint); // 更新数据区位置
             }
             std::cout << "--------Done!--------" << "\n";
 

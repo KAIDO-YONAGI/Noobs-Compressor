@@ -38,7 +38,7 @@
 
 int main()
 {
-    std::string deCompressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";
+    std::string deCompressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\123.bin";
     const char *key = "LOVEYONAGI";
 
     Aes aes(key);

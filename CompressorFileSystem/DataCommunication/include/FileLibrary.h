@@ -10,9 +10,6 @@
 #include <cstdint>
 #include <cassert>
 #include <array>
-#include <unicode/ucnv.h>
-#include <unicode/ustring.h>
-#include <stdexcept>
 #include <memory>
 // ÃüÃû¿Õ¼ä
 

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(\"Secure Files Compressor (Multiple Files Supports).exe\")",
+      "Bash(C:/msys64/ucrt64/bin/g++.exe:*)"
+    ]
+  }
+}

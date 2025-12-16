@@ -6,20 +6,20 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
 
-    inFile.seekg(header.directoryOffset - offset, std::ios::beg); // ÖØ¶¨Î»
+    inFile.seekg(header.directoryOffset - offset, std::ios::beg); // ï¿½Ø¶ï¿½Î»
 
     try
     {
-        // ¶ÁÈ¡Header
+        // ï¿½ï¿½È¡Header
         if (inFile.tellg() == std::streampos(0))
         {
             if (!inFile.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
             {
                 throw std::runtime_error("Failed to read header");
             }
-            // ½âÊÍHeader
+            // ï¿½ï¿½ï¿½ï¿½Header
             std::memcpy(&header, buffer.data(), sizeof(Header));
-            // ÑéÖ¤Ä§Êı
+            // ï¿½ï¿½Ö¤Ä§ï¿½ï¿½
             if (header.magicNum_1 != MAGIC_NUM ||
                 header.magicNum_2 != MAGIC_NUM)
             {
@@ -38,7 +38,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
-            allLoopDone(); // ËùÓĞÑ­»·½áÊø£¬½ô½Ó×ÅreturnÍË³ö
+            allLoopDone(); // ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½returnï¿½Ë³ï¿½
             return;
         }
         while (offset > 0)
@@ -55,7 +55,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        // ÇåÀí×ÊÔ´»òÖØĞÂÅ×³öÒì³£
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×³ï¿½ï¿½ì³£
         throw e.what();
     }
 }
@@ -69,30 +69,30 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
     if (flag == SEPARATED_FLAG)
     {
 
-        // ¶ÁÈ¡¿éÆ«ÒÆÁ¿
+        // ï¿½ï¿½È¡ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½
         tempOffset = numsReader.readBinaryNums<DirectoryOffsetSize_uint>();
-        // ¶ÁÈ¡ivÍ·
+        // ï¿½ï¿½È¡ivÍ·
         IvSize_uint ivNum = numsReader.readBinaryNums<IvSize_uint>();
 
-        offset -= SEPARATED_STANDARD_SIZE + tempOffset; // Æ«ÒÆÁ¿¼ì²â£¬Í¬ÑùÓÃÓÚ¼ì²âÍË³ö
+        offset -= SEPARATED_STANDARD_SIZE + tempOffset; // Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â£¬Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½Ë³ï¿½
 
-        // ¶ÁÈ¡Êı¾İµ½vectorºóÔÚÄÚ´æÖĞ²Ù×÷£¬¶Ô×îºóÒ»¸öÎ´´ïµ½Ğ´Èë·Ö¸î±ê×¼´óĞ¡µÄ¿éÒıÈëÌØÊâ´¦Àí
+        // ï¿½ï¿½È¡ï¿½ï¿½ï¿½İµï¿½vectorï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½ï¿½Ğ²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Î´ï¿½ïµ½Ğ´ï¿½ï¿½Ö¸ï¿½ï¿½×¼ï¿½ï¿½Ğ¡ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â´¦ï¿½ï¿½
         DirectoryOffsetSize_uint readSize = (tempOffset == 0 ? (offset - sizeof(SizeOfMagicNum_uint)) : tempOffset);
 
         std::array<DirectoryOffsetSize_uint, 2> blockPos = {
-            static_cast<DirectoryOffsetSize_uint>(inFile.tellg()), // ×ª»»Á÷Î»ÖÃ
-            static_cast<DirectoryOffsetSize_uint>(readSize)        // ×ª»»¶ÁÈ¡´óĞ¡
+            static_cast<DirectoryOffsetSize_uint>(inFile.tellg()), // ×ªï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+            static_cast<DirectoryOffsetSize_uint>(readSize)        // ×ªï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½Ğ¡
         };
-        pos.push_back(blockPos); // ±£´æ´ËÊ±Êı¾İ¿éµÄÎ»ÖÃ£¬±ãÓÚÏÂÓÎ¶ÔÊı¾İ¿éÖ±½Ó²Ù×÷
+        pos.push_back(blockPos); // ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½İ¿ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¶ï¿½ï¿½ï¿½ï¿½İ¿ï¿½Ö±ï¿½Ó²ï¿½ï¿½ï¿½
 
-        // °´Æ«ÒÆÁ¿¶ÁÈ¡Êı¾İ¿é
-        buffer.resize(readSize); // clearºóresizeÈ·±£¿Õ¼ä¿ÉĞ´Èë£¬²»¸Ä±äcapacity
+        // ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ï¿½ï¿½İ¿ï¿½
+        buffer.resize(readSize); // clearï¿½ï¿½resizeÈ·ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½Ğ´ï¿½ë£¬ï¿½ï¿½ï¿½Ä±ï¿½capacity
         if (!inFile.read(reinterpret_cast<char *>(buffer.data()), readSize) && tempOffset != 0)
         {
             throw std::runtime_error("Failed to read buffer");
         }
 
-        if (ivNum != 0) // ½öÔÚ½âÑ¹Ê±»á´¥·¢£¬½«buffer½âÃÜºó½âÎö
+        if (ivNum != 0) // ï¿½ï¿½ï¿½Ú½ï¿½Ñ¹Ê±ï¿½á´¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½bufferï¿½ï¿½ï¿½Üºï¿½ï¿½ï¿½ï¿½
         {
             DataBlock blockWithIv;
             DataBlock decryptedBlock;
@@ -117,7 +117,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)
             {
-                // Ä¿Â¼½øÈë¾ÍĞ÷¶ÓÁĞµÄÂß¼­
+                // Ä¿Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ğµï¿½ï¿½ß¼ï¿½
                 const fs::path &directoryPath = directoryQueue.front().first.getFullPath();
                 if (!directoryQueue_ready.empty())
                 {
@@ -135,14 +135,14 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 directoryQueue.pop();
                 if (!directoryQueue.empty())
                 {
-                    countOfKidDirectory = directoryQueue.front().second; // ¸üĞÂ×ÓÄ¿Â¼ÊıÁ¿
+                    countOfKidDirectory = directoryQueue.front().second; // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½ï¿½ï¿½
                     if (!directoryQueue.empty())
-                        directoryQueue_ready.push(directoryQueue.front().first.getFullPath()); // popºóÖ±½Ó½«ĞÂÄ¿Â¼Èë¶Ó£¬·ÀÖ¹´¦Àíµ½Ò»°ë£¬Ã»ÓĞ½øÈëÍâ²ãif
+                        directoryQueue_ready.push(directoryQueue.front().first.getFullPath()); // popï¿½ï¿½Ö±ï¿½Ó½ï¿½ï¿½ï¿½Ä¿Â¼ï¿½ï¿½Ó£ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ë£¬Ã»ï¿½Ğ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½if
                 }
             }
         }
-        requestDone();       // µ¥´ÎÇëÇóÍê³É
-        if (tempOffset == 0) // tempOffsetÎªÁã£¬ËµÃ÷µ½Ä©Î²£¬¼õÈ¥¶ÔÓ¦Æ«ÒÆÁ¿
+        requestDone();       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        if (tempOffset == 0) // tempOffsetÎªï¿½ã£¬Ëµï¿½ï¿½ï¿½ï¿½Ä©Î²ï¿½ï¿½ï¿½ï¿½È¥ï¿½ï¿½Ó¦Æ«ï¿½ï¿½ï¿½ï¿½
         {
             offset -= readSize;
             return;
@@ -154,13 +154,9 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 }
 void BinaryIO_Loader::requestDone()
 {
-    {
-        if (inFile.is_open())
-        {
-            inFile.close();
-        }
-        blockIsDone = true;
-    }
+    // ä¸å…³é—­inFileï¼Œå› ä¸ºè§£å‹æ—¶éœ€è¦å…±äº«æ–‡ä»¶å¥æŸ„ç»§ç»­è¯»å–æ•°æ®åŒº
+    // æ–‡ä»¶å…³é—­ç”± allLoopDone() æˆ–ææ„å‡½æ•°è´Ÿè´£
+    blockIsDone = true;
 }
 void BinaryIO_Loader::allLoopDone()
 {
