@@ -111,6 +111,10 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     DirectoryOffsetSize_uint dataOffset = headerLoaderIterator.getDirectoryOffset();
 
+    // 创建 Huffman 对象用于解压
+    Heffman huffmanUnzip(1);
+    bool treeLoaded = false;
+
     while (!headerLoaderIterator.allLoopIsDone())
     {
         while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
@@ -143,6 +147,27 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             DataExporter dataExporter(filePath);
             FileSize_uint fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
             bool isFirstBlock = true;
+
+            // 读取并恢复 Huffman 树（每个文件第一个块是树数据）
+            if (!treeLoaded)
+            {
+                DirectoryOffsetSize_uint treeBlockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
+                dataLoader->dataLoader(treeBlockSize, inFile);
+                DataBlock rawTreeData = dataLoader->getBlock();
+
+                // 解密树数据
+                DataBlock decryptedTreeData(rawTreeData.size() + sizeof(IvSize_uint));
+                aes.doAes(2, rawTreeData, decryptedTreeData);
+
+                // 恢复 Huffman 树（树数据是序列化的文本格式，不需要解压）
+                huffmanUnzip.spawn_tree(decryptedTreeData);
+                treeLoaded = true;
+
+                fileCompressedSize -= treeBlockSize;
+                dataOffset += treeBlockSize + SEPARATED_STANDARD_SIZE - sizeof(IvSize_uint);
+                isFirstBlock = true;
+            }
+
             while (fileCompressedSize > 0)
             {
                 // 每个块前面都有 SEPARATED_FLAG，第一个块已经在循环外读过了
@@ -163,14 +188,22 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 DataBlock decryptedData(rawData.size() + sizeof(IvSize_uint));
                 aes.doAes(2, rawData, decryptedData);
 
-                dataExporter.exportDataToFile_Decompression(decryptedData);
+                // 进行 Huffman 解压
+                DataBlock decompressedData;
+                BitHandler bitHandler;
+                bitHandler.bytecount = decryptedData.size();  // 设置总字节数
+                huffmanUnzip.decode(decryptedData, decompressedData, bitHandler);
+
+                // 写入解压后的数据
+                dataExporter.exportDataToFile_Decompression(decompressedData);
 
                 fileCompressedSize -= readSize;
-                dataOffset += readSize+SEPARATED_STANDARD_SIZE-sizeof(IvSize_uint); // 更新数据区位置
+                dataOffset += readSize + SEPARATED_STANDARD_SIZE - sizeof(IvSize_uint); // 更新数据区位置
             }
             std::cout << "--------Done!--------" << "\n";
 
             headerLoaderIterator.fileQueue.pop();
+            treeLoaded = false; // 重置树加载标志，为下一个文件做准备
         }
 
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
