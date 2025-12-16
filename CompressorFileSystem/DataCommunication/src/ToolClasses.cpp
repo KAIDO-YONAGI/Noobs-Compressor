@@ -1,93 +1,27 @@
 #include "../include/ToolClasses.h"
-
-std::wstring Transfer::convertToWString(const std::string &utf8_str)
+// #include <unicode/ustring.h>
+// #include <unicode/uclean.h>
+std::wstring Transfer::convertToWString(const std::string &s)
 {
 
-    std::wstring wstr;
-
-    size_t i = 0;
-    while (i < utf8_str.size())
+    std::setlocale(LC_ALL, ""); // ä½¿ç”¨æœ¬åœ°åŒ–è®¾ç½®
+    size_t len = s.size() + 1;
+    wchar_t *wStr = new wchar_t[len];
+    size_t result = std::mbstowcs(wStr, s.c_str(), len);
+    if (result == (size_t)-1)
     {
-        uint32_t codepoint = 0;
-        uint8_t c = utf8_str[i++];
-
-        // 1×Ö½Ú UTF-8£¨0xxxxxxx£©
-        if ((c & 0x80) == 0)
-        {
-            codepoint = c;
-        }
-        // 2×Ö½Ú UTF-8£¨110xxxxx 10xxxxxx£©
-        else if ((c & 0xE0) == 0xC0)
-        {
-            if (i >= utf8_str.size())
-                throw std::runtime_error("Invalid UTF-8: truncated 2-byte sequence");
-            uint8_t c2 = utf8_str[i++];
-            if ((c2 & 0xC0) != 0x80)
-                throw std::runtime_error("Invalid UTF-8: bad continuation byte");
-            codepoint = ((c & 0x1F) << 6) | (c2 & 0x3F);
-        }
-        // 3×Ö½Ú UTF-8£¨1110xxxx 10xxxxxx 10xxxxxx£©
-        else if ((c & 0xF0) == 0xE0)
-        {
-            if (i + 1 >= utf8_str.size())
-                throw std::runtime_error("Invalid UTF-8: truncated 3-byte sequence");
-            uint8_t c2 = utf8_str[i++];
-            uint8_t c3 = utf8_str[i++];
-            if ((c2 & 0xC0) != 0x80 || (c3 & 0xC0) != 0x80)
-            {
-                throw std::runtime_error("Invalid UTF-8: bad continuation bytes");
-            }
-            codepoint = ((c & 0x0F) << 12) | ((c2 & 0x3F) << 6) | (c3 & 0x3F);
-        }
-        // 4×Ö½Ú UTF-8£¨11110xxx 10xxxxxx 10xxxxxx 10xxxxxx£©
-        else if ((c & 0xF8) == 0xF0)
-        {
-            if (i + 2 >= utf8_str.size())
-                throw std::runtime_error("Invalid UTF-8: truncated 4-byte sequence");
-            uint8_t c2 = utf8_str[i++];
-            uint8_t c3 = utf8_str[i++];
-            uint8_t c4 = utf8_str[i++];
-            if ((c2 & 0xC0) != 0x80 || (c3 & 0xC0) != 0x80 || (c4 & 0xC0) != 0x80)
-            {
-                throw std::runtime_error("Invalid UTF-8: bad continuation bytes");
-            }
-            codepoint = ((c & 0x07) << 18) | ((c2 & 0x3F) << 12) | ((c3 & 0x3F) << 6) | (c4 & 0x3F);
-        }
-        else
-        {
-            throw std::runtime_error("Invalid UTF-8: illegal leading byte");
-        }
-
-        // ×ª»»Îª `wchar_t`£¨×Ô¶¯ÊÊÅä UTF-16 / UTF-32£©
-        if (sizeof(wchar_t) == 2)
-        {
-            // Windows£¨UTF-16£©
-            if (codepoint <= 0xFFFF)
-            {
-                wstr.push_back(static_cast<wchar_t>(codepoint));
-            }
-            else
-            {
-                // ´úÀí¶Ô£¨Surrogate Pair£©
-                codepoint -= 0x10000;
-                wstr.push_back(static_cast<wchar_t>(0xD800 | (codepoint >> 10)));
-                wstr.push_back(static_cast<wchar_t>(0xDC00 | (codepoint & 0x3FF)));
-            }
-        }
-        else
-        {
-            // Linux/macOS£¨UTF-32£©
-            wstr.push_back(static_cast<wchar_t>(codepoint));
-        }
+        delete[] wStr;
+        throw std::runtime_error("mbstowcs conversion failed");
     }
-
-    return wstr;
+    std::wstring ws(wStr);
+    delete[] wStr;
+    return ws;
 }
 
 fs::path Transfer::transPath(const std::string &p)
 {
     std::wstring wPath = convertToWString(p);
-    return fs::path(p);
+    return fs::path(wPath);
 }
 
 void NumsWriter::appendMagicStatic(std::ofstream &outFile)
@@ -105,13 +39,13 @@ Directory_FileQueue::~Directory_FileQueue()
 void Directory_FileQueue::clear()
 {
     while (frontNode)
-    { // Ñ­»·Ö±µ½Á´±íÎª¿Õ
+    { // å¾ªç¯ç›´åˆ°é“¾è¡¨ä¸ºç©º
         Node *temp = frontNode;
         frontNode = frontNode->next;
-        delete temp; // ÊÍ·Å½ÚµãÄÚ´æ
+        delete temp; // é‡Šæ”¾èŠ‚ç‚¹å†…å­˜
     }
-    rearNode = nullptr; // ÖØÖÃÎ²Ö¸Õë
-    count = 0;          // ÖØÖÃ¼ÆÊıÆ÷
+    rearNode = nullptr; // é‡ç½®å°¾æŒ‡é’ˆ
+    count = 0;          // é‡ç½®è®¡æ•°å™¨
 }
 
 void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount_uint> val)
@@ -127,7 +61,7 @@ void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount_uint> 
     }
     rearNode = newNode;
     count++;
-} // ²»Ê¹ÓÃÒıÓÃ£¬ÒòÎªÊ¹ÓÃÊ±»áÔÚ´«ÖµÊ±´´½¨pair£¬»áµ¼ÖÂ³£Á¿ÒıÓÃÎÊÌâ
+} // ä¸ä½¿ç”¨å¼•ç”¨ï¼Œå› ä¸ºä½¿ç”¨æ—¶ä¼šåœ¨ä¼ å€¼æ—¶åˆ›å»ºpairï¼Œä¼šå¯¼è‡´å¸¸é‡å¼•ç”¨é—®é¢˜
 
 void Directory_FileQueue::pop()
 {

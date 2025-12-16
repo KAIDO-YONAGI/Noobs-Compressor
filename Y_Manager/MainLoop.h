@@ -6,7 +6,7 @@
 #include "../CompressorFileSystem/DataCommunication/include/BinaryIO_Loader.h"
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
 #include "../CompressionModules/heffman/include/Heffman.h"
-#include "Aes.h"
+#include "My_Aes.h"
 
 class CompressionLoop
 {

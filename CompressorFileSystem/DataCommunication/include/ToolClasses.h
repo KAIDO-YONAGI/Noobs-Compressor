@@ -68,6 +68,7 @@ private:
 
 public:
     NumsReader(std::ifstream &file) : file(file) {};
+    ~NumsReader()=default;
     template <typename T>
     T readBinaryNums()
     {

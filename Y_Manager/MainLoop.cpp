@@ -111,7 +111,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     BinaryIO_Loader headerLoaderIterator(fullPath.string(), blank, parentPath);
 
     std::ifstream &inFile = headerLoaderIterator.getInFile();//共享句柄，使用seek保证正确读取，不写入，避免数据缓冲区问题
-    DataLoader dataLoader;
+    std::unique_ptr<DataLoader> dataLoader;
     NumsReader numReader(inFile);
 
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
@@ -149,9 +149,9 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
                 DirectoryOffsetSize_uint readSize = (blockSize != 0 ? blockSize : fileCompressedSize);
 
-                dataLoader.dataLoader(readSize, inFile);
+                dataLoader->dataLoader(readSize, inFile);
 
-                DataBlock rawData = dataLoader.getBlock(); // deAes
+                DataBlock rawData = dataLoader->getBlock(); // deAes
                 DataBlock decryptedData(rawData.size() + sizeof(IvSize_uint));
                 aes.doAes(2, rawData, decryptedData);
 

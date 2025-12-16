@@ -1,10 +1,12 @@
 #include "../include/BinaryIO_Loader.h"
 void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
 {
+    NumsReader numsReader(inFile);
+
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
 
-    inFile.seekg(header.directoryOffset-offset,std::ios::beg);//重定位
+    inFile.seekg(header.directoryOffset - offset, std::ios::beg); // 重定位
 
     try
     {
@@ -28,9 +30,6 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             offset = header.directoryOffset - HEADER_SIZE;
         }
 
-
-
-        NumsReader numsReader(inFile);
         // if (offset < 100)
         //     int a = 1;
         if (offset == sizeof(SizeOfMagicNum_uint))
@@ -48,7 +47,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
                 break;
             if (loaderRequestIsDone() || allLoopIsDone())
                 return;
-    
+
             buffer.clear();
             loadBySepratedFlag(numsReader, countOfKidDirectory, aes);
         }

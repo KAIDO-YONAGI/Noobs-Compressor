@@ -60,9 +60,7 @@ public:
     {
         // 安全清除密钥
         memset(const_cast<uint8_t *>(aes_key_16bytes), 0, 16);
-        memset(&aes_key, 0, sizeof(aes_key));
-        delete[] aes_key;
-        aes_key = nullptr;
+
     }
     void doAes(int mode, const DataBlock &inputBuffer,DataBlock &outputBuffer);
 };

@@ -4,7 +4,7 @@
 #include "ToolClasses.h"
 #include "Directory_FileDetails.h"
 #include "Directory_FileParser.h"
-#include "Aes.h"
+#include "My_Aes.h"
 #include <queue>
 class BinaryIO_Loader
 {
@@ -25,7 +25,7 @@ private:
 
     Transfer transfer;
     Header header;                         // 私有化存储当前文件头信息
-    Directory_FileParser *parserForLoader; // 私有化工具类实例，避免重复构造与析构
+    std::unique_ptr<Directory_FileParser>parserForLoader; // 私有化工具类实例，避免重复构造与析构
     DataBlock buffer =
         DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
 
@@ -60,13 +60,13 @@ public:
         this->inFile = std::move(inFile);
         this->fstreamForRefill = std::move(fstreamForRefill);
         this->filePathToScan = filePathToScan;
-        this->parserForLoader =
-            new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
+        this->parserForLoader = std::make_unique<Directory_FileParser>
+            (buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
         this->parentPath = parentPath;
     }
 
     ~BinaryIO_Loader() { allLoopDone(); }
-    
+
     DirectoryOffsetSize_uint getDirectoryOffset() { return header.directoryOffset; }
 
     bool allLoopIsDone() { return allDone; }
