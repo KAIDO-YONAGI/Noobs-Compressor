@@ -56,9 +56,9 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
     if (offset == 0)
         return;
 
-    char flag = numsReader.readBinaryNums<char>();
+    const char flag = numsReader.readBinaryNums<char>();
 
-    if (flag == '2')
+    if (flag == SEPARATED_FLAG)
     {
 
         // ¶ÁÈ¡¿éÆ«ÒÆÁ¿
@@ -102,7 +102,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
             while ((countOfKidDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
             {
-                parserForLoader->parser(bufferPtr, filePathToScan, countOfKidDirectory);
+                parserForLoader->parser(bufferPtr, countOfKidDirectory);
             }
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)

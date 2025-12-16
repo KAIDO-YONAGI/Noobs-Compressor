@@ -85,7 +85,8 @@ public:
         }
         if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
         {
-            throw std::runtime_error("readBinaryNums()Error-Failed to read" + file.eof() ? " - End of File reached" : "");
+            std::string msg = std::string("readBinaryNums()Error-Failed to read") + (file.eof() ? " - End of File reached" : "");
+            throw std::runtime_error(msg);
         }
         return value;
     }
@@ -98,7 +99,7 @@ private:
     {
         std::pair<Directory_FileDetails, FileCount_uint> data;
         Node *next;
-        Node(const std::pair<const Directory_FileDetails, FileCount_uint> &val)
+        Node(const std::pair<Directory_FileDetails, FileCount_uint> &val)
             : data(val), next(nullptr) {}
     };
 

@@ -5,6 +5,7 @@
 #include "Heffman.h"
 #include "../../Schedule/include/Worker.h"
 #include "../../../ThreadPool/ThreadPool.h"
+#include "../../../Schedule/include/Worker.h"
 
 /**
  * 赫夫曼的解压缩功能模块

@@ -86,7 +86,7 @@ void BinaryIO_Writter::writeDirectoryStandard(Directory_FileDetails &details, Fi
 
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(HEADER_FLAG, FLAG_SIZE);
+    outFile.write(&DIRECTORY_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(sizeOfName, outFile);
     outFile.write(details.getName().c_str(), sizeOfName);
     numWriter.writeBinaryNums(count, outFile); // 写入文件数目
@@ -98,7 +98,7 @@ void BinaryIO_Writter::writeFileStandard(Directory_FileDetails &details, Directo
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(FILE_FLAG, FLAG_SIZE);                       // 先写文件标
+    outFile.write(&FILE_FLAG, FLAG_SIZE);                       // 先写文件标
     numWriter.writeBinaryNums(sizeOfName, outFile);            // 写入文件名偏移量
     outFile.write(details.getName().c_str(), sizeOfName);      // 写入文件名
     numWriter.writeBinaryNums(details.getFileSize(), outFile); // 写入文件大小
@@ -114,14 +114,14 @@ void BinaryIO_Writter::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffs
 // 空分割标准写入函数
 void BinaryIO_Writter::writeBlankSeparatedStandard()
 {
-    outFile.write(SEPARATED_FLAG, FLAG_SIZE);
+    outFile.write(&SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), outFile);
     numWriter.writeBinaryNums(IvSize_uint(0), outFile);
 }
 // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
 void BinaryIO_Writter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
 {
-    File.write(SEPARATED_FLAG, FLAG_SIZE);
+    File.write(&SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), File);
 }
 // 符号链接标准写入函数
@@ -132,7 +132,7 @@ void BinaryIO_Writter::writeSymbolLinkStandard(Directory_FileDetails &details, D
 
     tempOffset += SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
 
-    outFile.write(SYMBOL_LINK_FLAG, FLAG_SIZE);
+    outFile.write(&SYMBOL_LINK_FLAG, FLAG_SIZE);
 
     numWriter.writeBinaryNums(sizeOfName, outFile);
     numWriter.writeBinaryNums(sizeOfPath, outFile);
@@ -145,7 +145,7 @@ void BinaryIO_Writter::writeLogicalRoot(const std::string &logicalRoot, const Fi
     FileNameSize_uint sizeOfName = logicalRoot.size();
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(LOGICAL_ROOT_FLAG, FLAG_SIZE);
+    outFile.write(&LOGICAL_ROOT_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(sizeOfName, outFile);
     outFile.write(logicalRoot.c_str(), sizeOfName);
     numWriter.writeBinaryNums(count, outFile); // 写文件数

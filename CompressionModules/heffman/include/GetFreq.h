@@ -7,6 +7,7 @@
 #include <string>
 #include "../include/Heffman.h"
 #include "../../../ThreadPool/ThreadPool.h"
+#include "../../../Schedule/include/Worker.h"
 
 /**
  * 赫夫曼统计字符频率的功能模块

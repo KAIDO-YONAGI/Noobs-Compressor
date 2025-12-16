@@ -13,7 +13,7 @@ Heffman::~Heffman() {
     destroy_tree(treeroot);
 }
 
-void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
+void Heffman::statistic_freq(const int thread_id, const sfc::block_t& in_block)
 {
     // 确保thread_tabs足够大
     if (thread_id >= (int)thread_tabs.size()) {
@@ -28,6 +28,7 @@ void Heffman::statistic_freq(const int& thread_id, sfc::block_t& in_block)
 }
 
 void Heffman::merge_ttabs(){
+    hashtab.clear(); //清空旧的表
     auto iter_ttabs = thread_tabs.cbegin();
     auto ttabsend = thread_tabs.cend();
     while (iter_ttabs != ttabsend)
@@ -41,6 +42,11 @@ void Heffman::merge_ttabs(){
         }
         ++iter_ttabs;  // 递增外层迭代器
     }
+    //清空线程表
+    for(auto& tab : thread_tabs)
+    {
+        tab.clear();
+    }
 }
 
 std::unique_ptr<Minheap> Heffman::gen_minheap(){
@@ -53,6 +59,11 @@ std::unique_ptr<Minheap> Heffman::gen_minheap(){
 } 
 
 void Heffman::gen_hefftree(){
+    //清空旧的树
+    if (treeroot != nullptr) {
+        destroy_tree(treeroot);
+        treeroot = nullptr;
+    }
     auto heap = gen_minheap();
     while (heap->size() != 1)
     {
