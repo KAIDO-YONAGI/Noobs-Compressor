@@ -28,28 +28,28 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
     while (!headerLoaderIterator.fileQueue.empty())
     {
-        // if (!isGenerated)
-        // {
-        //     std::cout << "genTree" << "\n";
-        //     // dataLoader->dataLoader();
+        if (!isGenerated)
+        {
+            std::cout << "genTree" << "\n";
 
-        //     while (!dataLoader->isDone())
-        //     {
-        //         dataLoader->dataLoader();
-        //         huffmanZip.statistic_freq(0, dataLoader->getBlock());
-        //     }
-        //     huffmanZip.merge_ttabs();
-        //     huffmanZip.gen_hefftree();
-        //     huffmanZip.save_code_inTab();
-        //     DataBlock huffTree;
-        //     DataBlock huffTree_outPut;
-        //     huffmanZip.tree_to_plat_uchar(huffTree);
-        //     aes.doAes(1, huffTree, huffTree_outPut);
-        //     dataExporter.exportDataToFile_Compression(huffTree_outPut);
-        //     Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
-        //     dataLoader->reset(loadFile.getFullPath()); // 生成编码表后，调用reset（原目录）复读
-        //     isGenerated = true;
-        // }
+            while (!dataLoader->isDone())
+            {
+                dataLoader->dataLoader();
+                huffmanZip.statistic_freq(0, dataLoader->getBlock());
+            }
+            huffmanZip.merge_ttabs();
+            huffmanZip.gen_hefftree();
+            huffmanZip.save_code_inTab();
+            DataBlock huffTree;
+            huffmanZip.tree_to_plat_uchar(huffTree);
+            DataBlock huffTree_outPut(huffTree.size());
+
+            aes.doAes(1, huffTree, huffTree_outPut);
+            dataExporter.exportDataToFile_Compression(huffTree_outPut);
+            Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
+            dataLoader->reset(loadFile.getFullPath()); // 生成编码表后，调用reset（原目录）复读
+            isGenerated = true;
+        }
 
         dataLoader->dataLoader();
 
@@ -61,15 +61,12 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                       << std::fixed << std::setw(6) << std::setprecision(2)
                       << (100.0 * ++count) / totalBlocks
                       << "% \n";
-            encryptedBlock.resize(BUFFER_SIZE + sizeof(IvSize_uint));
 
-            // DataBlock data_In = dataLoader->getBlock(); // 调用压缩
-            // DataBlock compressedData;
-            // huffmanZip.encode(data_In, compressedData);
+            DataBlock data_In = dataLoader->getBlock(); // 调用压缩
+            DataBlock compressedData;
+            huffmanZip.encode(data_In, compressedData);
 
-            // aes.doAes(1, compressedData, encryptedBlock);
-
-            aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
+            aes.doAes(1, compressedData, encryptedBlock);
 
             dataExporter.exportDataToFile_Compression(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();

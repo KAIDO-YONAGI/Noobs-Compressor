@@ -64,6 +64,10 @@ void PathStack::pop(){
 }
 
 void PathStack::writecode(Chardata& cdata){
+   // 清空之前的编码
+   cdata.code.clear();
+
+   // 写入新的编码
    for(auto stackblock : codeblocks){
       cdata.code.push_back(stackblock);
    }
@@ -74,14 +78,14 @@ void PathStack::writecode(Chardata& cdata){
 
 void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out_block){
    uint8_t remaining_bits = codelen;  // 剩余比特数
-   uint8_t bit_pos = 0;  // 当前处理的比特位置（从codeblock中）
 
    for(size_t i = 0; i < codeblocks.size() && remaining_bits > 0; ++i) {
       uint8_t codeblock = codeblocks[i];
-      uint8_t bits_in_block = (i == codeblocks.size() - 1) ? remaining_bits : 8;
+      // 计算当前字节中有效的位数：取剩余位数和8的较小值
+      uint8_t bits_in_block = (remaining_bits >= 8) ? 8 : remaining_bits;
 
       // 处理当前字节的比特
-      for(uint8_t bit_idx = 0; bit_idx < bits_in_block && remaining_bits > 0; ++bit_idx) {
+      for(uint8_t bit_idx = 0; bit_idx < bits_in_block; ++bit_idx) {
          // 从codeblock中提取比特（从高位到低位）
          uint8_t bit = (codeblock >> (7 - bit_idx)) & 1;
 

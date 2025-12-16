@@ -1,5 +1,6 @@
 #include "../include/Heffman.h"
 #include <stdexcept>
+#include <iostream>
 
 //TODO: 检查方法中in_block使用完是否清空
 
@@ -78,6 +79,10 @@ void Heffman::gen_hefftree(){
 }
 
 void Heffman::save_code_inTab(){
+    // 重置pathStack
+    pathStack.codeblocks.clear();
+    pathStack.codelen = 0;
+
     run_save_code_inTab(treeroot);
 }
 
@@ -86,7 +91,7 @@ void Heffman::run_save_code_inTab(Hefftreenode* root){
 
     if(root->isleaf == true){
         pathStack.writecode(hashtab[root->data]);
-        pathStack.pop();
+        return;  // 直接返回，不需要pop，因为调用者会pop
     }
     pathStack.push(0);
     run_save_code_inTab(root->left);
@@ -246,3 +251,35 @@ bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)
     }
     return false;
 }
+
+// 调试方法：打印编码表统计信息
+void Heffman::debugPrintCodeStats() {
+    std::cout << "=== Huffman Code Table Stats ===\n";
+    std::cout << "Total characters in table: " << hashtab.size() << "\n";
+
+    int total_bits = 0;
+    int max_codelen = 0;
+    int min_codelen = 999;
+
+    for(const auto& pair : hashtab) {
+        const Chardata& cd = pair.second;
+        if(cd.codelen > max_codelen) max_codelen = cd.codelen;
+        if(cd.codelen < min_codelen) min_codelen = cd.codelen;
+        total_bits += cd.codelen;
+
+        // 打印前5个字符的编码详情
+        static int count = 0;
+        if(count < 5) {
+            std::cout << "  Char '" << (char)pair.first << "' (0x" << std::hex << (int)pair.first << std::dec
+                      << "): codelen=" << (int)cd.codelen
+                      << ", code_bytes=" << cd.code.size() << "\n";
+            count++;
+        }
+    }
+
+    std::cout << "Average code length: " << (hashtab.size() > 0 ? (double)total_bits / hashtab.size() : 0) << " bits\n";
+    std::cout << "Min code length: " << min_codelen << " bits\n";
+    std::cout << "Max code length: " << max_codelen << " bits\n";
+    std::cout << "================================\n";
+}
+

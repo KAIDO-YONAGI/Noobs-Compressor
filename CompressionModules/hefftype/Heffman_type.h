@@ -91,7 +91,10 @@ struct Hefftreenode{
 struct CompareHeap
 {
     bool operator()(const Hefftreenode* n1, const Hefftreenode* n2){
-        return n1->freq < n2->freq;
+        // priority_queue是最大堆，要实现最小堆需要反转比较
+        // 返回true表示n1优先级低于n2，会被排在后面
+        // 我们希望频率小的在堆顶，所以频率大的应该优先级低
+        return n1->freq > n2->freq;
     }
 };
 
@@ -106,6 +109,8 @@ struct PathStack
 {
     code_t codeblocks;
     codelen_t codelen;
+
+    PathStack() : codelen(0) { }
 
     void push(int bit);
     void pop();

@@ -53,9 +53,12 @@ public:
     void tree_to_plat_uchar(sfc::block_t& out_block);
     //解析编码表并加载树
     void spawn_tree(sfc::block_t& in_block);
-    
+
     Hefftreenode* getTreeRoot();
     void receiveTreRroot(Hefftreenode*);
+
+    // 调试方法：打印编码表统计信息
+    void debugPrintCodeStats();
 
 private:
     using Datablk_ptr = sfc::block_t*;
