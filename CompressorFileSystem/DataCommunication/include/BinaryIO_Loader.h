@@ -18,7 +18,7 @@ private:
     DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
 
     fs::path loadPath;
-    fs::path rootPath;
+    fs::path parentPath;
     std::ifstream inFile;
     std::fstream fstreamForRefill;
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
@@ -47,7 +47,7 @@ public:
     std::queue<fs::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
 
     BinaryIO_Loader() {};
-    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, fs::path rootPath)
+    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, fs::path parentPath)
     {
         this->loadPath = transfer.transPath(inPath);
         std::ifstream inFile(loadPath, std::ios::binary);
@@ -62,12 +62,12 @@ public:
         this->filePathToScan = filePathToScan;
         this->parserForLoader =
             new Directory_FileParser(buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
-        this->rootPath = rootPath;
+        this->parentPath = parentPath;
     }
 
     ~BinaryIO_Loader() { allLoopDone(); }
     
-    HeaderOffsetSize_uint getHeaderSize() { return header.headerOffset; }
+    DirectoryOffsetSize_uint getDirectoryOffset() { return header.directoryOffset; }
 
     bool allLoopIsDone() { return allDone; }
     bool loaderRequestIsDone() { return blockIsDone; }

@@ -1,4 +1,4 @@
-// ÍêÕûLoop
+// å®Œæ•´Loop
 #include "../EncryptionModules/Aes/include/Aes.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
 #include "MainLoop.h"
@@ -9,17 +9,17 @@
 //     std::string logicalRoot, compressionFilePath;
 //     const char *key;
 //     // filePathToScan.push_back("D:\\1gal\\TEST");
-//     // filePathToScan.push_back("D:\\1gal\\TEST\\123Òâ514.txt");
-//     // filePathToScan.push_back("D:\\1gal\\TEST\\ÎÒ");
-//     // filePathToScan.push_back("D:\\1gal\\Goods\\°Î×÷µº\\2\\root.pfs.020");
+//     // filePathToScan.push_back("D:\\1gal\\TEST\\123æ„514.txt");
+//     // filePathToScan.push_back("D:\\1gal\\TEST\\æˆ‘");
+//     // filePathToScan.push_back("D:\\1gal\\Goods\\æ‹”ä½œå²›\\2\\root.pfs.020");
 //     filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
 //     // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\credits.html");
 
 //     logicalRoot = "YONAGI";
-//     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\Ö¿°®µÄÊ±¹â.bin";
+//     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\æŒšçˆ±çš„æ—¶å…‰.bin";
 //     key = "LOVEYONAGI";
 
-//     // Ä¬ÈÏv0,Èç¹û¸üĞÂ°æ±¾£¬¿ÉÒÔ°´ÕÕÒÔÏÂ´úÂëÖ¸¶¨ĞÂ°æº¯Êı»ò½Ó¿Ú
+//     // é»˜è®¤v0,å¦‚æœæ›´æ–°ç‰ˆæœ¬ï¼Œå¯ä»¥æŒ‰ç…§ä»¥ä¸‹ä»£ç æŒ‡å®šæ–°ç‰ˆå‡½æ•°æˆ–æ¥å£
 //     //  auto customWriter = std::make_unique<HeaderWriter_v0>();
 //     //  HeaderWriter writer2(std::move(customWriter));
 //     //  writer2.write(files, "output_v2.bin", "/custom_root");
@@ -38,7 +38,7 @@
 
 int main()
 {
-    std::string deCompressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\Ö¿°®µÄÊ±¹â.bin";
+    std::string deCompressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\æŒšçˆ±çš„æ—¶å…‰.bin";
     const char *key = "LOVEYONAGI";
 
     Aes aes(key);

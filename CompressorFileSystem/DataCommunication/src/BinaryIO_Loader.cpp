@@ -3,6 +3,9 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
 {
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
+
+    inFile.seekg(header.directoryOffset-offset,std::ios::beg);//重定位
+
     try
     {
         // 读取Header
@@ -25,6 +28,8 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             offset = header.directoryOffset - HEADER_SIZE;
         }
 
+
+
         NumsReader numsReader(inFile);
         // if (offset < 100)
         //     int a = 1;
@@ -33,17 +38,18 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
-            
+
             allLoopDone(); // 所有循环结束，紧接着return退出
             return;
         }
         while (offset > 0)
         {
-            buffer.clear();
             if (offset == 0)
                 break;
             if (loaderRequestIsDone() || allLoopIsDone())
                 return;
+    
+            buffer.clear();
             loadBySepratedFlag(numsReader, countOfKidDirectory, aes);
         }
     }
@@ -90,15 +96,15 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
         if (ivNum != 0) // 仅在解压时会触发，将buffer解密后解析
         {
             DataBlock blockWithIv;
-            DataBlock dencryptedBlock;
+            DataBlock decryptedBlock;
             blockWithIv.resize(sizeof(IvSize_uint));
             std::memcpy(blockWithIv.data(), &ivNum, sizeof(IvSize_uint));
             blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
 
-            aes.doAes(2, blockWithIv, dencryptedBlock);
+            aes.doAes(2, blockWithIv, decryptedBlock);
             buffer.clear();
-            buffer.resize(dencryptedBlock.size());
-            buffer = dencryptedBlock;
+            buffer.resize(decryptedBlock.size());
+            buffer = decryptedBlock;
         }
         DirectoryOffsetSize_uint bufferPtr = 0;
 
@@ -118,12 +124,12 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 {
                     if (directoryQueue_ready.back() != directoryPath)
                     {
-                        directoryQueue_ready.push(rootPath / directoryPath);
+                        directoryQueue_ready.push(parentPath / directoryPath);
                     }
                 }
                 else if (FirstReady)
                 {
-                    directoryQueue_ready.push(rootPath / directoryPath);
+                    directoryQueue_ready.push(parentPath / directoryPath);
                     FirstReady = false;
                 }
 

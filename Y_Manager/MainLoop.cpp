@@ -1,7 +1,9 @@
 #include "MainLoop.h"
+#pragma pack(1) // ç¦ç”¨å¡«å……ï¼Œç´§å¯†è¯»å–
+
 void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
-    // ³õÊ¼»¯µü´úÆ÷
+    // åˆå§‹åŒ–è¿­ä»£å™¨
     fs::path blank;
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
     Heffman huffmanZip(1);
@@ -10,8 +12,8 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     fs::path loadPath;
     DataLoader *dataLoader;
 
-    headerLoaderIterator.headerLoaderIterator(aes); // Ö´ĞĞµÚÒ»´Î²Ù×÷£¬°Ñ¸ùÄ¿Â¼ÔØÈë
-    if (!headerLoaderIterator.fileQueue.empty())    // µ¥¸öÎÄ¼şÌØÊâ´¦Àí
+    headerLoaderIterator.headerLoaderIterator(aes); // æ‰§è¡Œç¬¬ä¸€æ¬¡æ“ä½œï¼ŒæŠŠæ ¹ç›®å½•è½½å…¥
+    if (!headerLoaderIterator.fileQueue.empty())    // å•ä¸ªæ–‡ä»¶ç‰¹æ®Šå¤„ç†
     {
         Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
@@ -46,13 +48,13 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
         //     aes.doAes(1, huffTree, huffTree_outPut);
         //     dataExporter.exportDataToFile_Compression(huffTree_outPut);
         //     Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
-        //     dataLoader->reset(loadFile.getFullPath()); // Éú³É±àÂë±íºó£¬µ÷ÓÃreset£¨Ô­Ä¿Â¼£©¸´¶Á
+        //     dataLoader->reset(loadFile.getFullPath()); // ç”Ÿæˆç¼–ç è¡¨åï¼Œè°ƒç”¨resetï¼ˆåŸç›®å½•ï¼‰å¤è¯»
         //     isGenerated = true;
         // }
 
         dataLoader->dataLoader();
 
-        if (!dataLoader->isDone()) // ±ÜÃâ¶Áµ½¿ÕÊı¾İ¿é
+        if (!dataLoader->isDone()) // é¿å…è¯»åˆ°ç©ºæ•°æ®å—
         {
 
             system("cls");
@@ -62,7 +64,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                       << "% \n";
             encryptedBlock.resize(BUFFER_SIZE + sizeof(IvSize_uint));
 
-            // DataBlock data_In = dataLoader->getBlock(); // µ÷ÓÃÑ¹Ëõ
+            // DataBlock data_In = dataLoader->getBlock(); // è°ƒç”¨å‹ç¼©
             // DataBlock compressedData;
             // huffmanZip.encode(data_In, compressedData);
 
@@ -70,18 +72,18 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             aes.doAes(1, dataLoader->getBlock(), encryptedBlock);
 
-            dataExporter.exportDataToFile_Compression(encryptedBlock); // ¶ÁÈ¡µÄÊı¾İ´«Êä¸øexporter
+            dataExporter.exportDataToFile_Compression(encryptedBlock); // è¯»å–çš„æ•°æ®ä¼ è¾“ç»™exporter
             encryptedBlock.clear();
         }
         else if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty())
         {
             FileNameSize_uint offsetToFill = headerLoaderIterator.fileQueue.front().second;
-            dataExporter.thisFileIsDone(offsetToFill); // ¿ÉÔÚ´ËÇ°²åÈëÒ»¸ö±àÂë±íĞ´ÈëÔÙµ÷ÓÃdone
+            dataExporter.thisFileIsDone(offsetToFill); // å¯åœ¨æ­¤å‰æ’å…¥ä¸€ä¸ªç¼–ç è¡¨å†™å…¥å†è°ƒç”¨done
             std::cout << "--------Done!--------" << "\n";
 
             headerLoaderIterator.fileQueue.pop();
             if (!headerLoaderIterator.fileQueue.empty())
-            { // ¸üĞÂÏÂÒ»¸öÎÄ¼şÂ·¾¶
+            { // æ›´æ–°ä¸‹ä¸€ä¸ªæ–‡ä»¶è·¯å¾„
                 Directory_FileDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
                 dataLoader->reset(newLoadFile.getFullPath());
                 filename = newLoadFile.getFullPath().filename();
@@ -91,43 +93,51 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             }
         }
 
-        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // ¶ÓÁĞ¿Õµ«ÕûÌåÎ´Íê³É£¬ÇëÇóÏÂÒ»ÂÖ¶ÁÈ¡¶Ô¶ÓÁĞ½øĞĞÌî³ä
+        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // é˜Ÿåˆ—ç©ºä½†æ•´ä½“æœªå®Œæˆï¼Œè¯·æ±‚ä¸‹ä¸€è½®è¯»å–å¯¹é˜Ÿåˆ—è¿›è¡Œå¡«å……
         {
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
         }
     }
-    headerLoaderIterator.encryptHeaderBlock(aes); // ¼ÓÃÜÄ¿Â¼¿é²¢ÇÒ»ØÌî
+    headerLoaderIterator.encryptHeaderBlock(aes); // åŠ å¯†ç›®å½•å—å¹¶ä¸”å›å¡«
 
     delete dataLoader;
 }
 
 void DecompressionLoop::decompressionLoop(Aes &aes)
 {
-    NumsReader numReader(deCompressionFile);
-    DataLoader dataLoader;
+
     std::vector<std::string> blank;
-    BinaryIO_Loader headerLoaderIterator(deCompressionFilePath, blank, rootPath);
-    headerLoaderIterator.headerLoaderIterator(aes); // Ö´ĞĞµÚÒ»´Î²Ù×÷£¬°Ñ¸ùÄ¿Â¼ÔØÈë
-    HeaderOffsetSize_uint dataOffset = headerLoaderIterator.getHeaderSize();
+    BinaryIO_Loader headerLoaderIterator(fullPath.string(), blank, parentPath);
+
+    std::ifstream &inFile = headerLoaderIterator.getInFile();//å…±äº«å¥æŸ„ï¼Œä½¿ç”¨seekä¿è¯æ­£ç¡®è¯»å–ï¼Œä¸å†™å…¥ï¼Œé¿å…æ•°æ®ç¼“å†²åŒºé—®é¢˜
+    DataLoader dataLoader;
+    NumsReader numReader(inFile);
+
+    headerLoaderIterator.headerLoaderIterator(aes); // æ‰§è¡Œç¬¬ä¸€æ¬¡æ“ä½œï¼ŒæŠŠæ ¹ç›®å½•è½½å…¥
+    DirectoryOffsetSize_uint dataOffset = headerLoaderIterator.getDirectoryOffset();
 
     while (!headerLoaderIterator.allLoopIsDone())
     {
-        while (!headerLoaderIterator.directoryQueue_ready.empty()) // ÖØ½¨Ä¿Â¼
+        while (!headerLoaderIterator.directoryQueue_ready.empty()) // é‡å»ºç›®å½•
         {
             createDirectory(headerLoaderIterator.directoryQueue_ready.front());
             headerLoaderIterator.directoryQueue_ready.pop();
         }
         while (!headerLoaderIterator.fileQueue.empty())
         {
-            createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // ÖØ½¨ÎÄ¼ş
-            // °ÑÒÑÑ¹Ëõ¿é¶Á½øÄÚ´æ£¬´¦Àí£¬Ğ´Èë¶ÔÓ¦Î»ÖÃ
-            deCompressionFile.seekg(dataOffset, std::ios::beg);        // ¶¨Î»µ½Êı¾İÇø£¨»òÒÑ´¦Àí¿éºó£©
-            if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG)) // ¼ì²â·Ö¸î±êÖ¾
+            createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // é‡å»ºæ–‡ä»¶
+            
+            // headerLoaderIterator.fileQueue.pop();
+            // continue;
+            
+            // æŠŠå·²å‹ç¼©å—è¯»è¿›å†…å­˜ï¼Œå¤„ç†ï¼Œå†™å…¥å¯¹åº”ä½ç½®
+            inFile.seekg(dataOffset, std::ios::beg);                   // å®šä½åˆ°æ•°æ®åŒºï¼ˆæˆ–å·²å¤„ç†å—åï¼‰
+            if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG)) // æ£€æµ‹åˆ†å‰²æ ‡å¿—
                 throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG");
             fs::path filePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
-            fs:: path filename=filePath.filename();
-            
+            fs::path filename = filePath.filename();
+
             system("cls");
             std::cout << "Processing file: " << filename << "\n";
 
@@ -137,23 +147,25 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             {
                 DirectoryOffsetSize_uint blockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
 
-                dataLoader.dataLoader(blockSize, deCompressionFile);
+                DirectoryOffsetSize_uint readSize = (blockSize != 0 ? blockSize : fileCompressedSize);
+
+                dataLoader.dataLoader(readSize, inFile);
 
                 DataBlock rawData = dataLoader.getBlock(); // deAes
-                DataBlock dencryptedData(rawData.size());
-                aes.doAes(2, rawData, dencryptedData);
+                DataBlock decryptedData(rawData.size() + sizeof(IvSize_uint));
+                aes.doAes(2, rawData, decryptedData);
 
-                dataExporter.exportDataToFile_Decompression(dencryptedData);
+                dataExporter.exportDataToFile_Decompression(decryptedData);
 
-                fileCompressedSize -= blockSize;
-                dataOffset += blockSize; // ¸üĞÂÊı¾İÇøÎ»ÖÃ
+                fileCompressedSize -= readSize;
+                dataOffset += readSize; // æ›´æ–°æ•°æ®åŒºä½ç½®
             }
             std::cout << "--------Done!--------" << "\n";
 
             headerLoaderIterator.fileQueue.pop();
         }
 
-        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // ¶ÓÁĞ¿Õµ«ÕûÌåÎ´Íê³É£¬ÇëÇóÏÂÒ»ÂÖ¶ÁÈ¡¶Ô¶ÓÁĞ½øĞĞÌî³ä
+        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // é˜Ÿåˆ—ç©ºä½†æ•´ä½“æœªå®Œæˆï¼Œè¯·æ±‚ä¸‹ä¸€è½®è¯»å–å¯¹é˜Ÿåˆ—è¿›è¡Œå¡«å……
         {
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
@@ -166,7 +178,7 @@ void DecompressionLoop::createDirectory(const fs::path &directoryPath)
     {
         if (fs::exists(directoryPath))
         {
-            std::cout << "directoryIsExist: " << directoryPath << " ,skipped to next \n"; // ¿ÉÒÔÓÅ»¯ÓÃ»§Ñ¡Ôñ¸²¸Ç»úÖÆ
+            std::cout << "directoryIsExist: " << directoryPath << " ,skipped to next \n"; // å¯ä»¥ä¼˜åŒ–ç”¨æˆ·é€‰æ‹©è¦†ç›–æœºåˆ¶
         }
         bool created = fs::create_directory(directoryPath);
     }
@@ -176,7 +188,7 @@ void DecompressionLoop::createDirectory(const fs::path &directoryPath)
     }
 }
 
-// ´´½¨ÎÄ¼ş (´´½¨¿ÕÎÄ¼ş)
+// åˆ›å»ºæ–‡ä»¶ (åˆ›å»ºç©ºæ–‡ä»¶)
 void DecompressionLoop::createFile(const fs::path &filePath)
 {
     try
@@ -186,7 +198,7 @@ void DecompressionLoop::createFile(const fs::path &filePath)
             std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
         }
 
-        // È·±£¸¸Ä¿Â¼´æÔÚ
+        // ç¡®ä¿çˆ¶ç›®å½•å­˜åœ¨
         if (!filePath.parent_path().empty() && !fs::exists(filePath.parent_path()))
         {
             createDirectory(filePath.parent_path());

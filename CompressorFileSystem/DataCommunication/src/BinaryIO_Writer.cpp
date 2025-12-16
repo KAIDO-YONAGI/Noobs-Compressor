@@ -167,30 +167,30 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
             throw("directory_fileProcessor()-Error:file Not Exist: " + sPath.string() + "\n");
         }
 
-        fs::path rootPath = file.getFilePathToScan(); // 获取根目录
+        fs::path parentPath = file.getFilePathToScan(); // 获取根目录
 
         // 先写入根目录(或文件)自身（手动构造）
 
-        std::string rootName = rootPath.filename().string();
+        std::string rootName = parentPath.filename().string();
         FileNameSize_uint rootNameSize = rootName.size();
-        bool File_Direc = fs::is_regular_file(rootPath);
-        FileSize_uint fileSize = File_Direc ? fs::file_size(rootPath) : 0;
+        bool File_Direc = fs::is_regular_file(parentPath);
+        FileSize_uint fileSize = File_Direc ? fs::file_size(parentPath) : 0;
 
         Directory_FileDetails rootDetails(
             rootName,     // 目录名 (如 "Folder")
             rootNameSize, // 名称长度
             fileSize,     // 文件大小(如果是文件)
             File_Direc,   // 是否为常规文件
-            rootPath      // 完整路径
+            parentPath      // 完整路径
         );
-        const fs::directory_entry entry(rootPath);
+        const fs::directory_entry entry(parentPath);
         if (entry.is_regular_file())
         {
             writeFileStandard(rootDetails, tempOffset);
         }
         else if (entry.is_directory())
         {
-            FileCount_uint count = countFilesInDirectory(rootPath);
+            FileCount_uint count = countFilesInDirectory(parentPath);
             writeDirectoryStandard(rootDetails, count, tempOffset);
         }
         else if (entry.is_symlink())

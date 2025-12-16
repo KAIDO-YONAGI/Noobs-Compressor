@@ -24,22 +24,20 @@ public:
 class DecompressionLoop
 {
 private:
-    std::string deCompressionFilePath;
-    fs::path rootPath;
-    fs::path deCompressionFullPath;
-    std::ifstream deCompressionFile;
+    
+    fs::path parentPath;
+    fs::path fullPath;
     void createDirectory(const fs::path &path);
-    // ´´½¨ÎÄ¼þ (´´½¨¿ÕÎÄ¼þ)
+    // åˆ›å»ºæ–‡ä»¶ (åˆ›å»ºç©ºæ–‡ä»¶)
     void createFile(const fs::path &filePath);
 
 public:
-    DecompressionLoop(const std::string deCompressionFilePath)
+    DecompressionLoop(std::string deCompressionFilePath)
     {
         Transfer transfer;
-        rootPath = transfer.transPath(deCompressionFilePath).parent_path();
-        this->deCompressionFilePath = deCompressionFilePath;
-        this->deCompressionFullPath = transfer.transPath(deCompressionFilePath);
-        this->deCompressionFile = std::move(std::ifstream(deCompressionFullPath,std::ios::binary));
+        fullPath=transfer.transPath(deCompressionFilePath);
+        parentPath = fullPath.parent_path();
+
     }
     void decompressionLoop(Aes &aes);
 };
