@@ -257,7 +257,7 @@ void runCompressionMode(const std::string &basePath)
     }
 
     std::string compressionFilePath = getNonEmptyInput(
-        "Enter compressed file output path (default: " + basePath + "SHINKU_YONAGI.sy): ",
+        "Enter compressed file output path\n(default: " + basePath + "SHINKU_YONAGI.sy): ",
         basePath + "SHINKU_YONAGI.sy");
 
     if (!hasSyExtension(compressionFilePath))
