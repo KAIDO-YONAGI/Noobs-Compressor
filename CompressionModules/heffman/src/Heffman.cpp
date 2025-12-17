@@ -126,20 +126,33 @@ void Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward
     }
 }
 
-void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput){
+void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput, size_t maxOutputSize){
     Hefftreenode *now = treeroot;
-    std::vector<uint8_t> treepath(8);
+    std::vector<uint8_t> treepath;  // 不预分配元素,只在需要时push_back
+    treepath.reserve(8);  // 预留容量避免重新分配
     unsigned char result = 0;
+
+    // 预留足够空间避免频繁重新分配
+    out_block.reserve(in_block.size() * 2);
+
     for(auto& c: in_block)
     {
         bitinput.handle(c, treepath);
         for(auto toward: treepath)
         {
             if(now == NULL) break;
+
+            // 先保存当前节点,因为findchar会修改now
+            Hefftreenode* beforeMove = now;
             findchar(now, result, toward);
-            if(now->isleaf == true){
+
+            // 如果移动前的节点在移动到叶子后now被重置了,说明找到了字符
+            if(beforeMove != treeroot && now == treeroot){
+                // 在push之前检查是否已达到maxOutputSize
+                if(out_block.size() >= maxOutputSize) {
+                    return;
+                }
                 out_block.push_back(result);
-                now = treeroot;
             }
         }
         treepath.clear();
@@ -193,20 +206,32 @@ void Heffman::tree_to_plat_uchar(sfc::block_t& out_block)
 //解析编码表并加载树
 void Heffman::spawn_tree(sfc::block_t& in_block)
 {
+    // 清空旧的树,避免内存泄漏和状态污染
+    if (treeroot != nullptr) {
+        std::cout << "[spawn_tree] Destroying old tree before spawning new one\n";
+        destroy_tree(treeroot);
+        treeroot = nullptr;
+    } else {
+        std::cout << "[spawn_tree] No old tree to destroy\n";
+    }
+
     std::stack<Hefftreenode*> stack;
 
     auto iter_ib = in_block.cbegin();
     if(*iter_ib != 'F')
     {
-        //TODO: 解析编码表异常，验证错误
+        throw std::runtime_error("spawn_tree: Invalid tree format - missing 'F' header");
     }
     ++iter_ib;
+
+    Hefftreenode* lastNode = nullptr;  // 记录最后处理的节点
+
     while(iter_ib != in_block.cend())
     {
         Hefftreenode *node = NULL;
         if(iter_ib + 1 == in_block.cend())
         {
-            //TODO: 解析编码表异常，数据缺失
+            throw std::runtime_error("spawn_tree: Incomplete data - missing node data");
         }
         if(*iter_ib == 'r')
         {
@@ -216,21 +241,47 @@ void Heffman::spawn_tree(sfc::block_t& in_block)
         else if(*iter_ib == 'l')
         {
             node = new Hefftreenode(*++iter_ib, 0, true);
-            while(!stack.empty() && connectNode(stack.top(), node))
+            // 叶子节点需要连接到栈顶的父节点
+            while(!stack.empty())
             {
-                stack.pop();
+                Hefftreenode* parent = stack.top();
+                bool parentComplete = connectNode(parent, node);
+
+                if(parentComplete)
+                {
+                    // 父节点完成,弹出并作为新的子节点继续向上连接
+                    stack.pop();
+                    node = parent;
+                }
+                else
+                {
+                    // 父节点还没完成(只连接了左子节点),停止
+                    break;
+                }
             }
         }
         if(node == NULL)
         {
-            //TODO: 解析编码表异常，创建节点失败
+            throw std::runtime_error("spawn_tree: Failed to create node");
         }
+        lastNode = node;  // 记录最后的节点
         ++iter_ib;
     }
 
-    while(stack.size() != 1)
-        stack.pop();
-    treeroot = stack.top();
+    // 如果栈空了,说明整棵树已经构建完成,根节点在lastNode中
+    if(stack.empty())
+    {
+        treeroot = lastNode;
+    }
+    else if(stack.size() == 1)
+    {
+        treeroot = stack.top();
+    }
+    else
+    {
+        throw std::runtime_error("spawn_tree: Invalid tree structure - stack size is " +
+                                std::to_string(stack.size()) + ", expected 0 or 1");
+    }
 }
 
 bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)
@@ -242,14 +293,14 @@ bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)
     if(p->left == NULL)
     {
         p->left = c;
-        return true;
+        return false;  // 左子节点连接,但父节点还没完成,不应该弹出
     }
     if(p->right == NULL)
     {
         p->right = c;
-        return true;
+        return true;  // 右子节点也连接了,父节点完成,应该弹出
     }
-    return false;
+    return false;  // 父节点已经有两个子节点,不能连接
 }
 
 // 调试方法：打印编码表统计信息

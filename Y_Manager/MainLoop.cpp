@@ -94,14 +94,11 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     std::vector<std::string> blank;
     BinaryIO_Loader headerLoaderIterator(fullPath.string(), blank, parentPath);
 
-    std::unique_ptr<DataLoader> dataLoader = std::make_unique<DataLoader>();
-
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     DirectoryOffsetSize_uint dataOffset = headerLoaderIterator.getDirectoryOffset();
 
     // 创建 Huffman 对象用于解压
     Heffman huffmanUnzip(1);
-    bool treeLoaded = false;
 
     while (!headerLoaderIterator.allLoopIsDone())
     {
@@ -114,12 +111,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         {
             createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // 重建文件
 
-            // headerLoaderIterator.fileQueue.pop();
-            // continue;
-
             // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
             std::ifstream &inFile = headerLoaderIterator.getInFile();
-            NumsReader numReader(inFile); // 在此处创建 NumsReader，确保引用有效
 
             // 把已压缩块读进内存，处理，写入对应位置
             inFile.clear();                          // 清除可能的错误标志(如eof)，确保seek可以正常工作
@@ -128,74 +121,190 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             {
                 throw std::runtime_error("decompressionLoop()-Error:Failed to seek to dataOffset " + std::to_string(dataOffset));
             }
-            if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG)) // 检测分割标志
-                throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG");
+
             fs::path filePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
             fs::path filename = filePath.filename();
 
-            system("cls");
+            // system("cls");
             std::cout << "Processing file: " << filename << "\n";
 
             DataExporter dataExporter(filePath);
             FileSize_uint fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
-            bool isFirstBlock = true;
 
-            // 读取并恢复 Huffman 树（每个文件第一个块是树数据）
-            if (!treeLoaded)
+            // 获取原始文件大小（未压缩的大小）用于控制解压输出
+            FileSize_uint originalFileSize = headerLoaderIterator.fileQueue.front().first.getFileSize();
+            FileSize_uint totalDecompressedBytes = 0;  // 跟踪已经解压的总字节数
+
+            std::cout << "[DEBUG] Original file size: " << originalFileSize << " bytes\n";
+            std::cout << "[DEBUG] Compressed file size: " << fileCompressedSize << " bytes\n";
+
+            // 处理文件的每个块：每个块都有独立的 Huffman 树
+            while (totalDecompressedBytes < originalFileSize && fileCompressedSize > 0)
             {
+                std::cout << "[DEBUG] Block start, decompressed: " << totalDecompressedBytes << " / " << originalFileSize;
+                std::cout << ", compressed remaining: " << fileCompressedSize << "\n";
+
+                // 在每次循环中重新创建 NumsReader 以确保正确读取
+                NumsReader numReader(inFile);
+
+                // 1. 读取分隔标志
+                std::cout << "[DEBUG] Reading tree SEPARATED_FLAG...\n";
+                if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
+                    throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before tree block");
+
+                // 2. 读取 Huffman 树块大小
+                std::cout << "[DEBUG] Reading tree block size...\n";
                 DirectoryOffsetSize_uint treeBlockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
-                dataLoader->dataLoader(treeBlockSize, inFile);
-                DataBlock rawTreeData = dataLoader->getBlock();
+                std::cout << "[DEBUG] Tree block size: " << treeBlockSize << "\n";
 
-                // 解密树数据
-                DataBlock decryptedTreeData(rawTreeData.size() + sizeof(IvSize_uint));
-                aes.doAes(2, rawTreeData, decryptedTreeData);
-
-                // 恢复 Huffman 树（树数据是序列化的文本格式，不需要解压）
-                huffmanUnzip.spawn_tree(decryptedTreeData);
-                treeLoaded = true;
-
-                fileCompressedSize -= treeBlockSize;
-                dataOffset += treeBlockSize + SEPARATED_STANDARD_SIZE - sizeof(IvSize_uint);
-                isFirstBlock = true;
-            }
-
-            while (fileCompressedSize > 0)
-            {
-                // 每个块前面都有 SEPARATED_FLAG，第一个块已经在循环外读过了
-                if (!isFirstBlock)
+                // 检查是否还有足够的数据
+                if (treeBlockSize > fileCompressedSize)
                 {
-                    if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
-                        throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG in loop");
+                    throw std::runtime_error("decompressionLoop()-Error: treeBlockSize (" +
+                                           std::to_string(treeBlockSize) + ") exceeds remaining fileCompressedSize (" +
+                                           std::to_string(fileCompressedSize) + ")");
                 }
-                isFirstBlock = false;
 
+                // 3. 读取并解密树数据
+                std::cout << "[DEBUG] Loading tree data...\n";
+                std::cout << "[DEBUG] About to read " << treeBlockSize << " bytes for tree\n";
+
+                DataBlock rawTreeData(treeBlockSize);
+                inFile.read(reinterpret_cast<char*>(rawTreeData.data()), treeBlockSize);
+                std::streamsize bytesRead = inFile.gcount();
+
+                std::cout << "[DEBUG] Read " << bytesRead << " bytes\n";
+
+                if (bytesRead != static_cast<std::streamsize>(treeBlockSize))
+                {
+                    throw std::runtime_error("decompressionLoop()-Error: Failed to read complete tree block. Expected " +
+                                           std::to_string(treeBlockSize) + " bytes, got " + std::to_string(bytesRead));
+                }
+
+                std::cout << "[DEBUG] Raw tree data size: " << rawTreeData.size() << "\n";
+
+                // 解密树数据(doAes会重新分配outputBuffer,不需要预先指定大小)
+                std::cout << "[DEBUG] Decrypting tree data...\n";
+                DataBlock decryptedTreeData;
+                aes.doAes(2, rawTreeData, decryptedTreeData);
+                std::cout << "[DEBUG] Decrypted tree data size: " << decryptedTreeData.size() << "\n";
+
+                // 打印解密后的数据前几个字节
+                std::cout << "[DEBUG] First bytes of decrypted tree: ";
+                for (size_t i = 0; i < std::min(size_t(30), decryptedTreeData.size()); ++i) {
+                    if (decryptedTreeData[i] >= 32 && decryptedTreeData[i] <= 126) {
+                        std::cout << (char)decryptedTreeData[i];
+                    } else {
+                        std::cout << "[0x" << std::hex << (int)(unsigned char)decryptedTreeData[i] << std::dec << "]";
+                    }
+                }
+                std::cout << "\n";
+
+                // 恢复 Huffman 树（为这个块创建新树）
+                std::cout << "[DEBUG] Spawning Huffman tree...\n";
+                huffmanUnzip.spawn_tree(decryptedTreeData);
+
+                // 检查树是否正确构建
+                if (huffmanUnzip.getTreeRoot() == nullptr)
+                {
+                    throw std::runtime_error("decompressionLoop()-Error: Failed to spawn Huffman tree - tree root is NULL");
+                }
+                std::cout << "[DEBUG] Huffman tree spawned successfully\n";
+
+                // 更新剩余大小: 减去树数据块本身的大小
+                // 注意: FLAG 和 size 字段不计入 fileCompressedSize
+                fileCompressedSize -= treeBlockSize;
+
+                // 4. 读取分割标志(数据块前的标志)
+                std::cout << "[DEBUG] Reading data SEPARATED_FLAG...\n";
+                if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
+                    throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before data block");
+
+                // 5. 读取数据块大小
+                std::cout << "[DEBUG] Reading data block size...\n";
                 DirectoryOffsetSize_uint blockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
+                std::cout << "[DEBUG] Data block size: " << blockSize << "\n";
 
-                DirectoryOffsetSize_uint readSize = (blockSize != 0 ? blockSize : fileCompressedSize);
+                // 安全检查
+                DirectoryOffsetSize_uint readSize = blockSize;
+                if (readSize > fileCompressedSize)
+                {
+                    throw std::runtime_error("decompressionLoop()-Error: blockSize (" +
+                                           std::to_string(readSize) + ") exceeds remaining fileCompressedSize (" +
+                                           std::to_string(fileCompressedSize) + ")");
+                }
 
-                dataLoader->dataLoader(readSize, inFile);
+                // 6. 读取加密的压缩数据
+                std::cout << "[DEBUG] Loading compressed data...\n";
+                std::cout << "[DEBUG] About to read " << readSize << " bytes for data\n";
 
-                DataBlock rawData = dataLoader->getBlock(); // deAes
-                DataBlock decryptedData(rawData.size() + sizeof(IvSize_uint));
+                DataBlock rawData(readSize);
+                inFile.read(reinterpret_cast<char*>(rawData.data()), readSize);
+                std::streamsize bytesRead2 = inFile.gcount();
+
+                std::cout << "[DEBUG] Read " << bytesRead2 << " bytes\n";
+
+                if (bytesRead2 != static_cast<std::streamsize>(readSize))
+                {
+                    throw std::runtime_error("decompressionLoop()-Error: Failed to read complete data block. Expected " +
+                                           std::to_string(readSize) + " bytes, got " + std::to_string(bytesRead2));
+                }
+
+                std::cout << "[DEBUG] Raw data size: " << rawData.size() << "\n";
+
+                // 解密数据(doAes会重新分配outputBuffer,不需要预先指定大小)
+                std::cout << "[DEBUG] Decrypting compressed data...\n";
+                DataBlock decryptedData;
                 aes.doAes(2, rawData, decryptedData);
+                std::cout << "[DEBUG] Decrypted data size: " << decryptedData.size() << "\n";
 
-                // 进行 Huffman 解压
+                // 7. 使用该块对应的 Huffman 树进行解压
+                std::cout << "[DEBUG] Decoding with Huffman...\n";
+
+                // 计算这个块最多应该解压多少字节
+                // 每个块最多8192字节，但最后一个块可能更少
+                size_t remainingBytes = originalFileSize - totalDecompressedBytes;
+                size_t maxBytesThisBlock = std::min(remainingBytes, static_cast<size_t>(8192));
+                std::cout << "[DEBUG] Remaining bytes to decompress: " << remainingBytes;
+                std::cout << ", max this block: " << maxBytesThisBlock << "\n";
+
                 DataBlock decompressedData;
-                BitHandler bitHandler;
-                bitHandler.bytecount = decryptedData.size(); // 设置总字节数
-                huffmanUnzip.decode(decryptedData, decompressedData, bitHandler);
+                huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), maxBytesThisBlock);
+                std::cout << "[DEBUG] Decompressed data size: " << decompressedData.size() << "\n";
 
-                // 写入解压后的数据
+                // 调试: 打印解压数据的前几个字节
+                std::cout << "[DEBUG] First bytes of decompressed data: ";
+                for (size_t i = 0; i < std::min(size_t(30), decompressedData.size()); ++i) {
+                    if (decompressedData[i] >= 32 && decompressedData[i] <= 126) {
+                        std::cout << (char)decompressedData[i];
+                    } else {
+                        std::cout << "[0x" << std::hex << (int)(unsigned char)decompressedData[i] << std::dec << "]";
+                    }
+                }
+                std::cout << "\n";
+
+                // 更新已解压的总字节数
+                totalDecompressedBytes += decompressedData.size();
+                std::cout << "[DEBUG] Total decompressed bytes: " << totalDecompressedBytes << " / " << originalFileSize << "\n";
+
+                // 8. 写入解压后的数据
+                std::cout << "[DEBUG] Exporting decompressed data...\n";
                 dataExporter.exportDataToFile_Decompression(decompressedData);
 
+                // 更新剩余大小: 减去压缩数据块本身的大小
+                // 注意: FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= readSize;
-                dataOffset += readSize + SEPARATED_STANDARD_SIZE - sizeof(IvSize_uint); // 更新数据区位置
+                std::cout << "[DEBUG] Block done, remaining size: " << fileCompressedSize << "\n\n";
+
+                // 文件流已经自动前进，不需要手动seekg
+                // dataOffset会在下一个文件开始时更新
             }
             std::cout << "--------Done!--------" << "\n";
 
+            // 更新dataOffset为下一个文件的起始位置
+            dataOffset = inFile.tellg();
+
             headerLoaderIterator.fileQueue.pop();
-            treeLoaded = false; // 重置树加载标志，为下一个文件做准备
         }
 
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充

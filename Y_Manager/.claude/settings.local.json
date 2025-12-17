@@ -5,7 +5,14 @@
       "Bash(C:/msys64/ucrt64/bin/g++.exe:*)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(powershell:*)",
+      "Bash(cmp:*)",
+      "Bash(find:*)",
+      "Bash(sort:*)",
+      "Bash(./bin/main.exe:*)",
+      "Bash(timeout 10 ./bin/main.exe:*)",
+      "Bash(awk:*)"
     ]
   }
 }

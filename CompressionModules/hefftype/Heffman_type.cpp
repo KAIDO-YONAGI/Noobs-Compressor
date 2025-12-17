@@ -106,16 +106,13 @@ void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out
 }
 
 void BitHandler::handle(unsigned char byte_in, std::vector<uint8_t>& path){
-   uint8_t valbit = 7;
-   if(bytecount == 1){
-      valbit = valued_bits - 1;
-   }
-   for(int i = valbit; i >= 0; --i)
+   // 解压时,总是读取所有8位
+   // 通过decode函数的maxOutputSize参数来控制输出大小
+   for(int i = 7; i >= 0; --i)
    {
       uint8_t bit = (byte_in >> i) & 1;
       path.push_back(bit);
    }
-   --bytecount;
 }
 
 void BitHandler::handle_last(){

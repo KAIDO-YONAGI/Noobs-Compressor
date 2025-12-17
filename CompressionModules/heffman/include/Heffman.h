@@ -45,7 +45,7 @@ public:
     //解压调用：spawn_tree、decode
     void statistic_freq(const int thread_id, const sfc::block_t&);
     void encode(const sfc::block_t&, sfc::block_t&, BitHandler bitoutput = BitHandler());
-    void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler());
+    void decode(const sfc::block_t&, sfc::block_t&, BitHandler bitinput = BitHandler(), size_t maxOutputSize = SIZE_MAX);
     void merge_ttabs();
     void gen_hefftree();
     void save_code_inTab();
