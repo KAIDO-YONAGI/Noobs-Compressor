@@ -139,7 +139,7 @@ struct BitHandler
     BitHandler() : byte(0), bitlen(0), bytecount(0), valued_bits(0) { }
 
     void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t&);
-    void handle(unsigned char, std::vector<uint8_t>&);
+    void handle(unsigned char, std::vector<uint8_t>&, uint8_t valid_bits = 8);
     void handle_last();
 };
 

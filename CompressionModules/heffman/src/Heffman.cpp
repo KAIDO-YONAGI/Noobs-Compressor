@@ -102,16 +102,55 @@ void Heffman::run_save_code_inTab(Hefftreenode* root){
 }
 
 void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput){
+    // 在数据块开始前写入填充位数标记（1字节）
+    // 这个字节稍后会被更新为实际的填充位数
+    size_t padding_bits_pos = out_block.size();
+    out_block.push_back(0);  // 占位符，稍后更新
 
-    for(auto& c: in_block){
-        bitoutput.handle(hashtab[c].code, hashtab[c].codelen, out_block);
+    std::cout << "[ENCODE] Input size: " << in_block.size() << " bytes\n";
+    std::cout << "[ENCODE] Initial out_block size: " << padding_bits_pos << "\n";
+
+    // 打印输入数据的前几个字节
+    std::cout << "[ENCODE] First bytes of input: ";
+    for(size_t i = 0; i < std::min(size_t(20), in_block.size()); ++i) {
+        if(in_block[i] >= 32 && in_block[i] <= 126) {
+            std::cout << (char)in_block[i];
+        } else {
+            std::cout << "[0x" << std::hex << (int)in_block[i] << std::dec << "]";
+        }
     }
+    std::cout << "\n";
+
+    size_t chars_encoded = 0;
+    for(auto& c: in_block){
+        // 检查字符是否在编码表中
+        if(hashtab.find(c) == hashtab.end() || hashtab[c].codelen == 0) {
+            std::cout << "[ENCODE] ERROR: Character 0x" << std::hex << (int)(unsigned char)c << std::dec
+                      << " ('" << (char)c << "') not in encoding table at position " << chars_encoded << "!\n";
+            throw std::runtime_error("Character not in Huffman encoding table");
+        }
+        bitoutput.handle(hashtab[c].code, hashtab[c].codelen, out_block);
+        chars_encoded++;
+    }
+    std::cout << "[ENCODE] Successfully encoded " << chars_encoded << " characters\n";
 
     // 处理最后不足8位的字节
+    std::cout << "[ENCODE] Before handle_last: bitlen=" << (int)bitoutput.bitlen << "\n";
     bitoutput.handle_last();
+    uint8_t padding_bits = 0;
     if(bitoutput.bitlen > 0) {
+        padding_bits = 8 - bitoutput.bitlen;  // 计算填充的位数
         out_block.push_back(bitoutput.byte);
+        std::cout << "[ENCODE] Last byte: 0x" << std::hex << (int)bitoutput.byte << std::dec
+                  << ", padding_bits=" << (int)padding_bits << "\n";
+    } else {
+        std::cout << "[ENCODE] No last byte needed (8-bit aligned), padding_bits=0\n";
     }
+
+    // 更新填充位数标记
+    out_block[padding_bits_pos] = padding_bits;
+    std::cout << "[ENCODE] Output size: " << out_block.size() << " bytes (including "
+              << (int)padding_bits << " padding bits in last byte)\n\n";
 }
 
 void Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward){
@@ -127,20 +166,53 @@ void Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward
 }
 
 void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput, size_t maxOutputSize){
+    if(in_block.size() < 1) {
+        throw std::runtime_error("decode: input block too small (missing padding bits marker)");
+    }
+
+    // 读取填充位数标记（第一个字节）
+    uint8_t padding_bits = in_block[0];
+    if(padding_bits > 7) {
+        throw std::runtime_error("decode: invalid padding bits value: " + std::to_string(padding_bits));
+    }
+
+    std::cout << "[DECODE] Input size: " << in_block.size() << " bytes\n";
+    std::cout << "[DECODE] Padding bits: " << (int)padding_bits << "\n";
+    std::cout << "[DECODE] Max output size: " << maxOutputSize << "\n";
+
     Hefftreenode *now = treeroot;
     std::vector<uint8_t> treepath;  // 不预分配元素,只在需要时push_back
     treepath.reserve(8);  // 预留容量避免重新分配
     unsigned char result = 0;
+    size_t total_bits_processed = 0;
+    size_t chars_decoded = 0;
 
     // 预留足够空间避免频繁重新分配
     out_block.reserve(in_block.size() * 2);
 
-    for(auto& c: in_block)
+    // 从第二个字节开始处理（跳过填充位数标记）
+    for(size_t idx = 1; idx < in_block.size(); ++idx)
     {
-        bitinput.handle(c, treepath);
+        unsigned char c = in_block[idx];
+
+        // 如果是最后一个字节，需要考虑填充位
+        bool is_last_byte = (idx == in_block.size() - 1);
+        uint8_t valid_bits = is_last_byte ? (8 - padding_bits) : 8;
+
+        if(is_last_byte) {
+            std::cout << "[DECODE] Last byte: 0x" << std::hex << (int)c << std::dec
+                      << ", valid_bits=" << (int)valid_bits << "\n";
+        }
+
+        bitinput.handle(c, treepath, valid_bits);
+        total_bits_processed += valid_bits;
+
         for(auto toward: treepath)
         {
-            if(now == NULL) break;
+            if(now == NULL) {
+                std::cout << "[DECODE] ERROR: now is NULL at bit position!\n";
+                break;
+            }
 
             // 先保存当前节点,因为findchar会修改now
             Hefftreenode* beforeMove = now;
@@ -150,13 +222,24 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
             if(beforeMove != treeroot && now == treeroot){
                 // 在push之前检查是否已达到maxOutputSize
                 if(out_block.size() >= maxOutputSize) {
+                    std::cout << "[DECODE] Reached maxOutputSize, stopping. Output size: " << out_block.size() << "\n\n";
                     return;
                 }
                 out_block.push_back(result);
+                chars_decoded++;
             }
         }
         treepath.clear();
     }
+
+    // 检查是否还有未完成的路径（不应该有）
+    if(now != treeroot) {
+        std::cout << "[DECODE] WARNING: Decoding ended with incomplete Huffman path! Current node is not root.\n";
+        std::cout << "[DECODE] This indicates the compressed data may be truncated or corrupted.\n";
+    }
+
+    std::cout << "[DECODE] Completed. Total bits processed: " << total_bits_processed
+              << ", chars decoded: " << chars_decoded << ", output size: " << out_block.size() << " bytes\n\n";
 }
 
 Hefftreenode* Heffman::getTreeRoot()

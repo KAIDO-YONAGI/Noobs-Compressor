@@ -105,10 +105,13 @@ void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out
    }
 }
 
-void BitHandler::handle(unsigned char byte_in, std::vector<uint8_t>& path){
-   // 解压时,总是读取所有8位
-   // 通过decode函数的maxOutputSize参数来控制输出大小
-   for(int i = 7; i >= 0; --i)
+void BitHandler::handle(unsigned char byte_in, std::vector<uint8_t>& path, uint8_t valid_bits){
+   // 解压时,只读取指定的有效位数（用于处理最后一个字节的填充位）
+   // valid_bits 范围: 1-8
+   if(valid_bits > 8) valid_bits = 8;
+   if(valid_bits == 0) return;
+
+   for(int i = 7; i >= 8 - valid_bits; --i)
    {
       uint8_t bit = (byte_in >> i) & 1;
       path.push_back(bit);

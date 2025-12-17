@@ -2,11 +2,16 @@
 
 void DataExporter::thisBlockIsDone(DirectoryOffsetSize_uint dataSize)
 {
-    std::streamoff offsetToFill = outFile.tellp() - static_cast<std::streamoff>(dataSize + sizeof(DirectoryOffsetSize_uint));
+    std::cout << "[EXPORT] thisBlockIsDone called with dataSize=" << dataSize << " bytes\n";
+    std::streamoff currentPos = outFile.tellp();
+    std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(DirectoryOffsetSize_uint));
+    std::cout << "[EXPORT] Current file position: " << currentPos << ", backfilling size at offset: " << offsetToFill << "\n";
     outFile.seekp(offsetToFill, std::ios::beg);
     NumsWriter numWriter;
     numWriter.writeBinaryNums(dataSize, outFile);
+    outFile.flush();  // 寮哄埗鍐欏叆纾佺洏
     outFile.seekp(0, std::ios::end);
+    std::cout << "[EXPORT] Backfilled block size=" << dataSize << " bytes and flushed to disk\n";
 }
 
 void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
@@ -23,7 +28,7 @@ void DataExporter::exportDataToFile_Compression(const DataBlock &data)
 {
     std::ofstream tempFilePtr;
 
-    BinaryIO_Writter processor(tempFilePtr); // 此处只传入不使用(使用禁止)
+    BinaryIO_Writter processor(tempFilePtr); // 锟剿达拷只锟斤拷锟诫不使锟斤拷(使锟矫斤拷止)
 
     outFile.seekp(0, std::ios::end);
     FileSize_uint dataSize = data.size();
