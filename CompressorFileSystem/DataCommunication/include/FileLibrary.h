@@ -36,7 +36,7 @@ constexpr CompressorVersion_uint VERSION = 0; // 版本号
 
 constexpr SizeOfMagicNum_uint MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
-constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 *1024; // 偏移量缓冲需要确保大于文件头大小HeaderSize
+constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 * 1024; // 偏移量缓冲需要确保大于文件头大小HeaderSize
 // 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题。此外，频繁地进行flush()可能导致数据丢失
 // 分割标准上的偏移量不包含分割标准本身的大小，便于随取随用
 // 会在数据区作为首选的偏移量管理方案来使用，比如按照数据块对象提供的size()方法获取块大小，而不是依赖上述存在更新延迟的文件流提供的size方法

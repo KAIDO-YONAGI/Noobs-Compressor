@@ -10,24 +10,24 @@ class BinaryIO_Loader
 {
 private:
     bool blockIsDone = false;
-    bool allDone = false;   // 锟斤拷锟斤拷欠锟斤拷锟斤拷锟斤拷锟斤拷目录锟斤拷取
-    bool FirstReady = true; // 锟斤拷堑锟角帮拷欠锟斤拷锟侥柯硷拷锟斤拷锟斤拷锟斤拷械锟揭伙拷锟皆?拷锟?
+    bool allDone = false;   // 标记是否完成所有目录读取
+    bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
 
-    FileCount_uint countOfKidDirectory = 0;  // 锟斤拷前锟斤拷锟斤拷锟叫伙拷锟剿筹拷时目录锟斤拷锟斤拷目录锟斤拷锟侥硷拷锟斤拷锟斤拷
-    DirectoryOffsetSize_uint offset = 0;     // 锟斤拷前剩锟斤拷锟街斤拷锟斤拷
-    DirectoryOffsetSize_uint tempOffset = 0; // 锟斤拷前锟斤拷锟斤拷锟斤拷拇锟叫★拷锟狡?拷疲锟?
+    FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
+    DirectoryOffsetSize_uint offset = 0;     // 当前剩余字节数
+    DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
 
     fs::path loadPath;
     fs::path parentPath;
     std::ifstream inFile;
     std::fstream fstreamForRefill;
-    std::vector<std::string> filePathToScan; // 锟斤拷锟斤拷时锟斤拷始锟斤拷锟斤拷锟斤拷锟斤拷只使锟斤拷一锟斤拷
+    std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
 
     Transfer transfer;
-    Header header;                         // 私锟叫伙拷锟芥储锟斤拷前锟侥硷拷头锟斤拷息
-    std::unique_ptr<Directory_FileParser>parserForLoader; // 私锟叫伙拷锟斤拷锟斤拷锟斤拷实锟斤拷锟斤拷锟斤拷锟斤拷锟截革拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
+    Header header;                                         // 私有化存储当前文件头信息
+    std::unique_ptr<Directory_FileParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
     DataBlock buffer =
-        DataBlock(BUFFER_SIZE + 1024); // 私锟斤拷buffer,预锟斤拷1024锟街节凤拷止锟斤拷锟?
+        DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
 
     void requestDone();
 
@@ -36,30 +36,32 @@ private:
     void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory, Aes &aes);
 
 public:
-    void headerLoaderIterator(Aes &aes); // 锟斤拷锟竭硷拷锟斤拷锟斤拷
+    void headerLoaderIterator(Aes &aes); // 主逻辑函数
 
-    // 压锟斤拷时锟斤拷锟斤拷
-    Directory_FileQueue fileQueue;                            // 锟侥硷拷锟斤拷锟斤拷
-    Directory_FileQueue directoryQueue;                       // 目录锟斤拷锟斤拷
-    std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // 目录锟斤拷锟捷匡拷位锟斤拷锟斤拷锟斤拷 1 为锟斤拷悖?2为锟斤拷小
+    // 压缩时队列
+    Directory_FileQueue fileQueue;                            // 文件队列
+    Directory_FileQueue directoryQueue;                       // 目录队列
+    std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
 
-    // 锟斤拷压时锟斤拷锟斤拷
-    std::queue<fs::path> directoryQueue_ready; // 目录锟街革拷锟斤拷锟斤拷锟斤拷锟叫ｏ拷锟侥硷拷锟斤拷原锟斤拷要锟斤拷目录锟街革拷锟斤拷锟斤拷锟?
+    // 解压时队列
+    std::queue<fs::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
 
     BinaryIO_Loader() {};
     BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, fs::path parentPath)
     {
         this->loadPath = transfer.transPath(inPath);
-        this->inFile.open(loadPath, std::ios::binary);
-        this->fstreamForRefill.open(loadPath, std::ios::binary | std::ios::in | std::ios::out);
-        if (!this->inFile)
+
+        this->inFile = std::ifstream(loadPath, std::ios::binary);
+
+        this->fstreamForRefill = std::fstream(loadPath, std::ios::binary | std::ios::in | std::ios::out);
+        
+        if (!inFile)
             throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile" + inPath);
-        if (!this->fstreamForRefill)
+        if (!fstreamForRefill)
             throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open fstreamForRefill" + inPath);
 
         this->filePathToScan = filePathToScan;
-        this->parserForLoader = std::make_unique<Directory_FileParser>
-            (buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
+        this->parserForLoader = std::make_unique<Directory_FileParser>(buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
         this->parentPath = parentPath;
     }
 

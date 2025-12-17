@@ -11,6 +11,7 @@ private:
     FileSize_uint fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
+    FileSize_uint readed=0;
 
     void done();
 
@@ -22,6 +23,7 @@ public:
     void dataLoader();
     void dataLoader(FileSize_uint readSize, std::ifstream &decompressionFile);
     void setFileSize(FileSize_uint newSize) { fileSize = newSize; }
+    void resetByLastReaded();
 
     DataLoader() {}
     DataLoader(const fs::path &inPath)

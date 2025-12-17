@@ -16,27 +16,21 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     {
         Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
-        dataLoader = std::make_unique <DataLoader>(loadPath);
+        dataLoader = std::make_unique<DataLoader>(loadPath);
         totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
     }
 
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
 
     fs::path filename = loadPath.filename();
-
-    bool isGenerated = false;
-
     while (!headerLoaderIterator.fileQueue.empty())
     {
-        if (!isGenerated)
-        {
-            std::cout << "genTree" << "\n";
 
-            while (!dataLoader->isDone())
-            {
-                dataLoader->dataLoader();
-                huffmanZip.statistic_freq(0, dataLoader->getBlock());
-            }
+        dataLoader->dataLoader();
+        if (!dataLoader->isDone())
+        {
+            huffmanZip.statistic_freq(0, dataLoader->getBlock());
+
             huffmanZip.merge_ttabs();
             huffmanZip.gen_hefftree();
             huffmanZip.save_code_inTab();
@@ -46,20 +40,16 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             aes.doAes(1, huffTree, huffTree_outPut);
             dataExporter.exportDataToFile_Compression(huffTree_outPut);
-            Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
-            dataLoader->reset(loadFile.getFullPath()); // 生成编码表后，调用reset（原目录）复读
-            isGenerated = true;
         }
-
-        dataLoader->dataLoader();
-
-        if (!dataLoader->isDone()) // 避免读到空数据块
+        if (count < totalBlocks)
         {
+            count++;
+            dataLoader->resetByLastReaded();
 
             system("cls");
             std::cout << "Processing file: " << filename << "\n"
                       << std::fixed << std::setw(6) << std::setprecision(2)
-                      << (100.0 * ++count) / totalBlocks
+                      << (100.0 * count) / totalBlocks
                       << "% \n";
 
             DataBlock data_In = dataLoader->getBlock(); // 调用压缩
@@ -71,10 +61,11 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             dataExporter.exportDataToFile_Compression(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
         }
-        else if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty())
+
+        if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty())
         {
             FileNameSize_uint offsetToFill = headerLoaderIterator.fileQueue.front().second;
-            dataExporter.thisFileIsDone(offsetToFill); // 可在此前插入一个编码表写入再调用done
+            dataExporter.thisFileIsDone(offsetToFill);
             std::cout << "--------Done!--------" << "\n";
 
             headerLoaderIterator.fileQueue.pop();
@@ -85,7 +76,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                 filename = newLoadFile.getFullPath().filename();
                 totalBlocks = (newLoadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
                 count = 0;
-                isGenerated = false;
             }
         }
 
@@ -104,9 +94,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     std::vector<std::string> blank;
     BinaryIO_Loader headerLoaderIterator(fullPath.string(), blank, parentPath);
 
-    std::ifstream &inFile = headerLoaderIterator.getInFile();//共享句柄，使用seek保证正确读取，不写入，避免数据缓冲区问题
     std::unique_ptr<DataLoader> dataLoader = std::make_unique<DataLoader>();
-    NumsReader numReader(inFile);
 
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     DirectoryOffsetSize_uint dataOffset = headerLoaderIterator.getDirectoryOffset();
@@ -129,9 +117,13 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             // headerLoaderIterator.fileQueue.pop();
             // continue;
 
+            // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
+            std::ifstream &inFile = headerLoaderIterator.getInFile();
+            NumsReader numReader(inFile); // 在此处创建 NumsReader，确保引用有效
+
             // 把已压缩块读进内存，处理，写入对应位置
-            inFile.clear(); // 清除可能的错误标志(如eof)，确保seek可以正常工作
-            inFile.seekg(dataOffset, std::ios::beg);                   // 定位到数据区（或已处理块后）
+            inFile.clear();                          // 清除可能的错误标志(如eof)，确保seek可以正常工作
+            inFile.seekg(dataOffset, std::ios::beg); // 定位到数据区（或已处理块后）
             if (!inFile.good())
             {
                 throw std::runtime_error("decompressionLoop()-Error:Failed to seek to dataOffset " + std::to_string(dataOffset));
@@ -191,7 +183,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 进行 Huffman 解压
                 DataBlock decompressedData;
                 BitHandler bitHandler;
-                bitHandler.bytecount = decryptedData.size();  // 设置总字节数
+                bitHandler.bytecount = decryptedData.size(); // 设置总字节数
                 huffmanUnzip.decode(decryptedData, decompressedData, bitHandler);
 
                 // 写入解压后的数据

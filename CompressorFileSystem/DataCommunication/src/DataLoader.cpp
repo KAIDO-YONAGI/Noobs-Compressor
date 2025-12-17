@@ -7,26 +7,29 @@ void DataLoader::done()
         inFile.close();
     }
     loadIsDone = true;
+    readed = 0;
     data.clear();
 }
 void DataLoader::reset(const fs::path inPath)
 {
     if (isDone())
     {
-        std::ifstream newInFile(inPath, std::ios::binary);
-        if (!newInFile)
+        this->inFile = std::ifstream(inPath, std::ios::binary);
+        if (!inFile)
             throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + inPath.string());
-        this->inFile = std::move(newInFile);
         loadIsDone = false;
     }
     else
         throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + inPath.string());
 }
+void DataLoader::resetByLastReaded()
+{
+    inFile.seekg(readed, std::ios::beg);
+}
 void DataLoader::dataLoader()
 {
     try
     {
-
         data.resize(BUFFER_SIZE);
         inFile.read(reinterpret_cast<char *>((data.data())), BUFFER_SIZE);
         data.resize(inFile.gcount());
@@ -41,6 +44,7 @@ void DataLoader::dataLoader()
     {
         done();
     }
+    readed += inFile.gcount();
 }
 void DataLoader::dataLoader(FileSize_uint readSize, std::ifstream &decompressionFile)
 {
