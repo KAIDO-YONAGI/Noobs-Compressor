@@ -107,14 +107,26 @@ void BitHandler::handle(code_t& codeblocks, codelen_t codelen, sfc::block_t& out
 
 void BitHandler::handle(unsigned char byte_in, std::vector<uint8_t>& path, uint8_t valid_bits){
    // 解压时,只读取指定的有效位数（用于处理最后一个字节的填充位）
+   // 注意：编码时使用 handle_last() 会将有效位左移到高位
+   // 所以部分字节中的有效位在高位，需要从高位读取
    // valid_bits 范围: 1-8
    if(valid_bits > 8) valid_bits = 8;
    if(valid_bits == 0) return;
 
-   for(int i = 7; i >= 8 - valid_bits; --i)
-   {
-      uint8_t bit = (byte_in >> i) & 1;
-      path.push_back(bit);
+   // 如果 valid_bits < 8，说明这是最后一个部分字节
+   // 有效位在高位（由 handle_last() 左移产生）
+   if(valid_bits < 8) {
+      // 有效位在位置 [7 downto 8-valid_bits]
+      for(int i = 7; i >= 8 - valid_bits; --i) {
+         uint8_t bit = (byte_in >> i) & 1;
+         path.push_back(bit);
+      }
+   } else {
+      // valid_bits == 8，所有位都有效
+      for(int i = 7; i >= 0; --i) {
+         uint8_t bit = (byte_in >> i) & 1;
+         path.push_back(bit);
+      }
    }
 }
 

@@ -108,6 +108,7 @@ void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
     out_block.push_back(0);  // 占位符，稍后更新
 
     std::cout << "[ENCODE] Input size: " << in_block.size() << " bytes\n";
+    std::cout << "[ENCODE] Encoding table has " << hashtab.size() << " unique characters\n";
     std::cout << "[ENCODE] Initial out_block size: " << padding_bits_pos << "\n";
 
     // 打印输入数据的前几个字节
@@ -153,7 +154,7 @@ void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
               << (int)padding_bits << " padding bits in last byte)\n\n";
 }
 
-void Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward){
+bool Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward){
     if(toward == 0){
         now = now->left;
     } else {
@@ -162,7 +163,9 @@ void Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward
     if(now != NULL && now->isleaf == true){
         result = now->data;
         now = treeroot;
+        return true;  // 找到了一个字符
     }
+    return false;  // 还在树的中间节点
 }
 
 void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput, size_t maxOutputSize){
@@ -179,6 +182,7 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
     std::cout << "[DECODE] Input size: " << in_block.size() << " bytes\n";
     std::cout << "[DECODE] Padding bits: " << (int)padding_bits << "\n";
     std::cout << "[DECODE] Max output size: " << maxOutputSize << "\n";
+    std::cout << "[DECODE] Current tree has " << hashtab.size() << " unique characters\n";
 
     Hefftreenode *now = treeroot;
     std::vector<uint8_t> treepath;  // 不预分配元素,只在需要时push_back
@@ -190,22 +194,38 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
     // 预留足够空间避免频繁重新分配
     out_block.reserve(in_block.size() * 2);
 
+    // 计算最后有填充的字节位置（如果padding_bits>0，最后一个字节才有填充）
+    // 如果padding_bits==0，使用SIZE_MAX表示没有字节有填充（避免误匹配索引0）
+    size_t last_byte_idx = (padding_bits > 0) ? (in_block.size() - 1) : SIZE_MAX;
+    if(padding_bits > 0) {
+        std::cout << "[DECODE] Last byte with padding at index: " << last_byte_idx << " (padding_bits=" << (int)padding_bits << ")\n";
+    } else {
+        std::cout << "[DECODE] No padding bits, all bytes fully valid\n";
+    }
+
     // 从第二个字节开始处理（跳过填充位数标记）
     for(size_t idx = 1; idx < in_block.size(); ++idx)
     {
         unsigned char c = in_block[idx];
 
-        // 如果是最后一个字节，需要考虑填充位
-        bool is_last_byte = (idx == in_block.size() - 1);
-        uint8_t valid_bits = is_last_byte ? (8 - padding_bits) : 8;
+        // 只有当这是最后有填充的字节时，才考虑填充位
+        uint8_t valid_bits = (idx == last_byte_idx && padding_bits > 0) ? (8 - padding_bits) : 8;
 
-        if(is_last_byte) {
-            std::cout << "[DECODE] Last byte: 0x" << std::hex << (int)c << std::dec
-                      << ", valid_bits=" << (int)valid_bits << "\n";
+        if(idx == last_byte_idx && padding_bits > 0) {
+            std::cout << "[DECODE] Last byte with padding: 0x" << std::hex << (int)c << std::dec
+                      << ", valid_bits=" << (int)valid_bits << " (padding_bits=" << (int)padding_bits << ")\n";
         }
 
         bitinput.handle(c, treepath, valid_bits);
         total_bits_processed += valid_bits;
+
+        // 调试：显示treepath的大小和处理进度
+        if(treepath.size() > 0 || (idx % 100 == 0)) {
+            if(idx % 500 == 0) {
+                std::cout << "[DECODE] Processing byte " << idx << "/" << in_block.size()
+                          << ", treepath.size=" << treepath.size() << ", chars_decoded=" << chars_decoded << "\n";
+            }
+        }
 
         for(auto toward: treepath)
         {
@@ -214,12 +234,11 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
                 break;
             }
 
-            // 先保存当前节点,因为findchar会修改now
-            Hefftreenode* beforeMove = now;
-            findchar(now, result, toward);
+            // 调用findchar并检查是否找到了字符
+            bool foundChar = findchar(now, result, toward);
 
-            // 如果移动前的节点在移动到叶子后now被重置了,说明找到了字符
-            if(beforeMove != treeroot && now == treeroot){
+            // 如果找到了字符，输出它
+            if(foundChar){
                 // 在push之前检查是否已达到maxOutputSize
                 if(out_block.size() >= maxOutputSize) {
                     std::cout << "[DECODE] Reached maxOutputSize, stopping. Output size: " << out_block.size() << "\n\n";
@@ -227,6 +246,10 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
                 }
                 out_block.push_back(result);
                 chars_decoded++;
+            }
+            else if(now == NULL) {
+                std::cout << "[DECODE] ERROR: Moved to NULL node! Tree structure corrupted.\n";
+                break;
             }
         }
         treepath.clear();
@@ -351,7 +374,7 @@ void Heffman::spawn_tree(sfc::block_t& in_block)
         ++iter_ib;
     }
 
-    // 如果栈空了,说明整棵树已经构建完成,根节点在lastNode中
+    // 如果栈空了,说味著整棵树已经构建完成,根节点在lastNode中
     if(stack.empty())
     {
         treeroot = lastNode;
@@ -365,6 +388,17 @@ void Heffman::spawn_tree(sfc::block_t& in_block)
         throw std::runtime_error("spawn_tree: Invalid tree structure - stack size is " +
                                 std::to_string(stack.size()) + ", expected 0 or 1");
     }
+
+    // 统计树中的叶子节点数量（即有多少个不同的字符）
+    size_t leaf_count = countLeaves(treeroot);
+    std::cout << "[spawn_tree] Tree spawned successfully. Tree data size: " << in_block.size() << " bytes, Leaves: " << leaf_count << "\n";
+}
+
+// 计算树中的叶子节点数量
+size_t Heffman::countLeaves(Hefftreenode* node) {
+    if(node == NULL) return 0;
+    if(node->isleaf) return 1;
+    return countLeaves(node->left) + countLeaves(node->right);
 }
 
 bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)

@@ -70,7 +70,10 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
         {
             FileNameSize_uint offsetToFill = headerLoaderIterator.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill);
-            std::cout << "--------Done!--------" << "\n";
+            std::cout << "\n========================================\n";
+            std::cout << "File compression complete: " << filename << "\n";
+            std::cout << "Total blocks: " << count << "\n";
+            std::cout << "========================================\n\n";
 
             headerLoaderIterator.fileQueue.pop();
             if (!headerLoaderIterator.fileQueue.empty())
@@ -275,9 +278,9 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 std::cout << "[DECOMPRESS] Decoding with Huffman tree...\n";
 
                 // 计算这个块最多应该解压多少字节
-                // 每个块最多8192字节，但最后一个块可能更少
+                // 每个块固定解压8192字节，只有最后一个块使用剩余字节数
                 size_t remainingBytes = originalFileSize - totalDecompressedBytes;
-                size_t maxBytesThisBlock = std::min(remainingBytes, static_cast<size_t>(8192));
+                size_t maxBytesThisBlock = std::min(remainingBytes, (size_t)BUFFER_SIZE);
                 std::cout << "[DECOMPRESS] Remaining bytes to decompress: " << remainingBytes;
                 std::cout << ", max this block: " << maxBytesThisBlock << "\n";
 
@@ -316,7 +319,10 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 文件流已经自动前进，不需要手动seekg
                 // dataOffset会在下一个文件开始时更新
             }
-            std::cout << "--------Done!--------" << "\n";
+            std::cout << "\n========================================\n";
+            std::cout << "File decompression complete: " << filename << "\n";
+            std::cout << "Final size: " << totalDecompressedBytes << " / " << originalFileSize << " bytes\n";
+            std::cout << "========================================\n\n";
 
             // 更新dataOffset为下一个文件的起始位置
             DirectoryOffsetSize_uint oldOffset = dataOffset;

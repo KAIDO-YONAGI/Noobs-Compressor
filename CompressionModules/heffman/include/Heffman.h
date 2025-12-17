@@ -72,9 +72,10 @@ private:
 
     std::unique_ptr<Minheap> gen_minheap();
     void run_save_code_inTab(Hefftreenode* root);
-    void findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward);
+    bool findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward);
     bool connectNode(Hefftreenode*, Hefftreenode*);
     void destroy_tree(Hefftreenode* node);
+    size_t countLeaves(Hefftreenode* node);
 };
 
 #endif //HEFFMAN_H
