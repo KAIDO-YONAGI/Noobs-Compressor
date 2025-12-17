@@ -18,7 +18,7 @@ private:
 public:
     DataExporter(const fs::path &outPath)
     {
-        std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in); // 避免截断，只能使用fstream输出
+        std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in); // 閬垮厤鎴柇锛屽彧鑳戒娇鐢╢stream杈撳嚭
         if (!outFile)
         {
             throw std::runtime_error("DataExporter()-Error:Failed to open outFile");

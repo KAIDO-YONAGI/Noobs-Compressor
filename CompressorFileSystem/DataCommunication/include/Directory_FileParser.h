@@ -16,7 +16,7 @@ private:
     const DirectoryOffsetSize_uint &offset;
     const DirectoryOffsetSize_uint &tempOffset;
     void checkBounds(DirectoryOffsetSize_uint pos, FileNameSize_uint equiredSize) const;
-    size_t parserMode = 0; // 0£ºÄ¬ÈÏÄ£Ê½¡¢1£ºÑ¹ËõÄ£Ê½¡¢2£º½âÑ¹Ä£Ê½
+    size_t parserMode = 0; // 0ï¼šé»˜è®¤æ¨¡å¼ã€1ï¼šå‹ç¼©æ¨¡å¼ã€2ï¼šè§£å‹æ¨¡å¼
 
     template <typename T>
     void fileName_fileSizeParser(
@@ -26,12 +26,12 @@ private:
     {
         try
         {
-            // 1. ¶ÁÈ¡ÎÄ¼şÃû³¤¶È
+            // 1. è¯»å–æ–‡ä»¶åé•¿åº¦
             checkBounds(bufferPtr, sizeof(T));
             memcpy(&fileNameSize, buffer.data() + bufferPtr, sizeof(T));
             bufferPtr += sizeof(T);
 
-            // 2. ¶ÁÈ¡×Ö·û´®ÄÚÈİ,°²È«¹¹Ôì std::string,·ÀÖ¹Î´³õÊ¼»¯µÄÔ½½ç±¨´í
+            // 2. è¯»å–å­—ç¬¦ä¸²å†…å®¹,å®‰å…¨æ„é€  std::string,é˜²æ­¢æœªåˆå§‹åŒ–çš„è¶Šç•ŒæŠ¥é”™
             checkBounds(bufferPtr, static_cast<FileNameSize_uint>(fileNameSize));
             fileName.assign(
                 buffer.data() + bufferPtr,
@@ -87,7 +87,7 @@ public:
           header(header),
           offset(offset), tempOffset(tempOffset),filePathToScan(filePathToScan)
     {
-        parserMode=((!filePathToScan.empty())?1:2);//·Ç¿Õ±íÊ¾Ñ¹Ëõ
+        parserMode=((!filePathToScan.empty())?1:2);//éç©ºè¡¨ç¤ºå‹ç¼©
     }
     void parser(DirectoryOffsetSize_uint &bufferPtr, FileCount_uint &countOfKidDirectory);
 };

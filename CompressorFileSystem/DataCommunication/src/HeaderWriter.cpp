@@ -8,7 +8,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     {
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
-    // ÎÄ¼şÍ·
+    // æ–‡ä»¶å¤´
     CompressStrategy_uint strategySize = STRATEGY;
     CompressorVersion_uint versionSize = VERSION;
     HeaderOffsetSize_uint headerOffsetSize = 0;
@@ -19,7 +19,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     numWriter.writeBinaryNums(headerOffsetSize,outFile);
     numWriter.writeBinaryNums(directoryOffsetSize,outFile);
 
-    // »ØÌîÆ«ÒÆÁ¿²¢ÖØ¶¨Î»Ö¸ÕëÖÁ»ØÌîÇ°µÄÎ»ÖÃ
+    // å›å¡«åç§»é‡å¹¶é‡å®šä½æŒ‡é’ˆè‡³å›å¡«å‰çš„ä½ç½®
     locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint) - sizeof(headerOffsetSize));
     numWriter.writeBinaryNums(HEADER_SIZE,outFile);
     outFile.seekp(0, std::ios::end);
@@ -33,10 +33,10 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     Directory_FileProcessor begin(outFile);
     begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot);
 
-    // »ØÌîÆ«ÒÆÁ¿²¢ÖØ¶¨Î»Ö¸ÕëÖÁ»ØÌîÇ°µÄÎ»ÖÃ
+    // å›å¡«åç§»é‡å¹¶é‡å®šä½æŒ‡é’ˆè‡³å›å¡«å‰çš„ä½ç½®
     locator.offsetLocator(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint));
     DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)ÈÏÎªÕû¸öÄ¿Â¼+ÎÄ¼şÍ·ÊÇ°üº¬Ä©Î²Ä§ÊıµÄ£¬Ö»²»¹ı´ËÊ±»¹Î´Ğ´Èë
+    numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)è®¤ä¸ºæ•´ä¸ªç›®å½•+æ–‡ä»¶å¤´æ˜¯åŒ…å«æœ«å°¾é­”æ•°çš„ï¼Œåªä¸è¿‡æ­¤æ—¶è¿˜æœªå†™å…¥
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
@@ -51,7 +51,7 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
             throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
         }
 
-        std::ofstream outFile(fullOutPath, std::ios::binary | std::ios::out | std::ios::ate); // ate´ò¿ª£¬±ÜÃâ¸²Ğ´ÎÄ¼ş£¬Ê¹ÓÃÆ«ÒÆÁ¿¶¨Î»
+        std::ofstream outFile(fullOutPath, std::ios::binary | std::ios::out | std::ios::ate); // ateæ‰“å¼€ï¼Œé¿å…è¦†å†™æ–‡ä»¶ï¼Œä½¿ç”¨åç§»é‡å®šä½
         if (!outFile)
         {
             throw std::runtime_error("HeaderWriter()-Error_File open failed: " + fullOutPath.string());
@@ -60,16 +60,16 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
         try
         {
             NumsWriter numWriter;
-            // Ğ´Èë±íÊ¾ÎÄ¼şÆğÊ¼µÄ4×Ö½ÚÄ§Êı
+            // å†™å…¥è¡¨ç¤ºæ–‡ä»¶èµ·å§‹çš„4å­—èŠ‚é­”æ•°
             numWriter.appendMagicStatic(outFile);
-            writeHeader(outFile,fullOutPath); // ÎÄ¼şÍ·½áÊø--°üº¬Ä§ÊıÒ»¹²11×Ö½Ú(ÒÑ»ØÌî)
+            writeHeader(outFile,fullOutPath); // æ–‡ä»¶å¤´ç»“æŸ--åŒ…å«é­”æ•°ä¸€å…±11å­—èŠ‚(å·²å›å¡«)
 
             numWriter.appendMagicStatic(outFile);
 
-            // Ä¿Â¼ĞÅÏ¢
-            writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // Ä¿Â¼Çø½áÊø£¨ÒÑ»ØÌî£©
+            // ç›®å½•ä¿¡æ¯
+            writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // ç›®å½•åŒºç»“æŸï¼ˆå·²å›å¡«ï¼‰
 
-            numWriter.appendMagicStatic(outFile); // ÎÄ¼şÄ©Î²Ä§Êı
+            numWriter.appendMagicStatic(outFile); // æ–‡ä»¶æœ«å°¾é­”æ•°
         }
         catch (const std::exception &e)
         {
@@ -81,6 +81,6 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
     catch (const std::exception &e)
     {
         std::cerr << e.what() << std::endl;
-        throw (e.what()); // ÖØĞÂÅ×³öÒì³£ÒÔ±ãÉÏ²ã´¦Àí
+        throw (e.what()); // é‡æ–°æŠ›å‡ºå¼‚å¸¸ä»¥ä¾¿ä¸Šå±‚å¤„ç†
     }
 }

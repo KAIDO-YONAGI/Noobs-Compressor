@@ -13,14 +13,14 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
     {
         FileCount_uint length = filePathToScan.size();
 
-        // Ô¤Áô»ØÌîÆ«ÒÆÁ¿µÄ×Ö½ÚÎ»ÖÃ
-        DirectoryOffsetSize_uint tempOffset = 0; // ³õÊ¼Æ«ÒÆÁ¿
+        // é¢„ç•™å›å¡«åç§»é‡çš„å­—èŠ‚ä½ç½®
+        DirectoryOffsetSize_uint tempOffset = 0; // åˆå§‹åç§»é‡
         DirectoryOffsetSize_uint offset = HEADER_SIZE;
 
         BIO->writeBlankSeparatedStandard();
 
-        BIO->writeLogicalRoot(logicalRoot, length, tempOffset); // Ğ´ÈëÂß¼­¸ù½ÚµãµÄ×ÓÎÄ¼şÊıÄ¿£¨Ä¬ÈÏ´´½¨Ò»¸ö¸ù½Úµã£¬ÓÃ»§¿ÉÒÔÑ¡ÔñÊÇ·ñÃüÃû£©
-        BIO->writeRoot(file, filePathToScan, tempOffset);  // Ğ´ÈëÎÄ¼ş¸ùÄ¿Â¼
+        BIO->writeLogicalRoot(logicalRoot, length, tempOffset); // å†™å…¥é€»è¾‘æ ¹èŠ‚ç‚¹çš„å­æ–‡ä»¶æ•°ç›®ï¼ˆé»˜è®¤åˆ›å»ºä¸€ä¸ªæ ¹èŠ‚ç‚¹ï¼Œç”¨æˆ·å¯ä»¥é€‰æ‹©æ˜¯å¦å‘½åï¼‰
+        BIO->writeRoot(file, filePathToScan, tempOffset);  // å†™å…¥æ–‡ä»¶æ ¹ç›®å½•
 
         for (FileCount_uint i = 0; i < length; i++)
         {
@@ -29,7 +29,7 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
             if (!fs::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
-                BIO->binaryIO_Writer(file, directoryQueue, tempOffset, offset); // Ìí¼Óµ±Ç°Ä¿Â¼µ½¶ÓÁĞÒÔÆô¶¯Õû¸öBFSµİÍÆ
+                BIO->binaryIO_Writer(file, directoryQueue, tempOffset, offset); // æ·»åŠ å½“å‰ç›®å½•åˆ°é˜Ÿåˆ—ä»¥å¯åŠ¨æ•´ä¸ªBFSé€’æ¨
             }
         }
         scanFlow(file, tempOffset, offset);

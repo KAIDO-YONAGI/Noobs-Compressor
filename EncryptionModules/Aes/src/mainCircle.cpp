@@ -3,53 +3,53 @@ DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
 {
     DataBlock outputBuffer;
 
-    // ´¦ÀíIV
+    // å¤„ç†IV
     if (mode==1)
-    { // ¼ÓÃÜ
-        // Éú³ÉËæ»úIV
+    { // åŠ å¯†
+        // ç”ŸæˆéšæœºIV
         if (RAND_priv_bytes(iv, sizeof(iv)) != 1)
         {
             throw std::runtime_error("Failed to generate random IV");
         }
 
-        // Ìí¼ÓIVµ½Êä³ö»º³åÇø
+        // æ·»åŠ IVåˆ°è¾“å‡ºç¼“å†²åŒº
         outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));
 
-        // ×¼±¸Òª¼ÓÃÜµÄÊı¾İ
+        // å‡†å¤‡è¦åŠ å¯†çš„æ•°æ®
         buffer = inputBuffer;
     }
     else if(mode ==2)
-    { // ½âÃÜ
-        // ¼ì²éÊäÈëÊÇ·ñ×ã¹»°üº¬IV
+    { // è§£å¯†
+        // æ£€æŸ¥è¾“å…¥æ˜¯å¦è¶³å¤ŸåŒ…å«IV
         if (inputBuffer.size() < sizeof(iv))
         {
             throw std::runtime_error("Input too short to contain IV");
         }
 
-        // ÌáÈ¡IV
+        // æå–IV
         memcpy(iv, inputBuffer.data(), sizeof(iv));
 
-        // ×¼±¸Òª½âÃÜµÄÊı¾İ
+        // å‡†å¤‡è¦è§£å¯†çš„æ•°æ®
         buffer.assign(inputBuffer.begin() + sizeof(iv), inputBuffer.end());
     }
 
-    // ´¦ÀíÊı¾İ
+    // å¤„ç†æ•°æ®
     size_t bytesToProcess = buffer.size();
     if (mode==1)
     {
-        aes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // ¼ÓÃÜ
+        aes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // åŠ å¯†
     }
     else if (mode==2)
     {
-        deAes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // ½âÃÜ
+        deAes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // è§£å¯†
     }
 
-    // Ìí¼Ó´¦ÀíºóµÄÊı¾İµ½Êä³ö»º³åÇø
+    // æ·»åŠ å¤„ç†åçš„æ•°æ®åˆ°è¾“å‡ºç¼“å†²åŒº
     outputBuffer.insert(outputBuffer.end(), buffer.begin(), buffer.end());
 
     return outputBuffer;
 }
-//mode 1: ¼ÓÃÜ 2: ½âÃÜ
+//mode 1: åŠ å¯† 2: è§£å¯†
 void Aes::doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer)
 {
 
@@ -81,11 +81,11 @@ void Aes::aes(char *p, int plen)
     {
         int blockSize = std::min(16, plen - offset);
 
-        // ¼ÓÃÜ·´À¡¼Ä´æÆ÷
+        // åŠ å¯†åé¦ˆå¯„å­˜å™¨
         int tempArray[4][4];
         convertToIntArray(reinterpret_cast<char *>(feedback), tempArray);
 
-        // AES¼ÓÃÜÂÖ´Î
+        // AESåŠ å¯†è½®æ¬¡
         addRoundKey(tempArray, 0);
         for (int round = 1; round < 10; ++round)
         {
@@ -98,11 +98,11 @@ void Aes::aes(char *p, int plen)
         shiftRows(tempArray);
         addRoundKey(tempArray, 10);
 
-        // »ñÈ¡¼ÓÃÜ½á¹û
+        // è·å–åŠ å¯†ç»“æœ
         char encryptedFeedback[16];
         convertArrayToStr(tempArray, encryptedFeedback);
 
-        // Ö´ĞĞXORºÍ¸üĞÂ·´À¡
+        // æ‰§è¡ŒXORå’Œæ›´æ–°åé¦ˆ
         for (int i = 0; i < blockSize; ++i)
         {
             p[offset + i] ^= encryptedFeedback[i];
@@ -112,7 +112,7 @@ void Aes::aes(char *p, int plen)
         offset += blockSize;
     }
 
-    // °²È«Çå³ı
+    // å®‰å…¨æ¸…é™¤
     memset(feedback, 0, sizeof(feedback));
 }
 
@@ -130,11 +130,11 @@ void Aes::deAes(char *c, int clen)
         uint8_t cipherBackup[16] = {0};
         memcpy(cipherBackup, c + offset, blockSize);
 
-        // ¼ÓÃÜ·´À¡¼Ä´æÆ÷
+        // åŠ å¯†åé¦ˆå¯„å­˜å™¨
         int tempArray[4][4];
         convertToIntArray(reinterpret_cast<char *>(feedback), tempArray);
 
-        // AES¼ÓÃÜÂÖ´Î
+        // AESåŠ å¯†è½®æ¬¡
         addRoundKey(tempArray, 0);
         for (int round = 1; round < 10; ++round)
         {
@@ -147,22 +147,22 @@ void Aes::deAes(char *c, int clen)
         shiftRows(tempArray);
         addRoundKey(tempArray, 10);
 
-        // »ñÈ¡¼ÓÃÜ½á¹û
+        // è·å–åŠ å¯†ç»“æœ
         char encryptedFeedback[16];
         convertArrayToStr(tempArray, encryptedFeedback);
 
-        // Ö´ĞĞXOR
+        // æ‰§è¡ŒXOR
         for (int i = 0; i < blockSize; ++i)
         {
             c[offset + i] ^= encryptedFeedback[i];
         }
 
-        // ¸üĞÂ·´À¡
+        // æ›´æ–°åé¦ˆ
         memcpy(feedback, cipherBackup, blockSize);
         offset += blockSize;
     }
 
-    // °²È«Çå³ı
+    // å®‰å…¨æ¸…é™¤
     memset(feedback, 0, sizeof(feedback));
 }
 

@@ -4,15 +4,15 @@
 #include "ToolClasses.h"
 #include "Directory_FileDetails.h"
 
-class BinaryIO_Writter // �Ӵ��������ļ����䴦�������IO�ĺ����ķ�װ
+class BinaryIO_Writter // 接触二进制文件及其处理的相关IO的函数的封装
 {
     /*
-    binaryIO_Writer()��������ɨ��ָ��·�������㣩���ļ��������ļ��еĺ���
-    writeStorageStandard()�ַ���ǰ������·���ϵ�Ŀ¼/�ļ�����Ŀ¼��׼д��/�ļ���׼д��
-    writeDirectoryStandard()Ŀ¼��׼д��
-    writeFileStandard()�ļ���׼д��
-    writeLogicalRoot()д���߼����ڵ㣬���ڴ������ļ���Ŀ¼�����񣬾�������ɼ����Դ���
-    writeRoot()д����ڵ㣨��Ϊfilesystem�Զ������˸��ڵ㣩
+    binaryIO_Writer()主函数。扫描指定路径（单层）的文件及其子文件夹的函数
+    writeStorageStandard()分发当前处理的路径上的目录/文件到：目录标准写入/文件标准写入
+    writeDirectoryStandard()目录标准写入
+    writeFileStandard()文件标准写入
+    writeLogicalRoot()写入逻辑根节点，用于处理多文件（目录）任务，具体情况可见调试代码
+    writeRoot()写入根节点（因为filesystem自动忽略了根节点）
     */
 private:
     Transfer transfer;

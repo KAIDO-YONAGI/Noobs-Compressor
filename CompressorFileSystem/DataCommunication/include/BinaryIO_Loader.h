@@ -10,24 +10,24 @@ class BinaryIO_Loader
 {
 private:
     bool blockIsDone = false;
-    bool allDone = false;   // ±ê¼ÇÊÇ·ñÍê³ÉËùÓĞÄ¿Â¼¶ÁÈ¡
-    bool FirstReady = true; // ±ê¼Çµ±Ç°ÊÇ·ñÊÇÄ¿Â¼¾ÍĞ÷¶ÓÁĞµÚÒ»¸öÔªËØ
+    bool allDone = false;   // æ ‡è®°æ˜¯å¦å®Œæˆæ‰€æœ‰ç›®å½•è¯»å–
+    bool FirstReady = true; // æ ‡è®°å½“å‰æ˜¯å¦æ˜¯ç›®å½•å°±ç»ªé˜Ÿåˆ—ç¬¬ä¸€ä¸ªå…ƒç´ 
 
-    FileCount_uint countOfKidDirectory = 0;  // µ±Ç°´¦ÀíÖĞ»òÍË³öÊ±Ä¿Â¼ÏÂ×ÓÄ¿Â¼»òÎÄ¼şÊıÁ¿
-    DirectoryOffsetSize_uint offset = 0;     // µ±Ç°Ê£Óà×Ö½ÚÊı
-    DirectoryOffsetSize_uint tempOffset = 0; // µ±Ç°´¦Àí¿éµÄ´óĞ¡£¨Æ«ÒÆ£©
+    FileCount_uint countOfKidDirectory = 0;  // å½“å‰å¤„ç†ä¸­æˆ–é€€å‡ºæ—¶ç›®å½•ä¸‹å­ç›®å½•æˆ–æ–‡ä»¶æ•°é‡
+    DirectoryOffsetSize_uint offset = 0;     // å½“å‰å‰©ä½™å­—èŠ‚æ•°
+    DirectoryOffsetSize_uint tempOffset = 0; // å½“å‰å¤„ç†å—çš„å¤§å°ï¼ˆåç§»ï¼‰
 
     fs::path loadPath;
     fs::path parentPath;
     std::ifstream inFile;
     std::fstream fstreamForRefill;
-    std::vector<std::string> filePathToScan; // ¹¹ÔìÊ±³õÊ¼»¯£¬¶øÇÒÖ»Ê¹ÓÃÒ»´Î
+    std::vector<std::string> filePathToScan; // æ„é€ æ—¶åˆå§‹åŒ–ï¼Œè€Œä¸”åªä½¿ç”¨ä¸€æ¬¡
 
     Transfer transfer;
-    Header header;                                         // Ë½ÓĞ»¯´æ´¢µ±Ç°ÎÄ¼şÍ·ĞÅÏ¢
-    std::unique_ptr<Directory_FileParser> parserForLoader; // Ë½ÓĞ»¯¹¤¾ßÀàÊµÀı£¬±ÜÃâÖØ¸´¹¹ÔìÓëÎö¹¹
+    Header header;                                         // ç§æœ‰åŒ–å­˜å‚¨å½“å‰æ–‡ä»¶å¤´ä¿¡æ¯
+    std::unique_ptr<Directory_FileParser> parserForLoader; // ç§æœ‰åŒ–å·¥å…·ç±»å®ä¾‹ï¼Œé¿å…é‡å¤æ„é€ ä¸ææ„
     DataBlock buffer =
-        DataBlock(BUFFER_SIZE + 1024); // Ë½ÓĞbuffer,Ô¤Áô1024×Ö½Ú·ÀÖ¹Òç³ö
+        DataBlock(BUFFER_SIZE + 1024); // ç§æœ‰buffer,é¢„ç•™1024å­—èŠ‚é˜²æ­¢æº¢å‡º
 
     void requestDone();
 
@@ -36,15 +36,15 @@ private:
     void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory, Aes &aes);
 
 public:
-    void headerLoaderIterator(Aes &aes); // Ö÷Âß¼­º¯Êı
+    void headerLoaderIterator(Aes &aes); // ä¸»é€»è¾‘å‡½æ•°
 
-    // Ñ¹ËõÊ±¶ÓÁĞ
-    Directory_FileQueue fileQueue;                            // ÎÄ¼ş¶ÓÁĞ
-    Directory_FileQueue directoryQueue;                       // Ä¿Â¼¶ÓÁĞ
-    std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // Ä¿Â¼Êı¾İ¿éÎ»ÖÃÊı×é 1 ÎªÆğµã£¬2Îª´óĞ¡
+    // å‹ç¼©æ—¶é˜Ÿåˆ—
+    Directory_FileQueue fileQueue;                            // æ–‡ä»¶é˜Ÿåˆ—
+    Directory_FileQueue directoryQueue;                       // ç›®å½•é˜Ÿåˆ—
+    std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // ç›®å½•æ•°æ®å—ä½ç½®æ•°ç»„ 1 ä¸ºèµ·ç‚¹ï¼Œ2ä¸ºå¤§å°
 
-    // ½âÑ¹Ê±¶ÓÁĞ
-    std::queue<fs::path> directoryQueue_ready; // Ä¿Â¼»Ö¸´¾ÍĞ÷¶ÓÁĞ£¬ÎÄ¼ş¸´Ô­ĞèÒªÔÚÄ¿Â¼»Ö¸´ºó²Ù×÷
+    // è§£å‹æ—¶é˜Ÿåˆ—
+    std::queue<fs::path> directoryQueue_ready; // ç›®å½•æ¢å¤å°±ç»ªé˜Ÿåˆ—ï¼Œæ–‡ä»¶å¤åŸéœ€è¦åœ¨ç›®å½•æ¢å¤åæ“ä½œ
 
     BinaryIO_Loader() {};
     BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, fs::path parentPath)

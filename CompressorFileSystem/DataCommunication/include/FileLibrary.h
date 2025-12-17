@@ -1,7 +1,7 @@
 // FileLibaray.h
 #pragma once
 
-#include <filesystem> //±àÒëÊ±ĞèÒªÇ¿ÖÆÁ´½ÓÎª¾²Ì¬¿â
+#include <filesystem> //ç¼–è¯‘æ—¶éœ€è¦å¼ºåˆ¶é“¾æ¥ä¸ºé™æ€åº“
 
 #include <fstream>
 #include <vector>
@@ -11,75 +11,75 @@
 #include <cassert>
 #include <array>
 #include <memory>
-// ÃüÃû¿Õ¼ä
+// å‘½åç©ºé—´
 
 namespace fs = std::filesystem;
 
-using FileCount_uint = uint32_t;    // ÎÄ¼ş¼ÆÊı
-using FileSize_uint = uint64_t;     // ÎÄ¼ş´óĞ¡
-using FileNameSize_uint = uint32_t; // ÎÄ¼şÃû³¤¶È£¨Ò²ÊÇ·ûºÅÁ´½ÓµÄÂ·¾¶³¤¶È£©
-// Ñ¹ËõÏà¹ØÅäÖÃ
-using CompressStrategy_uint = uint8_t;        // Ñ¹Ëõ²ßÂÔ
-using CompressorVersion_uint = uint8_t;       // Ñ¹ËõÆ÷°æ±¾
-using HeaderOffsetSize_uint = uint8_t;        // Í·²¿Æ«ÒÆ³¤¶È
-using DirectoryOffsetSize_uint = uint32_t;    // Ä¿Â¼Æ«ÒÆ³¤¶È
-using UpSizeOfBuffer_uint = uint32_t;         // ·Ö¿éµÄ³¤¶È
-using SizeOfMagicNum_uint = uint32_t;         // Ä§Êı³¤¶È
-using SizeOfFlag_uint = uint8_t;              // ÎÄ¼ş±ê³¤¶È
-using IvSize_uint = __uint128_t;              // ivÍ·³¤¶È
-using FlagType = char;                        // ±êÖ¾ÀàĞÍ
-using DataBlock = std::vector<unsigned char>; // Êı¾İ¿éÀàĞÍ
+using FileCount_uint = uint32_t;    // æ–‡ä»¶è®¡æ•°
+using FileSize_uint = uint64_t;     // æ–‡ä»¶å¤§å°
+using FileNameSize_uint = uint32_t; // æ–‡ä»¶åé•¿åº¦ï¼ˆä¹Ÿæ˜¯ç¬¦å·é“¾æ¥çš„è·¯å¾„é•¿åº¦ï¼‰
+// å‹ç¼©ç›¸å…³é…ç½®
+using CompressStrategy_uint = uint8_t;        // å‹ç¼©ç­–ç•¥
+using CompressorVersion_uint = uint8_t;       // å‹ç¼©å™¨ç‰ˆæœ¬
+using HeaderOffsetSize_uint = uint8_t;        // å¤´éƒ¨åç§»é•¿åº¦
+using DirectoryOffsetSize_uint = uint32_t;    // ç›®å½•åç§»é•¿åº¦
+using UpSizeOfBuffer_uint = uint32_t;         // åˆ†å—çš„é•¿åº¦
+using SizeOfMagicNum_uint = uint32_t;         // é­”æ•°é•¿åº¦
+using SizeOfFlag_uint = uint8_t;              // æ–‡ä»¶æ ‡é•¿åº¦
+using IvSize_uint = __uint128_t;              // ivå¤´é•¿åº¦
+using FlagType = char;                        // æ ‡å¿—ç±»å‹
+using DataBlock = std::vector<unsigned char>; // æ•°æ®å—ç±»å‹
 
-constexpr CompressStrategy_uint STRATEGY = 0; // ²ßÂÔºÅ
+constexpr CompressStrategy_uint STRATEGY = 0; // ç­–ç•¥å·
 
-constexpr CompressorVersion_uint VERSION = 0; // °æ±¾ºÅ
+constexpr CompressorVersion_uint VERSION = 0; // ç‰ˆæœ¬å·
 
-constexpr SizeOfMagicNum_uint MAGIC_NUM = 0xDEADBEEF; // ÎÄ¼ş±êÊ¶Ä§Êı
-// ÊµÏÖ·Ö¸î·½°¸£¬Îª·Ö¿é¼ÓÃÜºÍ½âÑ¹Ê±µÄ·Ö¿é¶ÁÈ¡ÃÜÎÄ×ö×¼±¸
-constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 * 1024; // Æ«ÒÆÁ¿»º³åĞèÒªÈ·±£´óÓÚÎÄ¼şÍ·´óĞ¡HeaderSize
-// ´Ë´¦²ÉÓÃÈí¼ş²ã¶¯Ì¬Î¬»¤tempOffectÀ´ÊµÏÖ£¬±ÜÃâÁËÒòofstreamµÈÎÄ¼şÁ÷µÄÄ¬ÈÏ»º³å¶øµ¼ÖÂµÄÒÀÀµÎÄ¼ş´óĞ¡µÄÆ«ÒÆÁ¿¶ÁÈ¡Ê±µÄÍ¬²½À§ÄÑÎÊÌâ¡£´ËÍâ£¬Æµ·±µØ½øĞĞflush()¿ÉÄÜµ¼ÖÂÊı¾İ¶ªÊ§
-// ·Ö¸î±ê×¼ÉÏµÄÆ«ÒÆÁ¿²»°üº¬·Ö¸î±ê×¼±¾ÉíµÄ´óĞ¡£¬±ãÓÚËæÈ¡ËæÓÃ
-// »áÔÚÊı¾İÇø×÷ÎªÊ×Ñ¡µÄÆ«ÒÆÁ¿¹ÜÀí·½°¸À´Ê¹ÓÃ£¬±ÈÈç°´ÕÕÊı¾İ¿é¶ÔÏóÌá¹©µÄsize()·½·¨»ñÈ¡¿é´óĞ¡£¬¶ø²»ÊÇÒÀÀµÉÏÊö´æÔÚ¸üĞÂÑÓ³ÙµÄÎÄ¼şÁ÷Ìá¹©µÄsize·½·¨
+constexpr SizeOfMagicNum_uint MAGIC_NUM = 0xDEADBEEF; // æ–‡ä»¶æ ‡è¯†é­”æ•°
+// å®ç°åˆ†å‰²æ–¹æ¡ˆï¼Œä¸ºåˆ†å—åŠ å¯†å’Œè§£å‹æ—¶çš„åˆ†å—è¯»å–å¯†æ–‡åšå‡†å¤‡
+constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 * 1024*1024; // åç§»é‡ç¼“å†²éœ€è¦ç¡®ä¿å¤§äºæ–‡ä»¶å¤´å¤§å°HeaderSize
+// æ­¤å¤„é‡‡ç”¨è½¯ä»¶å±‚åŠ¨æ€ç»´æŠ¤tempOffectæ¥å®ç°ï¼Œé¿å…äº†å› ofstreamç­‰æ–‡ä»¶æµçš„é»˜è®¤ç¼“å†²è€Œå¯¼è‡´çš„ä¾èµ–æ–‡ä»¶å¤§å°çš„åç§»é‡è¯»å–æ—¶çš„åŒæ­¥å›°éš¾é—®é¢˜ã€‚æ­¤å¤–ï¼Œé¢‘ç¹åœ°è¿›è¡Œflush()å¯èƒ½å¯¼è‡´æ•°æ®ä¸¢å¤±
+// åˆ†å‰²æ ‡å‡†ä¸Šçš„åç§»é‡ä¸åŒ…å«åˆ†å‰²æ ‡å‡†æœ¬èº«çš„å¤§å°ï¼Œä¾¿äºéšå–éšç”¨
+// ä¼šåœ¨æ•°æ®åŒºä½œä¸ºé¦–é€‰çš„åç§»é‡ç®¡ç†æ–¹æ¡ˆæ¥ä½¿ç”¨ï¼Œæ¯”å¦‚æŒ‰ç…§æ•°æ®å—å¯¹è±¡æä¾›çš„size()æ–¹æ³•è·å–å—å¤§å°ï¼Œè€Œä¸æ˜¯ä¾èµ–ä¸Šè¿°å­˜åœ¨æ›´æ–°å»¶è¿Ÿçš„æ–‡ä»¶æµæä¾›çš„sizeæ–¹æ³•
 
-// ÎÄ¼ş±ê×¼Ïà¹Ø
+// æ–‡ä»¶æ ‡å‡†ç›¸å…³
 constexpr const SizeOfFlag_uint FLAG_SIZE = 1;
 constexpr const char DIRECTORY_FLAG = '0';
 constexpr const char FILE_FLAG = '1';
 constexpr const char SEPARATED_FLAG = '2';
 constexpr const char LOGICAL_ROOT_FLAG = '3';
 constexpr const char SYMBOL_LINK_FLAG = '4';
-// ×¢ÒâÖ±½ÓÊ¹ÓÃsizeof·µ»ØµÄ²ÎÊı½øĞĞÔËËãÊ±£¬Ğ¡ÓÚuint64_tµÄÀàĞÍ»á±»×Ô¶¯ÀàĞÍ×ª»»ÎªULL£¬ĞèÒª°´ĞèÇ¿ÖÆ×ª»»ºóÔÙ²ÎÓëÔËËã
+// æ³¨æ„ç›´æ¥ä½¿ç”¨sizeofè¿”å›çš„å‚æ•°è¿›è¡Œè¿ç®—æ—¶ï¼Œå°äºuint64_tçš„ç±»å‹ä¼šè¢«è‡ªåŠ¨ç±»å‹è½¬æ¢ä¸ºULLï¼Œéœ€è¦æŒ‰éœ€å¼ºåˆ¶è½¬æ¢åå†å‚ä¸è¿ç®—
 
-// Ä¿Â¼±ê×¼µÄ»ù´¡´óĞ¡£¨²»º¬±ä³¤µÄÎÄ¼şÃû£¬ĞèÒª×ÔĞĞÎ¬»¤£©
+// ç›®å½•æ ‡å‡†çš„åŸºç¡€å¤§å°ï¼ˆä¸å«å˜é•¿çš„æ–‡ä»¶åï¼Œéœ€è¦è‡ªè¡Œç»´æŠ¤ï¼‰
 constexpr const uint8_t DIRECTORY_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
     sizeof(FileNameSize_uint) +
-    // ´ËĞĞÓ¦Îª±ä³¤ÎÄ¼şÃû£¬ÎŞ·¨Ô¤ÏÈ¶¨Òå,Ğè°´Çé¿ö´¦Àí
+    // æ­¤è¡Œåº”ä¸ºå˜é•¿æ–‡ä»¶åï¼Œæ— æ³•é¢„å…ˆå®šä¹‰,éœ€æŒ‰æƒ…å†µå¤„ç†
     sizeof(FileCount_uint);
 
-// ÎÄ¼ş±ê×¼µÄ»ù´¡´óĞ¡£¨²»º¬±ä³¤µÄÎÄ¼şÃû£¬ĞèÒª×ÔĞĞÎ¬»¤£©
+// æ–‡ä»¶æ ‡å‡†çš„åŸºç¡€å¤§å°ï¼ˆä¸å«å˜é•¿çš„æ–‡ä»¶åï¼Œéœ€è¦è‡ªè¡Œç»´æŠ¤ï¼‰
 constexpr const uint8_t FILE_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
     sizeof(FileNameSize_uint) +
-    // ´ËĞĞÓ¦Îª±ä³¤ÎÄ¼şÃû£¬ÎŞ·¨Ô¤ÏÈ¶¨Òå,Ğè°´Çé¿ö´¦Àí
+    // æ­¤è¡Œåº”ä¸ºå˜é•¿æ–‡ä»¶åï¼Œæ— æ³•é¢„å…ˆå®šä¹‰,éœ€æŒ‰æƒ…å†µå¤„ç†
     sizeof(FileSize_uint) * 2;
 
-// ·Ö¸î±ê×¼µÄ»ù´¡´óĞ¡
+// åˆ†å‰²æ ‡å‡†çš„åŸºç¡€å¤§å°
 constexpr const uint8_t SEPARATED_STANDARD_SIZE =
     FLAG_SIZE +
     sizeof(DirectoryOffsetSize_uint) +
     sizeof(IvSize_uint);
 
-// ·ûºÅÁ´½Ó±ê×¼µÄ»ù´¡´óĞ¡
+// ç¬¦å·é“¾æ¥æ ‡å‡†çš„åŸºç¡€å¤§å°
 constexpr const uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
     sizeof(FileNameSize_uint) +
     sizeof(FileNameSize_uint)
-    // ±ä³¤ÎÄ¼şÃû
-    // ±ä³¤ÎÄ¼şÂ·¾¶
+    // å˜é•¿æ–‡ä»¶å
+    // å˜é•¿æ–‡ä»¶è·¯å¾„
     ;
 
-// ÎÄ¼şÍ·µÄ´óĞ¡
+// æ–‡ä»¶å¤´çš„å¤§å°
 constexpr const uint8_t HEADER_SIZE =
     sizeof(MAGIC_NUM) +                // 4B
     sizeof(CompressStrategy_uint) +    // 1B
@@ -87,7 +87,7 @@ constexpr const uint8_t HEADER_SIZE =
     sizeof(HeaderOffsetSize_uint) +    // 1B
     sizeof(DirectoryOffsetSize_uint) + // 4B
     sizeof(MAGIC_NUM);                 // 4B
-#pragma pack(1)                        // ½ûÓÃÌî³ä£¬½ôÃÜ¶ÁÈ¡
+#pragma pack(1)                        // ç¦ç”¨å¡«å……ï¼Œç´§å¯†è¯»å–
 struct Header
 {
     SizeOfMagicNum_uint magicNum_1 = 0;

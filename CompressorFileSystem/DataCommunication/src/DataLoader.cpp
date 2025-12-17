@@ -51,7 +51,6 @@ void DataLoader::dataLoader(FileSize_uint readSize, std::ifstream &decompression
     try
     {
 
-        // 清空并重新分�?,而不是resize
         data.clear();
         data.resize(readSize);
 

@@ -27,13 +27,13 @@ fs::path Directory_FileParser::pathConnector(std::string &fileName)
 
 void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
 {
-    // ½âÎöÎÄ¼şÃûÆ«ÒÆÁ¿
+    // è§£ææ–‡ä»¶ååç§»é‡
     FileNameSize_uint fileNameSize = 0;
     std::string fileName;
     fs::path pathToProcess;
     fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
 
-    // ½âÎöÎÄ¼şÔ­´óĞ¡
+    // è§£ææ–‡ä»¶åŸå¤§å°
     FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
     FileSize_uint compressedSize_or_Offset;
     if (parserMode == 1) // for compression
@@ -59,13 +59,13 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
 
 void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
 {
-    // ½âÎöÄ¿Â¼ÃûÆ«ÒÆÁ¿
-    // ½âÎöÄ¿Â¼Ãû£¬ºóĞøÆ´½ÓÎª¾ø¶ÔÂ·¾¶Ö®ºóÈë¶Ó
+    // è§£æç›®å½•ååç§»é‡
+    // è§£æç›®å½•åï¼Œåç»­æ‹¼æ¥ä¸ºç»å¯¹è·¯å¾„ä¹‹åå…¥é˜Ÿ
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
 
-    // ½âÎöÏÂ¼¶ÎÄ¼şÊıÁ¿
+    // è§£æä¸‹çº§æ–‡ä»¶æ•°é‡
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
     fs::path pathToProcess = pathConnector(directoryName);
@@ -78,14 +78,14 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
 {
     FileNameSize_uint directoryNameSize = 0;
     std::string directoryName;
-    // ½âÎöÂß¼­¸ù
+    // è§£æé€»è¾‘æ ¹
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
-    // ½âÎöÏÂ¼¶ÎÄ¼şÊıÁ¿
+    // è§£æä¸‹çº§æ–‡ä»¶æ•°é‡
     FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
     countOfKidDirectory = count;
 
-    if (parserMode == 2) // ½âÑ¹Ä£Ê½,°ÑÂß¼­¸ùĞ´½ø¶ÓÁĞ
+    if (parserMode == 2) // è§£å‹æ¨¡å¼,æŠŠé€»è¾‘æ ¹å†™è¿›é˜Ÿåˆ—
     {
         fs::path root = transfer.transPath(rootForDecompression);
         fs::path file = transfer.transPath(directoryName);
@@ -105,9 +105,9 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
                 FileNameSize_uint fileNameSize = 0;
                 std::string fileName;
                 fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
-                // ½âÎöÎÄ¼şÔ­´óĞ¡
+                // è§£ææ–‡ä»¶åŸå¤§å°
                 FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
-                // ¼ÇÂ¼µÈ»áĞèÒª»ØÌîµÄÎ»ÖÃ
+                // è®°å½•ç­‰ä¼šéœ€è¦å›å¡«çš„ä½ç½®
                 FileSize_uint compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
                 bufferPtr += sizeof(FileSize_uint);
                 Directory_FileDetails fileDetails(
@@ -123,7 +123,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
                 FileNameSize_uint directoryNameSize = 0;
                 std::string directoryName;
                 fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
-                // ½âÎöÏÂ¼¶ÎÄ¼şÊıÁ¿
+                // è§£æä¸‹çº§æ–‡ä»¶æ•°é‡
                 FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
                 Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
@@ -161,7 +161,7 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount
         bool noDirec = false;
         rootParser(bufferPtr, filePathToScan, countOfKidDirectory, noDirec);
         if (!noDirec)
-            countOfKidDirectory = directoryQueue.front().second; // Æô¶¯µİÍÆ
+            countOfKidDirectory = directoryQueue.front().second; // å¯åŠ¨é€’æ¨
         break;
     }
 

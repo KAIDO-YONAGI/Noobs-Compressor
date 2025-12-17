@@ -8,7 +8,7 @@ class HeaderWriter_Interface
 {
 public:
     virtual ~HeaderWriter_Interface() = default;
-    virtual void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) = 0; //=0:±êÃ÷ÊÇ´¿Ğéº¯Êı£¬±ØĞëÖØĞ´£¬Ã»ÓĞ=0Ôò¿ÉÑ¡ÔñĞÔÖØĞ´
+    virtual void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) = 0; //=0:æ ‡æ˜æ˜¯çº¯è™šå‡½æ•°ï¼Œå¿…é¡»é‡å†™ï¼Œæ²¡æœ‰=0åˆ™å¯é€‰æ‹©æ€§é‡å†™
     virtual void writeDirectory(
         std::ofstream &outFile,
         const  std::vector<std::string> &filePathToScan,
@@ -30,16 +30,16 @@ public:
 
 class HeaderWriter
 {
-    std::unique_ptr<HeaderWriter_Interface> writer; // ÖÇÄÜÖ¸Õë£¬Ö§³ÖÔËĞĞÊ±ÇĞ»»Ä£Ê½
+    std::unique_ptr<HeaderWriter_Interface> writer; // æ™ºèƒ½æŒ‡é’ˆï¼Œæ”¯æŒè¿è¡Œæ—¶åˆ‡æ¢æ¨¡å¼
 
 public:
-    HeaderWriter() : writer(std::make_unique<HeaderWriter_v0>()) {} // Ä¬ÈÏÊ¹ÓÃ v0 °æ±¾
+    HeaderWriter() : writer(std::make_unique<HeaderWriter_v0>()) {} // é»˜è®¤ä½¿ç”¨ v0 ç‰ˆæœ¬
     void headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot);
-    // Ö§³ÖÖ¸¶¨°æ±¾
+    // æ”¯æŒæŒ‡å®šç‰ˆæœ¬
     explicit HeaderWriter(std::unique_ptr<HeaderWriter_Interface> impl)
         : writer(std::move(impl)) {}
 
-    // ·â×°ºóµÄµ÷ÓÃ·½·¨
+    // å°è£…åçš„è°ƒç”¨æ–¹æ³•
     void writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
     {
         writer->writeHeader(outFile, fullOutPath);

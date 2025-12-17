@@ -8,14 +8,14 @@
 class Directory_FileProcessor
 {
     /*
-    scanFlow()°´BFS£¨²ãĞò±éÀú£©É¨ÃèÖ¸¶¨Ä¿Â¼ÏÂËùÓĞÎÄ¼şµÄº¯Êı¡£°üº¬ÁË¶ÓÁĞÂß¼­£¬ÓÃÓÚ´¦ÀíbinaryIO_Reader()µÄÑ­»·É¨Ãèµ½µÄÄ¿Â¼
-    directory_fileProcessor()Ö÷º¯Êı¡£²ÎÊıconst const std::vector<std::string> &filePathToScan£¬ÓÃÓÚ´¦Àí¶àÎÄ¼ş£¨Ä¿Â¼£©ÈÎÎñ
+    scanFlow()æŒ‰BFSï¼ˆå±‚åºéå†ï¼‰æ‰«ææŒ‡å®šç›®å½•ä¸‹æ‰€æœ‰æ–‡ä»¶çš„å‡½æ•°ã€‚åŒ…å«äº†é˜Ÿåˆ—é€»è¾‘ï¼Œç”¨äºå¤„ç†binaryIO_Reader()çš„å¾ªç¯æ‰«æåˆ°çš„ç›®å½•
+    directory_fileProcessor()ä¸»å‡½æ•°ã€‚å‚æ•°const const std::vector<std::string> &filePathToScanï¼Œç”¨äºå¤„ç†å¤šæ–‡ä»¶ï¼ˆç›®å½•ï¼‰ä»»åŠ¡
     */
 private:
     Transfer transfer;
     std::ofstream &outFile;
     Directory_FIleQueueInterface directoryQueue;
-    FilePath file; // ´´½¨¸÷¸ö¹¤¾ßÀàµÄ¶ÔÏó
+    FilePath file; // åˆ›å»ºå„ä¸ªå·¥å…·ç±»çš„å¯¹è±¡
     BinaryIO_Writter *BIO;
     NumsWriter numWriter;
 

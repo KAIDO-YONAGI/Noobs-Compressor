@@ -5,10 +5,10 @@
 #include "Directory_FileDetails.h"
 
 /*
-TransferÀà£ºÎªfilesystemµÄfs::pathÀàĞÍÌá¹©¿í×Ö·û×ª»»·½°¸£¨Ö÷Òª´¦ÀíÖĞÎÄÂ·¾¶ÎÊÌâ£©£¬ÇÒ½öÔÚ×ÔĞĞ´´½¨fs::pathÊ±Ê¹ÓÃ£¬ÓÃÓÚÊäÈëĞèÒªSFC´¦ÀíµÄÂ·¾¶
-MagicNumWriterÀà£ºĞ´Ä§ÊıµÄ
-Directory_FileQueue£ºÄ¿Â¼Â·¾¶´æÈ¡ÌØ»¯µÄ¶ÓÁĞ
-Locator£ºÊ¹ÓÃÆ«ÒÆÁ¿µÄ¶¨Î»Æ÷
+Transferç±»ï¼šä¸ºfilesystemçš„fs::pathç±»å‹æä¾›å®½å­—ç¬¦è½¬æ¢æ–¹æ¡ˆï¼ˆä¸»è¦å¤„ç†ä¸­æ–‡è·¯å¾„é—®é¢˜ï¼‰ï¼Œä¸”ä»…åœ¨è‡ªè¡Œåˆ›å»ºfs::pathæ—¶ä½¿ç”¨ï¼Œç”¨äºè¾“å…¥éœ€è¦SFCå¤„ç†çš„è·¯å¾„
+MagicNumWriterç±»ï¼šå†™é­”æ•°çš„
+Directory_FileQueueï¼šç›®å½•è·¯å¾„å­˜å–ç‰¹åŒ–çš„é˜Ÿåˆ—
+Locatorï¼šä½¿ç”¨åç§»é‡çš„å®šä½å™¨
 */
 class Transfer
 {
@@ -27,7 +27,7 @@ public:
     {
         if (!ofstream)
             throw std::runtime_error("writeBinaryNums() Error-noFile");
-        // ±àÒëÊ±¼ì²é
+        // ç¼–è¯‘æ—¶æ£€æŸ¥
 
         static_assert(std::is_trivially_copyable_v<T>,
                       "Cannot write non-trivially-copyable type");
@@ -35,17 +35,17 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // ²»×öÀàĞÍ¼ì²é£¬Ö±½Ó½øĞĞÀàĞÍ×ª»»
+        if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // ä¸åšç±»å‹æ£€æŸ¥ï¼Œç›´æ¥è¿›è¡Œç±»å‹è½¬æ¢
         {
             throw std::runtime_error("writeBinaryNums()Error-Failed to write");
         }
     }
     template <typename T>
-    void writeBinaryNums(T value, std::fstream &fstream) // Õë¶ÔĞ´ÈëfstreamµÄÖØÔØ
+    void writeBinaryNums(T value, std::fstream &fstream) // é’ˆå¯¹å†™å…¥fstreamçš„é‡è½½
     {
         if (!fstream)
             throw std::runtime_error("1writeBinaryNums() Error-noFile");
-        // ±àÒëÊ±¼ì²é
+        // ç¼–è¯‘æ—¶æ£€æŸ¥
 
         static_assert(std::is_trivially_copyable_v<T>,
                       "Cannot write non-trivially-copyable type");
@@ -53,7 +53,7 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // ²»×öÀàĞÍ¼ì²é£¬Ö±½Ó½øĞĞÀàĞÍ×ª»»
+        if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // ä¸åšç±»å‹æ£€æŸ¥ï¼Œç›´æ¥è¿›è¡Œç±»å‹è½¬æ¢
         {
             throw std::runtime_error("1writeBinaryNums()Error-Failed to write");
         }

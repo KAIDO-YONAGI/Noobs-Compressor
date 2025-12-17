@@ -25,10 +25,10 @@ void BinaryIO_Writter::binaryIO_Writer(FilePath &file, Directory_FIleQueueInterf
             else if (entry.is_symlink())
             {
                 File_Direc = false;
-                fileSize = 1; // ´óĞ¡ÎªÒ»£¬½ö±íÊ¾ÊÇ·ûºÅÁ´½Ó
+                fileSize = 1; // å¤§å°ä¸ºä¸€ï¼Œä»…è¡¨ç¤ºæ˜¯ç¬¦å·é“¾æ¥
             }
             else
-                continue; // ½ûÓÃÈı¸ö»ù±¾ÎÄ¼şÀàĞÍÖ®ÍâµÄÎÄ¼şÀàĞÍ
+                continue; // ç¦ç”¨ä¸‰ä¸ªåŸºæœ¬æ–‡ä»¶ç±»å‹ä¹‹å¤–çš„æ–‡ä»¶ç±»å‹
             name = entry.path().filename().string();
             fullPath = entry.path();
             sizeOfName = name.size();
@@ -37,7 +37,7 @@ void BinaryIO_Writter::binaryIO_Writer(FilePath &file, Directory_FIleQueueInterf
                 sizeOfName,
                 fileSize,
                 File_Direc,
-                fullPath); // ´´½¨details
+                fullPath); // åˆ›å»ºdetails
 
             writeStorageStandard(details, directoryQueue, tempOffset, offset);
         }
@@ -47,39 +47,39 @@ void BinaryIO_Writter::binaryIO_Writer(FilePath &file, Directory_FIleQueueInterf
         std::cerr << "binaryIO_Writer()-Error: " << e.what() << "\n";
     }
 }
-// Ê¶±ğ´æ´¢±ê×¼²¢ÇÒ·Ö·¢µ½¸÷¸öĞ´Èëº¯Êı
+// è¯†åˆ«å­˜å‚¨æ ‡å‡†å¹¶ä¸”åˆ†å‘åˆ°å„ä¸ªå†™å…¥å‡½æ•°
 void BinaryIO_Writter::writeStorageStandard(Directory_FileDetails &details, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
 
-    if (details.getIsFile()) // ÎÄ¼ş¶ÔÓ¦µÄ´¦Àí
+    if (details.getIsFile()) // æ–‡ä»¶å¯¹åº”çš„å¤„ç†
     {
         writeFileStandard(details, tempOffset);
     }
-    else if ((!details.getIsFile()) && (details.getFileSize() == 0)) // Ä¿Â¼¶ÔÓ¦µÄ´¦Àí
+    else if ((!details.getIsFile()) && (details.getFileSize() == 0)) // ç›®å½•å¯¹åº”çš„å¤„ç†
     {
         FileCount_uint countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
-        directoryQueue.Directory_FileQueue.push({details, countOfThisDirectory}); // Èç¹ûÊÇÄ¿Â¼Ôò´æÈëÆädetailsÓëÆä×ÓÎÄ¼şÊıÄ¿µÄstd::pair µ½¶ÓÁĞÖĞ±¸ÓÃ
+        directoryQueue.Directory_FileQueue.push({details, countOfThisDirectory}); // å¦‚æœæ˜¯ç›®å½•åˆ™å­˜å…¥å…¶detailsä¸å…¶å­æ–‡ä»¶æ•°ç›®çš„std::pair åˆ°é˜Ÿåˆ—ä¸­å¤‡ç”¨
         writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
     }
     else if ((!details.getIsFile()) && (details.getFileSize() == 1))
     {
         writeSymbolLinkStandard(details, tempOffset);
     }
-    if (tempOffset >= BUFFER_SIZE) // ´ïµ½»º³å´óĞ¡ºóĞ´Èë·Ö¸î±ê×¼
+    if (tempOffset >= BUFFER_SIZE) // è¾¾åˆ°ç¼“å†²å¤§å°åå†™å…¥åˆ†å‰²æ ‡å‡†
     {
 
         writeSeparatedStandard(tempOffset, offset);
         offset += tempOffset;
-        // Ğ´ÈëÍê±Ïºó½«µ±Ç°Ïà¶ÔÎ»ÖÃ£¨ÓÃ¶à¸ö´æ´¢±ê×¼Æ«ÒÆÁ¿ÀÛ¼ÓÎ¬»¤µÄtempOffset£©¼Óµ½ÎÄ¼şµÄ×ÜÆ«ÒÆÁ¿offsetÉÏ£¬ÒÔÎ¬»¤Õû¸öÆ«ÒÆÂß¼­
-        tempOffset = 0; // Ïà¶ÔÎ»ÖÃ¹éÁã
+        // å†™å…¥å®Œæ¯•åå°†å½“å‰ç›¸å¯¹ä½ç½®ï¼ˆç”¨å¤šä¸ªå­˜å‚¨æ ‡å‡†åç§»é‡ç´¯åŠ ç»´æŠ¤çš„tempOffsetï¼‰åŠ åˆ°æ–‡ä»¶çš„æ€»åç§»é‡offsetä¸Šï¼Œä»¥ç»´æŠ¤æ•´ä¸ªåç§»é€»è¾‘
+        tempOffset = 0; // ç›¸å¯¹ä½ç½®å½’é›¶
 
-        // Ô¤ÁôÏÂÒ»´Î»ØÌîµÄÎ»ÖÃ
+        // é¢„ç•™ä¸‹ä¸€æ¬¡å›å¡«çš„ä½ç½®
         writeBlankSeparatedStandard();
-        offset += SEPARATED_STANDARD_SIZE; // ¸üĞÂoffset£¬±£Ö¤»ØÌîÕıÈ·¡£²»¸üĞÂtempOffset£¬ÎªµÄÊÇ½«·Ö¸î±ê×¼µÄ´óĞ¡ÅÅ³ıÔÚÍâ£¬±ãÓÚÄÃµ½Æ«ÒÆÁ¿ÄÜ²»¾­±ä»»Ö±½Ó²Ù×÷¶ÔÓ¦Î»ÖÃµÄÊı¾İ
+        offset += SEPARATED_STANDARD_SIZE; // æ›´æ–°offsetï¼Œä¿è¯å›å¡«æ­£ç¡®ã€‚ä¸æ›´æ–°tempOffsetï¼Œä¸ºçš„æ˜¯å°†åˆ†å‰²æ ‡å‡†çš„å¤§å°æ’é™¤åœ¨å¤–ï¼Œä¾¿äºæ‹¿åˆ°åç§»é‡èƒ½ä¸ç»å˜æ¢ç›´æ¥æ“ä½œå¯¹åº”ä½ç½®çš„æ•°æ®
     }
 }
-// Ä¿Â¼±ê×¼Ğ´Èëº¯Êı
+// ç›®å½•æ ‡å‡†å†™å…¥å‡½æ•°
 void BinaryIO_Writter::writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
 {
     FileNameSize_uint sizeOfName = details.getSizeOfName();
@@ -89,42 +89,42 @@ void BinaryIO_Writter::writeDirectoryStandard(Directory_FileDetails &details, Fi
     outFile.write(&DIRECTORY_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(sizeOfName, outFile);
     outFile.write(details.getName().c_str(), sizeOfName);
-    numWriter.writeBinaryNums(count, outFile); // Ğ´ÈëÎÄ¼şÊıÄ¿
+    numWriter.writeBinaryNums(count, outFile); // å†™å…¥æ–‡ä»¶æ•°ç›®
 }
-// ÎÄ¼ş±ê×¼Ğ´Èëº¯Êı
+// æ–‡ä»¶æ ‡å‡†å†™å…¥å‡½æ•°
 void BinaryIO_Writter::writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
     FileNameSize_uint sizeOfName = details.getSizeOfName();
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(&FILE_FLAG, FLAG_SIZE);                       // ÏÈĞ´ÎÄ¼ş±ê
-    numWriter.writeBinaryNums(sizeOfName, outFile);            // Ğ´ÈëÎÄ¼şÃûÆ«ÒÆÁ¿
-    outFile.write(details.getName().c_str(), sizeOfName);      // Ğ´ÈëÎÄ¼şÃû
-    numWriter.writeBinaryNums(details.getFileSize(), outFile); // Ğ´ÈëÎÄ¼ş´óĞ¡
-    numWriter.writeBinaryNums(FileSize_uint(0), outFile);      // Ô¤Áô´óĞ¡
+    outFile.write(&FILE_FLAG, FLAG_SIZE);                       // å…ˆå†™æ–‡ä»¶æ ‡
+    numWriter.writeBinaryNums(sizeOfName, outFile);            // å†™å…¥æ–‡ä»¶ååç§»é‡
+    outFile.write(details.getName().c_str(), sizeOfName);      // å†™å…¥æ–‡ä»¶å
+    numWriter.writeBinaryNums(details.getFileSize(), outFile); // å†™å…¥æ–‡ä»¶å¤§å°
+    numWriter.writeBinaryNums(FileSize_uint(0), outFile);      // é¢„ç•™å¤§å°
 }
-// ·Ö¸î±ê×¼Ğ´Èëº¯Êı£¨»ØÌî£©
+// åˆ†å‰²æ ‡å‡†å†™å…¥å‡½æ•°ï¼ˆå›å¡«ï¼‰
 void BinaryIO_Writter::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
 {
     locator.offsetLocator(outFile, offset + FLAG_SIZE);
     numWriter.writeBinaryNums(tempOffset, outFile);
     outFile.seekp(0, std::ios::end);
 }
-// ¿Õ·Ö¸î±ê×¼Ğ´Èëº¯Êı
+// ç©ºåˆ†å‰²æ ‡å‡†å†™å…¥å‡½æ•°
 void BinaryIO_Writter::writeBlankSeparatedStandard()
 {
     outFile.write(&SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), outFile);
     numWriter.writeBinaryNums(IvSize_uint(0), outFile);
 }
-// ÓÉÓÚ¼ÓÃÜÄ£Ê½iv°üº¬ÔÚÊı¾İÇøÄÚ£¬Ö±½ÓĞ´Èë²»º¬iv²¿·ÖµÄ¿Õ·Ö¸î±ê×¼
+// ç”±äºåŠ å¯†æ¨¡å¼ivåŒ…å«åœ¨æ•°æ®åŒºå†…ï¼Œç›´æ¥å†™å…¥ä¸å«ivéƒ¨åˆ†çš„ç©ºåˆ†å‰²æ ‡å‡†
 void BinaryIO_Writter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
 {
     File.write(&SEPARATED_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), File);
 }
-// ·ûºÅÁ´½Ó±ê×¼Ğ´Èëº¯Êı
+// ç¬¦å·é“¾æ¥æ ‡å‡†å†™å…¥å‡½æ•°
 void BinaryIO_Writter::writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
 {
     FileNameSize_uint sizeOfName = details.getSizeOfName();
@@ -148,7 +148,7 @@ void BinaryIO_Writter::writeLogicalRoot(const std::string &logicalRoot, const Fi
     outFile.write(&LOGICAL_ROOT_FLAG, FLAG_SIZE);
     numWriter.writeBinaryNums(sizeOfName, outFile);
     outFile.write(logicalRoot.c_str(), sizeOfName);
-    numWriter.writeBinaryNums(count, outFile); // Ğ´ÎÄ¼şÊı
+    numWriter.writeBinaryNums(count, outFile); // å†™æ–‡ä»¶æ•°
 }
 void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset)
 {
@@ -167,9 +167,9 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
             throw("directory_fileProcessor()-Error:file Not Exist: " + sPath.string() + "\n");
         }
 
-        fs::path parentPath = file.getFilePathToScan(); // »ñÈ¡¸ùÄ¿Â¼
+        fs::path parentPath = file.getFilePathToScan(); // è·å–æ ¹ç›®å½•
 
-        // ÏÈĞ´Èë¸ùÄ¿Â¼(»òÎÄ¼ş)×ÔÉí£¨ÊÖ¶¯¹¹Ôì£©
+        // å…ˆå†™å…¥æ ¹ç›®å½•(æˆ–æ–‡ä»¶)è‡ªèº«ï¼ˆæ‰‹åŠ¨æ„é€ ï¼‰
 
         std::string rootName = parentPath.filename().string();
         FileNameSize_uint rootNameSize = rootName.size();
@@ -177,11 +177,11 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
         FileSize_uint fileSize = File_Direc ? fs::file_size(parentPath) : 0;
 
         Directory_FileDetails rootDetails(
-            rootName,     // Ä¿Â¼Ãû (Èç "Folder")
-            rootNameSize, // Ãû³Æ³¤¶È
-            fileSize,     // ÎÄ¼ş´óĞ¡(Èç¹ûÊÇÎÄ¼ş)
-            File_Direc,   // ÊÇ·ñÎª³£¹æÎÄ¼ş
-            parentPath      // ÍêÕûÂ·¾¶
+            rootName,     // ç›®å½•å (å¦‚ "Folder")
+            rootNameSize, // åç§°é•¿åº¦
+            fileSize,     // æ–‡ä»¶å¤§å°(å¦‚æœæ˜¯æ–‡ä»¶)
+            File_Direc,   // æ˜¯å¦ä¸ºå¸¸è§„æ–‡ä»¶
+            parentPath      // å®Œæ•´è·¯å¾„
         );
         const fs::directory_entry entry(parentPath);
         if (entry.is_regular_file())
@@ -195,7 +195,7 @@ void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> 
         }
         else if (entry.is_symlink())
         {
-            rootDetails.setFileSize(1);//ÀûÓÃ´óĞ¡Çø·Ö·ûºÅÁ´½Ó
+            rootDetails.setFileSize(1);//åˆ©ç”¨å¤§å°åŒºåˆ†ç¬¦å·é“¾æ¥
             writeSymbolLinkStandard(rootDetails, tempOffset);
         }
     }
