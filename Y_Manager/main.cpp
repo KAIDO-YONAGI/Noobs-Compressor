@@ -4,8 +4,6 @@
 #include <windows.h>
 #include <limits>
 
-namespace fs = std::filesystem;
-
 // Windows API路径处理辅助函数
 fs::path make_path(const std::string &utf8_str)
 {
@@ -228,19 +226,33 @@ void runCompressionMode(const std::string &basePath)
         else
         {
             // 使用Windows API路径检查
-            if (!path_exists(path))
+            if (path_exists(path))
             {
+                // 路径存在，添加到队列
+                filePathToScan.push_back(path);
+                pathCount++;
+            }
+            else
+            {
+                // 路径不存在，询问用户是否继续
                 std::cout << "Warning: Path \"" << path << "\" does not exist! Continue anyway? (Y/N): ";
                 std::string confirm;
                 std::getline(std::cin, confirm);
                 confirm = removeQuotes(confirm);
-                if (confirm != "Y" && confirm != "y")
+                
+                if (confirm == "Y" || confirm == "y")
                 {
+                    // 用户选择继续，但路径不存在，不添加到队列
+                    // 路径计数不变，继续下一个路径的输入
                     continue;
                 }
+                else
+                {
+                    // 用户选择不继续，重新询问当前路径
+                    std::cout << "Skipping this path. Please enter a new path for Path " << pathCount << ".\n";
+                    continue;  // 重新询问当前路径
+                }
             }
-            filePathToScan.push_back(path);
-            pathCount++;
         }
     }
 
