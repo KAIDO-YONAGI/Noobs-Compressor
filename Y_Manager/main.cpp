@@ -9,12 +9,9 @@ int main()
     std::string logicalRoot, compressionFilePath;
     const char *key;
     // filePathToScan.push_back("D:\\1gal\\TEST");
-    // filePathToScan.push_back("D:\\1gal\\TEST\\123意514.txt");
-    // filePathToScan.push_back("D:\\1gal\\TEST\\我");
-    // filePathToScan.push_back("D:\\1gal\\Goods\\拔作岛\\2\\root.pfs.020");
-    // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
-    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules\\adm-zip\\methods\\deflater.js");
-    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules\\pe-library\\dist\\_esm\\type");
+    filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules");
+    // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules\\adm-zip\\methods\\deflater.js");
+    // filePathToScan.push_back("D:\\1gal\\1h\\Tool\\node_modules\\pe-library\\dist\\_esm\\type\\index.d.ts");
 
     logicalRoot = "YONAGI";
     compressionFilePath = "C:\\Users\\12248\\Desktop\\Secure Files Compressor\\Y_Manager\\bin\\挚爱的时光.bin";

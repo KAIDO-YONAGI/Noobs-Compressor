@@ -12,7 +12,8 @@
       "Bash(sort:*)",
       "Bash(./bin/main.exe:*)",
       "Bash(timeout 10 ./bin/main.exe:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

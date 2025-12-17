@@ -50,28 +50,20 @@ void DataLoader::dataLoader(FileSize_uint readSize, std::ifstream &decompression
 {
     try
     {
-        std::cout << "[DataLoader DEBUG] dataLoader called with readSize: " << readSize << "\n";
-        std::cout << "[DataLoader DEBUG] Current data.size(): " << data.size() << "\n";
-        std::cout << "[DataLoader DEBUG] Current data.capacity(): " << data.capacity() << "\n";
 
-        // 清空并重新分配,而不是resize
+        // 清空并重新分�?,而不是resize
         data.clear();
         data.resize(readSize);
 
-        std::cout << "[DataLoader DEBUG] After resize, data.size(): " << data.size() << "\n";
-        std::cout << "[DataLoader DEBUG] About to read from file...\n";
 
         decompressionFile.read(reinterpret_cast<char *>(data.data()), readSize);
 
-        std::cout << "[DataLoader DEBUG] Read completed, gcount(): " << decompressionFile.gcount() << "\n";
 
         data.resize(decompressionFile.gcount());
 
-        std::cout << "[DataLoader DEBUG] Final data.size(): " << data.size() << "\n";
     }
     catch (const std::exception &e)
     {
-        std::cout << "[DataLoader DEBUG] Exception caught: " << e.what() << "\n";
         throw std::runtime_error("Error-dataLaoder_decompression()");
     }
 }
