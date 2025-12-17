@@ -9,7 +9,7 @@
 #include "My_Aes.h"
 
 class CompressionLoop
-{
+{ 
 private:
     Transfer transfer;
     std::string compressionFilePath;
