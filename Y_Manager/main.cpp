@@ -462,35 +462,27 @@ void runDecompressionMode()
             {
                 outputDirectory = getNonEmptyInput(
                     "Enter output directory (default: " + currentDir + "): ",
-                    "");
+                    ".",
+                    true);
 
-                // 如果用户没有输入，使用当前目录
-                if (outputDirectory.empty())
+                // 检查目录是否存在
+                try
                 {
-                    outputDirectory = ".";
-                    validDirectorySelected = true;
+                    auto output_path = make_path(outputDirectory);
+                    if (fs::exists(output_path) && fs::is_directory(output_path))
+                    {
+                        validDirectorySelected = true;
+                    }
+                    else
+                    {
+                        std::cerr << "Error: Directory \"" << outputDirectory << "\" does not exist!\n";
+                        std::cout << "Please enter a valid existing directory.\n";
+                    }
                 }
-                else
+                catch (const std::exception &e)
                 {
-                    // 检查目录是否存在
-                    try
-                    {
-                        auto output_path = make_path(outputDirectory);
-                        if (fs::exists(output_path) && fs::is_directory(output_path))
-                        {
-                            validDirectorySelected = true;
-                        }
-                        else
-                        {
-                            std::cerr << "Error: Directory \"" << outputDirectory << "\" does not exist!\n";
-                            std::cout << "Please enter a valid existing directory.\n";
-                        }
-                    }
-                    catch (const std::exception &e)
-                    {
-                        std::cerr << "Error: Failed to check directory: " << e.what() << "\n";
-                        std::cout << "Please try again.\n";
-                    }
+                    std::cerr << "Error: Failed to check directory: " << e.what() << "\n";
+                    std::cout << "Please try again.\n";
                 }
             }
 
@@ -544,7 +536,26 @@ void runDecompressionMode()
                 DecompressionLoop decompressor(inputFilePath.string());
                 decompressor.decompressionLoop(aes);
 
-                std::cout << "\n>>> Decompression successful! Files output to: " << outputDirectory << "\n";
+                // 将输出路径转换为绝对路径用于显示
+                std::string displayPath = outputDirectory;
+                try
+                {
+                    auto output_path = make_path(outputDirectory);
+                    if (!output_path.is_absolute())
+                    {
+                        displayPath = fs::absolute(output_path).string();
+                    }
+                    else
+                    {
+                        displayPath = output_path.string();
+                    }
+                }
+                catch (...)
+                {
+                    // 如果转换失败，就使用原始路径
+                }
+
+                std::cout << "\n>>> Decompression successful! Files output to: " << displayPath << "\n";
                 operationComplete = true;
             }
             catch (const std::exception &e)
