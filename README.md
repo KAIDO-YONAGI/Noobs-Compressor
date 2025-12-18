@@ -1,4 +1,4 @@
-### SFC.exe-windows only
+# SFC.exe-windows only
 
 - 程序具有自行实现的文件系统,可支持复数个文件的压缩和解压缩，具体架构参见源代码以及相关markdown文件
 - 程序目前只有简单的命令行交互，无gui
@@ -7,7 +7,7 @@
 - 另外，虽然添加了逻辑根目录以及路径重复的跳过处理，但是仍然可能会存在覆盖原文件的情况，请谨慎处理，并且妥善保管（备份）你的原文件
 
 
-# 项目文档说明
+### 项目文档说明
 
 - instruction.md & 策划.md---huffmanZip
 - plan.md---Aes&CompressorFileSystem
