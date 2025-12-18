@@ -3,7 +3,7 @@
 
 #include <queue>
 #include <stack>
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include <cstdint>
 #include "../../DataBlocks/DataBlocksManage.h"
@@ -39,7 +39,7 @@ struct Chardata{
  */
 
 typedef  
-std::map<
+std::unordered_map<
     unsigned char, 
     Chardata
 >
