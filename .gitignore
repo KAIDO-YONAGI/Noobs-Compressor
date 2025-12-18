@@ -9,3 +9,4 @@ bin/
 src/main.cpp
 
 *.bin
+*.ps1
