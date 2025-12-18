@@ -9,5 +9,5 @@
 
 ### 项目文档说明
 
-- instruction.md & 策划.md---huffmanZip
+- instructions.md & 策划.md---instructions&HuffmanZip
 - plan.md---Aes&CompressorFileSystem
