@@ -10,3 +10,4 @@ src/main.cpp
 
 *.bin
 *.ps1
+*.bat
