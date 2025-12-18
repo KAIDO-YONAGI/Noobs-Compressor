@@ -131,18 +131,19 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 在每次循环中重新创建 NumsReader 以确保正确读取
                 NumsReader numReader(inFile);
 
-                // 1. 读取分隔标志
+                // 读取分隔标志
                 if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
                     throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before tree block");
 
-                // 2. 读取 Huffman 树块大小
+                // 读取 Huffman 树块大小
                 std::streampos treeSizePos = inFile.tellg();
                 DirectoryOffsetSize_uint treeBlockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
-                // 3. 读取并解密树数据
+                // 读取并解密树数据
                 DataBlock rawTreeData(treeBlockSize);
+                
                 inFile.read(reinterpret_cast<char *>(rawTreeData.data()), treeBlockSize);
+
                 std::streamsize bytesRead = inFile.gcount();
-                // 解密树数据(doAes会重新分配outputBuffer,不需要预先指定大小)
                 DataBlock decryptedTreeData;
                 aes.doAes(2, rawTreeData, decryptedTreeData);
                 // 恢复 Huffman 树（为这个块创建新树）
@@ -154,14 +155,13 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 }
                 // FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= treeBlockSize;
-                // 4. 读取分割标志(数据块前的标志)
+                // 读取分割标志(数据块前的标志)
                 if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
                     throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before data block");
-                // 5. 读取数据块大小
-                std::streampos dataSizePos = inFile.tellg();
+                // 读取数据块大小
                 DirectoryOffsetSize_uint blockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
                 DirectoryOffsetSize_uint readSize = blockSize;
-                // 6. 读取加密的压缩数据
+                // 读取加密的压缩数据
                 DataBlock rawData(readSize);
                 inFile.read(reinterpret_cast<char *>(rawData.data()), readSize);
                 std::streamsize bytesRead2 = inFile.gcount();
@@ -173,14 +173,14 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 解密数据(doAes会重新分配outputBuffer,不需要预先指定大小)
                 DataBlock decryptedData;
                 aes.doAes(2, rawData, decryptedData);
-                // 7. 使用该块对应的 Huffman 树进行解压
+                // 使用该块对应的 Huffman 树进行解压
                 size_t remainingBytes = originalFileSize - totalDecompressedBytes;
                 size_t maxBytesThisBlock = std::min(remainingBytes, (size_t)BUFFER_SIZE);
                 DataBlock decompressedData;
                 huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), maxBytesThisBlock);
                 // 更新已解压的总字节数
                 totalDecompressedBytes += decompressedData.size();
-                // 8. 写入解压后的数据
+                // 写入解压后的数据
                 dataExporter.exportDataToFile_Decompression(decompressedData);
 
                 // 更新剩余大小: 减去压缩数据块本身的大小
@@ -188,7 +188,6 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 fileCompressedSize -= readSize;
             }
             // 更新dataOffset为下一个文件的起始位置
-            DirectoryOffsetSize_uint oldOffset = dataOffset;
             dataOffset = inFile.tellg();
 
             headerLoaderIterator.fileQueue.pop();
