@@ -33,7 +33,6 @@ void DataExporter::exportDataToFile_Compression(const DataBlock &data)
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
     processedFileSize += dataSize;
-    // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
 
     thisBlockIsDone(dataSize);
 }
@@ -44,5 +43,4 @@ void DataExporter::exportDataToFile_Decompression(const DataBlock &data)
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
     processedFileSize += dataSize;
-    // std::cout << "FileProcessedSize:" << processedFileSize << "\n";
 }

@@ -65,7 +65,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             FileNameSize_uint offsetToFill = headerLoaderIterator.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill);
 
-
             headerLoaderIterator.fileQueue.pop();
             if (!headerLoaderIterator.fileQueue.empty())
             { // 更新下一个文件路径
@@ -148,25 +147,10 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 std::streampos treeSizePos = inFile.tellg();
                 DirectoryOffsetSize_uint treeBlockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
 
-                // 检查是否还有足够的数据
-                if (treeBlockSize > fileCompressedSize)
-                {
-                    throw std::runtime_error("decompressionLoop()-Error: treeBlockSize (" +
-                                             std::to_string(treeBlockSize) + ") exceeds remaining fileCompressedSize (" +
-                                             std::to_string(fileCompressedSize) + ")");
-                }
-
                 // 3. 读取并解密树数据
-
                 DataBlock rawTreeData(treeBlockSize);
                 inFile.read(reinterpret_cast<char *>(rawTreeData.data()), treeBlockSize);
                 std::streamsize bytesRead = inFile.gcount();
-
-                if (bytesRead != static_cast<std::streamsize>(treeBlockSize))
-                {
-                    throw std::runtime_error("decompressionLoop()-Error: Failed to read complete tree block. Expected " +
-                                             std::to_string(treeBlockSize) + " bytes, got " + std::to_string(bytesRead));
-                }
 
                 // 解密树数据(doAes会重新分配outputBuffer,不需要预先指定大小)
                 DataBlock decryptedTreeData;
@@ -180,9 +164,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 {
                     throw std::runtime_error("decompressionLoop()-Error: Failed to spawn Huffman tree - tree root is NULL");
                 }
-
-                // 更新剩余大小: 减去树数据块本身的大小
-                // 注意: FLAG 和 size 字段不计入 fileCompressedSize
+                // FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= treeBlockSize;
 
                 // 4. 读取分割标志(数据块前的标志)
@@ -195,12 +177,6 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
                 // 安全检查
                 DirectoryOffsetSize_uint readSize = blockSize;
-                if (readSize > fileCompressedSize)
-                {
-                    throw std::runtime_error("decompressionLoop()-Error: blockSize (" +
-                                             std::to_string(readSize) + ") exceeds remaining fileCompressedSize (" +
-                                             std::to_string(fileCompressedSize) + ")");
-                }
 
                 // 6. 读取加密的压缩数据
 
@@ -220,8 +196,6 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
                 // 7. 使用该块对应的 Huffman 树进行解压
 
-                // 计算这个块最多应该解压多少字节
-                // 每个块固定解压8192字节，只有最后一个块使用剩余字节数
                 size_t remainingBytes = originalFileSize - totalDecompressedBytes;
                 size_t maxBytesThisBlock = std::min(remainingBytes, (size_t)BUFFER_SIZE);
 
@@ -237,9 +211,6 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 更新剩余大小: 减去压缩数据块本身的大小
                 // 注意: FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= readSize;
-
-                // 文件流已经自动前进，不需要手动seekg
-                // dataOffset会在下一个文件开始时更新
             }
 
             // 更新dataOffset为下一个文件的起始位置

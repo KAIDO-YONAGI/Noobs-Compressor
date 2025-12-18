@@ -1,4 +1,5 @@
 #include "../include/BinaryIO_Loader.h"
+
 void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
 {
     NumsReader numsReader(inFile);
@@ -6,20 +7,20 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
 
-    inFile.seekg(header.directoryOffset - offset, std::ios::beg); // �ض�λ
+    inFile.seekg(header.directoryOffset - offset, std::ios::beg); // 定位到指定位置
 
     try
     {
-        // ��ȡHeader
+        // 读取Header
         if (inFile.tellg() == std::streampos(0))
         {
             if (!inFile.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
             {
                 throw std::runtime_error("Failed to read header");
             }
-            // ����Header
+            // 复制Header数据
             std::memcpy(&header, buffer.data(), sizeof(Header));
-            // ��֤ħ��
+            // 验证魔数
             if (header.magicNum_1 != MAGIC_NUM ||
                 header.magicNum_2 != MAGIC_NUM)
             {
@@ -30,15 +31,13 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             offset = header.directoryOffset - HEADER_SIZE;
         }
 
-        // if (offset < 100)
-        //     int a = 1;
         if (offset == sizeof(SizeOfMagicNum_uint))
         {
             SizeOfMagicNum_uint magicNum = numsReader.readBinaryNums<SizeOfMagicNum_uint>();
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
-            allLoopDone(); // ����ѭ��������������return�˳�
+            allLoopDone(); // 完成所有循环后设置完成标志并return退出
             return;
         }
         while (offset > 0)
@@ -55,10 +54,11 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        // ������Դ�������׳��쳣
+        // 清理资源后重新抛出异常
         throw e.what();
     }
 }
+
 void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory, Aes &aes)
 {
     if (offset == 0)
@@ -68,31 +68,30 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
     if (flag == SEPARATED_FLAG)
     {
-
-        // ��ȡ��ƫ����
+        // 读取子块偏移量
         tempOffset = numsReader.readBinaryNums<DirectoryOffsetSize_uint>();
-        // ��ȡivͷ
+        // 读取iv头
         IvSize_uint ivNum = numsReader.readBinaryNums<IvSize_uint>();
 
-        offset -= SEPARATED_STANDARD_SIZE + tempOffset; // ƫ������⣬ͬ�����ڼ���˳�
+        offset -= SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时跳过固定头部长度
 
-        // ��ȡ���ݵ�vector�����ڴ��в����������һ��δ�ﵽд��ָ��׼��С�Ŀ��������⴦��
+        // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
         DirectoryOffsetSize_uint readSize = (tempOffset == 0 ? (offset - sizeof(SizeOfMagicNum_uint)) : tempOffset);
 
         std::array<DirectoryOffsetSize_uint, 2> blockPos = {
-            static_cast<DirectoryOffsetSize_uint>(inFile.tellg()), // ת����λ��
-            static_cast<DirectoryOffsetSize_uint>(readSize)        // ת����ȡ��С
+            static_cast<DirectoryOffsetSize_uint>(inFile.tellg()), // 转换为当前位置
+            static_cast<DirectoryOffsetSize_uint>(readSize)        // 转换为读取大小
         };
-        pos.push_back(blockPos); // �����ʱ���ݿ��λ�ã��������ζ����ݿ�ֱ�Ӳ���
+        pos.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
 
-        // ��ƫ������ȡ���ݿ�
-        buffer.resize(readSize); // clear��resizeȷ���ռ��д�룬���ı�capacity
+        // 根据偏移量读取数据块
+        buffer.resize(readSize); // clear和resize确保容器大小正确，避免残留数据
         if (!inFile.read(reinterpret_cast<char *>(buffer.data()), readSize) && tempOffset != 0)
         {
             throw std::runtime_error("Failed to read buffer");
         }
 
-        if (ivNum != 0) // ���ڽ�ѹʱ�ᴥ������buffer���ܺ����
+        if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
         {
             DataBlock blockWithIv;
             DataBlock decryptedBlock;
@@ -109,7 +108,6 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
         while (readSize > bufferPtr)
         {
-
             while ((countOfKidDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
             {
                 parserForLoader->parser(bufferPtr, countOfKidDirectory);
@@ -117,7 +115,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 
             if (!directoryQueue.empty() && countOfKidDirectory == 0)
             {
-                // Ŀ¼����������е��߼�
+                // 目录队列处理逻辑
                 const fs::path &directoryPath = directoryQueue.front().first.getFullPath();
                 if (!directoryQueue_ready.empty())
                 {
@@ -135,14 +133,14 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 directoryQueue.pop();
                 if (!directoryQueue.empty())
                 {
-                    countOfKidDirectory = directoryQueue.front().second; // ������Ŀ¼����
+                    countOfKidDirectory = directoryQueue.front().second; // 获取子目录数量
                     if (!directoryQueue.empty())
-                        directoryQueue_ready.push(directoryQueue.front().first.getFullPath()); // pop��ֱ�ӽ���Ŀ¼��ӣ���ֹ������һ�룬û�н������if
+                        directoryQueue_ready.push(directoryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
                 }
             }
         }
-        requestDone();       // �����������
-        if (tempOffset == 0) // tempOffsetΪ�㣬˵����ĩβ����ȥ��Ӧƫ����
+        requestDone();       // 设置块完成标志
+        if (tempOffset == 0) // tempOffset为0，说明到达末尾，减去相应偏移量
         {
             offset -= readSize;
             return;
@@ -154,8 +152,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
 }
 void BinaryIO_Loader::requestDone()
 {
-    // 不关闭inFile，因为解压时需要共享文件句柄继续读取数据区
-    // 文件关闭由 allLoopDone() 或析构函数负责
+
     blockIsDone = true;
 }
 void BinaryIO_Loader::allLoopDone()
@@ -208,5 +205,4 @@ void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
         inBlock.clear();
         encryptedBlock.clear();
     }
-    std::cout << "encryptHeaderBlock-Done" << "\n";
 }
