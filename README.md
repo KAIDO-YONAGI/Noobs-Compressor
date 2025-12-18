@@ -5,3 +5,9 @@
 - 如果需要自己编译可执行文件，可以在Y_Manager目录下找到main.cpp进行编译（可以下载发行版下的.vscode压缩包获取配置）。
 - 由于huffman和aes均采用软件实现，所以运行速度极慢，且由于压缩编码类型仅依赖huffman，压缩率不高（最好时约60%）
 - 另外，虽然添加了逻辑根目录以及路径重复的跳过处理，但是仍然可能会存在覆盖原文件的情况，请谨慎处理，并且妥善保管（备份）你的原文件
+
+
+# 项目文档说明
+
+- instruction.md & 策划.md---huffmanZip
+- plan.md---Aes&CompressorFileSystem
