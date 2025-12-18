@@ -41,22 +41,59 @@ bool path_exists(const std::string &utf8_path_str)
 
 std::string get_exe_directory()
 {
-    char exe_path[MAX_PATH];
-    DWORD length = GetModuleFileNameA(NULL, exe_path, MAX_PATH);
+    wchar_t exe_path[MAX_PATH];
+    DWORD length = GetModuleFileNameW(NULL, exe_path, MAX_PATH);
     if (length == 0 || length == MAX_PATH)
     {
         // 获取失败或路径过长，回退到当前工作目录
-        return fs::current_path().string();
+        try
+        {
+            return fs::current_path().string();
+        }
+        catch (...)
+        {
+            return ".";
+        }
     }
 
-    std::string full_path = exe_path;
-    size_t last_slash = full_path.find_last_of("\\/");
-    if (last_slash != std::string::npos)
+    std::wstring full_path = exe_path;
+    size_t last_slash = full_path.find_last_of(L"\\/");
+    if (last_slash != std::wstring::npos)
     {
-        return full_path.substr(0, last_slash + 1);
+        full_path = full_path.substr(0, last_slash + 1);
     }
 
-    return full_path;
+    // 将宽字符路径转换为 UTF-8
+    int utf8_len = WideCharToMultiByte(CP_UTF8, 0, full_path.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (utf8_len == 0)
+    {
+        return ".";
+    }
+
+    std::string utf8_path(utf8_len, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, full_path.c_str(), -1, &utf8_path[0], utf8_len, nullptr, nullptr);
+
+    // 移除末尾的null字符
+    if (!utf8_path.empty() && utf8_path.back() == '\0')
+    {
+        utf8_path.pop_back();
+    }
+
+    return utf8_path;
+}
+
+// 获取当前工作目录字符串（正确处理编码）
+std::string current_path_string()
+{
+    try
+    {
+        fs::path current = fs::current_path();
+        return current.string();
+    }
+    catch (...)
+    {
+        return ".";
+    }
 }
 
 // 工具函数（保持不变）
@@ -103,7 +140,7 @@ bool hasSyExtension(const std::string &filePath)
     return (dotPos != std::string::npos) && (filePath.substr(dotPos) == ".sy");
 }
 
-std::string getNonEmptyInput(const std::string &prompt, const std::string &defaultValue = "")
+std::string getNonEmptyInput(const std::string &prompt, const std::string &defaultValue = "", bool allowEmpty = false)
 {
     std::string input;
     while (true)
@@ -112,15 +149,22 @@ std::string getNonEmptyInput(const std::string &prompt, const std::string &defau
         std::getline(std::cin, input);
         input = removeQuotes(input);
 
-        if (input.empty() && !defaultValue.empty())
+        if (input.empty())
         {
-            return defaultValue;
+            if (allowEmpty)
+            {
+                return defaultValue;
+            }
+            if (!defaultValue.empty())
+            {
+                return defaultValue;
+            }
+            std::cout << "Error: Input cannot be empty. Please try again.\n";
         }
-        else if (!input.empty())
+        else
         {
             return input;
         }
-        std::cout << "Error: Input cannot be empty. Please try again.\n";
     }
 }
 
@@ -201,143 +245,302 @@ bool getYesNoInput()
 // 压缩模式
 void runCompressionMode(const std::string &basePath)
 {
-    std::vector<std::string> filePathToScan;
-    int pathCount = 1;
+    bool operationComplete = false;
 
-    std::cout << "\n[Compression Mode] Enter paths to compress (enter 'done' to finish):\n";
-    while (true)
+    while (!operationComplete)
     {
-        std::cout << "Path " << pathCount << ": ";
-        std::string path;
-        std::getline(std::cin, path);
-        path = removeQuotes(path);
+        std::vector<std::string> filePathToScan;
+        int pathCount = 1;
 
-        if (path == "done")
+        std::cout << "\n[Compression Mode] Enter paths to compress (enter 'done' to finish):\n";
+        while (true)
         {
-            if (filePathToScan.empty())
+            std::cout << "Path " << pathCount << ": ";
+            std::string path;
+            std::getline(std::cin, path);
+            path = removeQuotes(path);
+
+            if (path == "done")
             {
-                std::cout << "Error: At least one valid path is required!\n";
-            }
-            else
-            {
-                break;
-            }
-        }
-        else
-        {
-            // 使用Windows API路径检查
-            if (path_exists(path))
-            {
-                // 路径存在，添加到队列
-                filePathToScan.push_back(path);
-                pathCount++;
-            }
-            else
-            {
-                // 路径不存在，询问用户是否继续
-                std::cout << "Warning: Path \"" << path << "\" does not exist! Press to continue ";
-                std::string confirm;
-                std::getline(std::cin, confirm);
-                confirm = removeQuotes(confirm);
-                
-                if (confirm == "Y" || confirm == "y")
+                if (filePathToScan.empty())
                 {
-                    // 用户选择继续，但路径不存在，不添加到队列
-                    // 路径计数不变，继续下一个路径的输入
-                    continue;
+                    std::cout << "Error: At least one valid path is required!\n";
                 }
                 else
                 {
-                    // 用户选择不继续，重新询问当前路径
-                    std::cout << "Skipping this path. Please enter a new path for Path " << pathCount << ".\n";
-                    continue;  // 重新询问当前路径
+                    break;
+                }
+            }
+            else
+            {
+                // 使用Windows API路径检查
+                if (path_exists(path))
+                {
+                    // 路径存在，添加到队列
+                    filePathToScan.push_back(path);
+                    pathCount++;
+                }
+                else
+                {
+                    // 路径不存在，询问用户是否继续
+                    std::cout << "Warning: Path \"" << path << "\" does not exist!\n";
+                    std::cout << "Options: (Y)es - skip and continue, (N)o - re-enter path, (E)xit compression: ";
+                    std::string confirm;
+                    std::getline(std::cin, confirm);
+                    confirm = removeQuotes(confirm);
+
+                    if (confirm == "E" || confirm == "e")
+                    {
+                        // 用户选择退出压缩模式
+                        operationComplete = true;
+                        filePathToScan.clear();  // 清空路径列表以退出外层循环
+                        break;
+                    }
+                    else if (confirm == "Y" || confirm == "y")
+                    {
+                        // 用户选择继续，但路径不存在，不添加到队列
+                        // 路径计数不变，继续下一个路径的输入
+                        continue;
+                    }
+                    else
+                    {
+                        // 用户选择不继续，重新询问当前路径
+                        std::cout << "Skipping this path. Please enter a new path for Path " << pathCount << ".\n";
+                        continue;  // 重新询问当前路径
+                    }
                 }
             }
         }
-    }
 
-    std::string compressionFilePath = getNonEmptyInput(
-        "Enter compressed file output path\n(default: " + basePath + "SHINKU_YONAGI.sy): ",
-        basePath + "SHINKU_YONAGI.sy");
+        // 如果用户选择退出，跳过后续步骤
+        if (operationComplete)
+        {
+            continue;
+        }
 
-    if (!hasSyExtension(compressionFilePath))
-    {
-        compressionFilePath += ".sy";
-    }
+        // 获取输出文件路径或文件名
+        std::string compressionFilePath = getNonEmptyInput(
+            "Enter compressed file output path or name\n(default: " + basePath + "SHINKU_YONAGI.sy): ",
+            basePath + "SHINKU_YONAGI.sy");
 
-    std::string logicalRoot = getNonEmptyInput(
-        "Enter logical root name (default: YONAGI): ",
-        "YONAGI");
+        // 如果用户只输入了文件名（不含路径分隔符），则拼接到 basePath
+        if (compressionFilePath.find('\\') == std::string::npos &&
+            compressionFilePath.find('/') == std::string::npos)
+        {
+            compressionFilePath = basePath + compressionFilePath;
+        }
 
-    std::string password = getNonEmptyInput(
-        "Enter encryption key (default: LOVEYONAGI): ",
-        "LOVEYONAGI");
+        if (!hasSyExtension(compressionFilePath))
+        {
+            compressionFilePath += ".sy";
+        }
 
-    try
-    {
-        Aes aes(password.c_str());
-        HeaderWriter headerWriter_v0;
-        headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
+        std::string logicalRoot = getNonEmptyInput(
+            "Enter logical root name (default: YONAGI): ",
+            "YONAGI");
 
-        CompressionLoop compressor(compressionFilePath);
-        compressor.compressionLoop(filePathToScan, aes);
+        std::string password = getNonEmptyInput(
+            "Enter encryption key (default: LOVEYONAGI): ",
+            "LOVEYONAGI");
 
-        std::cout << "\n>>> Compression successful! Output file: " << compressionFilePath << "\n";
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "\n[ERROR] Compression failed: " << e.what() << "\n";
-        std::cerr << "The operation could not be completed. Please check the input and try again.\n";
-    }
-    catch (...)
-    {
-        std::cerr << "\n[ERROR] Compression failed due to an unknown error.\n";
-        std::cerr << "The operation could not be completed. Please try again.\n";
+        try
+        {
+            Aes aes(password.c_str());
+            HeaderWriter headerWriter_v0;
+            headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
+
+            CompressionLoop compressor(compressionFilePath);
+            compressor.compressionLoop(filePathToScan, aes);
+
+            std::cout << "\n>>> Compression successful! Output file: " << compressionFilePath << "\n";
+            operationComplete = true;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "\n[ERROR] Compression failed: " << e.what() << "\n";
+
+            // 询问是否重试
+            std::cout << "\nDo you want to try again? (Y/N): ";
+            std::string response;
+            std::getline(std::cin, response);
+            if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+            {
+                operationComplete = true;
+            }
+        }
+        catch (...)
+        {
+            std::cerr << "\n[ERROR] Compression failed due to an unknown error.\n";
+
+            // 询问是否重试
+            std::cout << "\nDo you want to try again? (Y/N): ";
+            std::string response;
+            std::getline(std::cin, response);
+            if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+            {
+                operationComplete = true;
+            }
+        }
     }
 }
 
 // 解压模式
 void runDecompressionMode()
 {
-    std::string deCompressionFilePath = getRequiredInput(
-        "\n[Decompression Mode] Enter file path to decompress: ");
+    bool operationComplete = false;
 
-    // 使用Windows API路径检查
-    if (!path_exists(deCompressionFilePath))
+    while (!operationComplete)
     {
-        std::cout << "Error: Target file \"" << deCompressionFilePath << "\" does not exist!\n";
-        return;
-    }
+        std::string deCompressionFilePath = getRequiredInput(
+            "\n[Decompression Mode] Enter file path to decompress: ");
 
-    if (!hasSyExtension(deCompressionFilePath))
-    {
-        std::cout << "Error: Only .sy files can be decompressed!\n";
-        return;
-    }
+        // 使用Windows API路径检查
+        if (!path_exists(deCompressionFilePath))
+        {
+            std::cout << "Error: Target file \"" << deCompressionFilePath << "\" does not exist!\n";
+            continue;
+        }
 
-    std::string password = getRequiredInput("Enter decryption key (required): ");
+        if (!hasSyExtension(deCompressionFilePath))
+        {
+            std::cout << "Error: Only .sy files can be decompressed!\n";
+            continue;
+        }
 
-    try
-    {
-        Aes aes(password.c_str());
-        DecompressionLoop decompressor(deCompressionFilePath);
-        decompressor.decompressionLoop(aes);
+        // 获取自定义输出路径
+        std::string currentDir = current_path_string();
 
-        std::cout << "\n>>> Decompression successful! Files output to current directory\n";
-    }
-    catch (const std::exception &e)
-    {
-        std::cerr << "\n[ERROR] Decompression failed: " << e.what() << "\n";
-        std::cerr << "The operation could not be completed. Possible reasons:\n";
-        std::cerr << "1. Incorrect decryption key\n";
-        std::cerr << "2. Corrupted or incompatible .sy file\n";
-        std::cerr << "3. Insufficient disk space\n";
-        std::cerr << "Please check the input and try again.\n";
-    }
-    catch (...)
-    {
-        std::cerr << "\n[ERROR] Decompression failed due to an unknown error.\n";
-        std::cerr << "The operation could not be completed. Please try again.\n";
+        std::string outputDirectory;
+        bool validDirectorySelected = false;
+
+        while (!validDirectorySelected)
+        {
+            outputDirectory = getNonEmptyInput(
+                "Enter output directory (default: " + currentDir + "): ",
+                "");
+
+            // 如果用户没有输入，使用当前目录
+            if (outputDirectory.empty())
+            {
+                outputDirectory = ".";
+                validDirectorySelected = true;
+            }
+            else
+            {
+                // 检查目录是否存在
+                try
+                {
+                    auto output_path = make_path(outputDirectory);
+                    if (fs::exists(output_path) && fs::is_directory(output_path))
+                    {
+                        validDirectorySelected = true;
+                    }
+                    else
+                    {
+                        std::cerr << "Error: Directory \"" << outputDirectory << "\" does not exist!\n";
+                        std::cout << "Please enter a valid existing directory.\n";
+                    }
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "Error: Failed to check directory: " << e.what() << "\n";
+                    std::cout << "Please try again.\n";
+                }
+            }
+        }
+
+        std::string password = getRequiredInput("Enter decryption key (required): ");
+
+        // 保存当前工作目录（用于异常安全恢复）
+        fs::path originalPath = fs::current_path();
+
+        try
+        {
+            Aes aes(password.c_str());
+
+            // 切换到输出目录
+            try
+            {
+                auto output_path = make_path(outputDirectory);
+                fs::current_path(output_path);
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "Error: Failed to change to output directory: " << e.what() << "\n";
+                fs::current_path(originalPath);
+                std::cout << "Please try again with a different directory.\n";
+                continue;
+            }
+
+            // 将输入文件路径转换为绝对路径（防止目录切换后找不到文件）
+            fs::path inputFilePath;
+            try
+            {
+                auto input_path = make_path(deCompressionFilePath);
+                if (input_path.is_absolute())
+                {
+                    inputFilePath = input_path;
+                }
+                else
+                {
+                    inputFilePath = originalPath / input_path;
+                }
+            }
+            catch (...)
+            {
+                fs::current_path(originalPath);
+                std::cerr << "Error: Failed to process input file path\n";
+                std::cout << "Please try again with a different file.\n";
+                continue;
+            }
+
+            DecompressionLoop decompressor(inputFilePath.string());
+            decompressor.decompressionLoop(aes);
+
+            std::cout << "\n>>> Decompression successful! Files output to: " << outputDirectory << "\n";
+            operationComplete = true;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "\n[ERROR] Decompression failed: " << e.what() << "\n";
+            std::cerr << "Possible reasons:\n";
+            std::cerr << "1. Incorrect decryption key\n";
+            std::cerr << "2. Corrupted or incompatible .sy file\n";
+            std::cerr << "3. Insufficient disk space\n";
+            std::cerr << "4. Invalid output directory\n";
+
+            // 询问是否重试
+            std::cout << "\nDo you want to try again? (Y/N): ";
+            std::string response;
+            std::getline(std::cin, response);
+            if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+            {
+                operationComplete = true;
+            }
+        }
+        catch (...)
+        {
+            std::cerr << "\n[ERROR] Decompression failed due to an unknown error.\n";
+
+            // 询问是否重试
+            std::cout << "\nDo you want to try again? (Y/N): ";
+            std::string response;
+            std::getline(std::cin, response);
+            if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+            {
+                operationComplete = true;
+            }
+        }
+
+        // 确保无论如何都恢复原工作目录
+        try
+        {
+            fs::current_path(originalPath);
+        }
+        catch (...)
+        {
+            std::cerr << "Warning: Failed to restore original working directory\n";
+        }
     }
 }
 
@@ -356,27 +559,38 @@ int main()
         basePath += '\\';
     }
 
-    int count = 0;
-
     std::cout << "Program directory: " << basePath << std::endl;
 
-    do
+    bool shouldExit = false;
+
+    while (!shouldExit)
     {
         try
         {
             choice = getValidatedChoice();
-            
+
             switch (choice)
             {
             case 1:
                 runCompressionMode(basePath);
+                // 询问是否继续
+                if (!getYesNoInput())
+                {
+                    shouldExit = true;
+                }
                 break;
             case 2:
                 runDecompressionMode();
+                // 询问是否继续
+                if (!getYesNoInput())
+                {
+                    shouldExit = true;
+                }
                 break;
             case 3:
                 std::cout << "Thank you for using, goodbye!\n";
-                return 0;
+                shouldExit = true;
+                break;
             default:
                 std::cout << "Invalid selection, please try again!\n";
             }
@@ -385,26 +599,34 @@ int main()
         {
             std::cerr << "\n[FATAL ERROR] Unexpected error in main loop: " << e.what() << "\n";
             std::cerr << "The program will attempt to continue.\n";
+
+            // 询问用户是否继续
+            std::cout << "\nDo you want to continue? (Y/N): ";
+            std::string response;
+            std::getline(std::cin, response);
+            if (!response.empty() && (response[0] == 'N' || response[0] == 'n'))
+            {
+                shouldExit = true;
+            }
         }
         catch (...)
         {
             std::cerr << "\n[FATAL ERROR] Unknown error in main loop.\n";
             std::cerr << "The program will attempt to continue.\n";
-        }
-        
-        if (choice == 1 || choice == 2)
-        {
-            if (!getYesNoInput())
+
+            // 询问用户是否继续
+            std::cout << "\nDo you want to continue? (Y/N): ";
+            std::string response;
+            std::getline(std::cin, response);
+            if (!response.empty() && (response[0] == 'N' || response[0] == 'n'))
             {
-                break;
+                shouldExit = true;
             }
         }
-        
-        count++;
-    } while (count < 20);
-    
+    }
+
     std::cout << "\nProgram finished. Press Enter to exit...\n";
     std::cin.get();
-    
+
     return 0;
 }
