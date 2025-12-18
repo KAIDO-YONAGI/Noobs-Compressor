@@ -235,7 +235,7 @@ void runCompressionMode(const std::string &basePath)
             else
             {
                 // 路径不存在，询问用户是否继续
-                std::cout << "Warning: Path \"" << path << "\" does not exist! Continue anyway? (Y/N): ";
+                std::cout << "Warning: Path \"" << path << "\" does not exist! Press to continue ";
                 std::string confirm;
                 std::getline(std::cin, confirm);
                 confirm = removeQuotes(confirm);
