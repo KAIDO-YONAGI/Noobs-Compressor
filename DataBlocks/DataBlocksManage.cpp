@@ -20,7 +20,7 @@ int DataBlocks::size()
 }
 
 sfc::block_t& DataBlocks::at(int pos)
-{
+{ 
     return blocks.at(pos);
 }
 

@@ -23,7 +23,7 @@ public:
 private:
     std::thread a_thread;
     MonitorTaskQueue tasks;
-
+ 
     void thread_running();
 
 public:
