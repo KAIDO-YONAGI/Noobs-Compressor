@@ -1,4 +1,4 @@
-### SFC.exe稳定版-windows only
+### SFC.exe-windows only
 
 ### ========测试版========
 - 程序具有自行实现的文件系统,可支持复数个文件的压缩和解压缩，具体架构参见源代码以及相关markdown文件
