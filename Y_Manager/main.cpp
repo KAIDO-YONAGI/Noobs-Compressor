@@ -291,10 +291,8 @@ void runCompressionMode(const std::string &basePath)
 
                     if (confirm == "E" || confirm == "e")
                     {
-                        // 用户选择退出压缩模式
-                        operationComplete = true;
-                        filePathToScan.clear();  // 清空路径列表以退出外层循环
-                        break;
+                        // 用户选择退出压缩模式，返回主菜单
+                        return;
                     }
                     else if (confirm == "Y" || confirm == "y")
                     {
@@ -310,12 +308,6 @@ void runCompressionMode(const std::string &basePath)
                     }
                 }
             }
-        }
-
-        // 如果用户选择退出，跳过后续步骤
-        if (operationComplete)
-        {
-            continue;
         }
 
         // 获取输出文件路径或文件名
@@ -391,155 +383,201 @@ void runDecompressionMode()
 
     while (!operationComplete)
     {
-        std::string deCompressionFilePath = getRequiredInput(
-            "\n[Decompression Mode] Enter file path to decompress: ");
+        bool validFileSelected = false;
 
-        // 使用Windows API路径检查
-        if (!path_exists(deCompressionFilePath))
+        while (!validFileSelected)
         {
-            std::cout << "Error: Target file \"" << deCompressionFilePath << "\" does not exist!\n";
-            continue;
-        }
+            std::string deCompressionFilePath = getRequiredInput(
+                "\n[Decompression Mode] Enter file path to decompress: ");
 
-        if (!hasSyExtension(deCompressionFilePath))
-        {
-            std::cout << "Error: Only .sy files can be decompressed!\n";
-            continue;
-        }
-
-        // 获取自定义输出路径
-        std::string currentDir = current_path_string();
-
-        std::string outputDirectory;
-        bool validDirectorySelected = false;
-
-        while (!validDirectorySelected)
-        {
-            outputDirectory = getNonEmptyInput(
-                "Enter output directory (default: " + currentDir + "): ",
-                "");
-
-            // 如果用户没有输入，使用当前目录
-            if (outputDirectory.empty())
+            // 使用Windows API路径检查
+            if (!path_exists(deCompressionFilePath))
             {
-                outputDirectory = ".";
-                validDirectorySelected = true;
-            }
-            else
-            {
-                // 检查目录是否存在
-                try
+                std::cout << "Error: Target file \"" << deCompressionFilePath << "\" does not exist!\n";
+                std::cout << "Options: (R)etry - re-enter path, (E)xit decompression: ";
+                std::string confirm;
+                std::getline(std::cin, confirm);
+                confirm = removeQuotes(confirm);
+
+                if (confirm == "E" || confirm == "e")
                 {
-                    auto output_path = make_path(outputDirectory);
-                    if (fs::exists(output_path) && fs::is_directory(output_path))
-                    {
-                        validDirectorySelected = true;
-                    }
-                    else
-                    {
-                        std::cerr << "Error: Directory \"" << outputDirectory << "\" does not exist!\n";
-                        std::cout << "Please enter a valid existing directory.\n";
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "Error: Failed to check directory: " << e.what() << "\n";
-                    std::cout << "Please try again.\n";
-                }
-            }
-        }
-
-        std::string password = getRequiredInput("Enter decryption key (required): ");
-
-        // 保存当前工作目录（用于异常安全恢复）
-        fs::path originalPath = fs::current_path();
-
-        try
-        {
-            Aes aes(password.c_str());
-
-            // 切换到输出目录
-            try
-            {
-                auto output_path = make_path(outputDirectory);
-                fs::current_path(output_path);
-            }
-            catch (const std::exception &e)
-            {
-                std::cerr << "Error: Failed to change to output directory: " << e.what() << "\n";
-                fs::current_path(originalPath);
-                std::cout << "Please try again with a different directory.\n";
-                continue;
-            }
-
-            // 将输入文件路径转换为绝对路径（防止目录切换后找不到文件）
-            fs::path inputFilePath;
-            try
-            {
-                auto input_path = make_path(deCompressionFilePath);
-                if (input_path.is_absolute())
-                {
-                    inputFilePath = input_path;
+                    // 用户选择退出解压模式，返回主菜单
+                    return;
                 }
                 else
                 {
-                    inputFilePath = originalPath / input_path;
+                    // 用户选择重试，继续循环
+                    continue;
+                }
+            }
+
+            if (!hasSyExtension(deCompressionFilePath))
+            {
+                std::cout << "Error: Only .sy files can be decompressed!\n";
+                std::cout << "Options: (R)etry - re-enter path, (E)xit decompression: ";
+                std::string confirm;
+                std::getline(std::cin, confirm);
+                confirm = removeQuotes(confirm);
+
+                if (confirm == "E" || confirm == "e")
+                {
+                    // 用户选择退出解压模式，返回主菜单
+                    return;
+                }
+                else
+                {
+                    // 用户选择重试，继续循环
+                    continue;
+                }
+            }
+
+            // 文件有效，退出文件选择循环
+            validFileSelected = true;
+
+            // 获取自定义输出路径
+            std::string currentDir = current_path_string();
+
+            std::string outputDirectory;
+            bool validDirectorySelected = false;
+
+            while (!validDirectorySelected)
+            {
+                outputDirectory = getNonEmptyInput(
+                    "Enter output directory (default: " + currentDir + "): ",
+                    "");
+
+                // 如果用户没有输入，使用当前目录
+                if (outputDirectory.empty())
+                {
+                    outputDirectory = ".";
+                    validDirectorySelected = true;
+                }
+                else
+                {
+                    // 检查目录是否存在
+                    try
+                    {
+                        auto output_path = make_path(outputDirectory);
+                        if (fs::exists(output_path) && fs::is_directory(output_path))
+                        {
+                            validDirectorySelected = true;
+                        }
+                        else
+                        {
+                            std::cerr << "Error: Directory \"" << outputDirectory << "\" does not exist!\n";
+                            std::cout << "Please enter a valid existing directory.\n";
+                        }
+                    }
+                    catch (const std::exception &e)
+                    {
+                        std::cerr << "Error: Failed to check directory: " << e.what() << "\n";
+                        std::cout << "Please try again.\n";
+                    }
+                }
+            }
+
+            std::string password = getRequiredInput("Enter decryption key (required): ");
+
+            // 保存当前工作目录（用于异常安全恢复）
+            fs::path originalPath = fs::current_path();
+
+            try
+            {
+                Aes aes(password.c_str());
+
+                // 切换到输出目录
+                try
+                {
+                    auto output_path = make_path(outputDirectory);
+                    fs::current_path(output_path);
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << "Error: Failed to change to output directory: " << e.what() << "\n";
+                    fs::current_path(originalPath);
+                    std::cout << "Please try again with a different directory.\n";
+                    validFileSelected = false;
+                    continue;
+                }
+
+                // 将输入文件路径转换为绝对路径（防止目录切换后找不到文件）
+                fs::path inputFilePath;
+                try
+                {
+                    auto input_path = make_path(deCompressionFilePath);
+                    if (input_path.is_absolute())
+                    {
+                        inputFilePath = input_path;
+                    }
+                    else
+                    {
+                        inputFilePath = originalPath / input_path;
+                    }
+                }
+                catch (...)
+                {
+                    fs::current_path(originalPath);
+                    std::cerr << "Error: Failed to process input file path\n";
+                    std::cout << "Please try again with a different file.\n";
+                    validFileSelected = false;
+                    continue;
+                }
+
+                DecompressionLoop decompressor(inputFilePath.string());
+                decompressor.decompressionLoop(aes);
+
+                std::cout << "\n>>> Decompression successful! Files output to: " << outputDirectory << "\n";
+                operationComplete = true;
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << "\n[ERROR] Decompression failed: " << e.what() << "\n";
+                std::cerr << "Possible reasons:\n";
+                std::cerr << "1. Incorrect decryption key\n";
+                std::cerr << "2. Corrupted or incompatible .sy file\n";
+                std::cerr << "3. Insufficient disk space\n";
+                std::cerr << "4. Invalid output directory\n";
+
+                // 询问是否重试
+                std::cout << "\nDo you want to try again? (Y/N): ";
+                std::string response;
+                std::getline(std::cin, response);
+                if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+                {
+                    operationComplete = true;
+                }
+                else
+                {
+                    validFileSelected = false;
                 }
             }
             catch (...)
             {
+                std::cerr << "\n[ERROR] Decompression failed due to an unknown error.\n";
+
+                // 询问是否重试
+                std::cout << "\nDo you want to try again? (Y/N): ";
+                std::string response;
+                std::getline(std::cin, response);
+                if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+                {
+                    operationComplete = true;
+                }
+                else
+                {
+                    validFileSelected = false;
+                }
+            }
+
+            // 确保无论如何都恢复原工作目录
+            try
+            {
                 fs::current_path(originalPath);
-                std::cerr << "Error: Failed to process input file path\n";
-                std::cout << "Please try again with a different file.\n";
-                continue;
             }
-
-            DecompressionLoop decompressor(inputFilePath.string());
-            decompressor.decompressionLoop(aes);
-
-            std::cout << "\n>>> Decompression successful! Files output to: " << outputDirectory << "\n";
-            operationComplete = true;
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "\n[ERROR] Decompression failed: " << e.what() << "\n";
-            std::cerr << "Possible reasons:\n";
-            std::cerr << "1. Incorrect decryption key\n";
-            std::cerr << "2. Corrupted or incompatible .sy file\n";
-            std::cerr << "3. Insufficient disk space\n";
-            std::cerr << "4. Invalid output directory\n";
-
-            // 询问是否重试
-            std::cout << "\nDo you want to try again? (Y/N): ";
-            std::string response;
-            std::getline(std::cin, response);
-            if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
+            catch (...)
             {
-                operationComplete = true;
+                std::cerr << "Warning: Failed to restore original working directory\n";
             }
-        }
-        catch (...)
-        {
-            std::cerr << "\n[ERROR] Decompression failed due to an unknown error.\n";
-
-            // 询问是否重试
-            std::cout << "\nDo you want to try again? (Y/N): ";
-            std::string response;
-            std::getline(std::cin, response);
-            if (response.empty() || (response[0] != 'Y' && response[0] != 'y'))
-            {
-                operationComplete = true;
-            }
-        }
-
-        // 确保无论如何都恢复原工作目录
-        try
-        {
-            fs::current_path(originalPath);
-        }
-        catch (...)
-        {
-            std::cerr << "Warning: Failed to restore original working directory\n";
         }
     }
 }
