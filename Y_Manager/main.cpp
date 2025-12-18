@@ -96,6 +96,18 @@ std::string current_path_string()
     }
 }
 
+// 去除前后空白字符
+std::string trimWhitespace(const std::string &input)
+{
+    size_t start = input.find_first_not_of(" \t\r\n");
+    if (start == std::string::npos)
+    {
+        return "";
+    }
+    size_t end = input.find_last_not_of(" \t\r\n");
+    return input.substr(start, end - start + 1);
+}
+
 // 工具函数（保持不变）
 std::string removeQuotes(const std::string &input)
 {
@@ -123,6 +135,7 @@ std::string getRequiredInput(const std::string &prompt)
         count++;
         std::cout << prompt;
         std::getline(std::cin, input);
+        input = trimWhitespace(input);
         input = removeQuotes(input);
 
         if (!input.empty())
@@ -147,6 +160,7 @@ std::string getNonEmptyInput(const std::string &prompt, const std::string &defau
     {
         std::cout << prompt;
         std::getline(std::cin, input);
+        input = trimWhitespace(input);
         input = removeQuotes(input);
 
         if (input.empty())
@@ -258,6 +272,7 @@ void runCompressionMode(const std::string &basePath)
             std::cout << "Path " << pathCount << ": ";
             std::string path;
             std::getline(std::cin, path);
+            path = trimWhitespace(path);
             path = removeQuotes(path);
 
             if (path == "done")
@@ -287,6 +302,7 @@ void runCompressionMode(const std::string &basePath)
                     std::cout << "Options: (Y)es - skip and continue, (N)o - re-enter path, (E)xit compression: ";
                     std::string confirm;
                     std::getline(std::cin, confirm);
+                    confirm = trimWhitespace(confirm);
                     confirm = removeQuotes(confirm);
 
                     if (confirm == "E" || confirm == "e")
@@ -397,6 +413,7 @@ void runDecompressionMode()
                 std::cout << "Options: (R)etry - re-enter path, (E)xit decompression: ";
                 std::string confirm;
                 std::getline(std::cin, confirm);
+                confirm = trimWhitespace(confirm);
                 confirm = removeQuotes(confirm);
 
                 if (confirm == "E" || confirm == "e")
@@ -417,6 +434,7 @@ void runDecompressionMode()
                 std::cout << "Options: (R)etry - re-enter path, (E)xit decompression: ";
                 std::string confirm;
                 std::getline(std::cin, confirm);
+                confirm = trimWhitespace(confirm);
                 confirm = removeQuotes(confirm);
 
                 if (confirm == "E" || confirm == "e")
