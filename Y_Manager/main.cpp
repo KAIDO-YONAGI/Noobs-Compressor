@@ -265,7 +265,7 @@ void runCompressionMode(const std::string &basePath)
     {
         std::vector<std::string> filePathToScan;
 
-        // 询问一次路径
+        // 询问一次路径（要压缩的文件/文件夹）
         std::cout << "\n[Compression Mode] Enter path to compress: ";
         std::string path;
         std::getline(std::cin, path);
@@ -284,21 +284,50 @@ void runCompressionMode(const std::string &basePath)
 
             if (confirm == "E" || confirm == "e")
             {
-                // 用户选择退出压缩模式，返回主菜单
                 return;
             }
             else
             {
-                // 用户选择重试，继续循环
                 continue;
             }
         }
 
         filePathToScan.push_back(path);
 
+        // 询问输出目录路径
+        std::string outputDirectory = getNonEmptyInput(
+            "Enter output directory (default: " + basePath + "): ",
+            basePath);
+
+        // 检查输出目录是否存在
+        if (!path_exists(outputDirectory))
+        {
+            std::cout << "Error: Output directory \"" << outputDirectory << "\" does not exist!\n";
+            std::cout << "Options: (R)etry - re-enter path, (E)xit compression: ";
+            std::string confirm;
+            std::getline(std::cin, confirm);
+            confirm = trimWhitespace(confirm);
+            confirm = removeQuotes(confirm);
+
+            if (confirm == "E" || confirm == "e")
+            {
+                return;
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        // 确保输出目录以分隔符结尾
+        if (!outputDirectory.empty() && outputDirectory.back() != '\\' && outputDirectory.back() != '/')
+        {
+            outputDirectory += '\\';
+        }
+
         // 询问输出文件名
         std::string outputFileName = getNonEmptyInput(
-            "Enter output file name (without .sy extension, default: SHINKU_YONAGI): ",
+            "Enter output file name (default: SHINKU_YONAGI): ",
             "SHINKU_YONAGI");
 
         // 移除用户可能输入的后缀
@@ -308,7 +337,7 @@ void runCompressionMode(const std::string &basePath)
         }
 
         // 完整的输出文件路径
-        std::string compressionFilePath = basePath + outputFileName + ".sy";
+        std::string compressionFilePath = outputDirectory + outputFileName + ".sy";
 
         // 逻辑根就是文件名（不带后缀）
         std::string logicalRoot = outputFileName;
