@@ -21,7 +21,7 @@ fs::path make_path(const std::string &utf8_str)
     if (!wide_str.empty() && wide_str.back() == L'\0')
     {
         wide_str.pop_back();
-    }
+    } 
 
     return fs::path(wide_str);
 }
