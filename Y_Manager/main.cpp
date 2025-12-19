@@ -264,88 +264,54 @@ void runCompressionMode(const std::string &basePath)
     while (!operationComplete)
     {
         std::vector<std::string> filePathToScan;
-        int pathCount = 1;
 
-        std::cout << "\n[Compression Mode] Enter paths to compress (enter 'done' to finish):\n";
-        while (true)
+        // 询问一次路径
+        std::cout << "\n[Compression Mode] Enter path to compress: ";
+        std::string path;
+        std::getline(std::cin, path);
+        path = trimWhitespace(path);
+        path = removeQuotes(path);
+
+        // 检查路径是否存在
+        if (!path_exists(path))
         {
-            std::cout << "Path " << pathCount << ": ";
-            std::string path;
-            std::getline(std::cin, path);
-            path = trimWhitespace(path);
-            path = removeQuotes(path);
+            std::cout << "Error: Path \"" << path << "\" does not exist!\n";
+            std::cout << "Options: (R)etry - re-enter path, (E)xit compression: ";
+            std::string confirm;
+            std::getline(std::cin, confirm);
+            confirm = trimWhitespace(confirm);
+            confirm = removeQuotes(confirm);
 
-            if (path == "done")
+            if (confirm == "E" || confirm == "e")
             {
-                if (filePathToScan.empty())
-                {
-                    std::cout << "Error: At least one valid path is required!\n";
-                }
-                else
-                {
-                    break;
-                }
+                // 用户选择退出压缩模式，返回主菜单
+                return;
             }
             else
             {
-                // 使用Windows API路径检查
-                if (path_exists(path))
-                {
-                    // 路径存在，添加到队列
-                    filePathToScan.push_back(path);
-                    pathCount++;
-                }
-                else
-                {
-                    // 路径不存在，询问用户是否继续
-                    std::cout << "Warning: Path \"" << path << "\" does not exist!\n";
-                    std::cout << "Options: (Y)es - skip and continue, (N)o - re-enter path, (E)xit compression: ";
-                    std::string confirm;
-                    std::getline(std::cin, confirm);
-                    confirm = trimWhitespace(confirm);
-                    confirm = removeQuotes(confirm);
-
-                    if (confirm == "E" || confirm == "e")
-                    {
-                        // 用户选择退出压缩模式，返回主菜单
-                        return;
-                    }
-                    else if (confirm == "Y" || confirm == "y")
-                    {
-                        // 用户选择继续，但路径不存在，不添加到队列
-                        // 路径计数不变，继续下一个路径的输入
-                        continue;
-                    }
-                    else
-                    {
-                        // 用户选择不继续，重新询问当前路径
-                        std::cout << "Skipping this path. Please enter a new path for Path " << pathCount << ".\n";
-                        continue;  // 重新询问当前路径
-                    }
-                }
+                // 用户选择重试，继续循环
+                continue;
             }
         }
 
-        // 获取输出文件路径或文件名
-        std::string compressionFilePath = getNonEmptyInput(
-            "Enter compressed file output path or name\n(default: " + basePath + "SHINKU_YONAGI.sy): ",
-            basePath + "SHINKU_YONAGI.sy");
+        filePathToScan.push_back(path);
 
-        // 如果用户只输入了文件名（不含路径分隔符），则拼接到 basePath
-        if (compressionFilePath.find('\\') == std::string::npos &&
-            compressionFilePath.find('/') == std::string::npos)
+        // 询问输出文件名
+        std::string outputFileName = getNonEmptyInput(
+            "Enter output file name (without .sy extension, default: SHINKU_YONAGI): ",
+            "SHINKU_YONAGI");
+
+        // 移除用户可能输入的后缀
+        if (hasSyExtension(outputFileName))
         {
-            compressionFilePath = basePath + compressionFilePath;
+            outputFileName = fs::path(outputFileName).stem().string();
         }
 
-        if (!hasSyExtension(compressionFilePath))
-        {
-            compressionFilePath += ".sy";
-        }
+        // 完整的输出文件路径
+        std::string compressionFilePath = basePath + outputFileName + ".sy";
 
-        std::string logicalRoot = getNonEmptyInput(
-            "Enter logical root name (default: YONAGI): ",
-            "YONAGI");
+        // 逻辑根就是文件名（不带后缀）
+        std::string logicalRoot = outputFileName;
 
         std::string password = getNonEmptyInput(
             "Enter encryption key (default: LOVEYONAGI): ",

@@ -203,10 +203,12 @@ void DecompressionLoop::createDirectory(const fs::path &directoryPath)
 {
     try
     {
-        if (fs::exists(directoryPath))
+        // 确保父目录存在
+        if (!directoryPath.parent_path().empty() && !fs::exists(directoryPath.parent_path()))
         {
-            std::cout << "directoryIsExist: " << directoryPath << " ,skipped to next \n"; // 可以优化用户选择覆盖机制
+            createDirectory(directoryPath.parent_path());
         }
+
         bool created = fs::create_directory(directoryPath);
     }
     catch (const std::exception &e)
