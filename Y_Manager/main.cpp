@@ -460,6 +460,12 @@ void runDecompressionMode()
                     ".",
                     true);
 
+                // 确保末尾有斜杠
+                if (!outputDirectory.empty() && outputDirectory.back() != '\\' && outputDirectory.back() != '/')
+                {
+                    outputDirectory += '\\';
+                }
+
                 // 检查目录是否存在
                 try
                 {
@@ -490,22 +496,7 @@ void runDecompressionMode()
             {
                 Aes aes(password.c_str());
 
-                // 切换到输出目录
-                try
-                {
-                    auto output_path = make_path(outputDirectory);
-                    fs::current_path(output_path);
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "Error: Failed to change to output directory: " << e.what() << "\n";
-                    fs::current_path(originalPath);
-                    std::cout << "Please try again with a different directory.\n";
-                    validFileSelected = false;
-                    continue;
-                }
-
-                // 将输入文件路径转换为绝对路径（防止目录切换后找不到文件）
+                // 将输入文件路径转换为绝对路径
                 fs::path inputFilePath;
                 try
                 {
@@ -521,14 +512,44 @@ void runDecompressionMode()
                 }
                 catch (...)
                 {
-                    fs::current_path(originalPath);
                     std::cerr << "Error: Failed to process input file path\n";
                     std::cout << "Please try again with a different file.\n";
                     validFileSelected = false;
                     continue;
                 }
 
-                DecompressionLoop decompressor(inputFilePath.string());
+                // 将输出目录转换为绝对路径
+                fs::path absoluteOutputPath;
+                try
+                {
+                    auto output_path = make_path(outputDirectory);
+                    if (output_path.is_absolute())
+                    {
+                        absoluteOutputPath = output_path;
+                    }
+                    else
+                    {
+                        absoluteOutputPath = originalPath / output_path;
+                    }
+
+                    // 转换为字符串后再次确保末尾有斜杠
+                    std::string absOutputStr = absoluteOutputPath.string();
+                    if (!absOutputStr.empty() && absOutputStr.back() != '\\' && absOutputStr.back() != '/')
+                    {
+                        absOutputStr += '\\';
+                    }
+                    absoluteOutputPath = make_path(absOutputStr);
+                }
+                catch (...)
+                {
+                    std::cerr << "Error: Failed to process output directory path\n";
+                    std::cout << "Please try again with a different directory.\n";
+                    validFileSelected = false;
+                    continue;
+                }
+
+                // 不切换工作目录，直接传入绝对路径
+                DecompressionLoop decompressor(inputFilePath.string(), absoluteOutputPath.string());
                 decompressor.decompressionLoop(aes);
 
                 // 将输出路径转换为绝对路径用于显示

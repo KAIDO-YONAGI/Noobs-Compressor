@@ -32,12 +32,21 @@ private:
     void createFile(const fs::path &filePath);
 
 public:
-    DecompressionLoop(std::string deCompressionFilePath)
+    DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
     {
         Transfer transfer;
-        fullPath=transfer.transPath(deCompressionFilePath);
-        parentPath = fullPath.parent_path();
+        fullPath = transfer.transPath(deCompressionFilePath);
 
+        if (outputDirectory.empty())
+        {
+            // 默认行为：使用压缩文件所在目录
+            parentPath = fullPath.parent_path();
+        }
+        else
+        {
+            // 使用指定的输出目录
+            parentPath = transfer.transPath(outputDirectory);
+        }
     }
     void decompressionLoop(Aes &aes);
 };

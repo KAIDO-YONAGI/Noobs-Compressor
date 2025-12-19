@@ -30,7 +30,8 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
         if (!dataLoader->isDone() && count < totalBlocks)
         {
             count++;
-            huffmanZip.statistic_freq(0, dataLoader->getBlock());
+            const DataBlock data_In = dataLoader->getBlock(); // 获取一次数据块，重复使用
+            huffmanZip.statistic_freq(0, data_In);
 
             huffmanZip.merge_ttabs();
             huffmanZip.gen_hefftree();
@@ -48,8 +49,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                       << std::fixed << std::setw(6) << std::setprecision(2)
                       << (100.0 * count) / totalBlocks
                       << "% \n";
-
-            DataBlock data_In = dataLoader->getBlock(); // 调用压缩
 
             DataBlock compressedData;
             huffmanZip.encode(data_In, compressedData);

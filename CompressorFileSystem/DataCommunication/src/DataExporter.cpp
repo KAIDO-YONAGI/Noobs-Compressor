@@ -42,5 +42,6 @@ void DataExporter::exportDataToFile_Decompression(const DataBlock &data)
     FileSize_uint dataSize = data.size();
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
+    outFile.flush();
     processedFileSize += dataSize;
 }

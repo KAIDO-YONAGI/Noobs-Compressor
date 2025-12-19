@@ -83,7 +83,18 @@ void Heffman::save_code_inTab(){
     pathStack.codeblocks.clear();
     pathStack.codelen = 0;
 
-    run_save_code_inTab(treeroot);
+    // 处理特殊情况：只有一个字符时，树的根节点本身就是叶子节点
+    if(treeroot != nullptr && treeroot->isleaf == true) {
+        // 为这个唯一的字符分配编码 "0"
+        pathStack.codeblocks.clear();
+        pathStack.codeblocks.push_back(0);
+        pathStack.codelen = 1;
+        pathStack.writecode(hashtab[treeroot->data]);
+        pathStack.codeblocks.clear();
+        pathStack.codelen = 0;
+    } else {
+        run_save_code_inTab(treeroot);
+    }
 }
 
 void Heffman::run_save_code_inTab(Hefftreenode* root){
