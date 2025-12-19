@@ -103,7 +103,11 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         }
         while (!headerLoaderIterator.fileQueue.empty())
         {
-            createFile(headerLoaderIterator.fileQueue.front().first.getFullPath()); // 重建文件
+            // 获取相对路径并拼接 parentPath
+            fs::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
+            fs::path fullFilePath = parentPath / relativePath;
+
+            createFile(fullFilePath); // 重建文件
             // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
             std::ifstream &inFile = headerLoaderIterator.getInFile();
             // 把已压缩块读进内存，处理，写入对应位置
@@ -113,7 +117,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             {
                 throw std::runtime_error("decompressionLoop()-Error:Failed to seek to dataOffset " + std::to_string(dataOffset));
             }
-            fs::path filePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
+            fs::path filePath = fullFilePath;
             fs::path filename = filePath.filename();
             // system("cls");
             std::cout << "Processing file: " << filename << "\n";
