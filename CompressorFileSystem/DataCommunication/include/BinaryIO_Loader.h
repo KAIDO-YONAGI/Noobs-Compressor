@@ -6,6 +6,23 @@
 #include "Directory_FileParser.h"
 #include "My_Aes.h"
 #include <queue>
+
+/*
+ BinaryIO_Loader - 二进制目录块读取与解析器
+
+   功能:
+   从.sy文件读取加密的目录块
+   调用Directory_FileParser解析二进制目录结构
+   管理文件队列、目录队列用于解压流程
+   支持分块读取和AES解密
+
+   公共接口:
+   headerLoaderIterator(): 主循环函数，逐块读取目录数据
+   getDirectoryOffset(): 获取目录块偏移量
+   allLoopIsDone(): 检查是否完成所有读取
+   restartLoader(): 重新初始化读取状态
+   encryptHeaderBlock(): 加密并回填目录块
+*/
 class BinaryIO_Loader
 {
 private:
@@ -29,14 +46,12 @@ private:
     DataBlock buffer =
         DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
 
-    void requestDone();
-
-    void allLoopDone();
-
-    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory, Aes &aes);
+    void requestDone();                                                                             // 标记块读取完成
+    void allLoopDone();                                                                             // 标记所有循环完成并清理资源
+    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
 
 public:
-    void headerLoaderIterator(Aes &aes); // 主逻辑函数
+    void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
 
     // 压缩时队列
     Directory_FileQueue fileQueue;                            // 文件队列
@@ -54,7 +69,7 @@ public:
         this->inFile = std::ifstream(loadPath, std::ios::binary);
 
         this->fstreamForRefill = std::fstream(loadPath, std::ios::binary | std::ios::in | std::ios::out);
-        
+
         if (!inFile)
             throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile" + inPath);
         if (!fstreamForRefill)
@@ -67,11 +82,15 @@ public:
 
     ~BinaryIO_Loader() { allLoopDone(); }
 
-    DirectoryOffsetSize_uint getDirectoryOffset() { return header.directoryOffset; }
+    DirectoryOffsetSize_uint getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 
-    bool allLoopIsDone() { return allDone; }
-    bool loaderRequestIsDone() { return blockIsDone; }
-    std::ifstream &getInFile() { return inFile; }
-    void restartLoader();
-    void encryptHeaderBlock(Aes &aes);
+    bool allLoopIsDone() { return allDone; } // 检查所有读取是否完成
+
+    bool loaderRequestIsDone() { return blockIsDone; } // 检查当前块读取是否完成
+
+    std::ifstream &getInFile() { return inFile; } // 获取输入文件对象
+
+    void restartLoader(); // 重新打开文件并定位到当前偏移
+
+    void encryptHeaderBlock(Aes &aes); // 加密并回填目录块到文件
 };

@@ -5,12 +5,20 @@
 #include "Directory_FileDetails.h"
 #include "ToolClasses.h"
 #include "BinaryIO_Writer.h"
+
+/* Directory_FileProcessor - 目录文件处理和扫描器
+ *
+ * 功能:
+ *   按BFS（层序遍历）扫描文件系统并处理每个目录
+ *   支持多文件和多目录任务的统一处理
+ *   管理目录队列用于层序遍历
+ *   调用BinaryIO_Writer进行二进制序列化
+ *
+ * 公共接口:
+ *   directory_fileProcessor(): 主入口函数，启动文件系统扫描和处理
+ */
 class Directory_FileProcessor
 {
-    /*
-    scanFlow()按BFS（层序遍历）扫描指定目录下所有文件的函数。包含了队列逻辑，用于处理binaryIO_Reader()的循环扫描到的目录
-    directory_fileProcessor()主函数。参数const const std::vector<std::string> &filePathToScan，用于处理多文件（目录）任务
-    */
 private:
     Transfer transfer;
     std::ofstream &outFile;
@@ -19,16 +27,22 @@ private:
     BinaryIO_Writter *BIO;
     NumsWriter numWriter;
 
+    /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
     void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
 public:
+    /* 构造函数，初始化处理器并创建二进制写入器 */
     Directory_FileProcessor(std::ofstream &outFile) : outFile(outFile)
     {
         BIO = new BinaryIO_Writter(outFile);
     };
+
+    /* 析构函数，释放二进制写入器资源 */
     ~Directory_FileProcessor()
     {
         delete BIO;
     };
+
+    /* 主处理函数，执行指定路径的文件系统扫描和二进制序列化 */
     void directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot);
 };

@@ -7,62 +7,121 @@
 #include <vector>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
-#include"../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+
+/* AES-128加密算法实现 - 标准AES加密/解密、密钥扩展、预计算表优化 */
 class Aes
 {
 private:
-    int getLeft4Bit(int num);
-    int getRight4Bit(int num);
-    int getNumFromSBox(int index);
-    int getIntFromChar(char c);
-    void convertToIntArray(char *str, int pa[4][4]);
-    int getWordFromStr(const char *str);
-    void splitIntToArray(int num, int array[4]);
-    void leftLoop4int(int array[4], int step);
-    int mergeArrayToInt(int array[4]);
-    int T(int num, int round);
-    void extendKey(const char *key);
-    void addRoundKey(int array[4][4], int round);
-    void subBytes(int array[4][4]);
-    void shiftRows(int array[4][4]);
-    void mixColumns(int array[4][4]);
-    void convertArrayToStr(int array[4][4], char *str);
-    int getNumFromS1Box(int index);
-    void deSubBytes(int array[4][4]);
-    void rightLoop4int(int array[4], int step);
-    void deShiftRows(int array[4][4]);
-    void deMixColumns(int array[4][4]);
-    void addRoundTowArray(int aArray[4][4], int bArray[4][4]);
-    void getArrayFrom4W(int i, int array[4][4]);
-    void hash_to_16bytes(const char *input, uint8_t *output);
-    DataBlock processDataAES(const DataBlock &inputBuffer, int  mode);
+   /* 提取32位整数的高4比特，返回0-15 */
+   int getLeft4Bit(int num);
 
-    void aes(char *p, int plen);
-    void deAes(char *c, int clen);
+   /* 提取32位整数的低4比特，返回0-15 */
+   int getRight4Bit(int num);
+
+   /* 从S盒查表，返回替换值。加密用非线性替换 */
+   int getNumFromSBox(int index);
+
+   /* 从S2盒查表，返回替换值。解密用的逆S盒 */
+   int getNumFromS1Box(int index);
+
+   /* 将char字符转换为unsigned int，返回0-255 */
+   int getIntFromChar(char c);
+
+   /* 将16字节字符串转换为4x4状态矩阵，按列优先顺序 */
+   void convertToIntArray(char *str, int pa[4][4]);
+
+   /* 从4字节字符串构造32位字，大端序表示 */
+   int getWordFromStr(const char *str);
+
+   /* 将32位整数分解为4个字节数组，用于字旋转 */
+   void splitIntToArray(int num, int array[4]);
+
+   /* 数组循环左移指定步数，RotWord操作 */
+   void leftLoop4int(int array[4], int step);
+
+   /* 数组循环右移指定步数，InvShiftRows操作 */
+   void rightLoop4int(int array[4], int step);
+
+   /* 将4字节数组合并为32位整数，大端序 */
+   int mergeArrayToInt(int array[4]);
+
+   /* T变换函数，用于密钥扩展。RotWord+SubWord+Rcon异或 */
+   int T(int num, int round);
+
+   /* 从128位密钥生成44个轮密钥字，存储在w[]数组中 */
+   void extendKey(const char *key);
+
+   /* 状态与轮密钥异或，唯一涉及轮密钥的步骤 */
+   void addRoundKey(int array[4][4], int round);
+
+   /* 字节级非线性替换，使用S盒提供混淆性质 */
+   void subBytes(int array[4][4]);
+
+   /* 行位移变换，破坏列相关性。行i左移i个字节 */
+   void shiftRows(int array[4][4]);
+
+   /* 列混淆变换，使用GF(2^8)矩阵乘法增强扩散性质 */
+   void mixColumns(int array[4][4]);
+
+   /* 逆字节替换，使用S2盒。SubBytes的逆运算 */
+   void deSubBytes(int array[4][4]);
+
+   /* 逆行位移变换，行i右移i个字节。ShiftRows的逆运算 */
+   void deShiftRows(int array[4][4]);
+
+   /* 逆列混淆变换，使用GF(2^8)逆矩阵乘法 */
+   void deMixColumns(int array[4][4]);
+
+   /* 两个4x4矩阵异或，状态矩阵运算 */
+   void addRoundTowArray(int aArray[4][4], int bArray[4][4]);
+
+   /* 从轮密钥字数组提取状态矩阵，AddRoundKey中使用 */
+   void getArrayFrom4W(int i, int array[4][4]);
+
+   /* 将状态矩阵转换回16字节字符串，按列优先顺序 */
+   void convertArrayToStr(int array[4][4], char *str);
+
+   /* 将任意长度密钥哈希为128位，使用SHA-256并截取前16字节 */
+   void hash_to_16bytes(const char *input, uint8_t *output);
+
+   /* 分块处理AES加密/解密，按16字节分块 */
+   DataBlock processDataAES(const DataBlock &inputBuffer, int mode);
+
+   /* AES加密，10轮加密循环 */
+   void aes(char *p, int plen);
+
+   /* AES解密，10轮解密循环 */
+   void deAes(char *c, int clen);
 
 private:
-    int w[44];
-    uint8_t iv[16];
-    const char *aes_key;
-    uint8_t aes_key_16bytes[16];
-    DataBlock buffer;
+   int w[44];                   // 44个32位轮密钥字(w[0]-w[43])
+   uint8_t iv[16];              // 初始化向量(当前实现为全0)
+   const char *aes_key;         // 用户密钥指针(保存参考)
+   uint8_t aes_key_16bytes[16]; // 128位主密钥(哈希后)
+   DataBlock buffer;            // 数据处理缓冲区
 
 public:
-    Aes() {};
-    Aes(const char *aes_key)
-    {
-        hash_to_16bytes(aes_key, aes_key_16bytes);
-        extendKey(reinterpret_cast<const char *>(aes_key_16bytes));
-        memset(iv, 0, sizeof(iv));
-    }
+   /* 默认构造函数 */
+   Aes() {};
 
-    ~Aes()
-    {
-        // 安全清除密钥
-        memset(const_cast<uint8_t *>(aes_key_16bytes), 0, 16);
+   /* 初始化AES对象，哈希密钥、扩展密钥、初始化IV */
+   Aes(const char *aes_key)
+   {
+      hash_to_16bytes(aes_key, aes_key_16bytes);
+      extendKey(reinterpret_cast<const char *>(aes_key_16bytes));
+      memset(iv, 0, sizeof(iv));
+   }
 
-    }
-    void doAes(int mode, const DataBlock &inputBuffer,DataBlock &outputBuffer);
+   /* 析构函数，安全清除内存中的密钥副本 */
+   ~Aes()
+   {
+      // 安全清除密钥
+      memset(const_cast<uint8_t *>(aes_key_16bytes), 0, 16);
+   }
+
+   /* 统一加密/解密接口，mode=1加密、mode=2解密。自动分块处理 */
+   void doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer);
 };
 
 static const unsigned int Rcon[10] = {
