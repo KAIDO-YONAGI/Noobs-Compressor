@@ -13,4 +13,4 @@
 - instructions.md & 策划.md---instructions&HuffmanZip
 - plan.md---Aes&CompressorFileSystem
 
-### 本项目作为华南师范大学数据结构作业（项目第一贡献者），学号202440025284
+### 本项目作为华南师范大学数据结构与算法大作业（项目第一贡献者），学号202440025284
