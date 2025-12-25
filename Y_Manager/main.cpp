@@ -264,35 +264,127 @@ void runCompressionMode(const std::string &basePath)
     while (!operationComplete)
     {
         std::vector<std::string> filePathToScan;
+        bool addingFiles = true;
 
-        // 询问一次路径（要压缩的文件/文件夹）
-        std::cout << "\n[Compression Mode] Enter path to compress: ";
-        std::string path;
-        std::getline(std::cin, path);
-        path = trimWhitespace(path);
-        path = removeQuotes(path);
-
-        // 检查路径是否存在
-        if (!path_exists(path))
+        // 循环添加多个文件/文件夹
+        while (addingFiles)
         {
-            std::cout << "Error: Path \"" << path << "\" does not exist!\n";
-            std::cout << "Options: (R)etry - re-enter path, (E)xit compression: ";
-            std::string confirm;
-            std::getline(std::cin, confirm);
-            confirm = trimWhitespace(confirm);
-            confirm = removeQuotes(confirm);
+            std::cout << "\n[Compression Mode] Enter path to compress (or 'done' to finish adding files): ";
+            std::string path;
+            std::getline(std::cin, path);
+            path = trimWhitespace(path);
+            path = removeQuotes(path);
 
-            if (confirm == "E" || confirm == "e")
+            // 检查用户是否完成添加文件
+            if (path == "done" || path == "DONE")
             {
-                return;
+                if (filePathToScan.empty())
+                {
+                    std::cout << "Error: Please add at least one file before proceeding.\n";
+                    continue;
+                }
+                addingFiles = false;
+                break;
             }
-            else
+
+            // 检查路径是否存在
+            if (!path_exists(path))
             {
-                continue;
+                std::cout << "Error: Path \"" << path << "\" does not exist!\n";
+                std::cout << "Options: (R)etry - re-enter path, (S)kip - skip this file, (E)xit compression: ";
+                std::string confirm;
+                std::getline(std::cin, confirm);
+                confirm = trimWhitespace(confirm);
+                confirm = removeQuotes(confirm);
+
+                if (confirm == "E" || confirm == "e")
+                {
+                    return;
+                }
+                else if (confirm == "S" || confirm == "s")
+                {
+                    continue;
+                }
+                else
+                {
+                    continue;
+                }
+            }
+
+            // 检查是否已添加过相同路径
+            bool alreadyAdded = false;
+            for (const auto &existingPath : filePathToScan)
+            {
+                if (existingPath == path)
+                {
+                    std::cout << "Warning: This path has already been added.\n";
+                    alreadyAdded = true;
+                    break;
+                }
+            }
+
+            if (!alreadyAdded)
+            {
+                filePathToScan.push_back(path);
+                std::cout << "✓ Added: \"" << path << "\"\n";
+
+                // 显示已添加的文件列表
+                std::cout << "\nCurrent file list (" << filePathToScan.size() << " file(s)):\n";
+                for (size_t i = 0; i < filePathToScan.size(); ++i)
+                {
+                    std::cout << "  [" << (i + 1) << "] " << filePathToScan[i] << "\n";
+                }
+
+                // 询问是否继续添加文件
+                std::cout << "\nOptions: (A)dd more files, (R)emove file, (D)one adding: ";
+                std::string option;
+                std::getline(std::cin, option);
+                option = trimWhitespace(option);
+                option = removeQuotes(option);
+
+                if (option == "D" || option == "d")
+                {
+                    addingFiles = false;
+                    break;
+                }
+                else if (option == "R" || option == "r")
+                {
+                    std::cout << "Enter the number of the file to remove (1-" << filePathToScan.size() << "): ";
+                    std::string indexStr;
+                    std::getline(std::cin, indexStr);
+                    indexStr = trimWhitespace(indexStr);
+
+                    try
+                    {
+                        int index = std::stoi(indexStr) - 1;
+                        if (index >= 0 && index < static_cast<int>(filePathToScan.size()))
+                        {
+                            std::string removedPath = filePathToScan[index];
+                            filePathToScan.erase(filePathToScan.begin() + index);
+                            std::cout << "✓ Removed: \"" << removedPath << "\"\n";
+                        }
+                        else
+                        {
+                            std::cout << "Error: Invalid file number.\n";
+                        }
+                    }
+                    catch (...)
+                    {
+                        std::cout << "Error: Invalid input.\n";
+                    }
+                }
+                // 如果选择 "A" 或其他，继续循环
             }
         }
 
-        filePathToScan.push_back(path);
+        // 显示最终的文件列表摘要
+        std::cout << "\n========== File Summary ==========\n";
+        std::cout << "Total files to compress: " << filePathToScan.size() << "\n";
+        for (size_t i = 0; i < filePathToScan.size(); ++i)
+        {
+            std::cout << "  [" << (i + 1) << "] " << filePathToScan[i] << "\n";
+        }
+        std::cout << "==================================\n";
 
         // 询问输出目录路径
         std::string outputDirectory = getNonEmptyInput(
