@@ -1,4 +1,3 @@
-// HeaderLoader.h
 #pragma once
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 #include "../CompressorFileSystem/DataCommunication/include/DataLoader.h"

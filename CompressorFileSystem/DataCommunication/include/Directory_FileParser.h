@@ -1,4 +1,3 @@
-// Paser.hpp
 #pragma once
 
 #include "FileLibrary.h"

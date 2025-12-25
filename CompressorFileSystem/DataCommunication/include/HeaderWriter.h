@@ -1,4 +1,4 @@
-// Directory_FileWriter.h
+// HeaderWriter.h
 #pragma once
 
 #include "FileLibrary.h"
