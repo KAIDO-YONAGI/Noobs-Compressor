@@ -182,6 +182,21 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
     // 如果padding_bits==0，使用SIZE_MAX表示没有字节有填充（避免误匹配索引0）
     size_t last_byte_idx = (padding_bits > 0) ? (in_block.size() - 1) : SIZE_MAX;
 
+    // 特殊处理：如果树只有一个叶子节点（根节点本身就是叶子），直接根据比特数量输出字符
+    if(treeroot != nullptr && treeroot->isleaf == true) {
+        // 计算总比特数
+        size_t total_bits = 0;
+        for(size_t idx = 1; idx < in_block.size(); ++idx) {
+            size_t valid_bits = (idx == last_byte_idx && padding_bits > 0) ? (8 - padding_bits) : 8;
+            total_bits += valid_bits;
+        }
+
+        // 对于单叶子树，每一比特代表一个字符
+        for(size_t i = 0; i < total_bits && out_block.size() < maxOutputSize; ++i) {
+            out_block.push_back(treeroot->data);
+        }
+        return;
+    }
 
     // 从第二个字节开始处理（跳过填充位数标记）
     for(size_t idx = 1; idx < in_block.size(); ++idx)
