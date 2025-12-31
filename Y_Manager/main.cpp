@@ -539,8 +539,15 @@ void runDecompressionMode()
             // 文件有效，退出文件选择循环
             validFileSelected = true;
 
-            // 获取自定义输出路径
-            std::string currentDir = current_path_string();
+            // 获取自定义输出路径，使用压缩文件所在目录作为默认
+            // 必须先转换为绝对路径，避免相对于 bin 目录
+            auto compressionFileAbsPath = make_path(deCompressionFilePath);
+            if (!compressionFileAbsPath.is_absolute())
+            {
+                compressionFileAbsPath = fs::absolute(compressionFileAbsPath);
+            }
+            fs::path compressionFileDir = compressionFileAbsPath.parent_path();
+            std::string currentDir = compressionFileDir.string();
 
             std::string outputDirectory;
             bool validDirectorySelected = false;
@@ -552,30 +559,58 @@ void runDecompressionMode()
                     ".",
                     true);
 
-                // 确保末尾有斜杠
-                if (!outputDirectory.empty() && outputDirectory.back() != '\\' && outputDirectory.back() != '/')
+                // 如果输入是相对路径（不含冒号且不以斜杠开头），则拼接到默认目录
+                if (!outputDirectory.empty() && outputDirectory != ".")
                 {
-                    outputDirectory += '\\';
+                    // 检查是否是绝对路径（包含冒号如C:\ 或以斜杠开头）
+                    bool isAbsolutePath = (outputDirectory.find(':') != std::string::npos) ||
+                                        (outputDirectory[0] == '\\' || outputDirectory[0] == '/');
+
+                    if (!isAbsolutePath)
+                    {
+                        // 相对路径，拼接到默认目录
+                        outputDirectory = currentDir + "\\" + outputDirectory;
+                    }
                 }
 
-                // 检查目录是否存在
+                // 只验证路径格式，不创建目录
                 try
                 {
                     auto output_path = make_path(outputDirectory);
-                    if (fs::exists(output_path) && fs::is_directory(output_path))
+
+                    // 检查父目录是否存在（输出目录本身可以不存在，会由解压程序创建）
+                    fs::path parent_dir = output_path.parent_path();
+                    if (!parent_dir.empty() && !fs::exists(parent_dir))
                     {
-                        validDirectorySelected = true;
+                        std::cerr << "Error: Parent directory \"" << parent_dir.string() << "\" does not exist!\n";
+                        std::cout << "Please enter a valid path.\n";
+                        continue;
                     }
-                    else
+
+                    // 如果路径存在且是文件（不是目录），报错
+                    if (fs::exists(output_path) && !fs::is_directory(output_path))
                     {
-                        std::cerr << "Error: Directory \"" << outputDirectory << "\" does not exist!\n";
-                        std::cout << "Please enter a valid existing directory.\n";
+                        std::cerr << "Error: \"" << outputDirectory << "\" exists but is not a directory!\n";
+                        std::cout << "Please enter a valid directory path.\n";
+                        continue;
                     }
+
+                    // 转换为绝对路径（在当前工作目录下执行）
+                    output_path = fs::absolute(output_path);
+
+                    // 规范化输出目录（移除末尾斜杠）
+                    outputDirectory = output_path.string();
+                    if (!outputDirectory.empty() && (outputDirectory.back() == '\\' || outputDirectory.back() == '/'))
+                    {
+                        outputDirectory.pop_back();
+                    }
+
+                    validDirectorySelected = true;
                 }
                 catch (const std::exception &e)
                 {
-                    std::cerr << "Error: Failed to check directory: " << e.what() << "\n";
-                    std::cout << "Please try again.\n";
+                    std::cerr << "Error: Failed to process directory path: " << e.what() << "\n";
+                    std::cout << "Please try again with a different path.\n";
                 }
             }
 
@@ -610,60 +645,11 @@ void runDecompressionMode()
                     continue;
                 }
 
-                // 将输出目录转换为绝对路径
-                fs::path absoluteOutputPath;
-                try
-                {
-                    auto output_path = make_path(outputDirectory);
-                    if (output_path.is_absolute())
-                    {
-                        absoluteOutputPath = output_path;
-                    }
-                    else
-                    {
-                        absoluteOutputPath = originalPath / output_path;
-                    }
-
-                    // 转换为字符串后再次确保末尾有斜杠
-                    std::string absOutputStr = absoluteOutputPath.string();
-                    if (!absOutputStr.empty() && absOutputStr.back() != '\\' && absOutputStr.back() != '/')
-                    {
-                        absOutputStr += '\\';
-                    }
-                    absoluteOutputPath = make_path(absOutputStr);
-                }
-                catch (...)
-                {
-                    std::cerr << "Error: Failed to process output directory path\n";
-                    std::cout << "Please try again with a different directory.\n";
-                    validFileSelected = false;
-                    continue;
-                }
-
-                // 不切换工作目录，直接传入绝对路径
-                DecompressionLoop decompressor(inputFilePath.string(), absoluteOutputPath.string());
+                // 直接使用已验证和处理过的 outputDirectory（已规范化，无末尾斜杠，绝对路径）
+                DecompressionLoop decompressor(inputFilePath.string(), outputDirectory);
                 decompressor.decompressionLoop(aes);
 
-                // 将输出路径转换为绝对路径用于显示
-                std::string displayPath = outputDirectory;
-                try
-                {
-                    auto output_path = make_path(outputDirectory);
-                    if (!output_path.is_absolute())
-                    {
-                        displayPath = fs::absolute(output_path).string();
-                    }
-                    else
-                    {
-                        displayPath = output_path.string();
-                    }
-                }
-                catch (...)
-                {
-                    // 如果转换失败，就使用原始路径
-                }
-
-                std::cout << "\n>>> Decompression successful! Files output to: " << displayPath << "\n";
+                std::cout << "\n>>> Decompression successful! Files output to: " << outputDirectory << "\n";
                 operationComplete = true;
             }
             catch (const std::exception &e)

@@ -36,15 +36,15 @@ public:
         Transfer transfer;
         fullPath = transfer.transPath(deCompressionFilePath);
 
-        if (outputDirectory.empty())
+        if (outputDirectory.empty() || outputDirectory == ".")
         {
             // 默认行为：使用压缩文件所在目录
             parentPath = fullPath.parent_path();
         }
         else
         {
-            // 使用指定的输出目录
-            parentPath = transfer.transPath(outputDirectory);
+            // 使用指定的输出目录（outputDirectory 已是绝对路径）
+            parentPath = fs::path(outputDirectory);
         }
     }
     void decompressionLoop(Aes &aes);

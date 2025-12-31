@@ -98,7 +98,15 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     {
         while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
         {
-            createDirectory(headerLoaderIterator.directoryQueue_ready.front());
+            fs::path dir_to_create = headerLoaderIterator.directoryQueue_ready.front();
+
+            // 如果是相对路径，拼接parentPath
+            if (!dir_to_create.is_absolute())
+            {
+                dir_to_create = parentPath / dir_to_create;
+            }
+
+            createDirectory(dir_to_create);
             headerLoaderIterator.directoryQueue_ready.pop();
         }
         while (!headerLoaderIterator.fileQueue.empty())
