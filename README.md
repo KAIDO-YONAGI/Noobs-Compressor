@@ -13,3 +13,8 @@
 
 - instructions.md & 策划.md---instructions&HuffmanZip
 - plan.md---Aes&CompressorFileSystem
+
+### 版本更新记录
+
+- v1.0.0:预览版，存在少量bug
+- v1.0.1:稳定版，修复了huffman编码的边界处理问题
