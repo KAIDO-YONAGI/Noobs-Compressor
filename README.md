@@ -1,3 +1,4 @@
+### 本项目作为华南师范大学数据结构与算法大作业（项目第一贡献者），学号202440025284
 # SFC.exe-windows only
 
 - 程序具文件归档系统,可支持复数个文件的压缩和解压缩，具体架构参见源代码以及相关markdown文件
@@ -12,5 +13,3 @@
 
 - instructions.md & 策划.md---instructions&HuffmanZip
 - plan.md---Aes&CompressorFileSystem
-
-### 本项目作为华南师范大学数据结构作业（项目第一贡献者），学号202440025284
