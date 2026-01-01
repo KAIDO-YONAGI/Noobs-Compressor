@@ -1,6 +1,7 @@
 #include "../EncryptionModules/Aes/include/My_Aes.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
 #include "MainLoop.h"
+#include "IconHandler.h"
 #include <windows.h>
 #include <limits>
 
@@ -444,10 +445,23 @@ void runCompressionMode(const std::string &basePath)
             HeaderWriter headerWriter_v0;
             headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
 
+            // 压缩后关联图标到.sy文件类型（图标来自exe内嵌资源）
+            try
+            {
+                IconHandler::AssociateIconToSyFile(compressionFilePath, "");
+            }
+            catch (...)
+            {
+                // 忽略图标关联错误
+            }
+
             CompressionLoop compressor(compressionFilePath);
             compressor.compressionLoop(filePathToScan, aes);
 
             std::cout << "\n>>> Compression successful! Output file: " << compressionFilePath << "\n";
+
+            std::cout << "Icon associated with .sy file type\n";
+
             operationComplete = true;
         }
         catch (const std::exception &e)
@@ -709,6 +723,16 @@ int main()
 {
     // 设置控制台代码页为UTF-8，确保正确显示中文
     system("chcp 65001 > nul");
+
+    // 在程序启动时提前提取和注册图标（确保.sy文件能显示正确的图标）
+    try
+    {
+        IconHandler::AssociateIconToSyFile("", "");
+    }
+    catch (...)
+    {
+        // 忽略图标初始化错误，不影响主程序功能
+    }
 
     int choice;
     // 使用get_exe_directory获取程序所在目录
