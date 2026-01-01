@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <thread>
 
 /**
  * 图标处理类 - 处理从EXE中提取和应用图标功能

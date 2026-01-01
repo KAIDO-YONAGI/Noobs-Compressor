@@ -724,16 +724,6 @@ int main()
     // 设置控制台代码页为UTF-8，确保正确显示中文
     system("chcp 65001 > nul");
 
-    // 在程序启动时提前提取和注册图标（确保.sy文件能显示正确的图标）
-    try
-    {
-        IconHandler::AssociateIconToSyFile("", "");
-    }
-    catch (...)
-    {
-        // 忽略图标初始化错误，不影响主程序功能
-    }
-
     int choice;
     // 使用get_exe_directory获取程序所在目录
     std::string basePath = get_exe_directory();

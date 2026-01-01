@@ -303,15 +303,20 @@ bool IconHandler::AssociateIconToSyFile(const std::string &syFilePath, const std
 {
     try
     {
-        // 在注册表中注册图标关联（直接使用exe文件作为图标源）
-        if (!RegisterSyFileIcon(iconPath))
-        {
-            return false;
-        }
+        // 使用异步线程更新注册表，不阻塞主程序
+        std::thread registryUpdateThread([iconPath]() {
+            try
+            {
+                RegisterSyFileIcon(iconPath);
+            }
+            catch (...)
+            {
+                // 忽略异步更新中的错误
+            }
+        });
 
-        // 通知Windows更新文件关联缓存（多种方式）
-        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
-        SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_FLUSH, NULL, NULL);
+        // 设置为后台线程，主程序退出时自动停止
+        registryUpdateThread.detach();
 
         return true;
     }
