@@ -14,8 +14,8 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "YONAGI"
             VALUE "FileDescription", "Secure Files Compressor Application"
-            VALUE "FileVersion", "1.0.0.0"
-            VALUE "ProductVersion", "1.0.0.0"
+            VALUE "FileVersion", "1.0.1"
+            VALUE "ProductVersion", "1.0.1"
             VALUE "OriginalFilename", "Secure Files Compressor.exe"
             VALUE "ProductName", "Secure Files Compressor"
         END

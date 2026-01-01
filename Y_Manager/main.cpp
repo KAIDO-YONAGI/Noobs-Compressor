@@ -8,21 +8,42 @@
 // Windows API路径处理辅助函数
 fs::path make_path(const std::string &utf8_str)
 {
-    // 将UTF-8字符串转换为宽字符串（Windows内部使用UTF-16）
-    int wide_len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
-    if (wide_len == 0)
+    if (utf8_str.empty())
     {
-        throw std::runtime_error("Failed to convert UTF-8 to wide string");
+        return fs::path("");
     }
 
+    // 首先尝试用 UTF-8 进行转换
+    int wide_len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
+
+    // 如果 UTF-8 转换失败，尝试用本地代码页转换（ANSI）
+    if (wide_len == 0)
+    {
+        wide_len = MultiByteToWideChar(CP_ACP, 0, utf8_str.c_str(), -1, nullptr, 0);
+        if (wide_len == 0)
+        {
+            throw std::runtime_error("Failed to convert string to wide string");
+        }
+
+        std::wstring wide_str(wide_len, L'\0');
+        MultiByteToWideChar(CP_ACP, 0, utf8_str.c_str(), -1, &wide_str[0], wide_len);
+
+        if (!wide_str.empty() && wide_str.back() == L'\0')
+        {
+            wide_str.pop_back();
+        }
+
+        return fs::path(wide_str);
+    }
+
+    // UTF-8 转换成功
     std::wstring wide_str(wide_len, L'\0');
     MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, &wide_str[0], wide_len);
 
-    // 移除末尾的null字符
     if (!wide_str.empty() && wide_str.back() == L'\0')
     {
         wide_str.pop_back();
-    } 
+    }
 
     return fs::path(wide_str);
 }
@@ -68,13 +89,27 @@ std::string get_exe_directory()
     int utf8_len = WideCharToMultiByte(CP_UTF8, 0, full_path.c_str(), -1, nullptr, 0, nullptr, nullptr);
     if (utf8_len == 0)
     {
-        return ".";
+        // UTF-8 转换失败，尝试 ANSI
+        utf8_len = WideCharToMultiByte(CP_ACP, 0, full_path.c_str(), -1, nullptr, 0, nullptr, nullptr);
+        if (utf8_len == 0)
+        {
+            return ".";
+        }
+
+        std::string utf8_path(utf8_len, '\0');
+        WideCharToMultiByte(CP_ACP, 0, full_path.c_str(), -1, &utf8_path[0], utf8_len, nullptr, nullptr);
+
+        if (!utf8_path.empty() && utf8_path.back() == '\0')
+        {
+            utf8_path.pop_back();
+        }
+
+        return utf8_path;
     }
 
     std::string utf8_path(utf8_len, '\0');
     WideCharToMultiByte(CP_UTF8, 0, full_path.c_str(), -1, &utf8_path[0], utf8_len, nullptr, nullptr);
 
-    // 移除末尾的null字符
     if (!utf8_path.empty() && utf8_path.back() == '\0')
     {
         utf8_path.pop_back();
@@ -479,7 +514,7 @@ void runCompressionMode(const std::string &basePath)
         }
         catch (...)
         {
-            std::cerr << "\n[ERROR] Compression failed due to an unknown error.\n";
+            std::cerr << "\n[ERROR] Compression failed due to an error.\n";
 
             // 询问是否重试
             std::cout << "\nDo you want to try again? (Y/N): ";
@@ -690,7 +725,7 @@ void runDecompressionMode()
             }
             catch (...)
             {
-                std::cerr << "\n[ERROR] Decompression failed due to an unknown error.\n";
+                std::cerr << "\n[ERROR] Decompression failed due to an error.\n";
 
                 // 询问是否重试
                 std::cout << "\nDo you want to try again? (Y/N): ";
