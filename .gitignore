@@ -1,0 +1,14 @@
+# ignore IDE setting files
+.vscode/
+
+# ignore test files
+bin/
+*.txt
+*.log
+
+src/main.cpp
+
+*.bin
+*.ps1
+*.bat
+*.claude
