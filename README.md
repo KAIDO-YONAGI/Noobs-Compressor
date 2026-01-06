@@ -80,11 +80,17 @@
 
 ---
 
-## 构建说明 | Build Instructions
+## 关于构建 | Build Instructions
 
-1. 从 Release 页面下载 `.vscode` 压缩包  
-2. 解压并放入 `Y_Manager/` 目录  
-3. 配置依赖并编译 `main.cpp`
+- 从 Release 页面下载 `.vscode` 压缩包  
+- Download the `.vscode` archive from the Release page  
+
+- 解压并放入 `Y_Manager/` 目录  
+- Extract it and place it into the `Y_Manager/` directory  
+
+- 配置依赖并编译 `main.cpp`  
+- Configure the required dependencies and compile `main.cpp`
+
 
 ### 依赖 | Dependencies
 
