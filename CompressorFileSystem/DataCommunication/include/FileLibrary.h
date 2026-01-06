@@ -42,36 +42,36 @@ constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 * 1024 * 1024; // 偏移量缓冲�
 // 会在数据区作为首选的偏移量管理方案来使用，比如按照数据块对象提供的size()方法获取块大小，而不是依赖上述存在更新延迟的文件流提供的size方法
 
 // 文件标准相关
-constexpr const SizeOfFlag_uint FLAG_SIZE = 1;
-constexpr const char DIRECTORY_FLAG = '0';
-constexpr const char FILE_FLAG = '1';
-constexpr const char SEPARATED_FLAG = '2';
-constexpr const char LOGICAL_ROOT_FLAG = '3';
-constexpr const char SYMBOL_LINK_FLAG = '4';
+constexpr SizeOfFlag_uint FLAG_SIZE = 1;
+constexpr char DIRECTORY_FLAG = '0';
+constexpr char FILE_FLAG = '1';
+constexpr char SEPARATED_FLAG = '2';
+constexpr char LOGICAL_ROOT_FLAG = '3';
+constexpr char SYMBOL_LINK_FLAG = '4';
 // 注意直接使用sizeof返回的参数进行运算时，小于uint64_t的类型会被自动类型转换为ULL，需要按需强制转换后再参与运算
 
 // 目录标准的基础大小（不含变长的文件名，需要自行维护）
-constexpr const uint8_t DIRECTORY_STANDARD_SIZE_BASIC =
+constexpr uint8_t DIRECTORY_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
     sizeof(FileNameSize_uint) +
     // 此行应为变长文件名，无法预先定义,需按情况处理
     sizeof(FileCount_uint);
 
 // 文件标准的基础大小（不含变长的文件名，需要自行维护）
-constexpr const uint8_t FILE_STANDARD_SIZE_BASIC =
+constexpr uint8_t FILE_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
     sizeof(FileNameSize_uint) +
     // 此行应为变长文件名，无法预先定义,需按情况处理
     sizeof(FileSize_uint) * 2;
 
 // 分割标准的基础大小
-constexpr const uint8_t SEPARATED_STANDARD_SIZE =
+constexpr uint8_t SEPARATED_STANDARD_SIZE =
     FLAG_SIZE +
     sizeof(DirectoryOffsetSize_uint) +
     sizeof(IvSize_uint);
 
 // 符号链接标准的基础大小
-constexpr const uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
+constexpr uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
     sizeof(FileNameSize_uint) +
     sizeof(FileNameSize_uint)
@@ -80,7 +80,7 @@ constexpr const uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
     ;
 
 // 文件头的大小
-constexpr const uint8_t HEADER_SIZE =
+constexpr uint8_t HEADER_SIZE =
     sizeof(MAGIC_NUM) +                // 4B
     sizeof(CompressStrategy_uint) +    // 1B
     sizeof(CompressorVersion_uint) +   // 1B
