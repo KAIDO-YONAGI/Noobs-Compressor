@@ -20,7 +20,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     numWriter.writeBinaryNums(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint) - sizeof(headerOffsetSize));
+    locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint) - sizeof(HeaderOffsetSize_uint));
     numWriter.writeBinaryNums(HEADER_SIZE,outFile);
     outFile.seekp(0, std::ios::end);
 }

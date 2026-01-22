@@ -152,8 +152,8 @@ void BinaryIO_Writter::writeLogicalRoot(const std::string &logicalRoot, const Fi
 }
 void BinaryIO_Writter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset)
 {
-    FileCount_uint length = filePathToScan.size();
-    for (FileCount_uint i = 0; i < length; i++)
+    FileCount_uint num = filePathToScan.size();
+    for (FileCount_uint i = 0; i < num; i++)
     {
 
         fs::path sPath = transfer.transPath(filePathToScan[i]);

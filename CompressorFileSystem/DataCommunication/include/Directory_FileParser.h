@@ -39,6 +39,14 @@ private:
         std::string &fileName,
         DirectoryOffsetSize_uint &bufferPtr)
     {
+        // 编译时检查
+
+        static_assert(std::is_trivially_copyable_v<T>,
+                      "Cannot write non-trivially-copyable type");
+        static_assert(!std::is_pointer_v<T>,
+                      "Cannot safely write raw pointers");
+        static_assert(!std::is_polymorphic_v<T>,
+                      "Cannot safely write polymorphic types");
         try
         {
             // 1. 读取文件名长度
@@ -92,7 +100,7 @@ private:
     void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
 
     /* 解析根目录节点，处理多路径扫描 */
-    void rootParser(DirectoryOffsetSize_uint &bufferPtr,const std::vector<std::string> &filePathToScan,FileCount_uint &countOfKidDirectory,bool &noDirec);
+    void rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory, bool &noDirec);
 
 public:
     std::string rootForDecompression;
@@ -112,9 +120,11 @@ public:
         : buffer(buffer), directoryQueue(directoryQueue),
           fileQueue(fileQueue),
           header(header),
-          offset(offset), tempOffset(tempOffset),filePathToScan(filePathToScan)
+          offset(offset), 
+          tempOffset(tempOffset), 
+          filePathToScan(filePathToScan)
     {
-        parserMode=((!filePathToScan.empty())?1:2);//非空表示压缩
+        parserMode = ((!filePathToScan.empty()) ? 1 : 2); // 非空表示压缩
     }
 
     /* 主解析函数，处理缓冲区中的目录数据块 */
