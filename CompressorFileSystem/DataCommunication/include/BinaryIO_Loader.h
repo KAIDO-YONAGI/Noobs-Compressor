@@ -31,7 +31,7 @@ private:
     bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
 
     FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
-    DirectoryOffsetSize_uint offset = 0;     // 当前剩余字节数
+    FileSize_uint offset = 0;     // 当前剩余字节数
     DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
 
     fs::path loadPath;

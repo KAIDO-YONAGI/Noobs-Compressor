@@ -11,7 +11,7 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
 
     try
     {
-        FileCount_uint length = filePathToScan.size();
+        FileCount_uint num = filePathToScan.size();
 
         // 预留回填偏移量的字节位置
         DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
@@ -19,10 +19,10 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
 
         BIO->writeBlankSeparatedStandard();
 
-        BIO->writeLogicalRoot(logicalRoot, length, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
+        BIO->writeLogicalRoot(logicalRoot, num, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
         BIO->writeRoot(file, filePathToScan, tempOffset);  // 写入文件根目录
 
-        for (FileCount_uint i = 0; i < length; i++)
+        for (FileCount_uint i = 0; i < num; i++)
         {
 
             sPath = transfer.transPath(filePathToScan[i]);
