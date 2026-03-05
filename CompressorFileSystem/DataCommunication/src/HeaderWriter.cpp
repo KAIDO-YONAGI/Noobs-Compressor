@@ -1,4 +1,5 @@
 #include "../include/HeaderWriter.h"
+namespace fs = std::filesystem;
 
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 {
@@ -9,10 +10,10 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
     // 文件头
-    CompressStrategy_uint strategySize = STRATEGY;
-    CompressorVersion_uint versionSize = VERSION;
-    HeaderOffsetSize_uint headerOffsetSize = 0;
-    DirectoryOffsetSize_uint directoryOffsetSize = 0;
+    CompressStrategy strategySize = STRATEGY;
+    CompressorVersion versionSize = VERSION;
+    HeaderOffsetSize headerOffsetSize = 0;
+    DirectoryOffsetSize directoryOffsetSize = 0;
 
     dataWriter.writeBinaryNums(strategySize,outFile);
     dataWriter.writeBinaryNums(versionSize,outFile);
@@ -20,7 +21,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     dataWriter.writeBinaryNums(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint) - sizeof(HeaderOffsetSize_uint));
+    locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize) - sizeof(HeaderOffsetSize));
     dataWriter.writeBinaryNums(HEADER_SIZE,outFile);
     outFile.seekp(0, std::ios::end);
 }
@@ -34,9 +35,9 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint));
-    DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    dataWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    locator.offsetLocator(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize));
+    DirectoryOffsetSize directoryOffset = locator.getFileSize(fullOutPath, outFile);
+    dataWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     outFile.seekp(0, std::ios::end);
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)

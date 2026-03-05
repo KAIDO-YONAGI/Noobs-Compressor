@@ -1,5 +1,5 @@
 #include "../include/DataLoader.h"
-
+namespace fs = std::filesystem;
 void DataLoader::done()
 {
     if (inFile.is_open())
@@ -46,7 +46,7 @@ void DataLoader::dataLoader()
     }
     readed += inFile.gcount();
 }
-void DataLoader::dataLoader(FileSize_uint readSize, std::ifstream &decompressionFile)
+void DataLoader::dataLoader(FileSize readSize, std::ifstream &decompressionFile)
 {
     try
     {

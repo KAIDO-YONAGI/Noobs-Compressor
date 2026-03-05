@@ -1,6 +1,7 @@
 #include "../include/Directory_FileParser.h"
+namespace fs = std::filesystem;
 
-void Directory_FileParser::checkBounds(DirectoryOffsetSize_uint pos, FileNameSize_uint requiredSize) const
+void Directory_FileParser::checkBounds(DirectoryOffsetSize pos, FileNameSize requiredSize) const
 {
     if (pos + requiredSize > buffer.size())
     {
@@ -25,25 +26,25 @@ fs::path Directory_FileParser::pathConnector(std::string &fileName)
     return pathToProcess;
 }
 
-void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
+void Directory_FileParser::fileParser(DirectoryOffsetSize &bufferPtr)
 {
     // 解析文件名偏移量
-    FileNameSize_uint fileNameSize = 0;
+    FileNameSize fileNameSize = 0;
     std::string fileName;
     fs::path pathToProcess;
     fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
 
     // 解析文件原大小
-    FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
-    FileSize_uint compressedSize_or_Offset;
+    FileSize originSize = numsParser<FileSize>(bufferPtr);
+    FileSize compressedSize_or_Offset;
     if (parserMode == 1) // for compression
     {
         compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-        bufferPtr += sizeof(FileSize_uint); // skip compressedSize
+        bufferPtr += sizeof(FileSize); // skip compressedSize
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize_or_Offset = numsParser<FileSize_uint>(bufferPtr); // compressedSize
+        compressedSize_or_Offset = numsParser<FileSize>(bufferPtr); // compressedSize
     }
 
     pathToProcess = pathConnector(fileName);
@@ -57,16 +58,16 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize_uint &bufferPtr)
     fileQueue.push({fileDetails, compressedSize_or_Offset});
 }
 
-void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
+void Directory_FileParser::directoryParser(DirectoryOffsetSize &bufferPtr)
 {
     // 解析目录名偏移量
     // 解析目录名，后续拼接为绝对路径之后入队
-    FileNameSize_uint directoryNameSize = 0;
+    FileNameSize directoryNameSize = 0;
     std::string directoryName;
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
 
     // 解析下级文件数量
-    FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+    FileCount count = numsParser<FileCount>(bufferPtr);
 
     fs::path pathToProcess = pathConnector(directoryName);
 
@@ -74,14 +75,14 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     directory_FileQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory, bool &noDirec)
+void Directory_FileParser::rootParser(DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount &countOfKidDirectory, bool &noDirec)
 {
-    FileNameSize_uint directoryNameSize = 0;
+    FileNameSize directoryNameSize = 0;
     std::string directoryName;
     // 解析逻辑根
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
-    FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+    FileCount count = numsParser<FileCount>(bufferPtr);
 
     countOfKidDirectory = count;
 
@@ -102,14 +103,14 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
 
             if (D_F_flag == FILE_FLAG)
             {
-                FileNameSize_uint fileNameSize = 0;
+                FileNameSize fileNameSize = 0;
                 std::string fileName;
                 fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
                 // 解析文件原大小
-                FileSize_uint originSize = numsParser<FileSize_uint>(bufferPtr);
+                FileSize originSize = numsParser<FileSize>(bufferPtr);
                 // 记录等会需要回填的位置
-                FileSize_uint compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-                bufferPtr += sizeof(FileSize_uint);
+                FileSize compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+                bufferPtr += sizeof(FileSize);
                 Directory_FileDetails fileDetails(
                     fileName,
                     fileNameSize,
@@ -120,11 +121,11 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
             }
             else if (D_F_flag == DIRECTORY_FLAG)
             {
-                FileNameSize_uint directoryNameSize = 0;
+                FileNameSize directoryNameSize = 0;
                 std::string directoryName;
                 fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
                 // 解析下级文件数量
-                FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
+                FileCount count = numsParser<FileCount>(bufferPtr);
 
                 Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
                 directory_FileQueue.push({directoryDetails, count});
@@ -135,7 +136,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
     }
 }
 
-void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount_uint &countOfKidDirectory)
+void Directory_FileParser::parser(DirectoryOffsetSize &bufferPtr, FileCount &countOfKidDirectory)
 {
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;

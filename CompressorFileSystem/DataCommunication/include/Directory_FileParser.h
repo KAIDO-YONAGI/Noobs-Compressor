@@ -25,19 +25,19 @@ private:
     DataBlock &buffer;
     PathTransfer transfer;
     const Header &header;
-    const DirectoryOffsetSize_uint &offset;
-    const DirectoryOffsetSize_uint &tempOffset;
+    const DirectoryOffsetSize &offset;
+    const DirectoryOffsetSize &tempOffset;
     size_t parserMode = 0; // 0：默认模式、1：压缩模式、2：解压模式
 
     /* 检查缓冲区读取范围是否有效，防止越界 */
-    void checkBounds(DirectoryOffsetSize_uint pos, FileNameSize_uint equiredSize) const;
+    void checkBounds(DirectoryOffsetSize pos, FileNameSize equiredSize) const;
 
     /* 模板化函数：解析文件名长度和内容，安全构造std::string */
     template <typename T>
     void fileName_fileSizeParser(
         T &fileNameSize,
         std::string &fileName,
-        DirectoryOffsetSize_uint &bufferPtr)
+        DirectoryOffsetSize &bufferPtr)
     {
         // 编译时检查
 
@@ -55,7 +55,7 @@ private:
             bufferPtr += sizeof(T);
 
             // 2. 读取字符串内容,安全构造 std::string,防止未初始化的越界报错
-            checkBounds(bufferPtr, static_cast<FileNameSize_uint>(fileNameSize));
+            checkBounds(bufferPtr, static_cast<FileNameSize>(fileNameSize));
             fileName.assign(
                 buffer.data() + bufferPtr,
                 buffer.data() + bufferPtr + fileNameSize);
@@ -71,7 +71,7 @@ private:
 
     /* 模板化函数：按指定类型解析数值，返回解析的值 */
     template <typename T>
-    T numsParser(DirectoryOffsetSize_uint &bufferPtr)
+    T numsParser(DirectoryOffsetSize &bufferPtr)
     {
         try
         {
@@ -91,16 +91,16 @@ private:
     }
 
     /* 连接文件名到当前路径，返回完整路径 */
-    fs::path pathConnector(std::string &fileName);
+    std::filesystem::path pathConnector(std::string &fileName);
 
     /* 解析单个文件的元数据，将文件入队 */
-    void fileParser(DirectoryOffsetSize_uint &bufferPtr);
+    void fileParser(DirectoryOffsetSize &bufferPtr);
 
     /* 解析单个目录的元数据和子元素，将目录入队 */
-    void directoryParser(DirectoryOffsetSize_uint &bufferPtr);
+    void directoryParser(DirectoryOffsetSize &bufferPtr);
 
     /* 解析根目录节点，处理多路径扫描 */
-    void rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory, bool &noDirec);
+    void rootParser(DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount &countOfKidDirectory, bool &noDirec);
 
 public:
     std::string rootForDecompression;
@@ -114,8 +114,8 @@ public:
     /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
     Directory_FileParser(DataBlock &buffer, Directory_FileQueue &directory_FileQueue,
                          Directory_FileQueue &fileQueue, const Header &header,
-                         const DirectoryOffsetSize_uint &offset,
-                         const DirectoryOffsetSize_uint &tempOffset,
+                         const DirectoryOffsetSize &offset,
+                         const DirectoryOffsetSize &tempOffset,
                          std::vector<std::string> &filePathToScan)
         : buffer(buffer), directory_FileQueue(directory_FileQueue),
           fileQueue(fileQueue),
@@ -128,5 +128,5 @@ public:
     }
 
     /* 主解析函数，处理缓冲区中的目录数据块 */
-    void parser(DirectoryOffsetSize_uint &bufferPtr, FileCount_uint &countOfKidDirectory);
+    void parser(DirectoryOffsetSize &bufferPtr, FileCount &countOfKidDirectory);
 };

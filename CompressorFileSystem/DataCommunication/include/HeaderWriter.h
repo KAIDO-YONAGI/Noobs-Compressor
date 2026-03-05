@@ -17,13 +17,13 @@ public:
     virtual ~HeaderWriter_Interface() = default;
 
     /* 写入文件头信息到输出文件 */
-    virtual void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) = 0;
+    virtual void writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath) = 0;
 
     /* 序列化目录结构并写入输出文件 */
     virtual void writeDirectory(
         std::ofstream &outFile,
         const  std::vector<std::string> &filePathToScan,
-        const fs::path &fullOutPath,
+        const std::filesystem::path &fullOutPath,
         const std::string &logicalRoot) = 0;
 };
 
@@ -39,13 +39,13 @@ public:
     HeaderWriter_v0() = default;
 
     /* 写入v0格式的文件头 */
-    void writeHeader(std::ofstream &outFile, fs::path &fullOutPath) override;
+    void writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath) override;
 
     /* 写入v0格式的目录结构 */
     void writeDirectory(
         std::ofstream &outFile,
         const  std::vector<std::string> &filePathToScan,
-        const fs::path &fullOutPath,
+        const std::filesystem::path &fullOutPath,
         const std::string &logicalRoot) override;
 };
 
@@ -72,13 +72,13 @@ public:
     void headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot);
 
     /* 委托写入文件头到指定策略实现 */
-    void writeHeader(std::ofstream &outFile, fs::path &fullOutPath)
+    void writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath)
     {
         writer->writeHeader(outFile, fullOutPath);
     }
 
     /* 委托写入目录结构到指定策略实现 */
-    void writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+    void writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot)
     {
         writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };

@@ -22,10 +22,10 @@ class DataLoader
 private:
     DataBlock data = DataBlock(BUFFER_SIZE);
 
-    FileSize_uint fileSize = 0;
+    FileSize fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
-    FileSize_uint readed=0;
+    FileSize readed=0;
 
     /* 标记读取完成状态 */
     void done();
@@ -38,16 +38,16 @@ public:
     bool isDone() { return loadIsDone; }
 
     /* 打开指定文件并初始化读取状态 */
-    void reset(const fs::path inPath);
+    void reset(const std::filesystem::path inPath);
 
     /* 按缓冲区大小读取数据块 */
     void dataLoader();
 
     /* 在解压流程中按指定大小读取数据块 */
-    void dataLoader(FileSize_uint readSize, std::ifstream &decompressionFile);
+    void dataLoader(FileSize readSize, std::ifstream &decompressionFile);
 
     /* 设置文件总大小 */
-    void setFileSize(FileSize_uint newSize) { fileSize = newSize; }
+    void setFileSize(FileSize newSize) { fileSize = newSize; }
 
     /* 重置指针到上次读取的位置 */
     void resetByLastReaded();
@@ -56,7 +56,7 @@ public:
     DataLoader() {}
 
     /* 构造函数，打开指定文件 */
-    DataLoader(const fs::path &inPath)
+    DataLoader(const std::filesystem::path &inPath)
     {
         std::ifstream inFile(inPath, std::ios::binary);
         if (!inFile)

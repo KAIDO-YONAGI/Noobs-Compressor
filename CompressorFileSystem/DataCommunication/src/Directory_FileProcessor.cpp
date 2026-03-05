@@ -1,5 +1,6 @@
 // Directory_FileProcessor.cpp
 #include "../include/Directory_FileProcessor.h"
+namespace fs = std::filesystem;
 
 void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
@@ -11,18 +12,18 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
 
     try
     {
-        FileCount_uint num = filePathToScan.size();
+        FileCount num = filePathToScan.size();
 
         // 预留回填偏移量的字节位置
-        DirectoryOffsetSize_uint tempOffset = 0; // 初始偏移量
-        DirectoryOffsetSize_uint offset = HEADER_SIZE;
+        DirectoryOffsetSize tempOffset = 0; // 初始偏移量
+        DirectoryOffsetSize offset = HEADER_SIZE;
 
         BIO->writeBlankSeparatedStandard();
 
         BIO->writeLogicalRoot(logicalRoot, num, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
         BIO->writeRoot(file, filePathToScan, tempOffset);  // 写入文件根目录
 
-        for (FileCount_uint i = 0; i < num; i++)
+        for (FileCount i = 0; i < num; i++)
         {
 
             sPath = transfer.transPath(filePathToScan[i]);
@@ -40,7 +41,7 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
     }
 }
 
-void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset)
 {
 
     BinaryIO_Writer BIO(outFile);

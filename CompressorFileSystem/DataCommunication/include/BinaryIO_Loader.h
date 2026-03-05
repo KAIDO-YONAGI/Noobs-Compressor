@@ -30,12 +30,12 @@ private:
     bool allDone = false;   // 标记是否完成所有目录读取
     bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
 
-    FileCount_uint countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
-    FileSize_uint offset = 0;     // 当前剩余字节数
-    DirectoryOffsetSize_uint tempOffset = 0; // 当前处理块的大小（偏移）
+    FileCount countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
+    FileSize offset = 0;     // 当前剩余字节数
+    DirectoryOffsetSize tempOffset = 0; // 当前处理块的大小（偏移）
 
-    fs::path loadPath;
-    fs::path parentPath;
+    std::filesystem::path loadPath;
+    std::filesystem::path parentPath;
     std::ifstream inFile;
     std::fstream fstreamForRefill;
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
@@ -48,7 +48,7 @@ private:
 
     void requestDone();                                                                             // 标记块读取完成
     void allLoopDone();                                                                             // 标记所有循环完成并清理资源
-    void loadBySepratedFlag(NumsReader &numsReader, FileCount_uint &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
+    void loadBySepratedFlag(NumsReader &numsReader, FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
 
 public:
     void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
@@ -56,13 +56,13 @@ public:
     // 压缩时队列
     Directory_FileQueue fileQueue;                            // 文件队列
     Directory_FileQueue directory_FileQueue;                       // 目录队列
-    std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
+    std::vector<std::array<DirectoryOffsetSize, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列
-    std::queue<fs::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
+    std::queue<std::filesystem::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
 
     BinaryIO_Loader() {};
-    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, fs::path parentPath)
+    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, std::filesystem::path parentPath)
     {
         this->loadPath = transfer.transPath(inPath);
 
@@ -82,7 +82,7 @@ public:
 
     ~BinaryIO_Loader() { allLoopDone(); }
 
-    DirectoryOffsetSize_uint getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
+    DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 
     bool allLoopIsDone() { return allDone; } // 检查所有读取是否完成
 

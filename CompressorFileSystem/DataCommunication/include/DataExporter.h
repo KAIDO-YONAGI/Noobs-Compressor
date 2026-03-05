@@ -25,14 +25,14 @@ class DataExporter
 private:
     std::fstream outFile;
     Locator locator;
-    FileSize_uint processedFileSize = 0;
+    FileSize processedFileSize = 0;
 
     /* 标记单个数据块处理完成并更新位置 */
-    void thisBlockIsDone(DirectoryOffsetSize_uint dataSize);
+    void thisBlockIsDone(DirectoryOffsetSize dataSize);
 
 public:
     /* 构造函数，打开输出文件（使用fstream支持读写） */
-    DataExporter(const fs::path &outPath)
+    DataExporter(const std::filesystem::path &outPath)
     {
         std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in); // 避免截断，只能使用fstream输出
         if (!outFile)
@@ -52,10 +52,10 @@ public:
     }
 
     /* 获取已处理数据的总大小 */
-    FileSize_uint getProcessedFileSize() { return processedFileSize; }
+    FileSize getProcessedFileSize() { return processedFileSize; }
 
     /* 更新当前文件的完成标记和位置 */
-    void thisFileIsDone(FileSize_uint offsetToFill);
+    void thisFileIsDone(FileSize offsetToFill);
 
     /* 写入压缩数据块到输出文件 */
     void exportDataToFile_Compression(const DataBlock &data);

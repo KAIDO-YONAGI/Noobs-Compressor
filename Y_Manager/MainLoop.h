@@ -24,11 +24,11 @@ class DecompressionLoop
 {
 private:
     
-    fs::path parentPath;
-    fs::path fullPath;
-    void createDirectory(const fs::path &path);
+    std::filesystem::path parentPath;
+    std::filesystem::path fullPath;
+    void createDirectory(const std::filesystem::path &path);
     // 创建文件 (创建空文件)
-    void createFile(const fs::path &filePath);
+    void createFile(const std::filesystem::path &filePath);
 
 public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
@@ -44,7 +44,7 @@ public:
         else
         {
             // 使用指定的输出目录（outputDirectory 已是绝对路径）
-            parentPath = fs::path(outputDirectory);
+            parentPath = std::filesystem::path(outputDirectory);
         }
     }
     void decompressionLoop(Aes &aes);

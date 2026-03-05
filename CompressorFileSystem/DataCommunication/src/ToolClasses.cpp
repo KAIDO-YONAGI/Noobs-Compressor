@@ -1,4 +1,5 @@
 #include "../include/ToolClasses.h"
+namespace fs = std::filesystem;
 
 std::wstring PathTransfer::convertToWString(const std::string &s)
 {
@@ -17,9 +18,9 @@ std::wstring PathTransfer::convertToWString(const std::string &s)
     return ws;
 }
 
-fs::path PathTransfer::transPath(const std::string &p)
+std::filesystem::path PathTransfer::transPath(const std::string &p)
 {
-    return fs::path(p);
+    return std::filesystem::path(p);
 }
 
 void DataWriter::appendMagicStatic(std::ofstream &outFile)
@@ -40,7 +41,7 @@ void Directory_FileQueue::clear()
     count = 0;          // 重置计数器
 }
 
-void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount_uint> val)
+void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount> val)
 {
     Node *newNode = new Node(val);
     if (rearNode)
@@ -71,7 +72,7 @@ void Directory_FileQueue::pop()
     count--;
 }
 
-std::pair<Directory_FileDetails, FileCount_uint> &Directory_FileQueue::front()
+std::pair<Directory_FileDetails, FileCount> &Directory_FileQueue::front()
 {
     if (empty())
     {
@@ -80,7 +81,7 @@ std::pair<Directory_FileDetails, FileCount_uint> &Directory_FileQueue::front()
     return frontNode->data;
 }
 
-std::pair<Directory_FileDetails, FileCount_uint> &Directory_FileQueue::back()
+std::pair<Directory_FileDetails, FileCount> &Directory_FileQueue::back()
 {
     if (empty())
     {
@@ -99,17 +100,17 @@ size_t Directory_FileQueue::size()
     return count;
 }
 
-void Locator::offsetLocator(std::ofstream &outFile, FileSize_uint offset)
+void Locator::offsetLocator(std::ofstream &outFile, FileSize offset)
 {
     outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
 }
 
-void Locator::offsetLocator(std::ifstream &inFile, FileSize_uint offset)
+void Locator::offsetLocator(std::ifstream &inFile, FileSize offset)
 {
     inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
 }
 
-FileSize_uint Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
+FileSize Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
 {
     try
     {

@@ -28,7 +28,7 @@ private:
     DataWriter dataWriter;
 
     /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
-    void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void scanFlow(FilePath &file, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset);
 
 public:
     /* 构造函数，初始化处理器并创建二进制写入器 */
@@ -44,5 +44,5 @@ public:
     };
 
     /* 主处理函数，执行指定路径的文件系统扫描和二进制序列化 */
-    void directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot);
+    void directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot);
 };

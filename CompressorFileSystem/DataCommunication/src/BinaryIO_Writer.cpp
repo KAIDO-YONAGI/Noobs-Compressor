@@ -1,5 +1,7 @@
 #include "../include/BinaryIO_Writer.h"
-void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+namespace fs = std::filesystem;
+
+void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset)
 {
     try
     {
@@ -8,8 +10,8 @@ void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &direc
             bool isFile = true;
             std::string name;
             fs::path fullPath;
-            FileNameSize_uint sizeOfName;
-            FileSize_uint fileSize;
+            FileNameSize sizeOfName;
+            FileSize fileSize;
             if (entry.is_regular_file())
             {
                 isFile = true;
@@ -48,7 +50,7 @@ void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &direc
     }
 }
 // 识别存储标准并且分发到各个写入函数
-void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset)
 {
 
     if (details.getIsFile()) // 文件对应的处理
@@ -57,7 +59,7 @@ void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Direc
     }
     else if ((!details.getIsFile()) && (details.getFileSize() == 0)) // 目录对应的处理
     {
-        FileCount_uint countOfThisDirectory = countFilesInDirectory(details.getFullPath());
+        FileCount countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
         directory_FileQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
         writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
@@ -80,9 +82,9 @@ void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Direc
     }
 }
 // 目录标准写入函数
-void BinaryIO_Writer::writeDirectoryStandard(Directory_FileDetails &details, FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
+void BinaryIO_Writer::writeDirectoryStandard(Directory_FileDetails &details, FileCount count, DirectoryOffsetSize &tempOffset)
 {
-    FileNameSize_uint sizeOfName = details.getSizeOfName();
+    FileNameSize sizeOfName = details.getSizeOfName();
 
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
@@ -92,9 +94,9 @@ void BinaryIO_Writer::writeDirectoryStandard(Directory_FileDetails &details, Fil
     dataWriter.writeBinaryNums(count, outFile); // 写入文件数目
 }
 // 文件标准写入函数
-void BinaryIO_Writer::writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
+void BinaryIO_Writer::writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize &tempOffset)
 {
-    FileNameSize_uint sizeOfName = details.getSizeOfName();
+    FileNameSize sizeOfName = details.getSizeOfName();
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
@@ -102,10 +104,10 @@ void BinaryIO_Writer::writeFileStandard(Directory_FileDetails &details, Director
     dataWriter.writeBinaryNums(sizeOfName, outFile);            // 写入文件名偏移量
     outFile.write(details.getName().c_str(), sizeOfName);      // 写入文件名
     dataWriter.writeBinaryNums(details.getFileSize(), outFile); // 写入文件大小
-    dataWriter.writeBinaryNums(FileSize_uint(0), outFile);      // 预留大小
+    dataWriter.writeBinaryNums(FileSize(0), outFile);      // 预留大小
 }
 // 分割标准写入函数（回填）
-void BinaryIO_Writer::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset)
+void BinaryIO_Writer::writeSeparatedStandard(DirectoryOffsetSize &tempOffset, DirectoryOffsetSize offset)
 {
     locator.offsetLocator(outFile, offset + FLAG_SIZE);
     dataWriter.writeBinaryNums(tempOffset, outFile);
@@ -115,20 +117,20 @@ void BinaryIO_Writer::writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffse
 void BinaryIO_Writer::writeBlankSeparatedStandard()
 {
     outFile.write(&SEPARATED_FLAG, FLAG_SIZE);
-    dataWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), outFile);
-    dataWriter.writeBinaryNums(IvSize_uint(0), outFile);
+    dataWriter.writeBinaryNums(DirectoryOffsetSize(0), outFile);
+    dataWriter.writeBinaryNums(IvSize(0), outFile);
 }
 // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
 void BinaryIO_Writer::writeBlankSeparatedStandardForEncryption(std::fstream &File)
 {
     File.write(&SEPARATED_FLAG, FLAG_SIZE);
-    dataWriter.writeBinaryNums(DirectoryOffsetSize_uint(0), File);
+    dataWriter.writeBinaryNums(DirectoryOffsetSize(0), File);
 }
 // 符号链接标准写入函数
-void BinaryIO_Writer::writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset)
+void BinaryIO_Writer::writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize &tempOffset)
 {
-    FileNameSize_uint sizeOfName = details.getSizeOfName();
-    FileNameSize_uint sizeOfPath = details.getFullPath().string().size();
+    FileNameSize sizeOfName = details.getSizeOfName();
+    FileNameSize sizeOfPath = details.getFullPath().string().size();
 
     tempOffset += SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
 
@@ -140,9 +142,9 @@ void BinaryIO_Writer::writeSymbolLinkStandard(Directory_FileDetails &details, Di
     outFile.write(details.getName().c_str(), sizeOfName);
     outFile.write(details.getFullPath().string().c_str(), sizeOfPath);
 }
-void BinaryIO_Writer::writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset)
+void BinaryIO_Writer::writeLogicalRoot(const std::string &logicalRoot, const FileCount count, DirectoryOffsetSize &tempOffset)
 {
-    FileNameSize_uint sizeOfName = logicalRoot.size();
+    FileNameSize sizeOfName = logicalRoot.size();
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
     outFile.write(&LOGICAL_ROOT_FLAG, FLAG_SIZE);
@@ -150,10 +152,10 @@ void BinaryIO_Writer::writeLogicalRoot(const std::string &logicalRoot, const Fil
     outFile.write(logicalRoot.c_str(), sizeOfName);
     dataWriter.writeBinaryNums(count, outFile); // 写文件数
 }
-void BinaryIO_Writer::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize_uint &tempOffset)
+void BinaryIO_Writer::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize &tempOffset)
 {
-    FileCount_uint num = filePathToScan.size();
-    for (FileCount_uint i = 0; i < num; i++)
+    FileCount num = filePathToScan.size();
+    for (FileCount i = 0; i < num; i++)
     {
 
         fs::path sPath = transfer.transPath(filePathToScan[i]);
@@ -172,9 +174,9 @@ void BinaryIO_Writer::writeRoot(FilePath &file, const std::vector<std::string> &
         // 先写入根目录(或文件)自身（手动构造）
 
         std::string rootName = parentPath.filename().string();
-        FileNameSize_uint rootNameSize = rootName.size();
+        FileNameSize rootNameSize = rootName.size();
         bool isFile = fs::is_regular_file(parentPath);
-        FileSize_uint fileSize = isFile ? fs::file_size(parentPath) : 0;
+        FileSize fileSize = isFile ? fs::file_size(parentPath) : 0;
 
         Directory_FileDetails rootDetails(
             rootName,     // 目录名 (如 "Folder")
@@ -190,7 +192,7 @@ void BinaryIO_Writer::writeRoot(FilePath &file, const std::vector<std::string> &
         }
         else if (entry.is_directory())
         {
-            FileCount_uint count = countFilesInDirectory(parentPath);
+            FileCount count = countFilesInDirectory(parentPath);
             writeDirectoryStandard(rootDetails, count, tempOffset);
         }
         else if (entry.is_symlink())
@@ -200,7 +202,7 @@ void BinaryIO_Writer::writeRoot(FilePath &file, const std::vector<std::string> &
         }
     }
 }
-FileCount_uint BinaryIO_Writer::countFilesInDirectory(const fs::path &filePathToScan)
+FileCount BinaryIO_Writer::countFilesInDirectory(const fs::path &filePathToScan)
 {
     try
     {
@@ -211,7 +213,7 @@ FileCount_uint BinaryIO_Writer::countFilesInDirectory(const fs::path &filePathTo
         throw("countFilesInDirectory()-Error: " + std::string(e.what()) + "\n");
     }
 }
-FileSize_uint BinaryIO_Writer::getFileSize(const fs::path &filePathToScan)
+FileSize BinaryIO_Writer::getFileSize(const fs::path &filePathToScan)
 {
     try
     {

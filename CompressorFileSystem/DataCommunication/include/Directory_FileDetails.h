@@ -14,33 +14,33 @@ class Directory_FileDetails
 {
 private:
     std::string name;
-    FileNameSize_uint sizeOfName;
-    FileSize_uint fileSize;
+    FileNameSize sizeOfName;
+    FileSize fileSize;
     bool isFile;
-    fs::path fullPath;
+    std::filesystem::path fullPath;
 
 public:
     /* 构造函数，初始化文件/目录元数据 */
-    Directory_FileDetails(std::string name, FileNameSize_uint sizeOfName, FileSize_uint fileSize, bool isFile, fs::path fullPath)
+    Directory_FileDetails(std::string name, FileNameSize sizeOfName, FileSize fileSize, bool isFile, std::filesystem::path fullPath)
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 
     /* 获取文件/目录名称 */
     const std::string getName() { return name; }
 
     /* 获取完整路径 */
-    const fs::path getFullPath() { return fullPath; }
+    const std::filesystem::path getFullPath() { return fullPath; }
 
     /* 获取名称长度 */
-    const FileNameSize_uint getSizeOfName() { return sizeOfName; }
+    const FileNameSize getSizeOfName() { return sizeOfName; }
 
     /* 获取文件大小 */
-    const FileSize_uint getFileSize() { return fileSize; }
+    const FileSize getFileSize() { return fileSize; }
 
     /* 检查是否为文件（false表示目录） */
     const bool getIsFile() { return isFile; }
 
     /* 更新文件大小 */
-    void setFileSize(FileSize_uint fileSize) { this->fileSize = fileSize; }
+    void setFileSize(FileSize fileSize) { this->fileSize = fileSize; }
 };
 
 /* FilePath - 输入输出路径管理器
@@ -52,28 +52,28 @@ public:
 class FilePath
 {
 private:
-    fs::path outPutFilePath;
-    fs::path filePathToScan;
+    std::filesystem::path outPutFilePath;
+    std::filesystem::path filePathToScan;
 
 public:
     /* 默认构造函数 */
     FilePath() {}
 
     /* 设置输出文件路径 */
-    void setOutPutFilePath(const fs::path outPutFilePath)
+    void setOutPutFilePath(const std::filesystem::path outPutFilePath)
     {
         this->outPutFilePath = outPutFilePath;
     }
 
     /* 用于重新设置要扫描的源路径，复用对象 */
-    void setFilePathToScan(const fs::path filePathToScan)
+    void setFilePathToScan(const std::filesystem::path filePathToScan)
     {
         this->filePathToScan = filePathToScan;
     }
 
     /* 获取输出文件路径 */
-    const fs::path getOutPutFilePath() { return outPutFilePath; }
+    const std::filesystem::path getOutPutFilePath() { return outPutFilePath; }
 
     /* 获取要扫描的源路径 */
-    const fs::path getFilePathToScan() { return filePathToScan; }
+    const std::filesystem::path getFilePathToScan() { return filePathToScan; }
 };
