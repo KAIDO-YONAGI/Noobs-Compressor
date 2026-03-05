@@ -113,10 +113,10 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                 parserForLoader->parser(bufferPtr, countOfKidDirectory);
             }
 
-            if (!directoryQueue.empty() && countOfKidDirectory == 0)
+            if (!directory_FileQueue.empty() && countOfKidDirectory == 0)
             {
                 // 目录队列处理逻辑
-                const fs::path &directoryPath = directoryQueue.front().first.getFullPath();
+                const fs::path &directoryPath = directory_FileQueue.front().first.getFullPath();
                 if (!directoryQueue_ready.empty())
                 {
                     if (directoryQueue_ready.back() != directoryPath)
@@ -130,12 +130,12 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount_uint 
                     FirstReady = false;
                 }
 
-                directoryQueue.pop();
-                if (!directoryQueue.empty())
+                directory_FileQueue.pop();
+                if (!directory_FileQueue.empty())
                 {
-                    countOfKidDirectory = directoryQueue.front().second; // 获取子目录数量
-                    if (!directoryQueue.empty())
-                        directoryQueue_ready.push(directoryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
+                    countOfKidDirectory = directory_FileQueue.front().second; // 获取子目录数量
+                    if (!directory_FileQueue.empty())
+                        directoryQueue_ready.push(directory_FileQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
                 }
             }
         }

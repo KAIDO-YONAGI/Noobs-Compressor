@@ -15,13 +15,13 @@ void Directory_FileParser::checkBounds(DirectoryOffsetSize_uint pos, FileNameSiz
 fs::path Directory_FileParser::pathConnector(std::string &fileName)
 {
     fs::path pathToProcess;
-    if (!directoryQueue.empty())
+    if (!directory_FileQueue.empty())
     {
-        fs::path lastPath = directoryQueue.front().first.getFullPath();
+        fs::path lastPath = directory_FileQueue.front().first.getFullPath();
         pathToProcess = lastPath / fileName;
     }
     else
-        throw("directoryQueue is empty");
+        throw("directory_FileQueue is empty");
     return pathToProcess;
 }
 
@@ -71,7 +71,7 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize_uint &bufferPtr)
     fs::path pathToProcess = pathConnector(directoryName);
 
     Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, pathToProcess);
-    directoryQueue.push({directoryDetails, count});
+    directory_FileQueue.push({directoryDetails, count});
 }
 
 void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount_uint &countOfKidDirectory, bool &noDirec)
@@ -91,7 +91,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
         fs::path file = transfer.transPath(directoryName);
         fs::path fullPath = root / file;
         Directory_FileDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
-        directoryQueue.push({logicalRootDetails, count});
+        directory_FileQueue.push({logicalRootDetails, count});
     }
     else if (parserMode == 1)
     {
@@ -127,10 +127,10 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize_uint &bufferPtr, const
                 FileCount_uint count = numsParser<FileCount_uint>(bufferPtr);
 
                 Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
-                directoryQueue.push({directoryDetails, count});
+                directory_FileQueue.push({directoryDetails, count});
             }
         }
-        if (directoryQueue.empty())
+        if (directory_FileQueue.empty())
             noDirec = true;
     }
 }
@@ -161,7 +161,7 @@ void Directory_FileParser::parser(DirectoryOffsetSize_uint &bufferPtr, FileCount
         bool noDirec = false;
         rootParser(bufferPtr, filePathToScan, countOfKidDirectory, noDirec);
         if (!noDirec)
-            countOfKidDirectory = directoryQueue.front().second; // 启动递推
+            countOfKidDirectory = directory_FileQueue.front().second; // 启动递推
         break;
     }
 

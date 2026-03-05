@@ -36,7 +36,7 @@ private:
     void writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
 
     /* 分发当前路径上的目录/文件到相应的写入处理函数 */
-    void writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
     /* 处理符号链接的序列化写入 */
     void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
@@ -64,5 +64,5 @@ public:
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
 
     /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
-    void binaryIO_Writer(FilePath &file, Directory_FileQueue &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

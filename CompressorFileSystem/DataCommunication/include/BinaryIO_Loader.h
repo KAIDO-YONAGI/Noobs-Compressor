@@ -55,7 +55,7 @@ public:
 
     // 压缩时队列
     Directory_FileQueue fileQueue;                            // 文件队列
-    Directory_FileQueue directoryQueue;                       // 目录队列
+    Directory_FileQueue directory_FileQueue;                       // 目录队列
     std::vector<std::array<DirectoryOffsetSize_uint, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列
@@ -76,7 +76,7 @@ public:
             throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open fstreamForRefill" + inPath);
 
         this->filePathToScan = filePathToScan;
-        this->parserForLoader = std::make_unique<Directory_FileParser>(buffer, directoryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
+        this->parserForLoader = std::make_unique<Directory_FileParser>(buffer, directory_FileQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
         this->parentPath = parentPath;
     }
 

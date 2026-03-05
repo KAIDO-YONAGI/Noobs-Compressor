@@ -1,5 +1,5 @@
 #include "../include/BinaryIO_Writer.h"
-void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
     try
     {
@@ -39,7 +39,7 @@ void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &direc
                 isFile,
                 fullPath); // 创建details
 
-            writeStorageStandard(details, directoryQueue, tempOffset, offset);
+            writeStorageStandard(details, directory_FileQueue, tempOffset, offset);
         }
     }
     catch (fs::filesystem_error &e)
@@ -48,7 +48,7 @@ void BinaryIO_Writer::binaryIO_Writer(FilePath &file, Directory_FileQueue &direc
     }
 }
 // 识别存储标准并且分发到各个写入函数
-void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
+void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
 
     if (details.getIsFile()) // 文件对应的处理
@@ -59,7 +59,7 @@ void BinaryIO_Writer::writeStorageStandard(Directory_FileDetails &details, Direc
     {
         FileCount_uint countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
-        directoryQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
+        directory_FileQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
         writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
     }
     else if ((!details.getIsFile()) && (details.getFileSize() == 1))

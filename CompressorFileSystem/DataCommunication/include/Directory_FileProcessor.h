@@ -22,7 +22,7 @@ class Directory_FileProcessor
 private:
     PathTransfer transfer;
     std::ofstream &outFile;
-    Directory_FileQueue directoryQueue;
+    Directory_FileQueue directory_FileQueue;
     FilePath file; // 创建各个工具类的对象
     BinaryIO_Writer *BIO;
     DataWriter dataWriter;

@@ -19,7 +19,7 @@
 class Directory_FileParser
 {
 private:
-    Directory_FileQueue &directoryQueue;
+    Directory_FileQueue &directory_FileQueue;
     Directory_FileQueue &fileQueue;
     std::vector<std::string> &filePathToScan;
     DataBlock &buffer;
@@ -112,12 +112,12 @@ public:
     }
 
     /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
-    Directory_FileParser(DataBlock &buffer, Directory_FileQueue &directoryQueue,
+    Directory_FileParser(DataBlock &buffer, Directory_FileQueue &directory_FileQueue,
                          Directory_FileQueue &fileQueue, const Header &header,
                          const DirectoryOffsetSize_uint &offset,
                          const DirectoryOffsetSize_uint &tempOffset,
                          std::vector<std::string> &filePathToScan)
-        : buffer(buffer), directoryQueue(directoryQueue),
+        : buffer(buffer), directory_FileQueue(directory_FileQueue),
           fileQueue(fileQueue),
           header(header),
           offset(offset), 
