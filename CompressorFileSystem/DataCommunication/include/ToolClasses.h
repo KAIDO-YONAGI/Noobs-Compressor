@@ -4,6 +4,20 @@
 #include "FileLibrary.h"
 #include "Directory_FileDetails.h"
 
+template<typename T>
+class MyQueueInterface
+{
+public:
+    virtual ~MyQueueInterface() = default;
+
+    virtual void push(std::pair<Directory_FileDetails, FileCount_uint>) = 0;
+    virtual void pop() = 0;
+    virtual bool empty() = 0;
+    virtual T& front()=0 ;
+    virtual T& back() =0;
+    virtual size_t size() = 0;
+
+};
 /* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
  *
  * 功能:
@@ -21,13 +35,13 @@ public:
     fs::path transPath(const std::string &p);
 };
 
-/* NumsWriter - 二进制数值写入器
+/* DataWriter - 二进制数值写入器
  *
  * 功能:
  *   将任意类型数值以二进制格式写入文件流
  *   支持ofstream和fstream，编译时类型检查
  */
-class NumsWriter
+class DataWriter
 {
 public:
     /* 模板化函数：将数值写入ofstream（编译时检查可复制性、指针和多态性） */
@@ -125,7 +139,7 @@ public:
  *   BFS遍历中使用的队列，存储目录和文件计数对
  *   用链表实现，支持push/pop/front/back操作
  */
-class Directory_FileQueue
+class Directory_FileQueue :public MyQueueInterface<std::pair<Directory_FileDetails, FileCount_uint>>
 {
 private:
     struct Node
@@ -152,30 +166,23 @@ public:
     void clear();
 
     /* 入队（push_back），添加元素到队尾 */
-    void push(std::pair<Directory_FileDetails, FileCount_uint> val);
+    void push(std::pair<Directory_FileDetails, FileCount_uint> val) override;
 
     /* 出队（pop_front），移除队头元素 */
-    void pop();
-
-    /* 获取队头元素引用 */
-    std::pair<Directory_FileDetails, FileCount_uint> &front();
-
-    /* 获取队尾元素引用 */
-    std::pair<Directory_FileDetails, FileCount_uint> &back();
+    void pop() override;
 
     /* 检查队列是否为空 */
-    bool empty();
+    bool empty() override;
+    /* 获取队头元素引用 */
+    std::pair<Directory_FileDetails, FileCount_uint> &front()override;
+
+    /* 获取队尾元素引用 */
+    std::pair<Directory_FileDetails, FileCount_uint> &back()override;
 
     /* 获取队列中的元素个数 */
-    size_t size();
+    size_t size()override;
 };
 
-/* QueueInterface - 目录文件队列接口适配器 */
-class QueueInterface
-{
-public:
-    Directory_FileQueue queue;
-};
 
 /* Locator - 文件位置定位器
  *

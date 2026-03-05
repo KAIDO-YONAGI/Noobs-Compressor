@@ -45,13 +45,13 @@ void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint 
 
     BinaryIO_Writer BIO(outFile);
 
-    while (!directoryQueue.queue.empty())
+    while (!directoryQueue.empty())
     {
-        Directory_FileDetails &details = (directoryQueue.queue.front()).first;
+        Directory_FileDetails &details = (directoryQueue.front()).first;
         file.setFilePathToScan(details.getFullPath());
 
         BIO.binaryIO_Writer(file, directoryQueue, tempOffset, offset);
 
-        directoryQueue.queue.pop();
+        directoryQueue.pop();
     }
 }

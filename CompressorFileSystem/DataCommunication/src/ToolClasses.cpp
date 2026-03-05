@@ -22,11 +22,10 @@ fs::path PathTransfer::transPath(const std::string &p)
     return fs::path(p);
 }
 
-void NumsWriter::appendMagicStatic(std::ofstream &outFile)
+void DataWriter::appendMagicStatic(std::ofstream &outFile)
 {
     writeBinaryNums(MAGIC_NUM, outFile);
 }
-
 
 
 void Directory_FileQueue::clear()

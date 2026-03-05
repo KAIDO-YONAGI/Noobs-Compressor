@@ -22,10 +22,10 @@ class Directory_FileProcessor
 private:
     PathTransfer transfer;
     std::ofstream &outFile;
-    QueueInterface directoryQueue;
+    Directory_FileQueue directoryQueue;
     FilePath file; // 创建各个工具类的对象
     BinaryIO_Writer *BIO;
-    NumsWriter numWriter;
+    DataWriter dataWriter;
 
     /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
     void scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
