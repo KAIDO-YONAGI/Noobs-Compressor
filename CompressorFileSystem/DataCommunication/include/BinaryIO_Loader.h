@@ -40,7 +40,7 @@ private:
     std::fstream fstreamForRefill;
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
 
-    Transfer transfer;
+    PathTransfer transfer;
     Header header;                                         // 私有化存储当前文件头信息
     std::unique_ptr<Directory_FileParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
     DataBlock buffer =

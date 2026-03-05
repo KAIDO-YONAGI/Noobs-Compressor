@@ -4,13 +4,13 @@
 #include "FileLibrary.h"
 #include "Directory_FileDetails.h"
 
-/* Transfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
+/* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
  *
  * 功能:
  *   为filesystem的fs::path提供宽字符转换支持
  *   解决中文路径问题，处理多字节字符编码转换
  */
-class Transfer
+class PathTransfer
 {
 private:
     /* 将std::string转换为std::wstring，处理编码转换 */
@@ -90,7 +90,7 @@ public:
     NumsReader(std::ifstream &file) : file(file) {};
 
     /* 默认析构函数 */
-    ~NumsReader()=default;
+    ~NumsReader() = default;
 
     /* 模板化函数：从文件读取指定类型的数值（编译时检查可复制性） */
     template <typename T>
@@ -141,11 +141,12 @@ private:
     size_t count;
 
 public:
-    /* 默认构造函数 */
-    Directory_FileQueue();
+    Directory_FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
 
-    /* 析构函数，清理所有节点 */
-    ~Directory_FileQueue();
+    ~Directory_FileQueue()
+    {
+        clear();
+    }
 
     /* 清空队列中的所有元素 */
     void clear();
@@ -169,11 +170,11 @@ public:
     size_t size();
 };
 
-/* Directory_FIleQueueInterface - 目录文件队列接口适配器 */
-class Directory_FIleQueueInterface
+/* QueueInterface - 目录文件队列接口适配器 */
+class QueueInterface
 {
 public:
-    Directory_FileQueue Directory_FileQueue;
+    Directory_FileQueue queue;
 };
 
 /* Locator - 文件位置定位器

@@ -41,7 +41,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
 {
-    Transfer transfer;
+    PathTransfer transfer;
 
     try
     {

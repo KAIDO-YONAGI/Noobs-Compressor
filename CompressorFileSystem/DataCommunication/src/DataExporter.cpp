@@ -7,7 +7,6 @@ void DataExporter::thisBlockIsDone(DirectoryOffsetSize_uint dataSize)
     outFile.seekp(offsetToFill, std::ios::beg);
     NumsWriter numWriter;
     numWriter.writeBinaryNums(dataSize, outFile);
-    outFile.flush();  // 强制写入磁盘
     outFile.seekp(0, std::ios::end);
 }
 
@@ -17,7 +16,7 @@ void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
     NumsWriter numWriter;
     numWriter.writeBinaryNums(processedFileSize, outFile);
     outFile.seekp(0, std::ios::end);
-
+    outFile.flush();  // 强制写入磁盘
     processedFileSize = 0;
 }
 
@@ -25,7 +24,7 @@ void DataExporter::exportDataToFile_Compression(const DataBlock &data)
 {
     std::ofstream tempFilePtr;
 
-    BinaryIO_Writter processor(tempFilePtr);
+    BinaryIO_Writer processor(tempFilePtr);
 
     outFile.seekp(0, std::ios::end);
     FileSize_uint dataSize = data.size();

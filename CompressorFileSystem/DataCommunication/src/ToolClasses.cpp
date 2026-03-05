@@ -1,6 +1,6 @@
 #include "../include/ToolClasses.h"
 
-std::wstring Transfer::convertToWString(const std::string &s)
+std::wstring PathTransfer::convertToWString(const std::string &s)
 {
 
     std::setlocale(LC_ALL, ""); // 使用本地化设置
@@ -17,7 +17,7 @@ std::wstring Transfer::convertToWString(const std::string &s)
     return ws;
 }
 
-fs::path Transfer::transPath(const std::string &p)
+fs::path PathTransfer::transPath(const std::string &p)
 {
     return fs::path(p);
 }
@@ -27,12 +27,7 @@ void NumsWriter::appendMagicStatic(std::ofstream &outFile)
     writeBinaryNums(MAGIC_NUM, outFile);
 }
 
-Directory_FileQueue::Directory_FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
 
-Directory_FileQueue::~Directory_FileQueue()
-{
-    clear();
-}
 
 void Directory_FileQueue::clear()
 {

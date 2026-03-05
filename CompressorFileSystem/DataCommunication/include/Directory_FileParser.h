@@ -23,7 +23,7 @@ private:
     Directory_FileQueue &fileQueue;
     std::vector<std::string> &filePathToScan;
     DataBlock &buffer;
-    Transfer transfer;
+    PathTransfer transfer;
     const Header &header;
     const DirectoryOffsetSize_uint &offset;
     const DirectoryOffsetSize_uint &tempOffset;

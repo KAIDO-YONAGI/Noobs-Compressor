@@ -10,7 +10,7 @@
 class CompressionLoop
 { 
 private:
-    Transfer transfer;
+    PathTransfer transfer;
     std::string compressionFilePath;
 
 public:
@@ -33,7 +33,7 @@ private:
 public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
     {
-        Transfer transfer;
+        PathTransfer transfer;
         fullPath = transfer.transPath(deCompressionFilePath);
 
         if (outputDirectory.empty() || outputDirectory == ".")

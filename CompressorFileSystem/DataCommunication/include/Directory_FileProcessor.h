@@ -20,11 +20,11 @@
 class Directory_FileProcessor
 {
 private:
-    Transfer transfer;
+    PathTransfer transfer;
     std::ofstream &outFile;
-    Directory_FIleQueueInterface directoryQueue;
+    QueueInterface directoryQueue;
     FilePath file; // 创建各个工具类的对象
-    BinaryIO_Writter *BIO;
+    BinaryIO_Writer *BIO;
     NumsWriter numWriter;
 
     /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
@@ -34,7 +34,7 @@ public:
     /* 构造函数，初始化处理器并创建二进制写入器 */
     Directory_FileProcessor(std::ofstream &outFile) : outFile(outFile)
     {
-        BIO = new BinaryIO_Writter(outFile);
+        BIO = new BinaryIO_Writer(outFile);
     };
 
     /* 析构函数，释放二进制写入器资源 */

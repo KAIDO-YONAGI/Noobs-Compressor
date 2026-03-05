@@ -18,10 +18,10 @@
  *   writeLogicalRoot(): 写入逻辑根节点，用于多文件任务
  *   writeBlankSeparatedStandard(): 写入分隔符标记
  */
-class BinaryIO_Writter
+class BinaryIO_Writer
 {
 private:
-    Transfer transfer;
+    PathTransfer transfer;
     NumsWriter numWriter;
     Locator locator;
     std::ofstream &outFile;
@@ -36,7 +36,7 @@ private:
     void writeSeparatedStandard(DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint offset);
 
     /* 分发当前路径上的目录/文件到相应的写入处理函数 */
-    void writeStorageStandard(Directory_FileDetails &details, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void writeStorageStandard(Directory_FileDetails &details, QueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 
     /* 处理符号链接的序列化写入 */
     void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize_uint &tempOffset);
@@ -49,7 +49,7 @@ private:
 
 public:
     /* 构造函数，初始化写入器并关联输出文件流 */
-    explicit BinaryIO_Writter(std::ofstream &outFile) : outFile(outFile) {};
+    explicit BinaryIO_Writer(std::ofstream &outFile) : outFile(outFile) {};
 
     /* 写入逻辑根节点，用于处理多文件（目录）任务 */
     void writeLogicalRoot(const std::string &logicalRoot, const FileCount_uint count, DirectoryOffsetSize_uint &tempOffset);
@@ -64,5 +64,5 @@ public:
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
 
     /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
-    void binaryIO_Writer(FilePath &file, Directory_FIleQueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
+    void binaryIO_Writer(FilePath &file, QueueInterface &directoryQueue, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset);
 };

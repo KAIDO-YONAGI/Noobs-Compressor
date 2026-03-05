@@ -43,15 +43,15 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
 void Directory_FileProcessor::scanFlow(FilePath &file, DirectoryOffsetSize_uint &tempOffset, DirectoryOffsetSize_uint &offset)
 {
 
-    BinaryIO_Writter BIO(outFile);
+    BinaryIO_Writer BIO(outFile);
 
-    while (!directoryQueue.Directory_FileQueue.empty())
+    while (!directoryQueue.queue.empty())
     {
-        Directory_FileDetails &details = (directoryQueue.Directory_FileQueue.front()).first;
+        Directory_FileDetails &details = (directoryQueue.queue.front()).first;
         file.setFilePathToScan(details.getFullPath());
 
         BIO.binaryIO_Writer(file, directoryQueue, tempOffset, offset);
 
-        directoryQueue.Directory_FileQueue.pop();
+        directoryQueue.queue.pop();
     }
 }
