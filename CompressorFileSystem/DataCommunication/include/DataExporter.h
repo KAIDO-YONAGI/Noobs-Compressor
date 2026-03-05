@@ -18,17 +18,17 @@
  *   exportDataToFile_Compression(): 写入压缩数据块
  *   exportDataToFile_Decompression(): 写入解压数据块
  *   thisFileIsDone(): 更新当前文件的完成位置
- *   getProcessedFileSize(): 获取已处理数据大小
+ *   getProcessedY_flib::FileSize(): 获取已处理数据大小
  */
 class DataExporter
 {
 private:
     std::fstream outFile;
     Locator locator;
-    FileSize processedFileSize = 0;
+    Y_flib::FileSize processedFileSize = 0;
 
     /* 标记单个数据块处理完成并更新位置 */
-    void thisBlockIsDone(DirectoryOffsetSize dataSize);
+    void thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize);
 
 public:
     /* 构造函数，打开输出文件（使用fstream支持读写） */
@@ -52,14 +52,14 @@ public:
     }
 
     /* 获取已处理数据的总大小 */
-    FileSize getProcessedFileSize() { return processedFileSize; }
+    Y_flib::FileSize getProcessedFileSize() { return processedFileSize; }
 
     /* 更新当前文件的完成标记和位置 */
-    void thisFileIsDone(FileSize offsetToFill);
+    void thisFileIsDone(Y_flib::FileSize offsetToFill);
 
     /* 写入压缩数据块到输出文件 */
-    void exportDataToFile_Compression(const DataBlock &data);
+    void exportDataToFile_Compression(const Y_flib::DataBlock &data);
 
     /* 写入解压数据块到输出文件 */
-    void exportDataToFile_Decompression(const DataBlock &data);
+    void exportDataToFile_Decompression(const Y_flib::DataBlock &data);
 };

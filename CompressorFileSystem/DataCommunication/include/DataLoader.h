@@ -20,19 +20,19 @@
 class DataLoader
 {
 private:
-    DataBlock data = DataBlock(BUFFER_SIZE);
+    Y_flib::DataBlock data = Y_flib::DataBlock(BUFFER_SIZE);
 
-    FileSize fileSize = 0;
+    Y_flib::FileSize fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
-    FileSize readed=0;
+    Y_flib::FileSize readed=0;
 
     /* 标记读取完成状态 */
     void done();
 
 public:
     /* 获取当前缓冲区中的数据块 */
-    const DataBlock &getBlock() { return data; }
+    const Y_flib::DataBlock &getBlock() { return data; }
 
     /* 检查是否读取完成 */
     bool isDone() { return loadIsDone; }
@@ -44,10 +44,10 @@ public:
     void dataLoader();
 
     /* 在解压流程中按指定大小读取数据块 */
-    void dataLoader(FileSize readSize, std::ifstream &decompressionFile);
+    void dataLoader(Y_flib::FileSize readSize, std::ifstream &decompressionFile);
 
     /* 设置文件总大小 */
-    void setFileSize(FileSize newSize) { fileSize = newSize; }
+    void setFileSize(Y_flib::FileSize newSize) { fileSize = newSize; }
 
     /* 重置指针到上次读取的位置 */
     void resetByLastReaded();

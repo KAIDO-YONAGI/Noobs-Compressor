@@ -1,7 +1,7 @@
 #include "../include/My_Aes.h"
-DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
+Y_flib::DataBlock Aes::processDataAES(const Y_flib::DataBlock &inputBuffer, int  mode)
 {
-    DataBlock outputBuffer;
+    Y_flib::DataBlock outputBuffer;
 
     // 处理IV
     if (mode==1)
@@ -50,7 +50,7 @@ DataBlock Aes::processDataAES(const DataBlock &inputBuffer, int  mode)
     return outputBuffer;
 }
 //mode 1: 加密 2: 解密
-void Aes::doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer)
+void Aes::doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer)
 {
 
     if (mode != 1 && mode != 2)

@@ -32,9 +32,9 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
             offset = header.directoryOffset - HEADER_SIZE;
         }
 
-        if (offset == sizeof(SizeOfMagicNum))
+        if (offset == sizeof(Y_flib::SizeOfMagicNum))
         {
-            SizeOfMagicNum magicNum = numsReader.readBinaryNums<SizeOfMagicNum>();
+            Y_flib::SizeOfMagicNum magicNum = numsReader.readBinaryNums<Y_flib::SizeOfMagicNum>();
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
@@ -60,7 +60,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     }
 }
 
-void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount &countOfKidDirectory, Aes &aes)
+void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
@@ -70,18 +70,18 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount &coun
     if (flag == SEPARATED_FLAG)
     {
         // 读取子块偏移量
-        tempOffset = numsReader.readBinaryNums<DirectoryOffsetSize>();
+        tempOffset = numsReader.readBinaryNums<Y_flib::DirectoryOffsetSize>();
         // 读取iv头
-        IvSize ivNum = numsReader.readBinaryNums<IvSize>();
+        Y_flib::IvSize ivNum = numsReader.readBinaryNums<Y_flib::IvSize>();
 
         offset -= SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时跳过固定头部长度
 
         // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
-        DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(SizeOfMagicNum)) : tempOffset);
+        Y_flib::DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
 
-        std::array<DirectoryOffsetSize, 2> blockPos = {
-            static_cast<DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置
-            static_cast<DirectoryOffsetSize>(readSize)        // 转换为读取大小
+        std::array<Y_flib::DirectoryOffsetSize, 2> blockPos = {
+            static_cast<Y_flib::DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置
+            static_cast<Y_flib::DirectoryOffsetSize>(readSize)        // 转换为读取大小
         };
         pos.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
 
@@ -94,10 +94,10 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount &coun
 
         if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
         {
-            DataBlock blockWithIv;
-            DataBlock decryptedBlock;
-            blockWithIv.resize(sizeof(IvSize));
-            std::memcpy(blockWithIv.data(), &ivNum, sizeof(IvSize));
+            Y_flib::DataBlock blockWithIv;
+            Y_flib::DataBlock decryptedBlock;
+            blockWithIv.resize(sizeof(Y_flib::IvSize));
+            std::memcpy(blockWithIv.data(), &ivNum, sizeof(Y_flib::IvSize));
             blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
 
             aes.doAes(2, blockWithIv, decryptedBlock);
@@ -105,7 +105,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, FileCount &coun
             buffer.resize(decryptedBlock.size());
             buffer = decryptedBlock;
         }
-        DirectoryOffsetSize bufferPtr = 0;
+        Y_flib::DirectoryOffsetSize bufferPtr = 0;
 
         while (readSize > bufferPtr)
         {
@@ -184,9 +184,9 @@ void BinaryIO_Loader::restartLoader()
 void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
 
 {
-    DataBlock inBlock;
-    DataBlock encryptedBlock;
-    DirectoryOffsetSize startPos = 0, blockSize = 0;
+    Y_flib::DataBlock inBlock;
+    Y_flib::DataBlock encryptedBlock;
+    Y_flib::DirectoryOffsetSize startPos = 0, blockSize = 0;
 
     for (auto blockPos : pos)
     {
@@ -194,14 +194,14 @@ void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
         blockSize = blockPos[1];
 
         inBlock.resize(blockSize);
-        encryptedBlock.resize(blockSize + sizeof(IvSize));
+        encryptedBlock.resize(blockSize + sizeof(Y_flib::IvSize));
 
         fstreamForRefill.seekp(startPos, std::ios::beg);
         fstreamForRefill.read(reinterpret_cast<char *>(inBlock.data()), blockSize);
 
         aes.doAes(1, inBlock, encryptedBlock);
-        fstreamForRefill.seekp(startPos - sizeof(IvSize));
-        fstreamForRefill.write(reinterpret_cast<const char *>(encryptedBlock.data()), blockSize + sizeof(IvSize));
+        fstreamForRefill.seekp(startPos - sizeof(Y_flib::IvSize));
+        fstreamForRefill.write(reinterpret_cast<const char *>(encryptedBlock.data()), blockSize + sizeof(Y_flib::IvSize));
 
         inBlock.clear();
         encryptedBlock.clear();

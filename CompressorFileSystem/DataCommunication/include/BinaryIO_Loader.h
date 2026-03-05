@@ -30,9 +30,9 @@ private:
     bool allDone = false;   // 标记是否完成所有目录读取
     bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
 
-    FileCount countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
-    FileSize offset = 0;     // 当前剩余字节数
-    DirectoryOffsetSize tempOffset = 0; // 当前处理块的大小（偏移）
+    Y_flib::FileCount countOfKidDirectory = 0;  // 当前处理中或退出时目录下子目录或文件数量
+    Y_flib::FileSize offset = 0;     // 当前剩余字节数
+    Y_flib::DirectoryOffsetSize tempOffset = 0; // 当前处理块的大小（偏移）
 
     std::filesystem::path loadPath;
     std::filesystem::path parentPath;
@@ -43,12 +43,12 @@ private:
     PathTransfer transfer;
     Header header;                                         // 私有化存储当前文件头信息
     std::unique_ptr<Directory_FileParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
-    DataBlock buffer =
-        DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
+    Y_flib::DataBlock buffer =
+        Y_flib::DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
 
     void requestDone();                                                                             // 标记块读取完成
     void allLoopDone();                                                                             // 标记所有循环完成并清理资源
-    void loadBySepratedFlag(NumsReader &numsReader, FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
+    void loadBySepratedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
 
 public:
     void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
@@ -56,7 +56,7 @@ public:
     // 压缩时队列
     Directory_FileQueue fileQueue;                            // 文件队列
     Directory_FileQueue directory_FileQueue;                       // 目录队列
-    std::vector<std::array<DirectoryOffsetSize, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
+    std::vector<std::array<Y_flib::DirectoryOffsetSize, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列
     std::queue<std::filesystem::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
@@ -82,7 +82,7 @@ public:
 
     ~BinaryIO_Loader() { allLoopDone(); }
 
-    DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
+    Y_flib::DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 
     bool allLoopIsDone() { return allDone; } // 检查所有读取是否完成
 

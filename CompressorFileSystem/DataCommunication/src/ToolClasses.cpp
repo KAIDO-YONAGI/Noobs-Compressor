@@ -41,7 +41,7 @@ void Directory_FileQueue::clear()
     count = 0;          // 重置计数器
 }
 
-void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount> val)
+void Directory_FileQueue::push(std::pair<Directory_FileDetails, Y_flib::FileCount> val)
 {
     Node *newNode = new Node(val);
     if (rearNode)
@@ -72,7 +72,7 @@ void Directory_FileQueue::pop()
     count--;
 }
 
-std::pair<Directory_FileDetails, FileCount> &Directory_FileQueue::front()
+std::pair<Directory_FileDetails, Y_flib::FileCount> &Directory_FileQueue::front()
 {
     if (empty())
     {
@@ -81,7 +81,7 @@ std::pair<Directory_FileDetails, FileCount> &Directory_FileQueue::front()
     return frontNode->data;
 }
 
-std::pair<Directory_FileDetails, FileCount> &Directory_FileQueue::back()
+std::pair<Directory_FileDetails, Y_flib::FileCount> &Directory_FileQueue::back()
 {
     if (empty())
     {
@@ -100,17 +100,17 @@ size_t Directory_FileQueue::size()
     return count;
 }
 
-void Locator::offsetLocator(std::ofstream &outFile, FileSize offset)
+void Locator::offsetLocator(std::ofstream &outFile, Y_flib::FileSize offset)
 {
     outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
 }
 
-void Locator::offsetLocator(std::ifstream &inFile, FileSize offset)
+void Locator::offsetLocator(std::ifstream &inFile, Y_flib::FileSize offset)
 {
     inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
 }
 
-FileSize Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
+Y_flib::FileSize Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
 {
     try
     {

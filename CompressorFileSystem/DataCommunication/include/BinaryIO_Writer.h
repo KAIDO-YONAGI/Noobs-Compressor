@@ -27,35 +27,35 @@ private:
     std::ofstream &outFile;
 
     /* 序列化单个目录及其子元素，写入目录标准格式 */
-    void writeDirectoryStandard(Directory_FileDetails &details, FileCount count, DirectoryOffsetSize &tempOffset);
+    void writeDirectoryStandard(Directory_FileDetails &details, Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 序列化单个文件的元数据，写入文件标准格式 */
-    void writeFileStandard(Directory_FileDetails &details, DirectoryOffsetSize &tempOffset);
+    void writeFileStandard(Directory_FileDetails &details, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 写入分隔符标记分离多个目录块 */
-    void writeSeparatedStandard(DirectoryOffsetSize &tempOffset, DirectoryOffsetSize offset);
+    void writeSeparatedStandard(Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize offset);
 
     /* 分发当前路径上的目录/文件到相应的写入处理函数 */
-    void writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset);
+    void writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 
     /* 处理符号链接的序列化写入 */
-    void writeSymbolLinkStandard(Directory_FileDetails &details, DirectoryOffsetSize &tempOffset);
+    void writeSymbolLinkStandard(Directory_FileDetails &details, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 统计指定目录下的文件总数（不递归） */
-    FileCount countFilesInDirectory(const std::filesystem::path &filePathToScan);
+    Y_flib::FileCount countFilesInDirectory(const std::filesystem::path &filePathToScan);
 
     /* 获取指定文件的大小 */
-    FileSize getFileSize(const std::filesystem::path &filePathToScan);
+    Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan);
 
 public:
     /* 构造函数，初始化写入器并关联输出文件流 */
     explicit BinaryIO_Writer(std::ofstream &outFile) : outFile(outFile) {};
 
     /* 写入逻辑根节点，用于处理多文件（目录）任务 */
-    void writeLogicalRoot(const std::string &logicalRoot, const FileCount count, DirectoryOffsetSize &tempOffset);
+    void writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 写入根节点，处理filesystem自动忽略的根目录 */
-    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryOffsetSize &tempOffset);
+    void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 写入空白分隔符标记 */
     void writeBlankSeparatedStandard();
@@ -64,5 +64,5 @@ public:
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
 
     /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
-    void binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset);
+    void binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 };

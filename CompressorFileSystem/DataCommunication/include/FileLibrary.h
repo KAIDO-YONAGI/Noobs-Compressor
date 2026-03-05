@@ -12,30 +12,36 @@
 #include <array>
 #include <memory>
 // 命名空间
+namespace Y_flib
+{
+    using FileCount = uint32_t;
+    using FileSize = uint64_t;
+    using FileNameSize = uint32_t;
 
+    using CompressStrategy = uint8_t;
+    using CompressorVersion = uint8_t;
 
-using FileCount = uint32_t;    // 文件计数 
-using FileSize = uint64_t;     // 文件大小
-using FileNameSize = uint32_t; // 文件名长度（也是符号链接的路径长度）
-// 压缩相关配置
-using CompressStrategy = uint8_t;        // 压缩策略
-using CompressorVersion = uint8_t;       // 压缩器版本
-using HeaderOffsetSize = uint8_t;        // 头部偏移长度
-using DirectoryOffsetSize = uint64_t;    // 目录偏移长度 
-using UpSizeOfBuffer = uint32_t;         // 分块的长度
-using SizeOfMagicNum = uint32_t;         // 魔数长度
-using SizeOfFlag = uint8_t;              // 文件标长度
-using IvSize = __uint128_t;              // iv头长度
-using DataBlock = std::vector<unsigned char>; // 数据块类型
+    using HeaderOffsetSize = uint8_t;
+    using DirectoryOffsetSize = uint64_t;
 
-constexpr CompressStrategy STRATEGY = 0; // 策略号
+    using UpSizeOfBuffer = uint32_t;
 
-constexpr CompressorVersion VERSION = 0; // 版本号
+    using SizeOfMagicNum = uint32_t;
+    using SizeOfFlag = uint8_t;
 
-constexpr SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
+    using IvSize = __uint128_t;
+
+    using DataBlock = std::vector<unsigned char>;
+}
+
+constexpr Y_flib::CompressStrategy STRATEGY = 0; // 策略号
+
+constexpr Y_flib::CompressorVersion VERSION = 0; // 版本号
+
+constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
-constexpr UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024; // 偏移量缓冲需要确保大于文件头大小HeaderSize
-constexpr UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 4 * 1024; // 目录缓冲大小
+constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024; // 偏移量缓冲需要确保大于文件头大小HeaderSize
+constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 4 * 1024; // 目录缓冲大小
 //TODO:目前的目录分块大小检测仍存在bug，具体来说是边界对齐的时候误以为该块解压解析结束，然而实际上遗漏了边界交界处的文件。
 //目前通过提高buffer大小可以降低这种概率
 //后续打算通过在分割标准中添加一个标志位来指示是否存在边界交界处的文件，以便正确处理这种情况
@@ -53,7 +59,7 @@ enum class FlagType : char
     LogicalRoot = '3',
     SymbolLink = '4'
 };
-constexpr SizeOfFlag FLAG_SIZE = sizeof(FlagType);
+constexpr Y_flib::SizeOfFlag FLAG_SIZE = sizeof(FlagType);
 constexpr char DIRECTORY_FLAG = static_cast<char>(FlagType::Directory);
 constexpr char FILE_FLAG = static_cast<char>(FlagType::File);
 constexpr char SEPARATED_FLAG = static_cast<char>(FlagType::Separated);
@@ -64,28 +70,28 @@ constexpr char SYMBOL_LINK_FLAG = static_cast<char>(FlagType::SymbolLink);
 // 目录标准的基础大小（不含变长的文件名，需要自行维护）
 constexpr uint8_t DIRECTORY_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
-    sizeof(FileNameSize) +
+    sizeof(Y_flib::FileNameSize) +
     // 此行应为变长文件名，无法预先定义,需按情况处理
-    sizeof(FileCount);
+    sizeof(Y_flib::FileCount);
 
 // 文件标准的基础大小（不含变长的文件名，需要自行维护）
 constexpr uint8_t FILE_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
-    sizeof(FileNameSize) +
+    sizeof(Y_flib::FileNameSize) +
     // 此行应为变长文件名，无法预先定义,需按情况处理
-    sizeof(FileSize) * 2;
+    sizeof(Y_flib::FileSize) * 2;
 
 // 分割标准的基础大小
 constexpr uint8_t SEPARATED_STANDARD_SIZE =
     FLAG_SIZE +
-    sizeof(DirectoryOffsetSize) +
-    sizeof(IvSize);
+    sizeof(Y_flib::DirectoryOffsetSize) +
+    sizeof(Y_flib::IvSize);
 
 // 符号链接标准的基础大小
 constexpr uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
-    sizeof(FileNameSize) +
-    sizeof(FileNameSize)
+    sizeof(Y_flib::FileNameSize) +
+    sizeof(Y_flib::FileNameSize)
     // 变长文件名
     // 变长文件路径
     ;
@@ -94,12 +100,12 @@ constexpr uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
 #pragma pack(push, 1)
 struct Header
 {
-    SizeOfMagicNum magicNum_1 = 0;
-    CompressStrategy strategy = 0;
-    CompressorVersion version = 0;
-    HeaderOffsetSize headerOffset = 0;
-    DirectoryOffsetSize directoryOffset = 0;
-    SizeOfMagicNum magicNum_2 = 0;
+    Y_flib::SizeOfMagicNum magicNum_1 = 0;
+    Y_flib::CompressStrategy strategy = 0;
+    Y_flib::CompressorVersion version = 0;
+    Y_flib::HeaderOffsetSize headerOffset = 0;
+    Y_flib::DirectoryOffsetSize directoryOffset = 0;
+    Y_flib::SizeOfMagicNum magicNum_2 = 0;
 };
 #pragma pack(pop)
 constexpr uint8_t HEADER_SIZE =sizeof(Header);

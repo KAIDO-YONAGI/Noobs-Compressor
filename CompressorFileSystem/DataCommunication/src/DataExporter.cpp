@@ -1,16 +1,16 @@
 #include "../include/DataExporter.h"
 
-void DataExporter::thisBlockIsDone(DirectoryOffsetSize dataSize)
+void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
 {
     std::streamoff currentPos = outFile.tellp();
-    std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(DirectoryOffsetSize));
+    std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(Y_flib::DirectoryOffsetSize));
     outFile.seekp(offsetToFill, std::ios::beg);
     DataWriter dataWriter;
     dataWriter.writeBinaryNums(dataSize, outFile);
     outFile.seekp(0, std::ios::end);
 }
 
-void DataExporter::thisFileIsDone(FileSize offsetToFill)
+void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
 {
     outFile.seekp(offsetToFill, std::ios::beg);
     DataWriter dataWriter;
@@ -20,14 +20,14 @@ void DataExporter::thisFileIsDone(FileSize offsetToFill)
     processedFileSize = 0;
 }
 
-void DataExporter::exportDataToFile_Compression(const DataBlock &data)
+void DataExporter::exportDataToFile_Compression(const Y_flib::DataBlock &data)
 {
     std::ofstream tempFilePtr;
 
     BinaryIO_Writer processor(tempFilePtr);
 
     outFile.seekp(0, std::ios::end);
-    FileSize dataSize = data.size();
+    Y_flib::FileSize dataSize = data.size();
     processor.writeBlankSeparatedStandardForEncryption(outFile);
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
@@ -35,10 +35,10 @@ void DataExporter::exportDataToFile_Compression(const DataBlock &data)
 
     thisBlockIsDone(dataSize);
 }
-void DataExporter::exportDataToFile_Decompression(const DataBlock &data)
+void DataExporter::exportDataToFile_Decompression(const Y_flib::DataBlock &data)
 {
     outFile.seekp(0, std::ios::end);
-    FileSize dataSize = data.size();
+    Y_flib::FileSize dataSize = data.size();
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
     outFile.flush();

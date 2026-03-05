@@ -124,7 +124,7 @@ class MyQueueInterface
 public:
     virtual ~MyQueueInterface() = default;
 
-    virtual void push(std::pair<Directory_FileDetails, FileCount>) = 0;
+    virtual void push(std::pair<Directory_FileDetails, Y_flib::FileCount>) = 0;
     virtual void pop() = 0;
     virtual bool empty() = 0;
     virtual T &front() = 0;
@@ -138,14 +138,14 @@ public:
  *   BFS遍历中使用的队列，存储目录和文件计数对
  *   用链表实现，支持push/pop/front/back操作
  */
-class Directory_FileQueue : public MyQueueInterface<std::pair<Directory_FileDetails, FileCount>>
+class Directory_FileQueue : public MyQueueInterface<std::pair<Directory_FileDetails, Y_flib::FileCount>>
 {
 private:
     struct Node
     {
-        std::pair<Directory_FileDetails, FileCount> data;
+        std::pair<Directory_FileDetails, Y_flib::FileCount> data;
         Node *next;
-        Node(const std::pair<Directory_FileDetails, FileCount> &val)
+        Node(const std::pair<Directory_FileDetails, Y_flib::FileCount> &val)
             : data(val), next(nullptr) {}
     };
 
@@ -165,7 +165,7 @@ public:
     void clear() override;
 
     /* 入队（push_back），添加元素到队尾 */
-    void push(std::pair<Directory_FileDetails, FileCount> val) override;
+    void push(std::pair<Directory_FileDetails, Y_flib::FileCount> val) override;
 
     /* 出队（pop_front），移除队头元素 */
     void pop() override;
@@ -173,10 +173,10 @@ public:
     /* 检查队列是否为空 */
     bool empty() override;
     /* 获取队头元素引用 */
-    std::pair<Directory_FileDetails, FileCount> &front() override;
+    std::pair<Directory_FileDetails, Y_flib::FileCount> &front() override;
 
     /* 获取队尾元素引用 */
-    std::pair<Directory_FileDetails, FileCount> &back() override;
+    std::pair<Directory_FileDetails, Y_flib::FileCount> &back() override;
 
     /* 获取队列中的元素个数 */
     size_t size() override;
@@ -195,14 +195,14 @@ public:
     Locator() = default;
 
     /* 在输出文件中定位到指定偏移位置 */
-    void offsetLocator(std::ofstream &outFile, FileSize offset);
+    void offsetLocator(std::ofstream &outFile, Y_flib::FileSize offset);
 
     /* 在输入文件中定位到指定偏移位置 */
-    void offsetLocator(std::ifstream &inFile, FileSize offset);
+    void offsetLocator(std::ifstream &inFile, Y_flib::FileSize offset);
 
     /* fstream定位已禁用（删除函数） */
-    void offsetLocator(std::fstream &file, FileSize offset) = delete;
+    void offsetLocator(std::fstream &file, Y_flib::FileSize offset) = delete;
 
     /* 获取输出文件的当前大小 */
-    FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
+    Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
 };

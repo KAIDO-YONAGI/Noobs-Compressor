@@ -28,7 +28,7 @@ private:
     DataWriter dataWriter;
 
     /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
-    void scanFlow(FilePath &file, DirectoryOffsetSize &tempOffset, DirectoryOffsetSize &offset);
+    void scanFlow(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 
 public:
     /* 构造函数，初始化处理器并创建二进制写入器 */

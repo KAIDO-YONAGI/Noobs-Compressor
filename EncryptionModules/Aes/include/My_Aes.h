@@ -86,7 +86,7 @@ private:
    void hash_to_16bytes(const char *input, uint8_t *output);
 
    /* 分块处理AES加密/解密，按16字节分块 */
-   DataBlock processDataAES(const DataBlock &inputBuffer, int mode);
+   Y_flib::DataBlock processDataAES(const Y_flib::DataBlock &inputBuffer, int mode);
 
    /* AES加密，10轮加密循环 */
    void aes(char *p, int plen);
@@ -99,7 +99,7 @@ private:
    uint8_t iv[16];              // 初始化向量(当前实现为全0)
    const char *aes_key;         // 用户密钥指针(保存参考)
    uint8_t aes_key_16bytes[16]; // 128位主密钥(哈希后)
-   DataBlock buffer;            // 数据处理缓冲区
+   Y_flib::DataBlock buffer;            // 数据处理缓冲区
 
 public:
    /* 默认构造函数 */
@@ -121,7 +121,7 @@ public:
    }
 
    /* 统一加密/解密接口，mode=1加密、mode=2解密。自动分块处理 */
-   void doAes(int mode, const DataBlock &inputBuffer, DataBlock &outputBuffer);
+   void doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
 };
 
 static const unsigned int Rcon[10] = {

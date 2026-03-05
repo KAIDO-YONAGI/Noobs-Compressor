@@ -46,7 +46,7 @@ void DataLoader::dataLoader()
     }
     readed += inFile.gcount();
 }
-void DataLoader::dataLoader(FileSize readSize, std::ifstream &decompressionFile)
+void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &decompressionFile)
 {
     try
     {

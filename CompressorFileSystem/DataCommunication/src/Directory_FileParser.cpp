@@ -1,7 +1,7 @@
 #include "../include/Directory_FileParser.h"
 namespace fs = std::filesystem;
 
-void Directory_FileParser::checkBounds(DirectoryOffsetSize pos, FileNameSize requiredSize) const
+void Directory_FileParser::checkBounds(Y_flib::DirectoryOffsetSize pos, Y_flib::FileNameSize requiredSize) const
 {
     if (pos + requiredSize > buffer.size())
     {
@@ -26,25 +26,25 @@ fs::path Directory_FileParser::pathConnector(std::string &fileName)
     return pathToProcess;
 }
 
-void Directory_FileParser::fileParser(DirectoryOffsetSize &bufferPtr)
+void Directory_FileParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
 {
     // 解析文件名偏移量
-    FileNameSize fileNameSize = 0;
+    Y_flib::FileNameSize fileNameSize = 0;
     std::string fileName;
     fs::path pathToProcess;
     fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
 
     // 解析文件原大小
-    FileSize originSize = numsParser<FileSize>(bufferPtr);
-    FileSize compressedSize_or_Offset;
+    Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
+    Y_flib::FileSize compressedSize_or_Offset;
     if (parserMode == 1) // for compression
     {
         compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-        bufferPtr += sizeof(FileSize); // skip compressedSize
+        bufferPtr += sizeof(Y_flib::FileSize); // skip compressedSize
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize_or_Offset = numsParser<FileSize>(bufferPtr); // compressedSize
+        compressedSize_or_Offset = numsParser<Y_flib::FileSize>(bufferPtr); // compressedSize
     }
 
     pathToProcess = pathConnector(fileName);
@@ -58,16 +58,16 @@ void Directory_FileParser::fileParser(DirectoryOffsetSize &bufferPtr)
     fileQueue.push({fileDetails, compressedSize_or_Offset});
 }
 
-void Directory_FileParser::directoryParser(DirectoryOffsetSize &bufferPtr)
+void Directory_FileParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr)
 {
     // 解析目录名偏移量
     // 解析目录名，后续拼接为绝对路径之后入队
-    FileNameSize directoryNameSize = 0;
+    Y_flib::FileNameSize directoryNameSize = 0;
     std::string directoryName;
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
 
     // 解析下级文件数量
-    FileCount count = numsParser<FileCount>(bufferPtr);
+    Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
 
     fs::path pathToProcess = pathConnector(directoryName);
 
@@ -75,14 +75,14 @@ void Directory_FileParser::directoryParser(DirectoryOffsetSize &bufferPtr)
     directory_FileQueue.push({directoryDetails, count});
 }
 
-void Directory_FileParser::rootParser(DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, FileCount &countOfKidDirectory, bool &noDirec)
+void Directory_FileParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, Y_flib::FileCount &countOfKidDirectory, bool &noDirec)
 {
-    FileNameSize directoryNameSize = 0;
+    Y_flib::FileNameSize directoryNameSize = 0;
     std::string directoryName;
     // 解析逻辑根
     fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
-    FileCount count = numsParser<FileCount>(bufferPtr);
+    Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
 
     countOfKidDirectory = count;
 
@@ -103,14 +103,14 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize &bufferPtr, const std:
 
             if (D_F_flag == FILE_FLAG)
             {
-                FileNameSize fileNameSize = 0;
+                Y_flib::FileNameSize fileNameSize = 0;
                 std::string fileName;
                 fileName_fileSizeParser(fileNameSize, fileName, bufferPtr);
                 // 解析文件原大小
-                FileSize originSize = numsParser<FileSize>(bufferPtr);
+                Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
                 // 记录等会需要回填的位置
-                FileSize compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-                bufferPtr += sizeof(FileSize);
+                Y_flib::FileSize compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+                bufferPtr += sizeof(Y_flib::FileSize);
                 Directory_FileDetails fileDetails(
                     fileName,
                     fileNameSize,
@@ -121,11 +121,11 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize &bufferPtr, const std:
             }
             else if (D_F_flag == DIRECTORY_FLAG)
             {
-                FileNameSize directoryNameSize = 0;
+                Y_flib::FileNameSize directoryNameSize = 0;
                 std::string directoryName;
                 fileName_fileSizeParser(directoryNameSize, directoryName, bufferPtr);
                 // 解析下级文件数量
-                FileCount count = numsParser<FileCount>(bufferPtr);
+                Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
 
                 Directory_FileDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
                 directory_FileQueue.push({directoryDetails, count});
@@ -136,7 +136,7 @@ void Directory_FileParser::rootParser(DirectoryOffsetSize &bufferPtr, const std:
     }
 }
 
-void Directory_FileParser::parser(DirectoryOffsetSize &bufferPtr, FileCount &countOfKidDirectory)
+void Directory_FileParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCount &countOfKidDirectory)
 {
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;

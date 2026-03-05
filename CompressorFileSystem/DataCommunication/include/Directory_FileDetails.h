@@ -14,14 +14,14 @@ class Directory_FileDetails
 {
 private:
     std::string name;
-    FileNameSize sizeOfName;
-    FileSize fileSize;
+    Y_flib::FileNameSize sizeOfName;
+    Y_flib::FileSize fileSize;
     bool isFile;
     std::filesystem::path fullPath;
 
 public:
     /* 构造函数，初始化文件/目录元数据 */
-    Directory_FileDetails(std::string name, FileNameSize sizeOfName, FileSize fileSize, bool isFile, std::filesystem::path fullPath)
+    Directory_FileDetails(std::string name, Y_flib::FileNameSize sizeOfName, Y_flib::FileSize fileSize, bool isFile, std::filesystem::path fullPath)
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 
     /* 获取文件/目录名称 */
@@ -31,16 +31,16 @@ public:
     const std::filesystem::path getFullPath() { return fullPath; }
 
     /* 获取名称长度 */
-    const FileNameSize getSizeOfName() { return sizeOfName; }
+    const Y_flib::FileNameSize getSizeOfName() { return sizeOfName; }
 
     /* 获取文件大小 */
-    const FileSize getFileSize() { return fileSize; }
+    const Y_flib::FileSize getFileSize() { return fileSize; }
 
     /* 检查是否为文件（false表示目录） */
     const bool getIsFile() { return isFile; }
 
     /* 更新文件大小 */
-    void setFileSize(FileSize fileSize) { this->fileSize = fileSize; }
+    void setFileSize(Y_flib::FileSize fileSize) { this->fileSize = fileSize; }
 };
 
 /* FilePath - 输入输出路径管理器
