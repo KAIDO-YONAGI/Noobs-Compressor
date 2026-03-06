@@ -14,6 +14,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
         // 读取Header
         if (inFile.tellg() == std::streampos(0))
         {
+            
             if (!inFile.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
             {
                 throw std::runtime_error("Failed to read header");

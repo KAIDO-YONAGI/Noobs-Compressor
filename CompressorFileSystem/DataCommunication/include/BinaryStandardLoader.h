@@ -92,5 +92,5 @@ public:
 
     void restartLoader(); // 重新打开文件并定位到当前偏移
 
-    void encryptHeaderBlock(Aes &aes); // 加密并回填目录块到文件
+    void encryptHeaderBlock(Aes &aes); //在压缩流程中读取完目录信息就直接加密并回填目录块到文件（读信息->填目录->读目录->加密回填 其中的后两步）
 };

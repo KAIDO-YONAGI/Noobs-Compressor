@@ -23,7 +23,7 @@ std::filesystem::path PathTransfer::transPath(const std::string &p)
     return std::filesystem::path(p);
 }
 
-void StandardWriter::appendMagicStatic(std::ofstream &outFile)
+void StandardsWriter::appendMagicStatic(std::ofstream &outFile)
 {
     writeBinaryStandards(MAGIC_NUM, outFile);
 }

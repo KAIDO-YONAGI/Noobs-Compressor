@@ -22,7 +22,7 @@ class BinaryStandardWriter
 {
 private:
     PathTransfer transfer;
-    StandardWriter standardWriter;
+    StandardsWriter standardWriter;
     Locator locator;
     std::ofstream &outFile;
 

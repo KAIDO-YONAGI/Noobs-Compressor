@@ -102,10 +102,10 @@ void BinaryStandardWriter::writeFileStandard(EntryDetails &details, Y_flib::Dire
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
-    standardWriter.writeBinaryStandards(FILE_FLAG, outFile);                      // 先写文件标
-    standardWriter.writeBinaryStandards(sizeOfName, outFile);                     // 写入文件名偏移量
+    standardWriter.writeBinaryStandards(FILE_FLAG, outFile);  // 先写文件标
+    standardWriter.writeBinaryStandards(sizeOfName, outFile); // 写入文件名偏移量
 
-    standardWriter.writeBinaryStandards(details.getName(), outFile);              // 写入文件名
+    standardWriter.writeBinaryStandards(details.getName(), outFile); // 写入文件名
 
     standardWriter.writeBinaryStandards(details.getFileSizeInDetails(), outFile); // 写入文件大小
     standardWriter.writeBinaryStandards(Y_flib::FileSize(0), outFile);            // 预留大小

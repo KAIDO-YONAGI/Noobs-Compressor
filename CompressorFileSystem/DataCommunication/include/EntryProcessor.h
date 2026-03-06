@@ -25,7 +25,7 @@ private:
     EntryQueue directory_FileQueue;
     FilePath file; // 创建各个工具类的对象
     BinaryStandardWriter *binaryStandardWriter;
-    StandardWriter standardWriter;
+    StandardsWriter standardWriter;
 
     /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
     void flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);

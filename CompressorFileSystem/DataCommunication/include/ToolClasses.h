@@ -21,13 +21,13 @@ public:
     std::filesystem::path transPath(const std::string &p);
 };
 
-/* StandardWriter - 二进制数值写入器
+/* StandardsWriter - 二进制数值写入器
  *
  * 功能:
  *   将任意类型数值以二进制格式写入文件流
  *   支持ofstream和fstream，编译时类型检查
  */
-class StandardWriter
+class StandardsWriter
 {
 public:
     /* 模板化函数：将数值写入ofstream（编译时检查可复制性、指针和多态性） */
@@ -48,7 +48,6 @@ public:
         {
             throw std::runtime_error("writeBinaryStandards()Error-Failed to write outFile");
         }
-
     }
 
     /* 模板化函数：将数值写入fstream（编译时检查可复制性、指针和多态性） */
@@ -69,7 +68,6 @@ public:
         {
             throw std::runtime_error("writeBinaryNums()Error-Failed to write inFile");
         }
-
     }
     void writeBinaryStandards(const std::string str, std::ofstream &ofstream)
     {
@@ -79,9 +77,22 @@ public:
         {
             throw std::runtime_error("writeBinaryStandards-char*()Error-Failed to write outFile");
         }
-
     }
 
+    void writeHeaderBlock(Y_flib::FileSize size, std::ofstream &file, Y_flib::DataBlock &buffer)
+    {
+        if (!file.write(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        {
+            throw std::runtime_error("writeHeaderBlock(std::ofstream)-Failed to write header");
+        }
+    }
+    void writeHeaderBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
+    {
+        if (!file.write(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        {
+            throw std::runtime_error("writeHeaderBlock(std::fstream &file)-Failed to write header");
+        }
+    }
     /* 写入静态魔数标记到输出文件 */
     void appendMagicStatic(std::ofstream &outFile);
 };
@@ -128,6 +139,20 @@ public:
             throw std::runtime_error(msg);
         }
         return value;
+    }
+    void readHeaderBlock(Y_flib::FileSize size, std::ifstream &file, Y_flib::DataBlock &buffer)
+    {
+        if (!file.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        {
+            throw std::runtime_error("readHeaderBlock(std::ifstream)-Failed to read header");
+        }
+    }
+    void readHeaderBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
+    {
+        if (!file.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        {
+            throw std::runtime_error("readHeaderBlock(std::fstream &file)-Failed to read header");
+        }
     }
 };
 template <typename T>
