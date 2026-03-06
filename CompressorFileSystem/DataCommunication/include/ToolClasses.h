@@ -79,18 +79,18 @@ public:
         }
     }
 
-    static void writeHeaderBlock(Y_flib::FileSize size, std::ofstream &file,const Y_flib::DataBlock &buffer)
+    static void writeDataBlock(Y_flib::FileSize size, std::ofstream &file,const Y_flib::DataBlock &buffer)
     {
         if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
         {
-            throw std::runtime_error("writeHeaderBlock(std::ofstream)-Failed to write header");
+            throw std::runtime_error("writeDataBlock(std::ofstream)-Failed to write header");
         }
     }
-    static void writeHeaderBlock(Y_flib::FileSize size, std::fstream &file,const Y_flib::DataBlock &buffer)
+    static void writeDataBlock(Y_flib::FileSize size, std::fstream &file,const Y_flib::DataBlock &buffer)
     {
         if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
         {
-            throw std::runtime_error("writeHeaderBlock(std::fstream &file)-Failed to write header");
+            throw std::runtime_error("writeDataBlock(std::fstream &file)-Failed to write header");
         }
     }
     /* 写入静态魔数标记到输出文件 */
@@ -140,20 +140,20 @@ public:
         }
         return value;
     }
-    static void readHeaderBlock(Y_flib::FileSize size, std::ifstream &file, Y_flib::DataBlock &buffer)
+    static void readDataBlock(Y_flib::FileSize size, std::ifstream &file, Y_flib::DataBlock &buffer)
     {
         buffer.resize(size); // clear和resize确保容器大小正确，避免残留数据
         if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
         {
-            throw std::runtime_error("readHeaderBlock(std::ifstream)-Failed to read header");
+            throw std::runtime_error("readDataBlock(std::ifstream)-Failed to read header");
         }
     }
-    static void readHeaderBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
+    static void readDataBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
     {
         buffer.resize(size);
         if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
         {
-            throw std::runtime_error("readHeaderBlock(std::fstream &file)-Failed to read header");
+            throw std::runtime_error("readDataBlock(std::fstream &file)-Failed to read header");
         }
     }
 };

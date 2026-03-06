@@ -14,7 +14,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
         // 读取Header
         if (inFile.tellg() == std::streampos(0))
         {
-            StandardsReader::readHeaderBlock(HEADER_SIZE, inFile, buffer);
+            StandardsReader::readDataBlock(HEADER_SIZE, inFile, buffer);
             // 复制Header数据
             std::memcpy(&header, buffer.data(), sizeof(Header));
             // 验证魔数
@@ -81,7 +81,7 @@ void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader,
         blockPosition.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
 
         // 根据偏移量读取数据块
-        StandardsReader::readHeaderBlock(readSize, inFile, buffer);
+        StandardsReader::readDataBlock(readSize, inFile, buffer);
 
         if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
         {
@@ -191,12 +191,12 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
 
         locator.locateFromBegin(fstreamForRefill, startPos);                    // 定位到数据块起始位置
 
-        StandardsReader::readHeaderBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
+        StandardsReader::readDataBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
 
         aes.doAes(1, inBlock, encryptedBlock);
         locator.locateFromBegin(fstreamForRefill, startPos - sizeof(Y_flib::IvSize)); // 定位回数据块起始位置，准备回写加密数据
-        
-        StandardsWriter::writeHeaderBlock(blockSize + sizeof(Y_flib::IvSize), fstreamForRefill, encryptedBlock); // 回写加密数据
+
+        StandardsWriter::writeDataBlock(blockSize + sizeof(Y_flib::IvSize), fstreamForRefill, encryptedBlock); // 回写加密数据
 
         inBlock.clear();
         encryptedBlock.clear();
