@@ -2,7 +2,7 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileProcessor.h"
+#include "EntryProcessor.h"
 
 /* HeaderWriter_Interface - 文件头和目录写入的抽象接口
  *

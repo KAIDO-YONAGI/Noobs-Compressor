@@ -1,16 +1,16 @@
-// Directory_FileDetails.h
+// EntryDetails.h
 #pragma once
 
 #include "FileLibrary.h"
 
-/* Directory_FileDetails - 文件/目录的元数据容器
+/* EntryDetails - 文件/目录的元数据容器
  *
  * 功能:
  *   存储单个文件或目录的基本属性
  *   包括名称、大小、类型和完整路径
  *   用于目录遍历和二进制序列化过程中传递信息
  */
-class Directory_FileDetails
+class EntryDetails
 {
 private:
     std::string name;
@@ -21,7 +21,7 @@ private:
 
 public:
     /* 构造函数，初始化文件/目录元数据 */
-    Directory_FileDetails(std::string name, Y_flib::FileNameSize sizeOfName, Y_flib::FileSize fileSize, bool isFile, std::filesystem::path fullPath)
+    EntryDetails(std::string name, Y_flib::FileNameSize sizeOfName, Y_flib::FileSize fileSize, bool isFile, std::filesystem::path fullPath)
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 
     /* 获取文件/目录名称 */

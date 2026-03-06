@@ -1,10 +1,10 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileDetails.h"
+#include "EntryDetails.h"
 #include "ToolClasses.h"
 
-/* Directory_FileParser - 二进制目录结构解析器
+/* EntryParser - 二进制目录结构解析器
  *
  * 功能:
  *   解析二进制目录块中的文件/目录信息
@@ -16,11 +16,11 @@
  *   parser(): 主解析函数，处理缓冲区中的目录数据
  *   setRootForDecompression(): 设置解压时的根路径
  */
-class Directory_FileParser
+class EntryParser
 {
 private:
-    Directory_FileQueue &directory_FileQueue;
-    Directory_FileQueue &fileQueue;
+    EntryQueue &directory_FileQueue;
+    EntryQueue &fileQueue;
     std::vector<std::string> &filePathToScan;
     Y_flib::DataBlock &buffer;
     PathTransfer transfer;
@@ -112,8 +112,8 @@ public:
     }
 
     /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
-    Directory_FileParser(Y_flib::DataBlock &buffer, Directory_FileQueue &directory_FileQueue,
-                         Directory_FileQueue &fileQueue, const Header &header,
+    EntryParser(Y_flib::DataBlock &buffer, EntryQueue &directory_FileQueue,
+                         EntryQueue &fileQueue, const Header &header,
                          const Y_flib::DirectoryOffsetSize &offset,
                          const Y_flib::DirectoryOffsetSize &tempOffset,
                          std::vector<std::string> &filePathToScan)

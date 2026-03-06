@@ -2,8 +2,8 @@
 
 #include "FileLibrary.h"
 #include "ToolClasses.h"
-#include "Directory_FileDetails.h"
-#include "Directory_FileParser.h"
+#include "EntryDetails.h"
+#include "EntryParser.h"
 #include "My_Aes.h"
 #include <queue>
 
@@ -12,7 +12,7 @@
 
    功能:
    从.sy文件读取加密的目录块
-   调用Directory_FileParser解析二进制目录结构
+   调用DEntryarser解析二进制目录结构
    管理文件队列、目录队列用于解压流程
    支持分块读取和AES解密
 
@@ -42,7 +42,7 @@ private:
 
     PathTransfer transfer;
     Header header;                                         // 私有化存储当前文件头信息
-    std::unique_ptr<Directory_FileParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
+    std::unique_ptr<EntryParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
     Y_flib::DataBlock buffer =
         Y_flib::DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
 
@@ -54,8 +54,8 @@ public:
     void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
 
     // 压缩时队列
-    Directory_FileQueue fileQueue;                            // 文件队列
-    Directory_FileQueue directory_FileQueue;                       // 目录队列
+    EntryQueue fileQueue;                            // 文件队列
+    EntryQueue directory_FileQueue;                       // 目录队列
     std::vector<std::array<Y_flib::DirectoryOffsetSize, 2>> pos; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列
@@ -76,7 +76,7 @@ public:
             throw std::runtime_error("BinaryStandardLoader()-Error:Failed to open fstreamForRefill" + inPath);
 
         this->filePathToScan = filePathToScan;
-        this->parserForLoader = std::make_unique<Directory_FileParser>(buffer, directory_FileQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
+        this->parserForLoader = std::make_unique<EntryParser>(buffer, directory_FileQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
         this->parentPath = parentPath;
     }
 

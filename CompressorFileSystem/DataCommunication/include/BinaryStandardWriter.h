@@ -2,7 +2,7 @@
 
 #include "FileLibrary.h"
 #include "ToolClasses.h"
-#include "Directory_FileDetails.h"
+#include "EntryDetails.h"
 
 /* BinaryStandardWriter - 二进制目录结构序列化写入器
  *
@@ -27,19 +27,19 @@ private:
     std::ofstream &outFile;
 
     /* 序列化单个目录及其子元素，写入目录标准格式 */
-    void writeDirectoryStandard(Directory_FileDetails &details, Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset);
+    void writeDirectoryStandard(EntryDetails &details, Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 序列化单个文件的元数据，写入文件标准格式 */
-    void writeFileStandard(Directory_FileDetails &details, Y_flib::DirectoryOffsetSize &tempOffset);
+    void writeFileStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 写入分隔符标记分离多个目录块 */
     void writeSeparatedStandard(Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize offset);
 
     /* 分发当前路径上的目录/文件到相应的写入处理函数 */
-    void writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
+    void writeStorageStandard(EntryDetails &details, EntryQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 
     /* 处理符号链接的序列化写入 */
-    void writeSymbolLinkStandard(Directory_FileDetails &details, Y_flib::DirectoryOffsetSize &tempOffset);
+    void writeSymbolLinkStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset);
 
     /* 统计指定目录下的文件总数（不递归） */
     Y_flib::FileCount countFilesInDirectory(const std::filesystem::path &filePathToScan);
@@ -64,5 +64,5 @@ public:
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
 
     /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
-    void binaryStandardWriter(FilePath &file, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
+    void binaryStandardWriter(FilePath &file, EntryQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 };

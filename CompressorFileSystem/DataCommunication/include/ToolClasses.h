@@ -2,7 +2,7 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileDetails.h"
+#include "EntryDetails.h"
 
 /* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
  *
@@ -132,20 +132,20 @@ public:
     virtual size_t size() = 0;
     virtual void clear() = 0;
 };
-/* Directory_FileQueue - 目录文件队列
+/* EntryQueue - 目录文件队列
  *
  * 功能:
  *   BFS遍历中使用的队列，存储目录和文件计数对
  *   用链表实现，支持push/pop/front/back操作
  */
-class Directory_FileQueue : public MyQueueInterface<std::pair<Directory_FileDetails, Y_flib::FileCount>>
+class EntryQueue : public MyQueueInterface<std::pair<EntryDetails, Y_flib::FileCount>>
 {
 private:
     struct Node
     {
-        std::pair<Directory_FileDetails, Y_flib::FileCount> data;
+        std::pair<EntryDetails, Y_flib::FileCount> data;
         Node *next;
-        Node(const std::pair<Directory_FileDetails, Y_flib::FileCount> &val)
+        Node(const std::pair<EntryDetails, Y_flib::FileCount> &val)
             : data(val), next(nullptr) {}
     };
 
@@ -154,9 +154,9 @@ private:
     size_t count;
 
 public:
-    Directory_FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
+    EntryQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
 
-    ~Directory_FileQueue()
+    ~EntryQueue()
     {
         clear();
     }
@@ -165,7 +165,7 @@ public:
     void clear() override;
 
     /* 入队（push_back），添加元素到队尾 */
-    void push(std::pair<Directory_FileDetails, Y_flib::FileCount> val) override;
+    void push(std::pair<EntryDetails, Y_flib::FileCount> val) override;
 
     /* 出队（pop_front），移除队头元素 */
     void pop() override;
@@ -173,10 +173,10 @@ public:
     /* 检查队列是否为空 */
     bool empty() override;
     /* 获取队头元素引用 */
-    std::pair<Directory_FileDetails, Y_flib::FileCount> &front() override;
+    std::pair<EntryDetails, Y_flib::FileCount> &front() override;
 
     /* 获取队尾元素引用 */
-    std::pair<Directory_FileDetails, Y_flib::FileCount> &back() override;
+    std::pair<EntryDetails, Y_flib::FileCount> &back() override;
 
     /* 获取队列中的元素个数 */
     size_t size() override;

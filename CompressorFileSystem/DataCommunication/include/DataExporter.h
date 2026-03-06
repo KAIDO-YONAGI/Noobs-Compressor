@@ -2,7 +2,7 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileProcessor.h"
+#include "EntryProcessor.h"
 #include "ToolClasses.h"
 #include "BinaryStandardWriter.h"
 

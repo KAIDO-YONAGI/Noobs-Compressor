@@ -31,7 +31,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     StandardWriter standardWriter;
     Locator locator;
 
-    Directory_FileProcessor begin(outFile);
+    EntryProcessor begin(outFile);
     begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot);
 
     // 回填偏移量并重定位指针至回填前的位置

@@ -1,8 +1,8 @@
-// Directory_FileProcessor.cpp
-#include "../include/Directory_FileProcessor.h"
+// EntryProcessor.cpp
+#include "../include/EntryProcessor.h"
 namespace fs = std::filesystem;
 
-void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void EntryProcessor::directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
     fs::path oPath = fullOutPath;
@@ -41,14 +41,14 @@ void Directory_FileProcessor::directory_fileProcessor(const  std::vector<std::st
     }
 }
 
-void Directory_FileProcessor::scanFlow(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+void EntryProcessor::scanFlow(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
 
     BinaryStandardWriter BIO(outFile);
 
     while (!directory_FileQueue.empty())
     {
-        Directory_FileDetails &details = (directory_FileQueue.front()).first;
+        EntryDetails &details = (directory_FileQueue.front()).first;
         file.setFilePathToScan(details.getFullPath());
 
         BIO.binaryStandardWriter(file, directory_FileQueue, tempOffset, offset);

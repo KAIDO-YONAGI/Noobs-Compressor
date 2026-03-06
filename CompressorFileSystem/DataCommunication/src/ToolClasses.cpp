@@ -28,7 +28,7 @@ void StandardWriter::appendMagicStatic(std::ofstream &outFile)
     writeBinaryStandards(MAGIC_NUM, outFile);
 }
 
-void Directory_FileQueue::clear()
+void EntryQueue::clear()
 {
     while (frontNode)
     { // 循环直到链表为空
@@ -40,7 +40,7 @@ void Directory_FileQueue::clear()
     count = 0;          // 重置计数器
 }
 
-void Directory_FileQueue::push(std::pair<Directory_FileDetails, Y_flib::FileCount> val)
+void EntryQueue::push(std::pair<EntryDetails, Y_flib::FileCount> val)
 {
     Node *newNode = new Node(val);
     if (rearNode)
@@ -55,7 +55,7 @@ void Directory_FileQueue::push(std::pair<Directory_FileDetails, Y_flib::FileCoun
     count++;
 } // 不使用引用，因为使用时会在传值时创建pair，会导致常量引用问题
 
-void Directory_FileQueue::pop()
+void EntryQueue::pop()
 {
     if (empty())
     {
@@ -71,30 +71,30 @@ void Directory_FileQueue::pop()
     count--;
 }
 
-std::pair<Directory_FileDetails, Y_flib::FileCount> &Directory_FileQueue::front()
+std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::front()
 {
     if (empty())
     {
-        throw std::runtime_error("Accessing front of empty Directory_FileQueue");
+        throw std::runtime_error("Accessing front of empty EntryQueue");
     }
     return frontNode->data;
 }
 
-std::pair<Directory_FileDetails, Y_flib::FileCount> &Directory_FileQueue::back()
+std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::back()
 {
     if (empty())
     {
-        throw std::runtime_error("Accessing back of empty Directory_FileQueue");
+        throw std::runtime_error("Accessing back of empty EntryQueue");
     }
     return rearNode->data;
 }
 
-bool Directory_FileQueue::empty()
+bool EntryQueue::empty()
 {
     return count == 0;
 }
 
-size_t Directory_FileQueue::size()
+size_t EntryQueue::size()
 {
     return count;
 }

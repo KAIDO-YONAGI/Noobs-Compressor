@@ -1,7 +1,7 @@
 #include "../include/BinaryStandardWriter.h"
 namespace fs = std::filesystem;
 
-void BinaryStandardWriter::binaryStandardWriter(FilePath &file, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
     try
     {
@@ -34,7 +34,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, Directory_FileQu
             name = entry.path().filename().string();
             fullPath = entry.path();
             sizeOfName = name.size();
-            Directory_FileDetails details(
+            EntryDetails details(
                 name,
                 sizeOfName,
                 fileSize,
@@ -50,7 +50,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, Directory_FileQu
     }
 }
 // 识别存储标准并且分发到各个写入函数
-void BinaryStandardWriter::writeStorageStandard(Directory_FileDetails &details, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
 
     if (details.getIsFile()) // 文件对应的处理
@@ -82,7 +82,7 @@ void BinaryStandardWriter::writeStorageStandard(Directory_FileDetails &details, 
     }
 }
 // 目录标准写入函数
-void BinaryStandardWriter::writeDirectoryStandard(Directory_FileDetails &details, Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset)
+void BinaryStandardWriter::writeDirectoryStandard(EntryDetails &details, Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset)
 {
     Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
 
@@ -94,7 +94,7 @@ void BinaryStandardWriter::writeDirectoryStandard(Directory_FileDetails &details
     standardWriter.writeBinaryStandards(count, outFile); // 写入文件数目
 }
 // 文件标准写入函数
-void BinaryStandardWriter::writeFileStandard(Directory_FileDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
+void BinaryStandardWriter::writeFileStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
 {
     Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
 
@@ -127,7 +127,7 @@ void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream
     standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), File);
 }
 // 符号链接标准写入函数
-void BinaryStandardWriter::writeSymbolLinkStandard(Directory_FileDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
+void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
 {
     Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
     Y_flib::FileNameSize sizeOfPath = details.getFullPath().string().size();
@@ -178,7 +178,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         bool isFile = fs::is_regular_file(parentPath);
         Y_flib::FileSize fileSize = isFile ? fs::file_size(parentPath) : 0;
 
-        Directory_FileDetails rootDetails(
+        EntryDetails rootDetails(
             rootName,     // 目录名 (如 "Folder")
             rootNameSize, // 名称长度
             fileSize,     // 文件大小(如果是文件)

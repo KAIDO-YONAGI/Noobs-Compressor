@@ -1,12 +1,12 @@
-// Directory_FileProcessor.h
+// EntryProcessor.h
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileDetails.h"
+#include "EntryDetails.h"
 #include "ToolClasses.h"
 #include "BinaryStandardWriter.h"
 
-/* Directory_FileProcessor - 目录文件处理和扫描器
+/* EntryProcessor - 目录文件处理和扫描器
  *
  * 功能:
  *   按BFS（层序遍历）扫描文件系统并处理每个目录
@@ -17,12 +17,12 @@
  * 公共接口:
  *   directory_fileProcessor(): 主入口函数，启动文件系统扫描和处理
  */
-class Directory_FileProcessor
+class EntryProcessor
 {
 private:
     PathTransfer transfer;
     std::ofstream &outFile;
-    Directory_FileQueue directory_FileQueue;
+    EntryQueue directory_FileQueue;
     FilePath file; // 创建各个工具类的对象
     BinaryStandardWriter *BIO;
     StandardWriter standardWriter;
@@ -32,13 +32,13 @@ private:
 
 public:
     /* 构造函数，初始化处理器并创建二进制写入器 */
-    Directory_FileProcessor(std::ofstream &outFile) : outFile(outFile)
+    EntryProcessor(std::ofstream &outFile) : outFile(outFile)
     {
         BIO = new BinaryStandardWriter(outFile);
     };
 
     /* 析构函数，释放二进制写入器资源 */
-    ~Directory_FileProcessor()
+    ~EntryProcessor()
     {
         delete BIO;
     };

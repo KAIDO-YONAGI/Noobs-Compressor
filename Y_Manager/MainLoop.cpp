@@ -20,7 +20,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
-        Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
+        EntryDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
         dataLoader = std::make_unique<DataLoader>(loadPath);
         totalBlocks = (loadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
@@ -73,7 +73,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             headerLoaderIterator.fileQueue.pop();
             if (!headerLoaderIterator.fileQueue.empty())
             { // 更新下一个文件路径
-                Directory_FileDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
+                EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
                 dataLoader->reset(newLoadFile.getFullPath());
                 filename = newLoadFile.getFullPath().filename();
                 totalBlocks = (newLoadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
