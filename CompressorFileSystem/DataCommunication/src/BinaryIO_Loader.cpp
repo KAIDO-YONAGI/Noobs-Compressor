@@ -49,7 +49,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
                 return;
 
             buffer.clear();
-            loadBySepratedFlag(numsReader, countOfKidDirectory, aes);
+            loadBySeparatedFlag(numsReader, countOfKidDirectory, aes);
         }
     }
     catch (const std::exception &e)
@@ -60,7 +60,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     }
 }
 
-void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
+void BinaryIO_Loader::loadBySeparatedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
@@ -148,7 +148,7 @@ void BinaryIO_Loader::loadBySepratedFlag(NumsReader &numsReader, Y_flib::FileCou
         }
     }
     else
-        throw std::runtime_error("loadBySepratedFlag()-Error:Failed to read separatedFlag");
+        throw std::runtime_error("loadBySeparatedFlag()-Error:Failed to read separatedFlag");
     return;
 }
 void BinaryIO_Loader::requestDone()

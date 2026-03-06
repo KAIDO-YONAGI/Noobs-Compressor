@@ -10,7 +10,6 @@
 class CompressionLoop
 { 
 private:
-    PathTransfer transfer;
     std::string compressionFilePath;
 
 public:

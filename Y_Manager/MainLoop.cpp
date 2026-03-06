@@ -6,12 +6,17 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     // 初始化迭代器
     fs::path blank;
     BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
+
     Heffman huffmanZip(1);
+
+    PathTransfer transfer;
+
     Y_flib::DataBlock encryptedBlock;
-    Y_flib::FileSize totalBlocks = 1, count = 0;
+
     fs::path loadPath;
     std::unique_ptr<DataLoader> dataLoader;
 
+    Y_flib::FileSize totalBlocks = 1, count = 0;
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
@@ -99,15 +104,15 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     {
         while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
         {
-            fs::path dir_to_create = headerLoaderIterator.directoryQueue_ready.front();
+            fs::path dirToCreate = headerLoaderIterator.directoryQueue_ready.front();
 
             // 如果是相对路径，拼接parentPath
-            if (!dir_to_create.is_absolute())
+            if (!dirToCreate.is_absolute())
             {
-                dir_to_create = parentPath / dir_to_create;
+                dirToCreate = parentPath / dirToCreate;
             }
 
-            createDirectory(dir_to_create);
+            createDirectory(dirToCreate);
             headerLoaderIterator.directoryQueue_ready.pop();
         }
         while (!headerLoaderIterator.fileQueue.empty())
@@ -152,7 +157,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 Y_flib::DirectoryOffsetSize treeBlockSize = numReader.readBinaryNums<Y_flib::DirectoryOffsetSize>();
                 // 读取并解密树数据
                 Y_flib::DataBlock rawTreeData(treeBlockSize);
-                
+
                 inFile.read(reinterpret_cast<char *>(rawTreeData.data()), treeBlockSize);
 
                 std::streamsize bytesRead = inFile.gcount();

@@ -48,7 +48,7 @@ private:
 
     void requestDone();                                                                             // 标记块读取完成
     void allLoopDone();                                                                             // 标记所有循环完成并清理资源
-    void loadBySepratedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
+    void loadBySeparatedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
 
 public:
     void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
