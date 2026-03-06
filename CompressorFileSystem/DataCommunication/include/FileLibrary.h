@@ -41,7 +41,7 @@ constexpr Y_flib::CompressorVersion VERSION = 0; // 版本号
 constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
 constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024; // 偏移量缓冲需要确保大于文件头大小HeaderSize
-constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 4 * 1024; // 目录缓冲大小
+constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 8 * 1024 * 1024; // 目录缓冲大小
 //TODO:目前的目录分块大小检测仍存在bug，具体来说是边界对齐的时候误以为该块解压解析结束，然而实际上遗漏了边界交界处的文件。
 //目前通过提高buffer大小可以降低这种概率
 //后续打算通过在分割标准中添加一个标志位来指示是否存在边界交界处的文件，以便正确处理这种情况

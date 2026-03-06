@@ -21,21 +21,21 @@ public:
     std::filesystem::path transPath(const std::string &p);
 };
 
-/* DataWriter - 二进制数值写入器
+/* StandardWriter - 二进制数值写入器
  *
  * 功能:
  *   将任意类型数值以二进制格式写入文件流
  *   支持ofstream和fstream，编译时类型检查
  */
-class DataWriter
+class StandardWriter
 {
 public:
     /* 模板化函数：将数值写入ofstream（编译时检查可复制性、指针和多态性） */
     template <typename T>
-    void writeBinaryNums(T value, std::ofstream &ofstream)
+    void writeBinaryStandards(T value, std::ofstream &ofstream)
     {
         if (!ofstream)
-            throw std::runtime_error("writeBinaryNums() Error-noFile");
+            throw std::runtime_error("writeBinaryStandards() Error-noFile");
         // 编译时检查
 
         static_assert(std::is_trivially_copyable_v<T>,
@@ -46,13 +46,13 @@ public:
                       "Cannot safely write polymorphic types");
         if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
-            throw std::runtime_error("writeBinaryNums()Error-Failed to write");
+            throw std::runtime_error("writeBinaryStandards()Error-Failed to write");
         }
     }
 
     /* 模板化函数：将数值写入fstream（编译时检查可复制性、指针和多态性） */
     template <typename T>
-    void writeBinaryNums(T value, std::fstream &fstream) // 针对写入fstream的重载
+    void writeBinaryStandards(T value, std::fstream &fstream) // 针对写入fstream的重载
     {
         if (!fstream)
             throw std::runtime_error("1writeBinaryNums() Error-noFile");
@@ -74,30 +74,30 @@ public:
     void appendMagicStatic(std::ofstream &outFile);
 };
 
-/* NumsReader - 二进制数值读取器
+/* BinaryStandardsReader - 二进制数值读取器
  *
  * 功能:
  *   从文件流中读取二进制格式的数值
  *   支持任意平凡可复制的类型，编译时类型检查
  */
-class NumsReader
+class BinaryStandardsReader
 {
 private:
     std::ifstream &file;
 
 public:
     /* 构造函数，关联输入文件流 */
-    NumsReader(std::ifstream &file) : file(file) {};
+    BinaryStandardsReader(std::ifstream &file) : file(file) {};
 
     /* 默认析构函数 */
-    ~NumsReader() = default;
+    ~BinaryStandardsReader() = default;
 
     /* 模板化函数：从文件读取指定类型的数值（编译时检查可复制性） */
     template <typename T>
-    T readBinaryNums()
+    T readBinaryStandards()
     {
         if (!file)
-            throw std::runtime_error("readBinaryNums() Error-noFile");
+            throw std::runtime_error("readBinaryStandards() Error-noFile");
         T value;
         static_assert(std::is_trivially_copyable_v<T>,
                       "Cannot write non-trivially-copyable type");
@@ -112,7 +112,7 @@ public:
         }
         if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
         {
-            std::string msg = std::string("readBinaryNums()Error-Failed to read") + (file.eof() ? " - End of File reached" : "");
+            std::string msg = std::string("readBinaryStandards()Error-Failed to read") + (file.eof() ? " - End of File reached" : "");
             throw std::runtime_error(msg);
         }
         return value;

@@ -1,9 +1,9 @@
-#include "../include/BinaryIO_Loader.h"
+#include "../include/BinaryStandardLoader.h"
 namespace fs = std::filesystem;
 
-void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
+void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
 {
-    NumsReader numsReader(inFile);
+    BinaryStandardsReader standardsReader(inFile);
     Locator locator;
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
@@ -33,7 +33,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
 
         if (offset == sizeof(Y_flib::SizeOfMagicNum))
         {
-            Y_flib::SizeOfMagicNum magicNum = numsReader.readBinaryNums<Y_flib::SizeOfMagicNum>();
+            Y_flib::SizeOfMagicNum magicNum = standardsReader.readBinaryStandards<Y_flib::SizeOfMagicNum>();
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
@@ -48,7 +48,7 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
                 return;
 
             buffer.clear();
-            loadBySeparatedFlag(numsReader, countOfKidDirectory, aes);
+            loadBySeparatedFlag(standardsReader, countOfKidDirectory, aes);
         }
     }
     catch (const std::exception &e)
@@ -59,19 +59,19 @@ void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
     }
 }
 
-void BinaryIO_Loader::loadBySeparatedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
+void BinaryStandardLoader::loadBySeparatedFlag(BinaryStandardsReader &standardsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
 
-    const char flag = numsReader.readBinaryNums<char>();
+    const char flag = standardsReader.readBinaryStandards<char>();
 
     if (flag == SEPARATED_FLAG)
     {
         // 读取子块偏移量
-        tempOffset = numsReader.readBinaryNums<Y_flib::DirectoryOffsetSize>();
+        tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
         // 读取iv头
-        Y_flib::IvSize ivNum = numsReader.readBinaryNums<Y_flib::IvSize>();
+        Y_flib::IvSize ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
 
         offset -= SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时跳过固定头部长度
 
@@ -150,12 +150,12 @@ void BinaryIO_Loader::loadBySeparatedFlag(NumsReader &numsReader, Y_flib::FileCo
         throw std::runtime_error("loadBySeparatedFlag()-Error:Failed to read separatedFlag");
     return;
 }
-void BinaryIO_Loader::requestDone()
+void BinaryStandardLoader::requestDone()
 {
 
     blockIsDone = true;
 }
-void BinaryIO_Loader::allLoopDone()
+void BinaryStandardLoader::allLoopDone()
 {
     if (inFile.is_open())
     {
@@ -163,7 +163,7 @@ void BinaryIO_Loader::allLoopDone()
     }
     allDone = true;
 }
-void BinaryIO_Loader::restartLoader()
+void BinaryStandardLoader::restartLoader()
 {
     Locator locator;
     if (!allLoopIsDone())
@@ -181,7 +181,7 @@ void BinaryIO_Loader::restartLoader()
     else
         return;
 }
-void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
+void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
 
 {
     Locator locator;

@@ -4,6 +4,7 @@
 #include "FileLibrary.h"
 #include "ToolClasses.h"
 /* DataLoader - 二进制数据块加载器
+//为非文件标准数据读取封装的读取器类，提供按块读取和按指定大小读取的功能
  *
  * 功能:
  *   逐块读取文件数据到缓冲区
@@ -25,7 +26,7 @@ private:
     Y_flib::FileSize fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
-    Y_flib::FileSize readed=0;
+    Y_flib::FileSize readed = 0;
 
     /* 标记读取完成状态 */
     void done();
@@ -44,7 +45,7 @@ public:
     void dataLoader();
 
     /* 在解压流程中按指定大小读取数据块 */
-    void dataLoader(Y_flib::FileSize readSize, std::ifstream &decompressionFile);
+    void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
 
     /* 设置文件总大小 */
     void setFileSize(Y_flib::FileSize newSize) { fileSize = newSize; }
@@ -57,12 +58,11 @@ public:
 
     /* 构造函数，打开指定文件 */
     DataLoader(const std::filesystem::path &inPath)
+        : inFile(inPath, std::ios::binary) // 使用初始化列表
     {
-        std::ifstream inFile(inPath, std::ios::binary);
-        if (!inFile)
-            throw std::runtime_error("DataLoader()-Error:Failed to open inFile Path:" + inPath.string());
-        this->inFile = std::move(inFile);
-    };
+        if (!inFile.is_open())
+            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + inPath.string());
+    }
 
     /* 析构函数，自动关闭文件流 */
     ~DataLoader()

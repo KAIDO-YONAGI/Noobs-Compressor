@@ -8,7 +8,7 @@
 #include <queue>
 
 /*
- BinaryIO_Loader - 二进制目录块读取与解析器
+ BinaryStandardLoader - 二进制目录块读取与解析器
 
    功能:
    从.sy文件读取加密的目录块
@@ -23,7 +23,7 @@
    restartLoader(): 重新初始化读取状态
    encryptHeaderBlock(): 加密并回填目录块
 */
-class BinaryIO_Loader
+class BinaryStandardLoader
 {
 private:
     bool blockIsDone = false;
@@ -48,7 +48,7 @@ private:
 
     void requestDone();                                                                             // 标记块读取完成
     void allLoopDone();                                                                             // 标记所有循环完成并清理资源
-    void loadBySeparatedFlag(NumsReader &numsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
+    void loadBySeparatedFlag(BinaryStandardsReader &standardsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes); // 读取单个数据块、解密、解析
 
 public:
     void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
@@ -61,8 +61,8 @@ public:
     // 解压时队列
     std::queue<std::filesystem::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
 
-    BinaryIO_Loader() {};
-    BinaryIO_Loader(const std::string inPath, std::vector<std::string> filePathToScan, std::filesystem::path parentPath)
+    BinaryStandardLoader() {};
+    BinaryStandardLoader(const std::string inPath, std::vector<std::string> filePathToScan, std::filesystem::path parentPath)
     {
         this->loadPath = transfer.transPath(inPath);
 
@@ -71,16 +71,16 @@ public:
         this->fstreamForRefill = std::fstream(loadPath, std::ios::binary | std::ios::in | std::ios::out);
 
         if (!inFile)
-            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open inFile" + inPath);
+            throw std::runtime_error("BinaryStandardLoader()-Error:Failed to open inFile" + inPath);
         if (!fstreamForRefill)
-            throw std::runtime_error("BinaryIO_Loader()-Error:Failed to open fstreamForRefill" + inPath);
+            throw std::runtime_error("BinaryStandardLoader()-Error:Failed to open fstreamForRefill" + inPath);
 
         this->filePathToScan = filePathToScan;
         this->parserForLoader = std::make_unique<Directory_FileParser>(buffer, directory_FileQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
         this->parentPath = parentPath;
     }
 
-    ~BinaryIO_Loader() { allLoopDone(); }
+    ~BinaryStandardLoader() { allLoopDone(); }
 
     Y_flib::DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 

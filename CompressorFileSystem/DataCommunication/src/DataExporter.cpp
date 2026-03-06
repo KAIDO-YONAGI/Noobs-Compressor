@@ -2,19 +2,19 @@
 
 void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
 {
-    DataWriter dataWriter;
+    StandardWriter standardWriter;
     std::streamoff currentPos = outFile.tellp();
     std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(Y_flib::DirectoryOffsetSize));
     locator.locateFromBegin(outFile, offsetToFill);
-    dataWriter.writeBinaryNums(dataSize, outFile);
+    standardWriter.writeBinaryStandards(dataSize, outFile);
     locator.locateFromEnd(outFile, 0);
 }
 
 void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
 {
-    DataWriter dataWriter;
+    StandardWriter standardWriter;
     locator.locateFromBegin(outFile, offsetToFill);
-    dataWriter.writeBinaryNums(processedFileSize, outFile);
+    standardWriter.writeBinaryStandards(processedFileSize, outFile);
     locator.locateFromEnd(outFile, 0);
     processedFileSize = 0;
 }
@@ -23,7 +23,7 @@ void DataExporter::exportDataToFile_Compression(const Y_flib::DataBlock &data)
 {
     std::ofstream tempFilePtr;
 
-    BinaryIO_Writer processor(tempFilePtr);
+    BinaryStandardWriter processor(tempFilePtr);
     Y_flib::FileSize dataSize = data.size();
 
     locator.locateFromEnd(outFile, 0);

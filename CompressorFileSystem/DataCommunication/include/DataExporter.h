@@ -4,9 +4,10 @@
 #include "FileLibrary.h"
 #include "Directory_FileProcessor.h"
 #include "ToolClasses.h"
-#include "BinaryIO_Writer.h"
+#include "BinaryStandardWriter.h"
 
 /* DataExporter - 二进制数据块导出器
+//为非文件标准数据写入封装的写入器类，提供按块写入和按指定大小写入的功能
  *
  * 功能:
  *   写入加密和压缩的数据块到输出文件

@@ -4,7 +4,7 @@
 #include "ToolClasses.h"
 #include "Directory_FileDetails.h"
 
-/* BinaryIO_Writer - 二进制目录结构序列化写入器
+/* BinaryStandardWriter - 二进制目录结构序列化写入器
  *
  * 功能:
  *   扫描本地文件系统并序列化为二进制目录结构
@@ -13,16 +13,16 @@
  *   写入分隔符标记用于区分不同数据块
  *
  * 公共接口:
- *   binaryIO_Writer(): 主写入函数，扫描并序列化目录结构
+ *   binaryStandardWriter(): 主写入函数，扫描并序列化目录结构
  *   writeRoot(): 写入根节点（filesystem自动忽略的节点）
  *   writeLogicalRoot(): 写入逻辑根节点，用于多文件任务
  *   writeBlankSeparatedStandard(): 写入分隔符标记
  */
-class BinaryIO_Writer
+class BinaryStandardWriter
 {
 private:
     PathTransfer transfer;
-    DataWriter dataWriter;
+    StandardWriter standardWriter;
     Locator locator;
     std::ofstream &outFile;
 
@@ -49,7 +49,7 @@ private:
 
 public:
     /* 构造函数，初始化写入器并关联输出文件流 */
-    explicit BinaryIO_Writer(std::ofstream &outFile) : outFile(outFile) {};
+    explicit BinaryStandardWriter(std::ofstream &outFile) : outFile(outFile) {};
 
     /* 写入逻辑根节点，用于处理多文件（目录）任务 */
     void writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset);
@@ -64,5 +64,5 @@ public:
     void writeBlankSeparatedStandardForEncryption(std::fstream &File);
 
     /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
-    void binaryIO_Writer(FilePath &file, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
+    void binaryStandardWriter(FilePath &file, Directory_FileQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 };

@@ -3,7 +3,7 @@ namespace fs = std::filesystem;
 
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 {
-    DataWriter dataWriter;
+    StandardWriter standardWriter;
     Locator locator;
     if (!outFile)
     {
@@ -15,20 +15,20 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     Y_flib::HeaderOffsetSize headerOffsetSize = 0;
     Y_flib::DirectoryOffsetSize directoryOffsetSize = 0;
 
-    dataWriter.writeBinaryNums(strategySize,outFile);
-    dataWriter.writeBinaryNums(versionSize,outFile);
-    dataWriter.writeBinaryNums(headerOffsetSize,outFile);
-    dataWriter.writeBinaryNums(directoryOffsetSize,outFile);
+    standardWriter.writeBinaryStandards(strategySize,outFile);
+    standardWriter.writeBinaryStandards(versionSize,outFile);
+    standardWriter.writeBinaryStandards(headerOffsetSize,outFile);
+    standardWriter.writeBinaryStandards(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.locateFromBegin(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
-    dataWriter.writeBinaryNums(HEADER_SIZE,outFile);
+    standardWriter.writeBinaryStandards(HEADER_SIZE,outFile);
     locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
-    DataWriter dataWriter;
+    StandardWriter standardWriter;
     Locator locator;
 
     Directory_FileProcessor begin(outFile);
@@ -37,7 +37,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     // 回填偏移量并重定位指针至回填前的位置
     locator.locateFromBegin(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
     Y_flib::DirectoryOffsetSize directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    dataWriter.writeBinaryNums(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
@@ -60,17 +60,17 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
 
         try
         {
-            DataWriter dataWriter;
+            StandardWriter standardWriter;
             // 写入表示文件起始的4字节魔数
-            dataWriter.appendMagicStatic(outFile);
+            standardWriter.appendMagicStatic(outFile);
             writeHeader(outFile,fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
 
-            dataWriter.appendMagicStatic(outFile);
+            standardWriter.appendMagicStatic(outFile);
 
             // 目录信息
             writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
 
-            dataWriter.appendMagicStatic(outFile); // 文件末尾魔数
+            standardWriter.appendMagicStatic(outFile); // 文件末尾魔数
         }
         catch (const std::exception &e)
         {

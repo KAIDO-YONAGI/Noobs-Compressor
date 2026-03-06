@@ -34,7 +34,7 @@ public:
     const Y_flib::FileNameSize getSizeOfName() { return sizeOfName; }
 
     /* 获取文件大小 */
-    const Y_flib::FileSize getFileSize() { return fileSize; }
+    const Y_flib::FileSize getFileSizeInDetails() { return fileSize; }
 
     /* 检查是否为文件（false表示目录） */
     const bool getIsFile() { return isFile; }

@@ -23,9 +23,9 @@ std::filesystem::path PathTransfer::transPath(const std::string &p)
     return std::filesystem::path(p);
 }
 
-void DataWriter::appendMagicStatic(std::ofstream &outFile)
+void StandardWriter::appendMagicStatic(std::ofstream &outFile)
 {
-    writeBinaryNums(MAGIC_NUM, outFile);
+    writeBinaryStandards(MAGIC_NUM, outFile);
 }
 
 void Directory_FileQueue::clear()
@@ -187,6 +187,7 @@ void Locator::locateFromBegin(std::fstream &file, Y_flib::FileSize offset)
         }
         else
         {
+            file.flush();
             file.seekg(offset, std::ios::beg); // 读
             file.seekp(offset, std::ios::beg); // 写
         }
@@ -197,8 +198,9 @@ void Locator::locateFromBegin(std::fstream &file, Y_flib::FileSize offset)
         return;
     }
 }
-void Locator::locateFromEnd(std::fstream &file, Y_flib::FileSize offset){
-        try
+void Locator::locateFromEnd(std::fstream &file, Y_flib::FileSize offset)
+{
+    try
     {
         if (!file)
         {
@@ -206,6 +208,7 @@ void Locator::locateFromEnd(std::fstream &file, Y_flib::FileSize offset){
         }
         else
         {
+            file.flush();
             file.seekg(offset, std::ios::end); // 读
             file.seekp(offset, std::ios::end); // 写
         }

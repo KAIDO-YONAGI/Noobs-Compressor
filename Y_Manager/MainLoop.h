@@ -2,7 +2,7 @@
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 #include "../CompressorFileSystem/DataCommunication/include/DataLoader.h"
 #include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
-#include "../CompressorFileSystem/DataCommunication/include/BinaryIO_Loader.h"
+#include "../CompressorFileSystem/DataCommunication/include/BinaryStandardLoader.h"
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
 #include "../CompressionModules/heffman/include/Heffman.h"
 #include "My_Aes.h"

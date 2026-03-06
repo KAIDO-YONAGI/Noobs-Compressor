@@ -47,20 +47,12 @@ void DataLoader::dataLoader()
     }
     readed += inFile.gcount();
 }
-void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &decompressionFile)
+void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile,Y_flib::DataBlock &data)
 {
     try
     {
-
-        data.clear();
-        data.resize(readSize);
-
-
-        decompressionFile.read(reinterpret_cast<char *>(data.data()), readSize);
-
-
-        data.resize(decompressionFile.gcount());
-
+        loadFile.read(reinterpret_cast<char *>(data.data()), readSize);
+        data.resize(loadFile.gcount());//缩小数组到实际读取的大小，避免后续处理时误读未初始化的部分
     }
     catch (const std::exception &e)
     {
