@@ -88,9 +88,11 @@ void BinaryStandardWriter::writeDirectoryStandard(EntryDetails &details, Y_flib:
 
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(&DIRECTORY_FLAG, FLAG_SIZE);
+    standardWriter.writeBinaryStandards(DIRECTORY_FLAG, outFile);
     standardWriter.writeBinaryStandards(sizeOfName, outFile);
-    outFile.write(details.getName().c_str(), sizeOfName);
+
+    standardWriter.writeBinaryStandards(details.getName(), outFile);
+
     standardWriter.writeBinaryStandards(count, outFile); // 写入文件数目
 }
 // 文件标准写入函数
@@ -100,11 +102,13 @@ void BinaryStandardWriter::writeFileStandard(EntryDetails &details, Y_flib::Dire
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(&FILE_FLAG, FLAG_SIZE);                       // 先写文件标
-    standardWriter.writeBinaryStandards(sizeOfName, outFile);            // 写入文件名偏移量
-    outFile.write(details.getName().c_str(), sizeOfName);      // 写入文件名
+    standardWriter.writeBinaryStandards(FILE_FLAG, outFile);                      // 先写文件标
+    standardWriter.writeBinaryStandards(sizeOfName, outFile);                     // 写入文件名偏移量
+
+    standardWriter.writeBinaryStandards(details.getName(), outFile);              // 写入文件名
+
     standardWriter.writeBinaryStandards(details.getFileSizeInDetails(), outFile); // 写入文件大小
-    standardWriter.writeBinaryStandards(Y_flib::FileSize(0), outFile);      // 预留大小
+    standardWriter.writeBinaryStandards(Y_flib::FileSize(0), outFile);            // 预留大小
 }
 // 分割标准写入函数（回填）
 void BinaryStandardWriter::writeSeparatedStandard(Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize offset)
@@ -116,14 +120,14 @@ void BinaryStandardWriter::writeSeparatedStandard(Y_flib::DirectoryOffsetSize &t
 // 空分割标准写入函数
 void BinaryStandardWriter::writeBlankSeparatedStandard()
 {
-    outFile.write(&SEPARATED_FLAG, FLAG_SIZE);
+    standardWriter.writeBinaryStandards(SEPARATED_FLAG, outFile);
     standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), outFile);
     standardWriter.writeBinaryStandards(Y_flib::IvSize(0), outFile);
 }
 // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
 void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
 {
-    File.write(&SEPARATED_FLAG, FLAG_SIZE);
+    standardWriter.writeBinaryStandards(SEPARATED_FLAG, File);
     standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), File);
 }
 // 符号链接标准写入函数
@@ -134,22 +138,24 @@ void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib
 
     tempOffset += SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
 
-    outFile.write(&SYMBOL_LINK_FLAG, FLAG_SIZE);
+    standardWriter.writeBinaryStandards(SEPARATED_FLAG, outFile);
 
     standardWriter.writeBinaryStandards(sizeOfName, outFile);
     standardWriter.writeBinaryStandards(sizeOfPath, outFile);
 
-    outFile.write(details.getName().c_str(), sizeOfName);
-    outFile.write(details.getFullPath().string().c_str(), sizeOfPath);
+    standardWriter.writeBinaryStandards(details.getName(), outFile);
+    standardWriter.writeBinaryStandards(details.getFullPath().string(), outFile);
 }
 void BinaryStandardWriter::writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset)
 {
     Y_flib::FileNameSize sizeOfName = logicalRoot.size();
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    outFile.write(&LOGICAL_ROOT_FLAG, FLAG_SIZE);
+    standardWriter.writeBinaryStandards(LOGICAL_ROOT_FLAG, outFile);
     standardWriter.writeBinaryStandards(sizeOfName, outFile);
-    outFile.write(logicalRoot.c_str(), sizeOfName);
+
+    standardWriter.writeBinaryStandards(logicalRoot, outFile); // 写入逻辑根节点名称，属于writeBinaryStandards的字符串参数重载函数
+
     standardWriter.writeBinaryStandards(count, outFile); // 写文件数
 }
 void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, Y_flib::DirectoryOffsetSize &tempOffset)
@@ -166,7 +172,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
         else
         {
-            throw("directory_fileProcessor()-Error:file Not Exist: " + sPath.string() + "\n");
+            throw("entryProcessor()-Error:file Not Exist: " + sPath.string() + "\n");
         }
 
         fs::path parentPath = file.getFilePathToScan(); // 获取根目录
@@ -182,8 +188,8 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
             rootName,     // 目录名 (如 "Folder")
             rootNameSize, // 名称长度
             fileSize,     // 文件大小(如果是文件)
-            isFile,   // 是否为常规文件
-            parentPath      // 完整路径
+            isFile,       // 是否为常规文件
+            parentPath    // 完整路径
         );
         const fs::directory_entry entry(parentPath);
         if (entry.is_regular_file())
@@ -197,7 +203,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
         else if (entry.is_symlink())
         {
-            rootDetails.setFileSize(1);//利用大小区分符号链接
+            rootDetails.setFileSize(1); // 利用大小区分符号链接
             writeSymbolLinkStandard(rootDetails, tempOffset);
         }
     }

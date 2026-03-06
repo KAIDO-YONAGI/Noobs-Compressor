@@ -19,9 +19,9 @@ int DataBlocks::size()
     return result; 
 }
 
-sfc::block_t& DataBlocks::at(int pos)
+sfc::block_t& DataBlocks::at(int blockPosition)
 { 
-    return blocks.at(pos);
+    return blocks.at(blockPosition);
 }
 
 void DataBlocks::clear()

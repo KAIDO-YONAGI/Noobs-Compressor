@@ -44,10 +44,10 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             huffmanZip.save_code_inTab();
             Y_flib::DataBlock huffTree;
             huffmanZip.tree_to_plat_uchar(huffTree);
-            Y_flib::DataBlock huffTree_outPut(huffTree.size());
+            Y_flib::DataBlock huffTreeOutPut(huffTree.size());
 
-            aes.doAes(1, huffTree, huffTree_outPut);
-            dataExporter.exportDataToFile_Compression(huffTree_outPut);
+            aes.doAes(1, huffTree, huffTreeOutPut);
+            dataExporter.exportDataToFileCompression(huffTreeOutPut);
 
             system("cls");
 
@@ -61,7 +61,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             aes.doAes(1, compressedData, encryptedBlock);
 
-            dataExporter.exportDataToFile_Compression(encryptedBlock); // 读取的数据传输给exporter
+            dataExporter.exportDataToFileCompression(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
         }
 
@@ -200,7 +200,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 更新已解压的总字节数
                 totalDecompressedBytes += decompressedData.size();
                 // 写入解压后的数据
-                dataExporter.exportDataToFile_Decompression(decompressedData);
+                dataExporter.exportDataToFileDecompression(decompressedData);
 
                 // 更新剩余大小: 减去压缩数据块本身的大小
                 // 注意: FLAG 和 size 字段不计入 fileCompressedSize

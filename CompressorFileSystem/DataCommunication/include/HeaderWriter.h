@@ -65,7 +65,7 @@ public:
     HeaderWriter() : writer(std::make_unique<HeaderWriter_v0>()) {}
 
     /* 支持指定版本的构造函数 */
-    explicit HeaderWriter(std::unique_ptr<HeaderWriter_Interface> impl)
+     HeaderWriter(std::unique_ptr<HeaderWriter_Interface> impl)
         : writer(std::move(impl)) {}
 
     /* 主写入函数，统一处理文件头和目录结构的序列化 */

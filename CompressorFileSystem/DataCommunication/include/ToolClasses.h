@@ -35,7 +35,7 @@ public:
     void writeBinaryStandards(T value, std::ofstream &ofstream)
     {
         if (!ofstream)
-            throw std::runtime_error("writeBinaryStandards() Error-noFile");
+            throw std::runtime_error("writeBinaryStandards() Error-noOutFile");
         // 编译时检查
 
         static_assert(std::is_trivially_copyable_v<T>,
@@ -46,8 +46,9 @@ public:
                       "Cannot safely write polymorphic types");
         if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
-            throw std::runtime_error("writeBinaryStandards()Error-Failed to write");
+            throw std::runtime_error("writeBinaryStandards()Error-Failed to write outFile");
         }
+
     }
 
     /* 模板化函数：将数值写入fstream（编译时检查可复制性、指针和多态性） */
@@ -55,7 +56,7 @@ public:
     void writeBinaryStandards(T value, std::fstream &fstream) // 针对写入fstream的重载
     {
         if (!fstream)
-            throw std::runtime_error("1writeBinaryNums() Error-noFile");
+            throw std::runtime_error("writeBinaryNums() Error-noInFile");
         // 编译时检查
 
         static_assert(std::is_trivially_copyable_v<T>,
@@ -66,8 +67,19 @@ public:
                       "Cannot safely write polymorphic types");
         if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
-            throw std::runtime_error("1writeBinaryNums()Error-Failed to write");
+            throw std::runtime_error("writeBinaryNums()Error-Failed to write inFile");
         }
+
+    }
+    void writeBinaryStandards(const std::string str, std::ofstream &ofstream)
+    {
+        if (!ofstream)
+            throw std::runtime_error("writeBinaryStandards-char*() Error-noOutFile");
+        if (!ofstream.write(str.c_str(), str.size()))
+        {
+            throw std::runtime_error("writeBinaryStandards-char*()Error-Failed to write outFile");
+        }
+
     }
 
     /* 写入静态魔数标记到输出文件 */

@@ -2,7 +2,7 @@
 #include "../include/EntryProcessor.h"
 namespace fs = std::filesystem;
 
-void EntryProcessor::directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
     fs::path oPath = fullOutPath;
@@ -18,10 +18,10 @@ void EntryProcessor::directory_fileProcessor(const  std::vector<std::string> &fi
         Y_flib::DirectoryOffsetSize tempOffset = 0; // 初始偏移量
         Y_flib::DirectoryOffsetSize offset = HEADER_SIZE;
 
-        BIO->writeBlankSeparatedStandard();
+        binaryStandardWriter->writeBlankSeparatedStandard();
 
-        BIO->writeLogicalRoot(logicalRoot, num, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
-        BIO->writeRoot(file, filePathToScan, tempOffset);  // 写入文件根目录
+        binaryStandardWriter->writeLogicalRoot(logicalRoot, num, tempOffset); // 写入逻辑根节点的子文件数目（默认创建一个根节点，用户可以选择是否命名）
+        binaryStandardWriter->writeRoot(file, filePathToScan, tempOffset);  // 写入文件根目录
 
         for (Y_flib::FileCount i = 0; i < num; i++)
         {
@@ -30,28 +30,28 @@ void EntryProcessor::directory_fileProcessor(const  std::vector<std::string> &fi
             if (!fs::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
-                BIO->binaryStandardWriter(file, directory_FileQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
+                binaryStandardWriter->binaryStandardWriter(file, directory_FileQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
             }
         }
-        scanFlow(file, tempOffset, offset);
+        flowScanner(file, tempOffset, offset);
     }
     catch (const std::exception &e)
     {
-        std::cerr << "directory_fileProcessor()-Error: " << e.what() << std::endl;
+        std::cerr << "entryProcessor()-Error: " << e.what() << std::endl;
     }
 }
 
-void EntryProcessor::scanFlow(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+void EntryProcessor::flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
 
-    BinaryStandardWriter BIO(outFile);
+    BinaryStandardWriter binaryStandardWriter(outFile);
 
     while (!directory_FileQueue.empty())
     {
         EntryDetails &details = (directory_FileQueue.front()).first;
         file.setFilePathToScan(details.getFullPath());
 
-        BIO.binaryStandardWriter(file, directory_FileQueue, tempOffset, offset);
+        binaryStandardWriter.binaryStandardWriter(file, directory_FileQueue, tempOffset, offset);
 
         directory_FileQueue.pop();
     }

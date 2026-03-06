@@ -19,7 +19,7 @@ void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
     processedFileSize = 0;
 }
 
-void DataExporter::exportDataToFile_Compression(const Y_flib::DataBlock &data)
+void DataExporter::exportDataToFileCompression(const Y_flib::DataBlock &data)
 {
     std::ofstream tempFilePtr;
 
@@ -34,7 +34,7 @@ void DataExporter::exportDataToFile_Compression(const Y_flib::DataBlock &data)
 
     thisBlockIsDone(dataSize);
 }
-void DataExporter::exportDataToFile_Decompression(const Y_flib::DataBlock &data)
+void DataExporter::exportDataToFileDecompression(const Y_flib::DataBlock &data)
 {
     locator.locateFromEnd(outFile, 0);
     Y_flib::FileSize dataSize = data.size();

@@ -30,7 +30,7 @@ private:
     size_t parserMode = 0; // 0：默认模式、1：压缩模式、2：解压模式
 
     /* 检查缓冲区读取范围是否有效，防止越界 */
-    void checkBounds(Y_flib::DirectoryOffsetSize pos, Y_flib::FileNameSize equiredSize) const;
+    void checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize equiredSize) const;
 
     /* 模板化函数：解析文件名长度和内容，安全构造std::string */
     template <typename T>

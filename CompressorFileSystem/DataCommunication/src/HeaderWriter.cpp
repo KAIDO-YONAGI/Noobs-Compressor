@@ -32,7 +32,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     Locator locator;
 
     EntryProcessor begin(outFile);
-    begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot);
+    begin.entryProcessor(filePathToScan, fullOutPath, logicalRoot);
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.locateFromBegin(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));

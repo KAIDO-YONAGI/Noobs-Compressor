@@ -49,7 +49,7 @@ private:
 
 public:
     /* 构造函数，初始化写入器并关联输出文件流 */
-    explicit BinaryStandardWriter(std::ofstream &outFile) : outFile(outFile) {};
+    BinaryStandardWriter(std::ofstream &outFile) : outFile(outFile) {};
 
     /* 写入逻辑根节点，用于处理多文件（目录）任务 */
     void writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset);

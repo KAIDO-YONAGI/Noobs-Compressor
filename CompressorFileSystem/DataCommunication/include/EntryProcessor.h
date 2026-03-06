@@ -15,7 +15,7 @@
  *   调用BinaryIStandardWriter行二进制序列化
  *
  * 公共接口:
- *   directory_fileProcessor(): 主入口函数，启动文件系统扫描和处理
+ *   entryProcessor(): 主入口函数，启动文件系统扫描和处理
  */
 class EntryProcessor
 {
@@ -24,25 +24,25 @@ private:
     std::ofstream &outFile;
     EntryQueue directory_FileQueue;
     FilePath file; // 创建各个工具类的对象
-    BinaryStandardWriter *BIO;
+    BinaryStandardWriter *binaryStandardWriter;
     StandardWriter standardWriter;
 
     /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
-    void scanFlow(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
+    void flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 
 public:
     /* 构造函数，初始化处理器并创建二进制写入器 */
     EntryProcessor(std::ofstream &outFile) : outFile(outFile)
     {
-        BIO = new BinaryStandardWriter(outFile);
+        binaryStandardWriter = new BinaryStandardWriter(outFile);
     };
 
     /* 析构函数，释放二进制写入器资源 */
     ~EntryProcessor()
     {
-        delete BIO;
+        delete binaryStandardWriter;
     };
 
     /* 主处理函数，执行指定路径的文件系统扫描和二进制序列化 */
-    void directory_fileProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot);
+    void entryProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot);
 };

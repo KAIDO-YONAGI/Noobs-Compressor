@@ -1,13 +1,13 @@
 #include "../include/EntryParser.h"
 namespace fs = std::filesystem;
 
-void EntryParser::checkBounds(Y_flib::DirectoryOffsetSize pos, Y_flib::FileNameSize requiredSize) const
+void EntryParser::checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize requiredSize) const
 {
-    if (pos + requiredSize > buffer.size())
+    if (blockPosition + requiredSize > buffer.size())
     {
         throw std::out_of_range(
-            "BinaryStandardLoader: Buffer overflow (pos=" +
-            std::to_string(pos) + ", required=" +
+            "BinaryStandardLoader: Buffer overflow (blockPosition=" +
+            std::to_string(blockPosition) + ", required=" +
             std::to_string(requiredSize) + ", buffer size=" +
             std::to_string(buffer.size()) + ")");
     }

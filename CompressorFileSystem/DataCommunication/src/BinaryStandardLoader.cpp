@@ -82,7 +82,7 @@ void BinaryStandardLoader::loadBySeparatedFlag(BinaryStandardsReader &standardsR
             static_cast<Y_flib::DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置
             static_cast<Y_flib::DirectoryOffsetSize>(readSize)        // 转换为读取大小
         };
-        pos.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
+        blockPosition.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
 
         // 根据偏移量读取数据块
         buffer.resize(readSize); // clear和resize确保容器大小正确，避免残留数据
@@ -189,7 +189,7 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
     Y_flib::DataBlock encryptedBlock;
     Y_flib::DirectoryOffsetSize startPos = 0, blockSize = 0;
 
-    for (auto blockPos : pos)
+    for (auto blockPos : blockPosition)
     {
         startPos = blockPos[0];
         blockSize = blockPos[1];
@@ -198,6 +198,7 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
         encryptedBlock.resize(blockSize + sizeof(Y_flib::IvSize));
 
         locator.locateFromBegin(fstreamForRefill, startPos); // 定位到数据块起始位置
+
         fstreamForRefill.read(reinterpret_cast<char *>(inBlock.data()), blockSize);
 
         aes.doAes(1, inBlock, encryptedBlock);
