@@ -143,8 +143,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             while (totalDecompressedBytes < originalSize && fileCompressedSize > 0)
             {
 
-                // 在每次循环中重新创建 BinaryStandardsReader 以确保正确读取
-                BinaryStandardsReader numReader(inFile);
+                // 在每次循环中重新创建 StandardsReader 以确保正确读取
+                StandardsReader numReader(inFile);
                 //循环中创建loader对象，使用当前文件路径，确保每次读取都能正确关联到当前文件
                 DataLoader loader(filePath);
 

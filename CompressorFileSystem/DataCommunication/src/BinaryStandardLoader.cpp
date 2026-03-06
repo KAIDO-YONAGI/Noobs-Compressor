@@ -3,7 +3,7 @@ namespace fs = std::filesystem;
 
 void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
 {
-    BinaryStandardsReader standardsReader(inFile);
+    StandardsReader standardsReader(inFile);
     Locator locator;
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
@@ -14,11 +14,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
         // 读取Header
         if (inFile.tellg() == std::streampos(0))
         {
-            
-            if (!inFile.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
-            {
-                throw std::runtime_error("Failed to read header");
-            }
+            StandardsReader::readHeaderBlock(HEADER_SIZE, inFile, buffer);
             // 复制Header数据
             std::memcpy(&header, buffer.data(), sizeof(Header));
             // 验证魔数
@@ -55,12 +51,11 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
-        // 清理资源后重新抛出异常
         throw e.what();
     }
 }
 
-void BinaryStandardLoader::loadBySeparatedFlag(BinaryStandardsReader &standardsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
+void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
@@ -86,11 +81,7 @@ void BinaryStandardLoader::loadBySeparatedFlag(BinaryStandardsReader &standardsR
         blockPosition.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
 
         // 根据偏移量读取数据块
-        buffer.resize(readSize); // clear和resize确保容器大小正确，避免残留数据
-        if (!inFile.read(reinterpret_cast<char *>(buffer.data()), readSize) && tempOffset != 0)
-        {
-            throw std::runtime_error("Failed to read buffer");
-        }
+        StandardsReader::readHeaderBlock(readSize, inFile, buffer);
 
         if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
         {
@@ -198,13 +189,14 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
         inBlock.resize(blockSize);
         encryptedBlock.resize(blockSize + sizeof(Y_flib::IvSize));
 
-        locator.locateFromBegin(fstreamForRefill, startPos); // 定位到数据块起始位置
+        locator.locateFromBegin(fstreamForRefill, startPos);                    // 定位到数据块起始位置
 
-        fstreamForRefill.read(reinterpret_cast<char *>(inBlock.data()), blockSize);
+        StandardsReader::readHeaderBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
 
         aes.doAes(1, inBlock, encryptedBlock);
         locator.locateFromBegin(fstreamForRefill, startPos - sizeof(Y_flib::IvSize)); // 定位回数据块起始位置，准备回写加密数据
-        fstreamForRefill.write(reinterpret_cast<const char *>(encryptedBlock.data()), blockSize + sizeof(Y_flib::IvSize));
+        
+        StandardsWriter::writeHeaderBlock(blockSize + sizeof(Y_flib::IvSize), fstreamForRefill, encryptedBlock); // 回写加密数据
 
         inBlock.clear();
         encryptedBlock.clear();

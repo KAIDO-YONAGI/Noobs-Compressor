@@ -32,7 +32,7 @@ class StandardsWriter
 public:
     /* 模板化函数：将数值写入ofstream（编译时检查可复制性、指针和多态性） */
     template <typename T>
-    void writeBinaryStandards(T value, std::ofstream &ofstream)
+    void writeBinaryStandards(const T value, std::ofstream &ofstream)
     {
         if (!ofstream)
             throw std::runtime_error("writeBinaryStandards() Error-noOutFile");
@@ -44,7 +44,7 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        if (!ofstream.write(reinterpret_cast<const char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
             throw std::runtime_error("writeBinaryStandards()Error-Failed to write outFile");
         }
@@ -52,7 +52,7 @@ public:
 
     /* 模板化函数：将数值写入fstream（编译时检查可复制性、指针和多态性） */
     template <typename T>
-    void writeBinaryStandards(T value, std::fstream &fstream) // 针对写入fstream的重载
+    void writeBinaryStandards(const T value, std::fstream &fstream) // 针对写入fstream的重载
     {
         if (!fstream)
             throw std::runtime_error("writeBinaryNums() Error-noInFile");
@@ -64,7 +64,7 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        if (!fstream.write(reinterpret_cast<const char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
             throw std::runtime_error("writeBinaryNums()Error-Failed to write inFile");
         }
@@ -79,16 +79,16 @@ public:
         }
     }
 
-    void writeHeaderBlock(Y_flib::FileSize size, std::ofstream &file, Y_flib::DataBlock &buffer)
+    static void writeHeaderBlock(Y_flib::FileSize size, std::ofstream &file,const Y_flib::DataBlock &buffer)
     {
-        if (!file.write(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
         {
             throw std::runtime_error("writeHeaderBlock(std::ofstream)-Failed to write header");
         }
     }
-    void writeHeaderBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
+    static void writeHeaderBlock(Y_flib::FileSize size, std::fstream &file,const Y_flib::DataBlock &buffer)
     {
-        if (!file.write(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
         {
             throw std::runtime_error("writeHeaderBlock(std::fstream &file)-Failed to write header");
         }
@@ -97,23 +97,23 @@ public:
     void appendMagicStatic(std::ofstream &outFile);
 };
 
-/* BinaryStandardsReader - 二进制数值读取器
+/* StandardsReader - 二进制数值读取器
  *
  * 功能:
  *   从文件流中读取二进制格式的数值
  *   支持任意平凡可复制的类型，编译时类型检查
  */
-class BinaryStandardsReader
+class StandardsReader
 {
 private:
     std::ifstream &file;
 
 public:
     /* 构造函数，关联输入文件流 */
-    BinaryStandardsReader(std::ifstream &file) : file(file) {};
+    StandardsReader(std::ifstream &file) : file(file) {};
 
     /* 默认析构函数 */
-    ~BinaryStandardsReader() = default;
+    ~StandardsReader() = default;
 
     /* 模板化函数：从文件读取指定类型的数值（编译时检查可复制性） */
     template <typename T>
@@ -140,16 +140,18 @@ public:
         }
         return value;
     }
-    void readHeaderBlock(Y_flib::FileSize size, std::ifstream &file, Y_flib::DataBlock &buffer)
+    static void readHeaderBlock(Y_flib::FileSize size, std::ifstream &file, Y_flib::DataBlock &buffer)
     {
-        if (!file.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        buffer.resize(size); // clear和resize确保容器大小正确，避免残留数据
+        if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
         {
             throw std::runtime_error("readHeaderBlock(std::ifstream)-Failed to read header");
         }
     }
-    void readHeaderBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
+    static void readHeaderBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
     {
-        if (!file.read(reinterpret_cast<char *>(buffer.data()), HEADER_SIZE))
+        buffer.resize(size);
+        if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
         {
             throw std::runtime_error("readHeaderBlock(std::fstream &file)-Failed to read header");
         }

@@ -29,7 +29,7 @@ void DataExporter::exportDataToFileCompression(const Y_flib::DataBlock &data)
     locator.locateFromEnd(outFile, 0);
     processor.writeBlankSeparatedStandardForEncryption(outFile);
 
-    outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
+    StandardsWriter::writeHeaderBlock(dataSize, outFile, data); // 直接写入数据块到输出文件
     processedFileSize += dataSize;
 
     thisBlockIsDone(dataSize);
@@ -38,7 +38,6 @@ void DataExporter::exportDataToFileDecompression(const Y_flib::DataBlock &data)
 {
     locator.locateFromEnd(outFile, 0);
     Y_flib::FileSize dataSize = data.size();
-
-    outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
+    StandardsWriter::writeHeaderBlock(dataSize, outFile, data);
     processedFileSize += dataSize;
 }
