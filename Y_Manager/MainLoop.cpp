@@ -99,6 +99,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
     // 创建 Huffman 对象用于解压
     Heffman huffmanUnzip(1);
+    Locator locator;
 
     while (!headerLoaderIterator.allLoopIsDone())
     {
@@ -126,11 +127,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             std::ifstream &inFile = headerLoaderIterator.getInFile();
             // 把已压缩块读进内存，处理，写入对应位置
             inFile.clear();                          // 清除可能的错误标志(如eof)，确保seek可以正常工作
-            inFile.seekg(dataOffset, std::ios::beg); // 定位到数据区（或已处理块后）
-            if (!inFile.good())
-            {
-                throw std::runtime_error("decompressionLoop()-Error:Failed to seek to dataOffset " + std::to_string(dataOffset));
-            }
+            locator.locateFromBegin(inFile, dataOffset); // 定位到数据区（或已处理块后）
+
             fs::path filePath = fullFilePath;
             fs::path filename = filePath.filename();
             // system("cls");

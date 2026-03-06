@@ -28,7 +28,6 @@ void DataWriter::appendMagicStatic(std::ofstream &outFile)
     writeBinaryNums(MAGIC_NUM, outFile);
 }
 
-
 void Directory_FileQueue::clear()
 {
     while (frontNode)
@@ -100,16 +99,123 @@ size_t Directory_FileQueue::size()
     return count;
 }
 
-void Locator::offsetLocator(std::ofstream &outFile, Y_flib::FileSize offset)
+void Locator::locateFromBegin(std::ofstream &outFile, Y_flib::FileSize offset)
 {
-    outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
+    try
+    {
+        if (!outFile)
+        {
+            throw std::runtime_error("locateFromBegin() Error-noOutFile");
+        }
+        else
+        {
+            outFile.flush(); // 确保之前的写入已完成
+            outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
 }
 
-void Locator::offsetLocator(std::ifstream &inFile, Y_flib::FileSize offset)
+void Locator::locateFromBegin(std::ifstream &inFile, Y_flib::FileSize offset)
 {
-    inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
+    try
+    {
+        if (!inFile)
+        {
+            throw std::runtime_error("locateFromBegin() Error-noInFile");
+        }
+        else
+            inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+void Locator::locateFromEnd(std::ofstream &outFile, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!outFile)
+        {
+            throw std::runtime_error("locateFromEnd() Error-noOutFile");
+        }
+        else
+        {
+            outFile.flush(); // 确保之前的写入已完成
+            outFile.seekp(static_cast<std::streamoff>(offset), outFile.end);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
 }
 
+void Locator::locateFromEnd(std::ifstream &inFile, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!inFile)
+        {
+            throw std::runtime_error("locateFromEnd() Error-noInFile");
+        }
+        else
+        {
+            inFile.seekg(static_cast<std::streamoff>(offset), inFile.end);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+void Locator::locateFromBegin(std::fstream &file, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!file)
+        {
+            throw std::runtime_error("locateFromBegin-fstream() Error-noFile");
+        }
+        else
+        {
+            file.seekg(offset, std::ios::beg); // 读
+            file.seekp(offset, std::ios::beg); // 写
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+void Locator::locateFromEnd(std::fstream &file, Y_flib::FileSize offset){
+        try
+    {
+        if (!file)
+        {
+            throw std::runtime_error("locateFromBegin-fstream() Error-noFile");
+        }
+        else
+        {
+            file.seekg(offset, std::ios::end); // 读
+            file.seekp(offset, std::ios::end); // 写
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
 Y_flib::FileSize Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
 {
     try

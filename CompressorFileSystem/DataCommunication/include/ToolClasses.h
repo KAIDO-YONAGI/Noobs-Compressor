@@ -124,7 +124,7 @@ class MyQueueInterface
 public:
     virtual ~MyQueueInterface() = default;
 
-    virtual void push(std::pair<Directory_FileDetails, Y_flib::FileCount>) = 0;
+    virtual void push(T) = 0;
     virtual void pop() = 0;
     virtual bool empty() = 0;
     virtual T &front() = 0;
@@ -195,14 +195,15 @@ public:
     Locator() = default;
 
     /* 在输出文件中定位到指定偏移位置 */
-    void offsetLocator(std::ofstream &outFile, Y_flib::FileSize offset);
+    void locateFromBegin(std::ofstream &outFile, Y_flib::FileSize offset);
+    void locateFromEnd(std::ofstream &outFile, Y_flib::FileSize offset);
 
     /* 在输入文件中定位到指定偏移位置 */
-    void offsetLocator(std::ifstream &inFile, Y_flib::FileSize offset);
+    void locateFromBegin(std::ifstream &inFile, Y_flib::FileSize offset);
+    void locateFromEnd(std::ifstream &inFile, Y_flib::FileSize offset);
 
-    /* fstream定位已禁用（删除函数） */
-    void offsetLocator(std::fstream &file, Y_flib::FileSize offset) = delete;
-
+    void locateFromBegin(std::fstream &file, Y_flib::FileSize offset);
+    void locateFromEnd(std::fstream &file, Y_flib::FileSize offset);
     /* 获取输出文件的当前大小 */
     Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
 };

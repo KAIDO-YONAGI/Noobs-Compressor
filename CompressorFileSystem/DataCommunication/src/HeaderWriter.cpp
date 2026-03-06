@@ -21,9 +21,9 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     dataWriter.writeBinaryNums(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
+    locator.locateFromBegin(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
     dataWriter.writeBinaryNums(HEADER_SIZE,outFile);
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
@@ -35,10 +35,10 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
+    locator.locateFromBegin(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
     Y_flib::DirectoryOffsetSize directoryOffset = locator.getFileSize(fullOutPath, outFile);
     dataWriter.writeBinaryNums(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
 {

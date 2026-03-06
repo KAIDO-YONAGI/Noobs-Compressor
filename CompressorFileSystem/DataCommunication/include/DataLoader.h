@@ -2,7 +2,7 @@
 #pragma once
 
 #include "FileLibrary.h"
-
+#include "ToolClasses.h"
 /* DataLoader - 二进制数据块加载器
  *
  * 功能:

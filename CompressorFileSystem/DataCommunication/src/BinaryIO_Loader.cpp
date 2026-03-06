@@ -4,11 +4,10 @@ namespace fs = std::filesystem;
 void BinaryIO_Loader::headerLoaderIterator(Aes &aes)
 {
     NumsReader numsReader(inFile);
-
+    Locator locator;
     if (loaderRequestIsDone() || allLoopIsDone())
         return;
-
-    inFile.seekg(header.directoryOffset - offset, std::ios::beg); // 定位到指定位置
+    locator.locateFromBegin(inFile, header.directoryOffset - offset); // 定位到指定位置
 
     try
     {
@@ -166,6 +165,7 @@ void BinaryIO_Loader::allLoopDone()
 }
 void BinaryIO_Loader::restartLoader()
 {
+    Locator locator;
     if (!allLoopIsDone())
     {
         std::ifstream newInFile(loadPath, std::ios::binary);
@@ -174,7 +174,7 @@ void BinaryIO_Loader::restartLoader()
 
         size_t offsetToRestart = header.directoryOffset - offset;
 
-        newInFile.seekg(offsetToRestart, std::ios::beg);
+        locator.locateFromBegin(newInFile, offsetToRestart);
         this->inFile = std::move(newInFile);
         blockIsDone = false;
     }
@@ -184,6 +184,7 @@ void BinaryIO_Loader::restartLoader()
 void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
 
 {
+    Locator locator;
     Y_flib::DataBlock inBlock;
     Y_flib::DataBlock encryptedBlock;
     Y_flib::DirectoryOffsetSize startPos = 0, blockSize = 0;
@@ -196,11 +197,11 @@ void BinaryIO_Loader::encryptHeaderBlock(Aes &aes)
         inBlock.resize(blockSize);
         encryptedBlock.resize(blockSize + sizeof(Y_flib::IvSize));
 
-        fstreamForRefill.seekp(startPos, std::ios::beg);
+        locator.locateFromBegin(fstreamForRefill, startPos); // 定位到数据块起始位置
         fstreamForRefill.read(reinterpret_cast<char *>(inBlock.data()), blockSize);
 
         aes.doAes(1, inBlock, encryptedBlock);
-        fstreamForRefill.seekp(startPos - sizeof(Y_flib::IvSize));
+        locator.locateFromBegin(fstreamForRefill, startPos - sizeof(Y_flib::IvSize)); // 定位回数据块起始位置，准备回写加密数据
         fstreamForRefill.write(reinterpret_cast<const char *>(encryptedBlock.data()), blockSize + sizeof(Y_flib::IvSize));
 
         inBlock.clear();

@@ -2,21 +2,20 @@
 
 void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
 {
+    DataWriter dataWriter;
     std::streamoff currentPos = outFile.tellp();
     std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(Y_flib::DirectoryOffsetSize));
-    outFile.seekp(offsetToFill, std::ios::beg);
-    DataWriter dataWriter;
+    locator.locateFromBegin(outFile, offsetToFill);
     dataWriter.writeBinaryNums(dataSize, outFile);
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromEnd(outFile, 0);
 }
 
 void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
 {
-    outFile.seekp(offsetToFill, std::ios::beg);
     DataWriter dataWriter;
+    locator.locateFromBegin(outFile, offsetToFill);
     dataWriter.writeBinaryNums(processedFileSize, outFile);
-    outFile.seekp(0, std::ios::end);
-    outFile.flush();  // 强制写入磁盘
+    locator.locateFromEnd(outFile, 0);
     processedFileSize = 0;
 }
 
@@ -25,9 +24,9 @@ void DataExporter::exportDataToFile_Compression(const Y_flib::DataBlock &data)
     std::ofstream tempFilePtr;
 
     BinaryIO_Writer processor(tempFilePtr);
-
-    outFile.seekp(0, std::ios::end);
     Y_flib::FileSize dataSize = data.size();
+
+    locator.locateFromEnd(outFile, 0);
     processor.writeBlankSeparatedStandardForEncryption(outFile);
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
@@ -37,10 +36,9 @@ void DataExporter::exportDataToFile_Compression(const Y_flib::DataBlock &data)
 }
 void DataExporter::exportDataToFile_Decompression(const Y_flib::DataBlock &data)
 {
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromEnd(outFile, 0);
     Y_flib::FileSize dataSize = data.size();
 
     outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
-    outFile.flush();
     processedFileSize += dataSize;
 }

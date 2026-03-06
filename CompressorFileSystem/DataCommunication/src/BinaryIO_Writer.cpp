@@ -109,9 +109,9 @@ void BinaryIO_Writer::writeFileStandard(Directory_FileDetails &details, Y_flib::
 // 分割标准写入函数（回填）
 void BinaryIO_Writer::writeSeparatedStandard(Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize offset)
 {
-    locator.offsetLocator(outFile, offset + FLAG_SIZE);
+    locator.locateFromBegin(outFile, offset + FLAG_SIZE);
     dataWriter.writeBinaryNums(tempOffset, outFile);
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromEnd(outFile, 0);
 }
 // 空分割标准写入函数
 void BinaryIO_Writer::writeBlankSeparatedStandard()

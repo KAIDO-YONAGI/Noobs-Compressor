@@ -24,7 +24,8 @@ void DataLoader::reset(const fs::path inPath)
 }
 void DataLoader::resetByLastReaded()
 {
-    inFile.seekg(readed, std::ios::beg);
+    Locator locator;
+    locator.locateFromBegin(inFile, readed);
 }
 void DataLoader::dataLoader()
 {
