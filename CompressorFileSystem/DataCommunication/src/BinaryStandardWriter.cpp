@@ -88,7 +88,7 @@ void BinaryStandardWriter::writeDirectoryStandard(EntryDetails &details, Y_flib:
 
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    standardWriter.writeBinaryStandards(DIRECTORY_FLAG, outFile);
+    standardWriter.writeBinaryStandards(FlagType::Directory, outFile);
     standardWriter.writeBinaryStandards(sizeOfName, outFile);
 
     standardWriter.writeBinaryStandards(details.getName(), outFile);
@@ -102,7 +102,7 @@ void BinaryStandardWriter::writeFileStandard(EntryDetails &details, Y_flib::Dire
 
     tempOffset += FILE_STANDARD_SIZE_BASIC + sizeOfName;
 
-    standardWriter.writeBinaryStandards(FILE_FLAG, outFile);  // 先写文件标
+    standardWriter.writeBinaryStandards(FlagType::File, outFile);  // 先写文件标
     standardWriter.writeBinaryStandards(sizeOfName, outFile); // 写入文件名偏移量
 
     standardWriter.writeBinaryStandards(details.getName(), outFile); // 写入文件名
@@ -120,14 +120,14 @@ void BinaryStandardWriter::writeSeparatedStandard(Y_flib::DirectoryOffsetSize &t
 // 空分割标准写入函数
 void BinaryStandardWriter::writeBlankSeparatedStandard()
 {
-    standardWriter.writeBinaryStandards(SEPARATED_FLAG, outFile);
+    standardWriter.writeBinaryStandards(FlagType::Separated, outFile);
     standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), outFile);
     standardWriter.writeBinaryStandards(Y_flib::IvSize(0), outFile);
 }
 // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
 void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
 {
-    standardWriter.writeBinaryStandards(SEPARATED_FLAG, File);
+    standardWriter.writeBinaryStandards(FlagType::Separated, File);
     standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), File);
 }
 // 符号链接标准写入函数
@@ -138,7 +138,7 @@ void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib
 
     tempOffset += SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
 
-    standardWriter.writeBinaryStandards(SEPARATED_FLAG, outFile);
+    standardWriter.writeBinaryStandards(FlagType::SymbolLink, outFile);
 
     standardWriter.writeBinaryStandards(sizeOfName, outFile);
     standardWriter.writeBinaryStandards(sizeOfPath, outFile);
@@ -151,7 +151,7 @@ void BinaryStandardWriter::writeLogicalRoot(const std::string &logicalRoot, cons
     Y_flib::FileNameSize sizeOfName = logicalRoot.size();
     tempOffset += DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
 
-    standardWriter.writeBinaryStandards(LOGICAL_ROOT_FLAG, outFile);
+    standardWriter.writeBinaryStandards(FlagType::LogicalRoot, outFile);
     standardWriter.writeBinaryStandards(sizeOfName, outFile);
 
     standardWriter.writeBinaryStandards(logicalRoot, outFile); // 写入逻辑根节点名称，属于writeBinaryStandards的字符串参数重载函数

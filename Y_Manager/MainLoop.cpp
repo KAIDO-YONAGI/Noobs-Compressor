@@ -149,7 +149,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 DataLoader loader(filePath);
 
                 // 读取分隔标志
-                if (!(numReader.readBinaryStandards<char>() == SEPARATED_FLAG))
+                if (!(numReader.readBinaryStandards<FlagType>() == FlagType::Separated))
                     throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before tree block");
 
                 // 读取 Huffman 树块大小
@@ -174,7 +174,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= treeBlockSize;
                 // 读取分割标志(数据块前的标志)
-                if (!(numReader.readBinaryStandards<char>() == SEPARATED_FLAG))
+                if (!(numReader.readBinaryStandards<FlagType>() == FlagType::Separated))
                     throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before data block");
                 // 读取数据块大小
                 Y_flib::DirectoryOffsetSize blockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();

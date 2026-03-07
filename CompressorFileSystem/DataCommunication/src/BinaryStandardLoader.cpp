@@ -60,9 +60,9 @@ void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader,
     if (offset == 0)
         return;
 
-    const char flag = standardsReader.readBinaryStandards<char>();
+    const FlagType flag = standardsReader.readBinaryStandards<FlagType>();
 
-    if (flag == SEPARATED_FLAG)
+    if (flag == FlagType::Separated)
     {
         // 读取子块偏移量
         tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();

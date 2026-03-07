@@ -47,9 +47,6 @@ public:
     /* 在解压流程中按指定大小读取数据块 */
     void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
 
-    /* 设置文件总大小 */
-    void setFileSize(Y_flib::FileSize newSize) { fileSize = newSize; }
-
     /* 重置指针到上次读取的位置 */
     void resetByLastReaded();
 

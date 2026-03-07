@@ -99,9 +99,9 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
         for (const std::string &path : filePathToScan)
         {
             fs::path fullPath = transfer.transPath(path);
-            const char D_F_flag = numsParser<char>(bufferPtr);
+            const FlagType D_F_flag = numsParser<FlagType>(bufferPtr);
 
-            if (D_F_flag == FILE_FLAG)
+            if (D_F_flag == FlagType::File)
             {
                 Y_flib::FileNameSize fileNameSize = 0;
                 std::string fileName;
@@ -119,7 +119,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
                     fullPath);
                 fileQueue.push({fileDetails, compressedSize_or_Offset});
             }
-            else if (D_F_flag == DIRECTORY_FLAG)
+            else if (D_F_flag == FlagType::Directory)
             {
                 Y_flib::FileNameSize directoryNameSize = 0;
                 std::string directoryName;
@@ -141,23 +141,23 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const unsigned char D_F_flag = numsParser<unsigned char>(bufferPtr);
+    const FlagType D_F_flag = numsParser<FlagType>(bufferPtr);
     switch (D_F_flag)
     {
-    case FILE_FLAG:
+    case FlagType::File:
     {
         fileParser(bufferPtr);
         countOfKidDirectory--;
         break;
         // countOfD_F++;
     }
-    case DIRECTORY_FLAG:
+    case FlagType::Directory:
     {
         directoryParser(bufferPtr);
         countOfKidDirectory--;
         break;
     }
-    case LOGICAL_ROOT_FLAG:
+    case FlagType::LogicalRoot:
     {
         bool noDirec = false;
         rootParser(bufferPtr, filePathToScan, countOfKidDirectory, noDirec);

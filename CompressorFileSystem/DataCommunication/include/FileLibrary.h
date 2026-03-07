@@ -51,7 +51,7 @@ constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 8 * 1024 * 1024; // 目
 // 会在数据区作为首选的偏移量管理方案来使用，比如按照数据块对象提供的size()方法获取块大小，而不是依赖上述存在更新延迟的文件流提供的size方法
 
 // 文件标准相关
-enum class FlagType : char
+enum class FlagType : char//枚举类，强类型检查
 {
     Directory = '0',
     File = '1',
@@ -60,11 +60,6 @@ enum class FlagType : char
     SymbolLink = '4'
 };
 constexpr Y_flib::SizeOfFlag FLAG_SIZE = sizeof(FlagType);
-constexpr char DIRECTORY_FLAG = static_cast<char>(FlagType::Directory);
-constexpr char FILE_FLAG = static_cast<char>(FlagType::File);
-constexpr char SEPARATED_FLAG = static_cast<char>(FlagType::Separated);
-constexpr char LOGICAL_ROOT_FLAG = static_cast<char>(FlagType::LogicalRoot);
-constexpr char SYMBOL_LINK_FLAG = static_cast<char>(FlagType::SymbolLink);
 // 注意直接使用sizeof返回的参数进行运算时，小于uint64_t的类型会被自动类型转换为ULL，需要按需强制转换后再参与运算
 
 // 目录标准的基础大小（不含变长的文件名，需要自行维护）
