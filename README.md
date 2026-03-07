@@ -180,9 +180,7 @@ Download the `.vscode` archive from the Release page.
 Place the extracted `.vscode` folder into:
 
 ```
-
 Y_Manager/
-
 ```
 
 ---
@@ -203,18 +201,14 @@ Compile `main.cpp` to generate the executable.
   Compiler option:
 
 ```
-
 -std=c++20
-
 ```
 
 - 推荐优化等级：  
   Recommended optimization level:
 
 ```
-
 -O3
-
 ```
 
 - 某些编译器需要链接 **stdc++fs** 以支持文件系统功能  
@@ -247,4 +241,3 @@ This project is intended **for educational and learning purposes only**.
 使用前请务必 **备份原始文件**。  
 Please **back up your original files before using the software**.
 ```
-
