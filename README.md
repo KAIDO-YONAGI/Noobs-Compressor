@@ -67,8 +67,11 @@
 - Compiler optimization level upgraded from `O2` to `O3`
 - 目前仍发现存在 **未知 Bug**，在部分情况下可能导致 **文件数据解析失败**
 - Some **unknown bugs** are still present, which may cause **file data parsing failures** in certain cases
-
-
+### v1.0.1 — Well Done
+- 封装了文件IO以及一些操作方法（如seek*）
+- 修复了文件目录分块问题，理论上，如果程序正常运行，则处理任意文件/文件夹的压缩都能将内存消耗稳定在60MB内
+- 需要注意的是，编译时开启LTO等优化会导致可执行文件压缩流程的错误，还请悉知
+- 目前没有已知bug
 ---
 
 ## 关于构建 | Build Instructions
@@ -82,6 +85,8 @@
 - 配置依赖并编译 `main.cpp`  
 - Configure the required dependencies and compile `main.cpp`
 
+- 关于编译：需要使用普通O3优化级别，且需要开启C++20标准支持（编译器选项 -std=c++20）。此外，确保链接器正确链接了所需的库，如stdc++fs（对于某些编译器）以支持文件系统功能。
+- 别开LTO（链接时优化）等选项，仅O3足矣，因为可能会导致某些符号被错误地优化掉，尤其是在使用了模板或内联函数的情况下。
 
 ### 依赖 | Dependencies
 
