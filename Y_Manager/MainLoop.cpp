@@ -16,7 +16,8 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     fs::path loadPath;
     std::unique_ptr<DataLoader> dataLoader;
 
-    Y_flib::FileSize totalBlocks = 1, count = 0;
+    Y_flib::FileSize totalBlocks = 1, blockCount = 0;
+
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
@@ -39,12 +40,14 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             debugFile << "Next file to process: " << headerLoaderIterator.fileQueue.front().first.getFullPath() << std::endl;
             debugFile.close();
         }
+
         dataLoader->dataLoader();
 
-        if (!dataLoader->isDone() && count < totalBlocks) // 处理当前文件的每个数据块
+        if ((!dataLoader->isDone() && blockCount < totalBlocks)) // 处理当前文件的每个数据块
         {
-            count++;
+            blockCount++;
             const Y_flib::DataBlock data_In = dataLoader->getBlock(); // 获取一次数据块，重复使用
+
             huffmanZip.statistic_freq(0, data_In);
 
             huffmanZip.merge_ttabs();
@@ -61,7 +64,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             std::cout << "Processing file: " << filename << "\n"
                       << std::fixed << std::setw(6) << std::setprecision(2)
-                      << (100.0 * count) / totalBlocks
+                      << (100.0 * blockCount) / totalBlocks
                       << "% \n";
 
             Y_flib::DataBlock compressedData;
@@ -86,7 +89,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                 dataLoader->reset(newLoadFile.getFullPath());
                 filename = newLoadFile.getFullPath().filename();
                 totalBlocks = (newLoadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
-                count = 0;
+                blockCount = 0;
             }
         }
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
@@ -94,9 +97,15 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             // 重启迭代器并且请求填充下一轮队列
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
-            // 更新后继目录块的首个文件到dataLoader
-            EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
-            dataLoader->reset(newLoadFile.getFullPath());
+            
+            if (!headerLoaderIterator.fileQueue.empty())
+            { // 更新下一个文件路径
+                EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
+                dataLoader->reset(newLoadFile.getFullPath());
+                filename = newLoadFile.getFullPath().filename();
+                totalBlocks = (newLoadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+                blockCount = 0;
+            }
         }
     }
     headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填

@@ -21,7 +21,7 @@
 class DataLoader
 {
 private:
-    Y_flib::DataBlock data = Y_flib::DataBlock(BUFFER_SIZE);
+    Y_flib::DataBlock data;
 
     Y_flib::FileSize fileSize = 0;
     std::ifstream inFile;

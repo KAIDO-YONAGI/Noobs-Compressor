@@ -14,7 +14,11 @@ void DataLoader::reset(const fs::path inPath)
 {
     if (isDone())
     {
-        this->inFile = std::ifstream(inPath, std::ios::binary);
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+        inFile = std::ifstream(inPath, std::ios::binary);
         if (!inFile)
             throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + inPath.string());
         loadIsDone = false;
@@ -34,7 +38,7 @@ void DataLoader::dataLoader()
     try
     {
         data.resize(BUFFER_SIZE); // 确保缓冲区大小正确
-        inFile.read(reinterpret_cast<char *>((data.data())), BUFFER_SIZE);
+        inFile.read(reinterpret_cast<char *>(data.data()), BUFFER_SIZE);
         data.resize(inFile.gcount());
     }
     catch (const std::exception &e)
