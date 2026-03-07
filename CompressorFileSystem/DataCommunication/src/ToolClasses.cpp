@@ -70,7 +70,7 @@ void EntryQueue::pop()
     delete temp;
     count--;
 }
-
+//返回头部的EntryDetails对象的引用，允许直接访问和修改队头元素的数据
 std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::front()
 {
     if (empty())
@@ -79,7 +79,7 @@ std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::front()
     }
     return frontNode->data;
 }
-
+//返回尾部的EntryDetails对象的引用，允许直接访问和修改队尾元素的数据
 std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::back()
 {
     if (empty())
@@ -109,6 +109,7 @@ void Locator::locateFromBegin(std::ofstream &outFile, Y_flib::FileSize offset)
         }
         else
         {
+            outFile.clear(); // 清除错误标志，确保seekp成功
             outFile.flush(); // 确保之前的写入已完成
             outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
         }
@@ -129,7 +130,10 @@ void Locator::locateFromBegin(std::ifstream &inFile, Y_flib::FileSize offset)
             throw std::runtime_error("locateFromBegin() Error-noInFile");
         }
         else
+        {
+            inFile.clear(); // 清除错误标志，确保seekp成功
             inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
+        }
     }
     catch (const std::exception &e)
     {
@@ -147,6 +151,7 @@ void Locator::locateFromEnd(std::ofstream &outFile, Y_flib::FileSize offset)
         }
         else
         {
+            outFile.clear();  // 清除错误标志，确保seekp成功
             outFile.flush(); // 确保之前的写入已完成
             outFile.seekp(static_cast<std::streamoff>(offset), outFile.end);
         }
@@ -168,6 +173,7 @@ void Locator::locateFromEnd(std::ifstream &inFile, Y_flib::FileSize offset)
         }
         else
         {
+            inFile.clear(); // 清除错误标志，确保seekp成功
             inFile.seekg(static_cast<std::streamoff>(offset), inFile.end);
         }
     }
@@ -187,6 +193,8 @@ void Locator::locateFromBegin(std::fstream &file, Y_flib::FileSize offset)
         }
         else
         {
+
+            file.clear(); // 清除错误标志，确保seekp成功
             file.flush();
             file.seekg(offset, std::ios::beg); // 读
             file.seekp(offset, std::ios::beg); // 写
@@ -208,6 +216,7 @@ void Locator::locateFromEnd(std::fstream &file, Y_flib::FileSize offset)
         }
         else
         {
+            file.clear(); // 清除错误标志，确保seekp成功
             file.flush();
             file.seekg(offset, std::ios::end); // 读
             file.seekp(offset, std::ios::end); // 写

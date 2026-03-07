@@ -79,14 +79,14 @@ public:
         }
     }
 
-    static void writeDataBlock(Y_flib::FileSize size, std::ofstream &file,const Y_flib::DataBlock &buffer)
+    static void writeDataBlock(Y_flib::FileSize size, std::ofstream &file, const Y_flib::DataBlock &buffer)
     {
         if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
         {
             throw std::runtime_error("writeDataBlock(std::ofstream)-Failed to write header");
         }
     }
-    static void writeDataBlock(Y_flib::FileSize size, std::fstream &file,const Y_flib::DataBlock &buffer)
+    static void writeDataBlock(Y_flib::FileSize size, std::fstream &file, const Y_flib::DataBlock &buffer)
     {
         if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
         {
@@ -147,6 +147,10 @@ public:
         {
             throw std::runtime_error("readDataBlock(std::ifstream)-Failed to read header");
         }
+        else
+        {
+            buffer.resize(file.gcount()); // 根据实际读取的字节数调整大小，避免后续处理时误读未初始化的部分
+        }
     }
     static void readDataBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
     {
@@ -154,6 +158,10 @@ public:
         if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
         {
             throw std::runtime_error("readDataBlock(std::fstream &file)-Failed to read header");
+        }
+        else
+        {
+            buffer.resize(file.gcount()); // 根据实际读取的字节数调整大小，避免后续处理时误读未初始化的部分
         }
     }
 };

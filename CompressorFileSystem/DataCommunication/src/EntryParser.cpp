@@ -37,8 +37,8 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
     // 解析文件原大小
     Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
 
-    Y_flib::FileSize compressedSize=0;
-    Y_flib::FileSize lastOffset=0;
+    Y_flib::FileSize compressedSize = 0;
+    Y_flib::FileSize lastOffset = 0;
 
     if (parserMode == 1) // for compression
     {
@@ -60,14 +60,19 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
         pathToProcess);
     fileQueue.push({fileDetails, parserMode == 1 ? lastOffset : compressedSize});
 
-    std::ofstream debugFile("debug_log.txt", std::ios::app);
-    if (fileName == "mainHeader.js" || fileName == "gbk-added.json" || fileName == "iso-8859-7.js"
-        ||pathToProcess=="D:\\TempDocx\\Programmes\\Secure Files Compressor\\Y_Manager\\bin\\SHINKU_YONAGI\\node_modules\\pe-library\\dist\\_esm\\type\\index.d.ts")
-    {
-        debugFile << "fileNameSize: " << fileNameSize << std::endl;
-        debugFile << "fileName: " << fileName << std::endl;
-        debugFile << "bufferPtr: " << bufferPtr << std::endl;
-    }
+
+    // if (fileName == "mainHeader.js" || fileName == "gbk-added.json" || fileName == "iso-8859-7.js"||
+    //     pathToProcess=="D:\\TempDocx\\Programmes\\Secure Files Compressor\\Y_Manager\\bin\\node_modules\\adm-zip\\headers\\index.js")
+    // {
+    //     std::ofstream debugFile("debug_log.txt", std::ios::app);
+    //     debugFile << "=== COMPRESSION fileParser ===" << std::endl;
+    //     debugFile << "fileName: " << fileName << std::endl;
+    //     debugFile << "originSize: " << originSize << std::endl;
+    //     debugFile << "lastOffset: " << lastOffset << std::endl;
+    //     debugFile << "bufferPtr: " << bufferPtr << std::endl;
+    //     debugFile << "pathToProcess: " << pathToProcess << std::endl;
+    //     debugFile.close();
+    // }
 }
 
 void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr)
@@ -121,7 +126,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
                 // 解析文件原大小
                 Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
                 // 记录等会需要回填的位置
-                Y_flib::FileSize compressedSize_or_Offset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+                Y_flib::FileSize offsetToFill = header.directoryOffset - (offset + tempOffset) + bufferPtr;
                 bufferPtr += sizeof(Y_flib::FileSize);
                 EntryDetails fileDetails(
                     fileName,
@@ -129,7 +134,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
                     originSize,
                     true,
                     fullPath);
-                fileQueue.push({fileDetails, compressedSize_or_Offset});
+                fileQueue.push({fileDetails, offsetToFill});
             }
             else if (entryFlag == FlagType::Directory)
             {
@@ -141,6 +146,9 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
 
                 EntryDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
                 entryQueue.push({directoryDetails, count});
+            }
+            else if (entryFlag == FlagType::SymbolLink)
+            {
             }
         }
         if (entryQueue.empty())

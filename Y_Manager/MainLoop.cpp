@@ -20,6 +20,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
+
         EntryDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
         dataLoader = std::make_unique<DataLoader>(loadPath);
@@ -31,9 +32,16 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     fs::path filename = loadPath.filename();
     while (!headerLoaderIterator.fileQueue.empty())
     {
-
+        if (headerLoaderIterator.fileQueue.front().first.getName() == "iso-8859-7.js")
+        {
+            std::ofstream debugFile("debug_log.txt", std::ios::app);
+            debugFile << "=== COMPRESSION Loop ===" << std::endl;
+            debugFile << "Next file to process: " << headerLoaderIterator.fileQueue.front().first.getFullPath() << std::endl;
+            debugFile.close();
+        }
         dataLoader->dataLoader();
-        if (!dataLoader->isDone() && count < totalBlocks)
+
+        if (!dataLoader->isDone() && count < totalBlocks) // 处理当前文件的每个数据块
         {
             count++;
             const Y_flib::DataBlock data_In = dataLoader->getBlock(); // 获取一次数据块，重复使用
@@ -47,9 +55,9 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             Y_flib::DataBlock huffTreeOutPut(huffTree.size());
 
             aes.doAes(1, huffTree, huffTreeOutPut);
-            dataExporter.exportDataToFileCompression(huffTreeOutPut);
+            dataExporter.exportCompressedData(huffTreeOutPut);
 
-            system("cls");
+            // system("cls");
 
             std::cout << "Processing file: " << filename << "\n"
                       << std::fixed << std::setw(6) << std::setprecision(2)
@@ -61,16 +69,17 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             aes.doAes(1, compressedData, encryptedBlock);
 
-            dataExporter.exportDataToFileCompression(encryptedBlock); // 读取的数据传输给exporter
+            dataExporter.exportCompressedData(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
         }
 
-        if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty())
+        if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
         {
             Y_flib::FileNameSize offsetToFill = headerLoaderIterator.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill);
 
             headerLoaderIterator.fileQueue.pop();
+
             if (!headerLoaderIterator.fileQueue.empty())
             { // 更新下一个文件路径
                 EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
@@ -80,11 +89,14 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                 count = 0;
             }
         }
-
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
         {
+            // 重启迭代器并且请求填充下一轮队列
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
+            // 更新后继目录块的首个文件到dataLoader
+            EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
+            dataLoader->reset(newLoadFile.getFullPath());
         }
     }
     headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填
@@ -126,7 +138,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
             std::ifstream &inFile = headerLoaderIterator.getInFile();
             // 把已压缩块读进内存，处理，写入对应位置
-            inFile.clear();                              // 清除可能的错误标志(如eof)，确保seek可以正常工作
+
             locator.locateFromBegin(inFile, dataOffset); // 定位到数据区（或已处理块后）
 
             fs::path filePath = fullFilePath;
@@ -145,7 +157,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
                 // 在每次循环中重新创建 StandardsReader 以确保正确读取
                 StandardsReader numReader(inFile);
-                //循环中创建loader对象，使用当前文件路径，确保每次读取都能正确关联到当前文件
+                // 循环中创建loader对象，使用当前文件路径，确保每次读取都能正确关联到当前文件
                 DataLoader loader(filePath);
 
                 // 读取分隔标志
@@ -157,7 +169,6 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 Y_flib::DirectoryOffsetSize treeBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
                 // 读取并解密树数据
                 Y_flib::DataBlock rawTreeData(treeBlockSize);
-
 
                 loader.dataLoader(treeBlockSize, inFile, rawTreeData);
 
@@ -200,7 +211,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 更新已解压的总字节数
                 totalDecompressedBytes += decompressedData.size();
                 // 写入解压后的数据
-                dataExporter.exportDataToFileDecompression(decompressedData);
+                dataExporter.exportDecompressedData(decompressedData);
 
                 // 更新剩余大小: 减去压缩数据块本身的大小
                 // 注意: FLAG 和 size 字段不计入 fileCompressedSize

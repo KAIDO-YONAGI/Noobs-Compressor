@@ -16,8 +16,8 @@
  *   支持记录填充位置用于解密回填
  *
  * 公共接口:
- *   exportDataToFileCompression(): 写入压缩数据块
- *   exportDataToFileDecompression(): 写入解压数据块
+ *   exportCompressedData(): 写入压缩数据块
+ *   exportDecompressedData(): 写入解压数据块
  *   thisFileIsDone(): 更新当前文件的完成位置
  *   getProcessedY_flib::FileSize(): 获取已处理数据大小
  */
@@ -26,6 +26,7 @@ class DataExporter
 private:
     std::fstream outFile;
     Locator locator;
+    StandardsWriter standardWriter;
     Y_flib::FileSize processedFileSize = 0;
 
     /* 标记单个数据块处理完成并更新位置 */
@@ -59,8 +60,8 @@ public:
     void thisFileIsDone(Y_flib::FileSize offsetToFill);
 
     /* 写入压缩数据块到输出文件 */
-    void exportDataToFileCompression(const Y_flib::DataBlock &data);
+    void exportCompressedData(const Y_flib::DataBlock &data);
 
     /* 写入解压数据块到输出文件 */
-    void exportDataToFileDecompression(const Y_flib::DataBlock &data);
+    void exportDecompressedData(const Y_flib::DataBlock &data);
 };
