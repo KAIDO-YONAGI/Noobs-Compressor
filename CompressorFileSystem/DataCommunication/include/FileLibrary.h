@@ -12,69 +12,78 @@
 #include <array>
 #include <memory>
 // 命名空间
+namespace Y_flib
+{
+    using FileCount = uint32_t;
+    using FileSize = uint64_t;
+    using FileNameSize = uint32_t;
 
-namespace fs = std::filesystem;
+    using CompressStrategy = uint8_t;
+    using CompressorVersion = uint8_t;
 
-using FileCount_uint = uint32_t;    // 文件计数
-using FileSize_uint = uint64_t;     // 文件大小
-using FileNameSize_uint = uint32_t; // 文件名长度（也是符号链接的路径长度）
-// 压缩相关配置
-using CompressStrategy_uint = uint8_t;        // 压缩策略
-using CompressorVersion_uint = uint8_t;       // 压缩器版本
-using HeaderOffsetSize_uint = uint8_t;        // 头部偏移长度
-using DirectoryOffsetSize_uint = uint64_t;    // 目录偏移长度
-using UpSizeOfBuffer_uint = uint32_t;         // 分块的长度
-using SizeOfMagicNum_uint = uint32_t;         // 魔数长度
-using SizeOfFlag_uint = uint8_t;              // 文件标长度
-using IvSize_uint = __uint128_t;              // iv头长度
-using FlagType = char;                        // 标志类型
-using DataBlock = std::vector<unsigned char>; // 数据块类型
+    using HeaderOffsetSize = uint8_t;
+    using DirectoryOffsetSize = uint64_t;
 
-constexpr CompressStrategy_uint STRATEGY = 0; // 策略号
+    using UpSizeOfBuffer = uint32_t;
 
-constexpr CompressorVersion_uint VERSION = 0; // 版本号
+    using SizeOfMagicNum = uint32_t;
+    using SizeOfFlag = uint8_t;
 
-constexpr SizeOfMagicNum_uint MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
+    using IvSize = __uint128_t;
+
+    using DataBlock = std::vector<unsigned char>;
+}
+// 文件标准相关
+enum class FlagType : char // 枚举类，强类型检查
+{
+    Directory = '0',
+    File = '1',
+    Separated = '2',
+    LogicalRoot = '3',
+    SymbolLink = '4'
+};
+constexpr Y_flib::SizeOfFlag FLAG_SIZE = sizeof(FlagType);
+
+constexpr Y_flib::CompressStrategy STRATEGY = 0; // 策略号
+
+constexpr Y_flib::CompressorVersion VERSION = 0; // 版本号
+
+constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
-constexpr UpSizeOfBuffer_uint BUFFER_SIZE = 8 * 1024 * 1024; // 偏移量缓冲需要确保大于文件头大小HeaderSize
+constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024;    // 读取的数据块大小，需要确保大于文件头大小HeaderSize和各种文件标准的最大值（可以添加检测以确保ENtry原子性）
+constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 16 * 1024; // 目录缓冲大小
+
 // 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题。此外，频繁地进行flush()可能导致数据丢失
 // 分割标准上的偏移量不包含分割标准本身的大小，便于随取随用
 // 会在数据区作为首选的偏移量管理方案来使用，比如按照数据块对象提供的size()方法获取块大小，而不是依赖上述存在更新延迟的文件流提供的size方法
 
-// 文件标准相关
-constexpr SizeOfFlag_uint FLAG_SIZE = 1;
-constexpr char DIRECTORY_FLAG = '0';
-constexpr char FILE_FLAG = '1';
-constexpr char SEPARATED_FLAG = '2';
-constexpr char LOGICAL_ROOT_FLAG = '3';
-constexpr char SYMBOL_LINK_FLAG = '4';
 // 注意直接使用sizeof返回的参数进行运算时，小于uint64_t的类型会被自动类型转换为ULL，需要按需强制转换后再参与运算
 
 // 目录标准的基础大小（不含变长的文件名，需要自行维护）
 constexpr uint8_t DIRECTORY_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
-    sizeof(FileNameSize_uint) +
+    sizeof(Y_flib::FileNameSize) +
     // 此行应为变长文件名，无法预先定义,需按情况处理
-    sizeof(FileCount_uint);
+    sizeof(Y_flib::FileCount);
 
 // 文件标准的基础大小（不含变长的文件名，需要自行维护）
 constexpr uint8_t FILE_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
-    sizeof(FileNameSize_uint) +
+    sizeof(Y_flib::FileNameSize) +
     // 此行应为变长文件名，无法预先定义,需按情况处理
-    sizeof(FileSize_uint) * 2;
+    sizeof(Y_flib::FileSize) * 2;
 
 // 分割标准的基础大小
 constexpr uint8_t SEPARATED_STANDARD_SIZE =
     FLAG_SIZE +
-    sizeof(DirectoryOffsetSize_uint) +
-    sizeof(IvSize_uint);
+    sizeof(Y_flib::DirectoryOffsetSize) +
+    sizeof(Y_flib::IvSize);
 
 // 符号链接标准的基础大小
 constexpr uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
     FLAG_SIZE +
-    sizeof(FileNameSize_uint) +
-    sizeof(FileNameSize_uint)
+    sizeof(Y_flib::FileNameSize) +
+    sizeof(Y_flib::FileNameSize)
     // 变长文件名
     // 变长文件路径
     ;
@@ -83,12 +92,12 @@ constexpr uint8_t SYMBOL_LINK_STANDARD_SIZE_BASIC =
 #pragma pack(push, 1)
 struct Header
 {
-    SizeOfMagicNum_uint magicNum_1 = 0;
-    CompressStrategy_uint strategy = 0;
-    CompressorVersion_uint version = 0;
-    HeaderOffsetSize_uint headerOffset = 0;
-    DirectoryOffsetSize_uint directoryOffset = 0;
-    SizeOfMagicNum_uint magicNum_2 = 0;
+    Y_flib::SizeOfMagicNum magicNum_1 = 0;
+    Y_flib::CompressStrategy strategy = 0;
+    Y_flib::CompressorVersion version = 0;
+    Y_flib::HeaderOffsetSize headerOffset = 0;
+    Y_flib::DirectoryOffsetSize directoryOffset = 0;
+    Y_flib::SizeOfMagicNum magicNum_2 = 0;
 };
 #pragma pack(pop)
-constexpr uint8_t HEADER_SIZE =sizeof(Header);
+constexpr uint8_t HEADER_SIZE = sizeof(Header);

@@ -1,5 +1,5 @@
 #include "../include/DataLoader.h"
-
+namespace fs = std::filesystem;
 void DataLoader::done()
 {
     if (inFile.is_open())
@@ -14,7 +14,11 @@ void DataLoader::reset(const fs::path inPath)
 {
     if (isDone())
     {
-        this->inFile = std::ifstream(inPath, std::ios::binary);
+        if (inFile.is_open())
+        {
+            inFile.close();
+        }
+        inFile = std::ifstream(inPath, std::ios::binary);
         if (!inFile)
             throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + inPath.string());
         loadIsDone = false;
@@ -24,14 +28,17 @@ void DataLoader::reset(const fs::path inPath)
 }
 void DataLoader::resetByLastReaded()
 {
-    inFile.seekg(readed, std::ios::beg);
+    Locator locator;
+    locator.locateFromBegin(inFile, readed);
 }
 void DataLoader::dataLoader()
 {
+    if (isDone())
+        return;
     try
     {
-        data.resize(BUFFER_SIZE);
-        inFile.read(reinterpret_cast<char *>((data.data())), BUFFER_SIZE);
+        data.resize(BUFFER_SIZE); // 确保缓冲区大小正确
+        inFile.read(reinterpret_cast<char *>(data.data()), BUFFER_SIZE);
         data.resize(inFile.gcount());
     }
     catch (const std::exception &e)
@@ -46,20 +53,13 @@ void DataLoader::dataLoader()
     }
     readed += inFile.gcount();
 }
-void DataLoader::dataLoader(FileSize_uint readSize, std::ifstream &decompressionFile)
+void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data)
 {
     try
     {
-
-        data.clear();
-        data.resize(readSize);
-
-
-        decompressionFile.read(reinterpret_cast<char *>(data.data()), readSize);
-
-
-        data.resize(decompressionFile.gcount());
-
+        data.resize(BUFFER_SIZE); // 确保缓冲区大小正确
+        loadFile.read(reinterpret_cast<char *>(data.data()), readSize);
+        data.resize(loadFile.gcount()); // 缩小数组到实际读取的大小，避免后续处理时误读未初始化的部分
     }
     catch (const std::exception &e)
     {

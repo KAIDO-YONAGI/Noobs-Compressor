@@ -1,23 +1,31 @@
 #include "MainLoop.h"
+namespace fs = std::filesystem;
 
 void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化迭代器
     fs::path blank;
-    BinaryIO_Loader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
+    BinaryStandardLoader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
+
     Heffman huffmanZip(1);
-    DataBlock encryptedBlock;
-    FileSize_uint totalBlocks = 1, count = 0;
+
+    PathTransfer transfer;
+
+    Y_flib::DataBlock encryptedBlock;
+
     fs::path loadPath;
     std::unique_ptr<DataLoader> dataLoader;
+
+    Y_flib::FileSize totalBlocks = 1, blockCount = 0;
 
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
-        Directory_FileDetails loadFile = headerLoaderIterator.fileQueue.front().first;
+
+        EntryDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
         dataLoader = std::make_unique<DataLoader>(loadPath);
-        totalBlocks = (loadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+        totalBlocks = (loadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
     }
 
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
@@ -27,58 +35,70 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     {
 
         dataLoader->dataLoader();
-        if (!dataLoader->isDone() && count < totalBlocks)
+
+        if ((!dataLoader->isDone() && blockCount < totalBlocks)) // 处理当前文件的每个数据块
         {
-            count++;
-            const DataBlock data_In = dataLoader->getBlock(); // 获取一次数据块，重复使用
+            blockCount++;
+            const Y_flib::DataBlock data_In = dataLoader->getBlock(); // 获取一次数据块，重复使用
+
             huffmanZip.statistic_freq(0, data_In);
 
             huffmanZip.merge_ttabs();
             huffmanZip.gen_hefftree();
             huffmanZip.save_code_inTab();
-            DataBlock huffTree;
+            Y_flib::DataBlock huffTree;
             huffmanZip.tree_to_plat_uchar(huffTree);
-            DataBlock huffTree_outPut(huffTree.size());
+            Y_flib::DataBlock huffTreeOutPut(huffTree.size());
 
-            aes.doAes(1, huffTree, huffTree_outPut);
-            dataExporter.exportDataToFile_Compression(huffTree_outPut);
+            aes.doAes(1, huffTree, huffTreeOutPut);
+            dataExporter.exportCompressedData(huffTreeOutPut);
 
-            system("cls");
+            // system("cls");
 
             std::cout << "Processing file: " << filename << "\n"
                       << std::fixed << std::setw(6) << std::setprecision(2)
-                      << (100.0 * count) / totalBlocks
+                      << (100.0 * blockCount) / totalBlocks
                       << "% \n";
 
-            DataBlock compressedData;
+            Y_flib::DataBlock compressedData;
             huffmanZip.encode(data_In, compressedData);
 
             aes.doAes(1, compressedData, encryptedBlock);
 
-            dataExporter.exportDataToFile_Compression(encryptedBlock); // 读取的数据传输给exporter
+            dataExporter.exportCompressedData(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
         }
 
-        if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty())
+        if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
         {
-            FileNameSize_uint offsetToFill = headerLoaderIterator.fileQueue.front().second;
+            Y_flib::FileNameSize offsetToFill = headerLoaderIterator.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill);
 
             headerLoaderIterator.fileQueue.pop();
+
             if (!headerLoaderIterator.fileQueue.empty())
             { // 更新下一个文件路径
-                Directory_FileDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
+                EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
                 dataLoader->reset(newLoadFile.getFullPath());
                 filename = newLoadFile.getFullPath().filename();
-                totalBlocks = (newLoadFile.getFileSize() + BUFFER_SIZE - 1) / BUFFER_SIZE;
-                count = 0;
+                totalBlocks = (newLoadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+                blockCount = 0;
             }
         }
-
         if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
         {
+            // 重启迭代器并且请求填充下一轮队列
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
+            
+            if (!headerLoaderIterator.fileQueue.empty())
+            { // 更新下一个文件路径(每块第一个文件)
+                EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
+                dataLoader->reset(newLoadFile.getFullPath());
+                filename = newLoadFile.getFullPath().filename();
+                totalBlocks = (newLoadFile.getFileSizeInDetails() + BUFFER_SIZE - 1) / BUFFER_SIZE;
+                blockCount = 0;
+            }
         }
     }
     headerLoaderIterator.encryptHeaderBlock(aes); // 加密目录块并且回填
@@ -88,25 +108,26 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 {
 
     std::vector<std::string> blank;
-    BinaryIO_Loader headerLoaderIterator(fullPath.string(), blank, parentPath);
+    BinaryStandardLoader headerLoaderIterator(fullPath.string(), blank, parentPath);
     headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
-    DirectoryOffsetSize_uint dataOffset = headerLoaderIterator.getDirectoryOffset();
+    Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
     // 创建 Huffman 对象用于解压
     Heffman huffmanUnzip(1);
+    Locator locator;
 
     while (!headerLoaderIterator.allLoopIsDone())
     {
         while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
         {
-            fs::path dir_to_create = headerLoaderIterator.directoryQueue_ready.front();
+            fs::path dirToCreate = headerLoaderIterator.directoryQueue_ready.front();
 
             // 如果是相对路径，拼接parentPath
-            if (!dir_to_create.is_absolute())
+            if (!dirToCreate.is_absolute())
             {
-                dir_to_create = parentPath / dir_to_create;
+                dirToCreate = parentPath / dirToCreate;
             }
 
-            createDirectory(dir_to_create);
+            createDirectory(dirToCreate);
             headerLoaderIterator.directoryQueue_ready.pop();
         }
         while (!headerLoaderIterator.fileQueue.empty())
@@ -119,43 +140,42 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
             std::ifstream &inFile = headerLoaderIterator.getInFile();
             // 把已压缩块读进内存，处理，写入对应位置
-            inFile.clear();                          // 清除可能的错误标志(如eof)，确保seek可以正常工作
-            inFile.seekg(dataOffset, std::ios::beg); // 定位到数据区（或已处理块后）
-            if (!inFile.good())
-            {
-                throw std::runtime_error("decompressionLoop()-Error:Failed to seek to dataOffset " + std::to_string(dataOffset));
-            }
+
+            locator.locateFromBegin(inFile, dataOffset); // 定位到数据区（或已处理块后）
+
             fs::path filePath = fullFilePath;
             fs::path filename = filePath.filename();
             // system("cls");
             std::cout << "Processing file: " << filename << "\n";
             DataExporter dataExporter(filePath);
-            FileSize_uint fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
+            Y_flib::FileSize fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
             // 获取原始文件大小（未压缩的大小）用于控制解压输出
-            FileSize_uint originalFileSize = headerLoaderIterator.fileQueue.front().first.getFileSize();
-            FileSize_uint totalDecompressedBytes = 0; // 跟踪已经解压的总字节数
+            Y_flib::FileSize originalSize = headerLoaderIterator.fileQueue.front().first.getFileSizeInDetails();
+            Y_flib::FileSize totalDecompressedBytes = 0; // 跟踪已经解压的总字节数
 
             // 处理文件的每个块：每个块都有独立的 Huffman 树
-            while (totalDecompressedBytes < originalFileSize && fileCompressedSize > 0)
+            while (totalDecompressedBytes < originalSize && fileCompressedSize > 0)
             {
 
-                // 在每次循环中重新创建 NumsReader 以确保正确读取
-                NumsReader numReader(inFile);
+                // 在每次循环中重新创建 StandardsReader 以确保正确读取
+                StandardsReader numReader(inFile);
+                // 循环中创建loader对象，使用当前文件路径，确保每次读取都能正确关联到当前文件
+                DataLoader loader(filePath);
 
                 // 读取分隔标志
-                if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
+                if (!(numReader.readBinaryStandards<FlagType>() == FlagType::Separated))
                     throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before tree block");
 
                 // 读取 Huffman 树块大小
                 std::streampos treeSizePos = inFile.tellg();
-                DirectoryOffsetSize_uint treeBlockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
+                Y_flib::DirectoryOffsetSize treeBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
                 // 读取并解密树数据
-                DataBlock rawTreeData(treeBlockSize);
-                
-                inFile.read(reinterpret_cast<char *>(rawTreeData.data()), treeBlockSize);
+                Y_flib::DataBlock rawTreeData(treeBlockSize);
+
+                loader.dataLoader(treeBlockSize, inFile, rawTreeData);
 
                 std::streamsize bytesRead = inFile.gcount();
-                DataBlock decryptedTreeData;
+                Y_flib::DataBlock decryptedTreeData;
                 aes.doAes(2, rawTreeData, decryptedTreeData);
                 // 恢复 Huffman 树（为这个块创建新树）
                 huffmanUnzip.spawn_tree(decryptedTreeData);
@@ -167,36 +187,37 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= treeBlockSize;
                 // 读取分割标志(数据块前的标志)
-                if (!(numReader.readBinaryNums<char>() == SEPARATED_FLAG))
+                if (!(numReader.readBinaryStandards<FlagType>() == FlagType::Separated))
                     throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before data block");
                 // 读取数据块大小
-                DirectoryOffsetSize_uint blockSize = numReader.readBinaryNums<DirectoryOffsetSize_uint>();
-                DirectoryOffsetSize_uint readSize = blockSize;
+                Y_flib::DirectoryOffsetSize blockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
                 // 读取加密的压缩数据
-                DataBlock rawData(readSize);
-                inFile.read(reinterpret_cast<char *>(rawData.data()), readSize);
-                std::streamsize bytesRead2 = inFile.gcount();
-                if (bytesRead2 != static_cast<std::streamsize>(readSize))
+                Y_flib::DataBlock rawData(blockSize);
+
+                loader.dataLoader(blockSize, inFile, rawData);
+
+                std::streamsize readedSize = inFile.gcount();
+                if (readedSize != static_cast<std::streamsize>(blockSize))
                 {
                     throw std::runtime_error("decompressionLoop()-Error: Failed to read complete data block. Expected " +
-                                             std::to_string(readSize) + " bytes, got " + std::to_string(bytesRead2));
+                                             std::to_string(blockSize) + " bytes, got " + std::to_string(readedSize));
                 }
                 // 解密数据(doAes会重新分配outputBuffer,不需要预先指定大小)
-                DataBlock decryptedData;
+                Y_flib::DataBlock decryptedData;
                 aes.doAes(2, rawData, decryptedData);
                 // 使用该块对应的 Huffman 树进行解压
-                size_t remainingBytes = originalFileSize - totalDecompressedBytes;
+                size_t remainingBytes = originalSize - totalDecompressedBytes;
                 size_t maxBytesThisBlock = std::min(remainingBytes, (size_t)BUFFER_SIZE);
-                DataBlock decompressedData;
+                Y_flib::DataBlock decompressedData;
                 huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), maxBytesThisBlock);
                 // 更新已解压的总字节数
                 totalDecompressedBytes += decompressedData.size();
                 // 写入解压后的数据
-                dataExporter.exportDataToFile_Decompression(decompressedData);
+                dataExporter.exportDecompressedData(decompressedData);
 
                 // 更新剩余大小: 减去压缩数据块本身的大小
                 // 注意: FLAG 和 size 字段不计入 fileCompressedSize
-                fileCompressedSize -= readSize;
+                fileCompressedSize -= blockSize;
             }
             // 更新dataOffset为下一个文件的起始位置
             dataOffset = inFile.tellg();

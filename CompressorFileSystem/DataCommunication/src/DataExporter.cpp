@@ -1,47 +1,40 @@
 #include "../include/DataExporter.h"
 
-void DataExporter::thisBlockIsDone(DirectoryOffsetSize_uint dataSize)
+void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
 {
     std::streamoff currentPos = outFile.tellp();
-    std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(DirectoryOffsetSize_uint));
-    outFile.seekp(offsetToFill, std::ios::beg);
-    NumsWriter numWriter;
-    numWriter.writeBinaryNums(dataSize, outFile);
-    outFile.flush();  // 寮哄埗鍐欏叆纾佺洏
-    outFile.seekp(0, std::ios::end);
+    std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(Y_flib::DirectoryOffsetSize));
+    locator.locateFromBegin(outFile, offsetToFill);
+    standardWriter.writeBinaryStandards(dataSize, outFile);
+    locator.locateFromEnd(outFile, 0);
 }
 
-void DataExporter::thisFileIsDone(FileSize_uint offsetToFill)
+void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
 {
-    outFile.seekp(offsetToFill, std::ios::beg);
-    NumsWriter numWriter;
-    numWriter.writeBinaryNums(processedFileSize, outFile);
-    outFile.seekp(0, std::ios::end);
-
+    locator.locateFromBegin(outFile, offsetToFill);
+    standardWriter.writeBinaryStandards(processedFileSize, outFile);//回填处理后大小
+    locator.locateFromEnd(outFile, 0);
     processedFileSize = 0;
 }
 
-void DataExporter::exportDataToFile_Compression(const DataBlock &data)
+void DataExporter::exportCompressedData(const Y_flib::DataBlock &data)
 {
-    std::ofstream tempFilePtr;
+    Y_flib::FileSize dataSize = data.size();
 
-    BinaryIO_Writter processor(tempFilePtr);
+    std::ofstream blank;
+    BinaryStandardWriter binaryStandardWriter(blank);
+    locator.locateFromEnd(outFile, 0);
+    binaryStandardWriter.writeBlankSeparatedStandardForEncryption(outFile);
 
-    outFile.seekp(0, std::ios::end);
-    FileSize_uint dataSize = data.size();
-    processor.writeBlankSeparatedStandardForEncryption(outFile);
-
-    outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
+    StandardsWriter::writeDataBlock(dataSize, outFile, data); // 直接写入数据块到输出文件
     processedFileSize += dataSize;
 
     thisBlockIsDone(dataSize);
 }
-void DataExporter::exportDataToFile_Decompression(const DataBlock &data)
+void DataExporter::exportDecompressedData(const Y_flib::DataBlock &data)
 {
-    outFile.seekp(0, std::ios::end);
-    FileSize_uint dataSize = data.size();
-
-    outFile.write(reinterpret_cast<const char*>(data.data()), dataSize);
-    outFile.flush();
+    locator.locateFromEnd(outFile, 0);
+    Y_flib::FileSize dataSize = data.size();
+    StandardsWriter::writeDataBlock(dataSize, outFile, data);
     processedFileSize += dataSize;
 }

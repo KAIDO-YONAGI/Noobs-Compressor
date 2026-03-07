@@ -2,15 +2,15 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileDetails.h"
+#include "EntryDetails.h"
 
-/* Transfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
+/* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
  *
  * 功能:
  *   为filesystem的fs::path提供宽字符转换支持
  *   解决中文路径问题，处理多字节字符编码转换
  */
-class Transfer
+class PathTransfer
 {
 private:
     /* 将std::string转换为std::wstring，处理编码转换 */
@@ -18,24 +18,24 @@ private:
 
 public:
     /* 转换输入路径为fs::path，支持中文路径 */
-    fs::path transPath(const std::string &p);
+    std::filesystem::path transPath(const std::string &p);
 };
 
-/* NumsWriter - 二进制数值写入器
+/* StandardsWriter - 二进制数值写入器
  *
  * 功能:
  *   将任意类型数值以二进制格式写入文件流
  *   支持ofstream和fstream，编译时类型检查
  */
-class NumsWriter
+class StandardsWriter
 {
 public:
     /* 模板化函数：将数值写入ofstream（编译时检查可复制性、指针和多态性） */
     template <typename T>
-    void writeBinaryNums(T value, std::ofstream &ofstream)
+    void writeBinaryStandards(const T value, std::ofstream &ofstream)
     {
         if (!ofstream)
-            throw std::runtime_error("writeBinaryNums() Error-noFile");
+            throw std::runtime_error("writeBinaryStandards() Error-noOutFile");
         // 编译时检查
 
         static_assert(std::is_trivially_copyable_v<T>,
@@ -44,18 +44,18 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!ofstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        if (!ofstream.write(reinterpret_cast<const char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
-            throw std::runtime_error("writeBinaryNums()Error-Failed to write");
+            throw std::runtime_error("writeBinaryStandards()Error-Failed to write outFile");
         }
     }
 
     /* 模板化函数：将数值写入fstream（编译时检查可复制性、指针和多态性） */
     template <typename T>
-    void writeBinaryNums(T value, std::fstream &fstream) // 针对写入fstream的重载
+    void writeBinaryStandards(const T value, std::fstream &fstream) // 针对写入fstream的重载
     {
         if (!fstream)
-            throw std::runtime_error("1writeBinaryNums() Error-noFile");
+            throw std::runtime_error("writeBinaryNums() Error-noInFile");
         // 编译时检查
 
         static_assert(std::is_trivially_copyable_v<T>,
@@ -64,40 +64,63 @@ public:
                       "Cannot safely write raw pointers");
         static_assert(!std::is_polymorphic_v<T>,
                       "Cannot safely write polymorphic types");
-        if (!fstream.write(reinterpret_cast<char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+        if (!fstream.write(reinterpret_cast<const char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
         {
-            throw std::runtime_error("1writeBinaryNums()Error-Failed to write");
+            throw std::runtime_error("writeBinaryNums()Error-Failed to write inFile");
+        }
+    }
+    void writeBinaryStandards(const std::string str, std::ofstream &ofstream)
+    {
+        if (!ofstream)
+            throw std::runtime_error("writeBinaryStandards-char*() Error-noOutFile");
+        if (!ofstream.write(str.c_str(), str.size()))
+        {
+            throw std::runtime_error("writeBinaryStandards-char*()Error-Failed to write outFile");
         }
     }
 
+    static void writeDataBlock(Y_flib::FileSize size, std::ofstream &file, const Y_flib::DataBlock &buffer)
+    {
+        if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
+        {
+            throw std::runtime_error("writeDataBlock(std::ofstream)-Failed to write header");
+        }
+    }
+    static void writeDataBlock(Y_flib::FileSize size, std::fstream &file, const Y_flib::DataBlock &buffer)
+    {
+        if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
+        {
+            throw std::runtime_error("writeDataBlock(std::fstream &file)-Failed to write header");
+        }
+    }
     /* 写入静态魔数标记到输出文件 */
     void appendMagicStatic(std::ofstream &outFile);
 };
 
-/* NumsReader - 二进制数值读取器
+/* StandardsReader - 二进制数值读取器
  *
  * 功能:
  *   从文件流中读取二进制格式的数值
  *   支持任意平凡可复制的类型，编译时类型检查
  */
-class NumsReader
+class StandardsReader
 {
 private:
     std::ifstream &file;
 
 public:
     /* 构造函数，关联输入文件流 */
-    NumsReader(std::ifstream &file) : file(file) {};
+    StandardsReader(std::ifstream &file) : file(file) {};
 
     /* 默认析构函数 */
-    ~NumsReader()=default;
+    ~StandardsReader() = default;
 
     /* 模板化函数：从文件读取指定类型的数值（编译时检查可复制性） */
     template <typename T>
-    T readBinaryNums()
+    T readBinaryStandards()
     {
         if (!file)
-            throw std::runtime_error("readBinaryNums() Error-noFile");
+            throw std::runtime_error("readBinaryStandards() Error-noFile");
         T value;
         static_assert(std::is_trivially_copyable_v<T>,
                       "Cannot write non-trivially-copyable type");
@@ -112,27 +135,64 @@ public:
         }
         if (!file.read(reinterpret_cast<char *>(&value), sizeof(T)))
         {
-            std::string msg = std::string("readBinaryNums()Error-Failed to read") + (file.eof() ? " - End of File reached" : "");
+            std::string msg = std::string("readBinaryStandards()Error-Failed to read") + (file.eof() ? " - End of File reached" : "");
             throw std::runtime_error(msg);
         }
         return value;
     }
+    static void readDataBlock(Y_flib::FileSize size, std::ifstream &file, Y_flib::DataBlock &buffer)
+    {
+        buffer.resize(size); // clear和resize确保容器大小正确，避免残留数据
+        if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
+        {
+            throw std::runtime_error("readDataBlock(std::ifstream)-Failed to read header");
+        }
+        else
+        {
+            buffer.resize(file.gcount()); // 根据实际读取的字节数调整大小，避免后续处理时误读未初始化的部分
+        }
+    }
+    static void readDataBlock(Y_flib::FileSize size, std::fstream &file, Y_flib::DataBlock &buffer)
+    {
+        buffer.resize(size);
+        if (!file.read(reinterpret_cast<char *>(buffer.data()), size))
+        {
+            throw std::runtime_error("readDataBlock(std::fstream &file)-Failed to read header");
+        }
+        else
+        {
+            buffer.resize(file.gcount()); // 根据实际读取的字节数调整大小，避免后续处理时误读未初始化的部分
+        }
+    }
 };
+template <typename T>
+class MyQueueInterface
+{
+public:
+    virtual ~MyQueueInterface() = default;
 
-/* Directory_FileQueue - 目录文件队列
+    virtual void push(T) = 0;
+    virtual void pop() = 0;
+    virtual bool empty() = 0;
+    virtual T &front() = 0;
+    virtual T &back() = 0;
+    virtual size_t size() = 0;
+    virtual void clear() = 0;
+};
+/* EntryQueue - 目录文件队列
  *
  * 功能:
  *   BFS遍历中使用的队列，存储目录和文件计数对
  *   用链表实现，支持push/pop/front/back操作
  */
-class Directory_FileQueue
+class EntryQueue : public MyQueueInterface<std::pair<EntryDetails, Y_flib::FileCount>>
 {
 private:
     struct Node
     {
-        std::pair<Directory_FileDetails, FileCount_uint> data;
+        std::pair<EntryDetails, Y_flib::FileCount> data;
         Node *next;
-        Node(const std::pair<Directory_FileDetails, FileCount_uint> &val)
+        Node(const std::pair<EntryDetails, Y_flib::FileCount> &val)
             : data(val), next(nullptr) {}
     };
 
@@ -141,39 +201,32 @@ private:
     size_t count;
 
 public:
-    /* 默认构造函数 */
-    Directory_FileQueue();
+    EntryQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
 
-    /* 析构函数，清理所有节点 */
-    ~Directory_FileQueue();
+    ~EntryQueue()
+    {
+        clear();
+    }
 
     /* 清空队列中的所有元素 */
-    void clear();
+    void clear() override;
 
     /* 入队（push_back），添加元素到队尾 */
-    void push(std::pair<Directory_FileDetails, FileCount_uint> val);
+    void push(std::pair<EntryDetails, Y_flib::FileCount> val) override;
 
     /* 出队（pop_front），移除队头元素 */
-    void pop();
-
-    /* 获取队头元素引用 */
-    std::pair<Directory_FileDetails, FileCount_uint> &front();
-
-    /* 获取队尾元素引用 */
-    std::pair<Directory_FileDetails, FileCount_uint> &back();
+    void pop() override;
 
     /* 检查队列是否为空 */
-    bool empty();
+    bool empty() override;
+    /* 获取队头元素引用 */
+    std::pair<EntryDetails, Y_flib::FileCount> &front() override;
+
+    /* 获取队尾元素引用 */
+    std::pair<EntryDetails, Y_flib::FileCount> &back() override;
 
     /* 获取队列中的元素个数 */
-    size_t size();
-};
-
-/* Directory_FIleQueueInterface - 目录文件队列接口适配器 */
-class Directory_FIleQueueInterface
-{
-public:
-    Directory_FileQueue Directory_FileQueue;
+    size_t size() override;
 };
 
 /* Locator - 文件位置定位器
@@ -189,14 +242,15 @@ public:
     Locator() = default;
 
     /* 在输出文件中定位到指定偏移位置 */
-    void offsetLocator(std::ofstream &outFile, FileSize_uint offset);
+    void locateFromBegin(std::ofstream &outFile, Y_flib::FileSize offset);
+    void locateFromEnd(std::ofstream &outFile, Y_flib::FileSize offset);
 
     /* 在输入文件中定位到指定偏移位置 */
-    void offsetLocator(std::ifstream &inFile, FileSize_uint offset);
+    void locateFromBegin(std::ifstream &inFile, Y_flib::FileSize offset);
+    void locateFromEnd(std::ifstream &inFile, Y_flib::FileSize offset);
 
-    /* fstream定位已禁用（删除函数） */
-    void offsetLocator(std::fstream &file, FileSize_uint offset) = delete;
-
+    void locateFromBegin(std::fstream &file, Y_flib::FileSize offset);
+    void locateFromEnd(std::fstream &file, Y_flib::FileSize offset);
     /* 获取输出文件的当前大小 */
-    FileSize_uint getFileSize(const fs::path &filePathToScan, std::ofstream &outFile);
+    Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
 };

@@ -2,11 +2,12 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "Directory_FileProcessor.h"
+#include "EntryProcessor.h"
 #include "ToolClasses.h"
-#include "BinaryIO_Writer.h"
+#include "BinaryStandardWriter.h"
 
 /* DataExporter - 二进制数据块导出器
+//为非文件标准数据写入封装的写入器类，提供按块写入和按指定大小写入的功能
  *
  * 功能:
  *   写入加密和压缩的数据块到输出文件
@@ -15,24 +16,25 @@
  *   支持记录填充位置用于解密回填
  *
  * 公共接口:
- *   exportDataToFile_Compression(): 写入压缩数据块
- *   exportDataToFile_Decompression(): 写入解压数据块
+ *   exportCompressedData(): 写入压缩数据块
+ *   exportDecompressedData(): 写入解压数据块
  *   thisFileIsDone(): 更新当前文件的完成位置
- *   getProcessedFileSize(): 获取已处理数据大小
+ *   getProcessedY_flib::FileSize(): 获取已处理数据大小
  */
 class DataExporter
 {
 private:
     std::fstream outFile;
     Locator locator;
-    FileSize_uint processedFileSize = 0;
+    StandardsWriter standardWriter;
+    Y_flib::FileSize processedFileSize = 0;
 
     /* 标记单个数据块处理完成并更新位置 */
-    void thisBlockIsDone(DirectoryOffsetSize_uint dataSize);
+    void thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize);
 
 public:
     /* 构造函数，打开输出文件（使用fstream支持读写） */
-    DataExporter(const fs::path &outPath)
+    DataExporter(const std::filesystem::path &outPath)
     {
         std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in); // 避免截断，只能使用fstream输出
         if (!outFile)
@@ -52,14 +54,14 @@ public:
     }
 
     /* 获取已处理数据的总大小 */
-    FileSize_uint getProcessedFileSize() { return processedFileSize; }
+    Y_flib::FileSize getProcessedFileSize() { return processedFileSize; }
 
     /* 更新当前文件的完成标记和位置 */
-    void thisFileIsDone(FileSize_uint offsetToFill);
+    void thisFileIsDone(Y_flib::FileSize offsetToFill);
 
     /* 写入压缩数据块到输出文件 */
-    void exportDataToFile_Compression(const DataBlock &data);
+    void exportCompressedData(const Y_flib::DataBlock &data);
 
     /* 写入解压数据块到输出文件 */
-    void exportDataToFile_Decompression(const DataBlock &data);
+    void exportDecompressedData(const Y_flib::DataBlock &data);
 };

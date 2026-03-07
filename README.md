@@ -1,17 +1,8 @@
 # SFC.exe (Windows Only)
 
-> 数据结构与算法课程大作业｜华南师范大学  
-> Final Project for *Data Structures and Algorithms* — South China Normal University
-
 ---
 
 ## 项目说明 | Project Description
-
-**本项目作为华南师范大学《数据结构与算法》课程大作业**  
-**项目第一贡献者，学号：202440025284**
-
-**This project is developed as the final assignment for the course _Data Structures and Algorithms_ at South China Normal University.**  
-**First contributor: Student ID 202440025284**
 
 ---
 

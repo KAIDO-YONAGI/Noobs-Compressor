@@ -2,8 +2,9 @@
 #pragma once
 
 #include "FileLibrary.h"
-
+#include "ToolClasses.h"
 /* DataLoader - 二进制数据块加载器
+//为非文件标准数据读取封装的读取器类，提供按块读取和按指定大小读取的功能
  *
  * 功能:
  *   逐块读取文件数据到缓冲区
@@ -20,34 +21,31 @@
 class DataLoader
 {
 private:
-    DataBlock data = DataBlock(BUFFER_SIZE);
+    Y_flib::DataBlock data;
 
-    FileSize_uint fileSize = 0;
+    Y_flib::FileSize fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
-    FileSize_uint readed=0;
+    Y_flib::FileSize readed = 0;
 
     /* 标记读取完成状态 */
     void done();
 
 public:
     /* 获取当前缓冲区中的数据块 */
-    const DataBlock &getBlock() { return data; }
+    const Y_flib::DataBlock &getBlock() { return data; }
 
     /* 检查是否读取完成 */
     bool isDone() { return loadIsDone; }
 
     /* 打开指定文件并初始化读取状态 */
-    void reset(const fs::path inPath);
+    void reset(const std::filesystem::path inPath);
 
     /* 按缓冲区大小读取数据块 */
     void dataLoader();
 
     /* 在解压流程中按指定大小读取数据块 */
-    void dataLoader(FileSize_uint readSize, std::ifstream &decompressionFile);
-
-    /* 设置文件总大小 */
-    void setFileSize(FileSize_uint newSize) { fileSize = newSize; }
+    void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
 
     /* 重置指针到上次读取的位置 */
     void resetByLastReaded();
@@ -56,13 +54,12 @@ public:
     DataLoader() {}
 
     /* 构造函数，打开指定文件 */
-    DataLoader(const fs::path &inPath)
+    DataLoader(const std::filesystem::path &inPath)
+        : inFile(inPath, std::ios::binary) // 使用初始化列表
     {
-        std::ifstream inFile(inPath, std::ios::binary);
-        if (!inFile)
-            throw std::runtime_error("DataLoader()-Error:Failed to open inFile Path:" + inPath.string());
-        this->inFile = std::move(inFile);
-    };
+        if (!inFile.is_open())
+            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + inPath.string());
+    }
 
     /* 析构函数，自动关闭文件流 */
     ~DataLoader()

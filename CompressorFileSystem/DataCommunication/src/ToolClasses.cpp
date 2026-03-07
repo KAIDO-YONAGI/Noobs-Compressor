@@ -1,6 +1,7 @@
 #include "../include/ToolClasses.h"
+namespace fs = std::filesystem;
 
-std::wstring Transfer::convertToWString(const std::string &s)
+std::wstring PathTransfer::convertToWString(const std::string &s)
 {
 
     std::setlocale(LC_ALL, ""); // 使用本地化设置
@@ -17,24 +18,17 @@ std::wstring Transfer::convertToWString(const std::string &s)
     return ws;
 }
 
-fs::path Transfer::transPath(const std::string &p)
+std::filesystem::path PathTransfer::transPath(const std::string &p)
 {
-    return fs::path(p);
+    return std::filesystem::path(p);
 }
 
-void NumsWriter::appendMagicStatic(std::ofstream &outFile)
+void StandardsWriter::appendMagicStatic(std::ofstream &outFile)
 {
-    writeBinaryNums(MAGIC_NUM, outFile);
+    writeBinaryStandards(MAGIC_NUM, outFile);
 }
 
-Directory_FileQueue::Directory_FileQueue() : frontNode(nullptr), rearNode(nullptr), count(0) {}
-
-Directory_FileQueue::~Directory_FileQueue()
-{
-    clear();
-}
-
-void Directory_FileQueue::clear()
+void EntryQueue::clear()
 {
     while (frontNode)
     { // 循环直到链表为空
@@ -46,7 +40,7 @@ void Directory_FileQueue::clear()
     count = 0;          // 重置计数器
 }
 
-void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount_uint> val)
+void EntryQueue::push(std::pair<EntryDetails, Y_flib::FileCount> val)
 {
     Node *newNode = new Node(val);
     if (rearNode)
@@ -61,7 +55,7 @@ void Directory_FileQueue::push(std::pair<Directory_FileDetails, FileCount_uint> 
     count++;
 } // 不使用引用，因为使用时会在传值时创建pair，会导致常量引用问题
 
-void Directory_FileQueue::pop()
+void EntryQueue::pop()
 {
     if (empty())
     {
@@ -76,46 +70,165 @@ void Directory_FileQueue::pop()
     delete temp;
     count--;
 }
-
-std::pair<Directory_FileDetails, FileCount_uint> &Directory_FileQueue::front()
+//返回头部的EntryDetails对象的引用，允许直接访问和修改队头元素的数据
+std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::front()
 {
     if (empty())
     {
-        throw std::runtime_error("Accessing front of empty Directory_FileQueue");
+        throw std::runtime_error("Accessing front of empty EntryQueue");
     }
     return frontNode->data;
 }
-
-std::pair<Directory_FileDetails, FileCount_uint> &Directory_FileQueue::back()
+//返回尾部的EntryDetails对象的引用，允许直接访问和修改队尾元素的数据
+std::pair<EntryDetails, Y_flib::FileCount> &EntryQueue::back()
 {
     if (empty())
     {
-        throw std::runtime_error("Accessing back of empty Directory_FileQueue");
+        throw std::runtime_error("Accessing back of empty EntryQueue");
     }
     return rearNode->data;
 }
 
-bool Directory_FileQueue::empty()
+bool EntryQueue::empty()
 {
     return count == 0;
 }
 
-size_t Directory_FileQueue::size()
+size_t EntryQueue::size()
 {
     return count;
 }
 
-void Locator::offsetLocator(std::ofstream &outFile, FileSize_uint offset)
+void Locator::locateFromBegin(std::ofstream &outFile, Y_flib::FileSize offset)
 {
-    outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
+    try
+    {
+        if (!outFile)
+        {
+            throw std::runtime_error("locateFromBegin() Error-noOutFile");
+        }
+        else
+        {
+            outFile.clear(); // 清除错误标志，确保seekp成功
+            outFile.flush(); // 确保之前的写入已完成
+            outFile.seekp(static_cast<std::streamoff>(offset), outFile.beg);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
 }
 
-void Locator::offsetLocator(std::ifstream &inFile, FileSize_uint offset)
+void Locator::locateFromBegin(std::ifstream &inFile, Y_flib::FileSize offset)
 {
-    inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
+    try
+    {
+        if (!inFile)
+        {
+            throw std::runtime_error("locateFromBegin() Error-noInFile");
+        }
+        else
+        {
+            inFile.clear(); // 清除错误标志，确保seekp成功
+            inFile.seekg(static_cast<std::streamoff>(offset), inFile.beg);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+void Locator::locateFromEnd(std::ofstream &outFile, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!outFile)
+        {
+            throw std::runtime_error("locateFromEnd() Error-noOutFile");
+        }
+        else
+        {
+            outFile.clear();  // 清除错误标志，确保seekp成功
+            outFile.flush(); // 确保之前的写入已完成
+            outFile.seekp(static_cast<std::streamoff>(offset), outFile.end);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
 }
 
-FileSize_uint Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
+void Locator::locateFromEnd(std::ifstream &inFile, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!inFile)
+        {
+            throw std::runtime_error("locateFromEnd() Error-noInFile");
+        }
+        else
+        {
+            inFile.clear(); // 清除错误标志，确保seekp成功
+            inFile.seekg(static_cast<std::streamoff>(offset), inFile.end);
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+void Locator::locateFromBegin(std::fstream &file, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!file)
+        {
+            throw std::runtime_error("locateFromBegin-fstream() Error-noFile");
+        }
+        else
+        {
+
+            file.clear(); // 清除错误标志，确保seekp成功
+            file.flush();
+            file.seekg(offset, std::ios::beg); // 读
+            file.seekp(offset, std::ios::beg); // 写
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+void Locator::locateFromEnd(std::fstream &file, Y_flib::FileSize offset)
+{
+    try
+    {
+        if (!file)
+        {
+            throw std::runtime_error("locateFromBegin-fstream() Error-noFile");
+        }
+        else
+        {
+            file.clear(); // 清除错误标志，确保seekp成功
+            file.flush();
+            file.seekg(offset, std::ios::end); // 读
+            file.seekp(offset, std::ios::end); // 写
+        }
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << "\n";
+        return;
+    }
+}
+Y_flib::FileSize Locator::getFileSize(const fs::path &filePathToScan, std::ofstream &outFile)
 {
     try
     {

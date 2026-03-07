@@ -4,6 +4,7 @@
 #include "IconHandler.h"
 #include <windows.h>
 #include <limits>
+namespace fs = std::filesystem;
 
 // Windows API路径处理辅助函数
 fs::path make_path(const std::string &utf8_str)

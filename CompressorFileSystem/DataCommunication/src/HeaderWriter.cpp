@@ -1,47 +1,48 @@
 #include "../include/HeaderWriter.h"
+namespace fs = std::filesystem;
 
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
 {
-    NumsWriter numWriter;
+    StandardsWriter standardWriter;
     Locator locator;
     if (!outFile)
     {
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
     // 文件头
-    CompressStrategy_uint strategySize = STRATEGY;
-    CompressorVersion_uint versionSize = VERSION;
-    HeaderOffsetSize_uint headerOffsetSize = 0;
-    DirectoryOffsetSize_uint directoryOffsetSize = 0;
+    Y_flib::CompressStrategy strategySize = STRATEGY;
+    Y_flib::CompressorVersion versionSize = VERSION;
+    Y_flib::HeaderOffsetSize headerOffsetSize = 0;
+    Y_flib::DirectoryOffsetSize directoryOffsetSize = 0;
 
-    numWriter.writeBinaryNums(strategySize,outFile);
-    numWriter.writeBinaryNums(versionSize,outFile);
-    numWriter.writeBinaryNums(headerOffsetSize,outFile);
-    numWriter.writeBinaryNums(directoryOffsetSize,outFile);
+    standardWriter.writeBinaryStandards(strategySize,outFile);
+    standardWriter.writeBinaryStandards(versionSize,outFile);
+    standardWriter.writeBinaryStandards(headerOffsetSize,outFile);
+    standardWriter.writeBinaryStandards(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint) - sizeof(HeaderOffsetSize_uint));
-    numWriter.writeBinaryNums(HEADER_SIZE,outFile);
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromBegin(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
+    standardWriter.writeBinaryStandards(HEADER_SIZE,outFile);
+    locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
 {
 
-    NumsWriter numWriter;
+    StandardsWriter standardWriter;
     Locator locator;
 
-    Directory_FileProcessor begin(outFile);
-    begin.directory_fileProcessor(filePathToScan, fullOutPath, logicalRoot);
+    EntryProcessor begin(outFile);
+    begin.entryProcessor(filePathToScan, fullOutPath, logicalRoot);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.offsetLocator(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(DirectoryOffsetSize_uint));
-    DirectoryOffsetSize_uint directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    numWriter.writeBinaryNums(directoryOffset + DirectoryOffsetSize_uint(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
-    outFile.seekp(0, std::ios::end);
+    locator.locateFromBegin(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
+    Y_flib::DirectoryOffsetSize directoryOffset = locator.getFileSize(fullOutPath, outFile);
+    standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
 {
-    Transfer transfer;
+    PathTransfer transfer;
 
     try
     {
@@ -59,17 +60,17 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
 
         try
         {
-            NumsWriter numWriter;
+            StandardsWriter standardWriter;
             // 写入表示文件起始的4字节魔数
-            numWriter.appendMagicStatic(outFile);
+            standardWriter.appendMagicStatic(outFile);
             writeHeader(outFile,fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
 
-            numWriter.appendMagicStatic(outFile);
+            standardWriter.appendMagicStatic(outFile);
 
             // 目录信息
             writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
 
-            numWriter.appendMagicStatic(outFile); // 文件末尾魔数
+            standardWriter.appendMagicStatic(outFile); // 文件末尾魔数
         }
         catch (const std::exception &e)
         {
