@@ -52,9 +52,6 @@ constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
 constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024;    // 读取的数据块大小，需要确保大于文件头大小HeaderSize和各种文件标准的最大值（可以添加检测以确保ENtry原子性）
 constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 4 * 1024; // 目录缓冲大小
-// TODO:目前的目录分块大小检测仍存在bug，具体来说是边界对齐的时候误以为该块解压解析结束，然而实际上遗漏了边界交界处的文件。
-// 目前通过提高buffer大小可以降低这种概率
-// 后续打算通过在分割标准中添加一个标志位来指示是否存在边界交界处的文件，以便正确处理这种情况
 
 // 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题。此外，频繁地进行flush()可能导致数据丢失
 // 分割标准上的偏移量不包含分割标准本身的大小，便于随取随用

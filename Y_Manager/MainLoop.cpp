@@ -33,13 +33,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
     fs::path filename = loadPath.filename();
     while (!headerLoaderIterator.fileQueue.empty())
     {
-        if (headerLoaderIterator.fileQueue.front().first.getName() == "iso-8859-7.js")
-        {
-            std::ofstream debugFile("debug_log.txt", std::ios::app);
-            debugFile << "=== COMPRESSION Loop ===" << std::endl;
-            debugFile << "Next file to process: " << headerLoaderIterator.fileQueue.front().first.getFullPath() << std::endl;
-            debugFile.close();
-        }
 
         dataLoader->dataLoader();
 
@@ -99,7 +92,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             headerLoaderIterator.headerLoaderIterator(aes);
             
             if (!headerLoaderIterator.fileQueue.empty())
-            { // 更新下一个文件路径
+            { // 更新下一个文件路径(每块第一个文件)
                 EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
                 dataLoader->reset(newLoadFile.getFullPath());
                 filename = newLoadFile.getFullPath().filename();

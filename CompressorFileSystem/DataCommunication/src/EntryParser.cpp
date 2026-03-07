@@ -59,20 +59,6 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
         true,
         pathToProcess);
     fileQueue.push({fileDetails, parserMode == 1 ? lastOffset : compressedSize});
-
-
-    // if (fileName == "mainHeader.js" || fileName == "gbk-added.json" || fileName == "iso-8859-7.js"||
-    //     pathToProcess=="D:\\TempDocx\\Programmes\\Secure Files Compressor\\Y_Manager\\bin\\node_modules\\adm-zip\\headers\\index.js")
-    // {
-    //     std::ofstream debugFile("debug_log.txt", std::ios::app);
-    //     debugFile << "=== COMPRESSION fileParser ===" << std::endl;
-    //     debugFile << "fileName: " << fileName << std::endl;
-    //     debugFile << "originSize: " << originSize << std::endl;
-    //     debugFile << "lastOffset: " << lastOffset << std::endl;
-    //     debugFile << "bufferPtr: " << bufferPtr << std::endl;
-    //     debugFile << "pathToProcess: " << pathToProcess << std::endl;
-    //     debugFile.close();
-    // }
 }
 
 void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr)
