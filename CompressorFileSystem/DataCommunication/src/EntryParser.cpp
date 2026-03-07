@@ -99,9 +99,9 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
         for (const std::string &path : filePathToScan)
         {
             fs::path fullPath = transfer.transPath(path);
-            const FlagType D_F_flag = numsParser<FlagType>(bufferPtr);
+            const FlagType entryFlag = numsParser<FlagType>(bufferPtr);
 
-            if (D_F_flag == FlagType::File)
+            if (entryFlag == FlagType::File)
             {
                 Y_flib::FileNameSize fileNameSize = 0;
                 std::string fileName;
@@ -119,7 +119,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
                     fullPath);
                 fileQueue.push({fileDetails, compressedSize_or_Offset});
             }
-            else if (D_F_flag == FlagType::Directory)
+            else if (entryFlag == FlagType::Directory)
             {
                 Y_flib::FileNameSize directoryNameSize = 0;
                 std::string directoryName;
@@ -141,8 +141,8 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const FlagType D_F_flag = numsParser<FlagType>(bufferPtr);
-    switch (D_F_flag)
+    const FlagType entryFlag = numsParser<FlagType>(bufferPtr);
+    switch (entryFlag)
     {
     case FlagType::File:
     {

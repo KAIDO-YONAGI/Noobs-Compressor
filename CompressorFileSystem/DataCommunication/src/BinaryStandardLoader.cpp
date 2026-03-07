@@ -116,7 +116,7 @@ void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader,
                         directoryQueue_ready.push(parentPath / directoryPath);
                     }
                 }
-                else if (FirstReady)
+                else if (FirstReady)//用firstReady让第一个元素入队，避免队列判空出问题
                 {
                     directoryQueue_ready.push(parentPath / directoryPath);
                     FirstReady = false;
