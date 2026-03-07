@@ -240,5 +240,3 @@ This project is intended **for educational and learning purposes only**.
 
 使用前请务必 **备份原始文件**。  
 Please **back up your original files before using the software**.
-```
-
