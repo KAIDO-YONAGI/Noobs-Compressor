@@ -1,7 +1,7 @@
 #include "../include/BinaryStandardWriter.h"
 namespace fs = std::filesystem;
 
-void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
     try
     {
@@ -41,7 +41,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &dire
                 isFile,
                 fullPath); // 创建details
 
-            writeStorageStandard(details, directory_FileQueue, tempOffset, offset);
+            writeStorageStandard(details, entryQueue, tempOffset, offset);
         }
     }
     catch (fs::filesystem_error &e)
@@ -50,7 +50,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &dire
     }
 }
 // 识别存储标准并且分发到各个写入函数
-void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueue &directory_FileQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
 
     if (details.getIsFile()) // 文件对应的处理
@@ -61,7 +61,7 @@ void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueu
     {
         Y_flib::FileCount countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
-        directory_FileQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
+        entryQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
         writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
     }
     else if ((!details.getIsFile()) && (details.getFileSizeInDetails() == 1))

@@ -45,7 +45,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
                 return;
 
             buffer.clear();
-            loadBySeparatedFlag(standardsReader, countOfKidDirectory, aes);
+            loadBySeparatedFlag(standardsReader, countOfChildDirectory, aes);
         }
     }
     catch (const std::exception &e)
@@ -55,7 +55,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     }
 }
 
-void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader, Y_flib::FileCount &countOfKidDirectory, Aes &aes)
+void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
@@ -100,15 +100,15 @@ void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader,
 
         while (readSize > bufferPtr)
         {
-            while ((countOfKidDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
+            while ((countOfChildDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
             {
-                parserForLoader->parser(bufferPtr, countOfKidDirectory);
+                parserForLoader->parser(bufferPtr, countOfChildDirectory);
             }
 
-            if (!directory_FileQueue.empty() && countOfKidDirectory == 0)
+            if (!entryQueue.empty() && countOfChildDirectory == 0)
             {
                 // 目录队列处理逻辑
-                const fs::path &directoryPath = directory_FileQueue.front().first.getFullPath();
+                const fs::path &directoryPath = entryQueue.front().first.getFullPath();
                 if (!directoryQueue_ready.empty())
                 {
                     if (directoryQueue_ready.back() != directoryPath)
@@ -122,12 +122,12 @@ void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader,
                     FirstReady = false;
                 }
 
-                directory_FileQueue.pop();
-                if (!directory_FileQueue.empty())
+                entryQueue.pop();
+                if (!entryQueue.empty())
                 {
-                    countOfKidDirectory = directory_FileQueue.front().second; // 获取子目录数量
-                    if (!directory_FileQueue.empty())
-                        directoryQueue_ready.push(directory_FileQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
+                    countOfChildDirectory = entryQueue.front().second; // 获取子目录数量
+                    if (!entryQueue.empty())
+                        directoryQueue_ready.push(entryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
                 }
             }
         }

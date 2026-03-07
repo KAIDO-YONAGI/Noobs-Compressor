@@ -19,7 +19,7 @@
 class EntryParser
 {
 private:
-    EntryQueue &directory_FileQueue;
+    EntryQueue &entryQueue;
     EntryQueue &fileQueue;
     std::vector<std::string> &filePathToScan;
     Y_flib::DataBlock &buffer;
@@ -34,7 +34,7 @@ private:
 
     /* 模板化函数：解析文件名长度和内容，安全构造std::string */
     template <typename T>
-    void fileName_fileSizeParser(
+    void fileDetailsParser(
         T &fileNameSize,
         std::string &fileName,
         Y_flib::DirectoryOffsetSize &bufferPtr)
@@ -64,7 +64,7 @@ private:
         catch (const std::exception &e)
         {
             throw std::runtime_error(
-                "fileName_fileSizeParser failed at offset " +
+                "fileDetailsParser failed at offset " +
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
@@ -100,7 +100,7 @@ private:
     void directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr);
 
     /* 解析根目录节点，处理多路径扫描 */
-    void rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, Y_flib::FileCount &countOfKidDirectory, bool &noDirec);
+    void rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, Y_flib::FileCount &countOfChildDirectory, bool &noDirec);
 
 public:
     std::string rootForDecompression;
@@ -112,12 +112,12 @@ public:
     }
 
     /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
-    EntryParser(Y_flib::DataBlock &buffer, EntryQueue &directory_FileQueue,
+    EntryParser(Y_flib::DataBlock &buffer, EntryQueue &entryQueue,
                          EntryQueue &fileQueue, const Header &header,
                          const Y_flib::DirectoryOffsetSize &offset,
                          const Y_flib::DirectoryOffsetSize &tempOffset,
                          std::vector<std::string> &filePathToScan)
-        : buffer(buffer), directory_FileQueue(directory_FileQueue),
+        : buffer(buffer), entryQueue(entryQueue),
           fileQueue(fileQueue),
           header(header),
           offset(offset), 
@@ -128,5 +128,5 @@ public:
     }
 
     /* 主解析函数，处理缓冲区中的目录数据块 */
-    void parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCount &countOfKidDirectory);
+    void parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCount &countOfChildDirectory);
 };

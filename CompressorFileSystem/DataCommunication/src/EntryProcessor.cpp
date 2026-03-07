@@ -30,7 +30,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
             if (!fs::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
-                binaryStandardWriter->binaryStandardWriter(file, directory_FileQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
+                binaryStandardWriter->binaryStandardWriter(file, entryQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推
             }
         }
         flowScanner(file, tempOffset, offset);
@@ -46,13 +46,13 @@ void EntryProcessor::flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &te
 
     BinaryStandardWriter binaryStandardWriter(outFile);
 
-    while (!directory_FileQueue.empty())
+    while (!entryQueue.empty())
     {
-        EntryDetails &details = (directory_FileQueue.front()).first;
+        EntryDetails &details = (entryQueue.front()).first;
         file.setFilePathToScan(details.getFullPath());
 
-        binaryStandardWriter.binaryStandardWriter(file, directory_FileQueue, tempOffset, offset);
+        binaryStandardWriter.binaryStandardWriter(file, entryQueue, tempOffset, offset);
 
-        directory_FileQueue.pop();
+        entryQueue.pop();
     }
 }

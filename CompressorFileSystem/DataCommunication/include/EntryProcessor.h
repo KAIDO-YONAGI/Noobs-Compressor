@@ -22,7 +22,7 @@ class EntryProcessor
 private:
     PathTransfer transfer;
     std::ofstream &outFile;
-    EntryQueue directory_FileQueue;
+    EntryQueue entryQueue;
     FilePath file; // 创建各个工具类的对象
     BinaryStandardWriter *binaryStandardWriter;
     StandardsWriter standardWriter;
