@@ -37,9 +37,7 @@ void DataLoader::dataLoader()
         return;
     try
     {
-        data.resize(BUFFER_SIZE); // 确保缓冲区大小正确
-        inFile.read(reinterpret_cast<char *>(data.data()), BUFFER_SIZE);
-        data.resize(inFile.gcount());
+        StandardsReader::readDataBlock(BUFFER_SIZE, inFile, data);
     }
     catch (const std::exception &e)
     {
@@ -57,9 +55,7 @@ void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, 
 {
     try
     {
-        data.resize(BUFFER_SIZE); // 确保缓冲区大小正确
-        loadFile.read(reinterpret_cast<char *>(data.data()), readSize);
-        data.resize(loadFile.gcount()); // 缩小数组到实际读取的大小，避免后续处理时误读未初始化的部分
+        StandardsReader::readDataBlock(readSize, loadFile, data);
     }
     catch (const std::exception &e)
     {
