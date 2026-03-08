@@ -16,10 +16,6 @@ class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
  */
 class PathTransfer
 {
-private:
-    /* 将std::string转换为std::wstring，处理编码转换 */
-    std::wstring convertToWString(const std::string &s);
-
 public:
     /* 转换输入路径为fs::path，支持中文路径 */
     std::filesystem::path transPath(const std::string &p);
@@ -73,7 +69,7 @@ public:
             throw std::runtime_error("writeBinaryNums()Error-Failed to write inFile");
         }
     }
-    void writeBinaryStandards(const std::string& str, std::ofstream &ofstream)
+    void writeBinaryStandards(const std::string &str, std::ofstream &ofstream)
     {
         if (!ofstream)
             throw std::runtime_error("writeBinaryStandards-char*() Error-noOutFile");
@@ -113,16 +109,15 @@ public:
 class StandardsReader
 {
 private:
-    std::istream& file;
+    std::istream &file;
 
 public:
-
-    StandardsReader(std::istream& f) : file(f) {}
+    StandardsReader(std::istream &file) : file(file) {}
 
     ~StandardsReader() = default;
 
     /* 读取平凡类型 */
-    template<typename T>
+    template <typename T>
     T readBinaryStandards()
     {
         static_assert(std::is_trivially_copyable_v<T>,
@@ -134,7 +129,7 @@ public:
 
         T value{};
 
-        file.read(reinterpret_cast<char*>(&value), sizeof(T));
+        file.read(reinterpret_cast<char *>(&value), sizeof(T));
 
         if (file.gcount() != sizeof(T))
         {
@@ -143,37 +138,21 @@ public:
 
         return value;
     }
-
-    /* 读取字符串 */
-    std::string readString()
-    {
-        Y_flib::FileSize len = readBinaryStandards<Y_flib::FileSize>();
-
-        std::string str;
-        str.resize(len);
-
-        file.read(str.data(), len);
-
-        if (file.gcount() != static_cast<std::streamsize>(len))
-        {
-            throw std::runtime_error("readString: unexpected EOF");
-        }
-
-        return str;
-    }
-
     /* 读取数据块 */
     static std::streamsize readDataBlock(
         Y_flib::FileSize size,
-        std::istream& file,
-        Y_flib::DataBlock& buffer)
+        std::istream &file,
+        Y_flib::DataBlock &buffer)
     {
         buffer.resize(size);
 
-        file.read(reinterpret_cast<char*>(buffer.data()), size);
+        file.read(reinterpret_cast<char *>(buffer.data()), size);
 
         std::streamsize n = file.gcount();
-
+        // if (file.gcount() < size)
+        // {
+        //     throw std::runtime_error("readDataBlock: unexpected EOF-- expected " + std::to_string(size) + " bytes, got " + std::to_string(n));
+        // }
         if (file.bad())
         {
             throw std::runtime_error("readDataBlock: read error");
