@@ -136,7 +136,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             fs::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
             fs::path fullFilePath = parentPath / relativePath;
 
-            if(createFile(fullFilePath))continue; // 重建文件,如果文件已存在则跳过（避免覆盖用户现有文件）
+            createFile(fullFilePath); // 重建文件
             // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
             std::ifstream &inFile = headerLoaderIterator.getInFile();
             // 把已压缩块读进内存，处理，写入对应位置
@@ -249,7 +249,7 @@ void DecompressionLoop::createDirectory(const fs::path &directoryPath)
     }
 }
 
-// 创建文件 (创建空文件) 返回true表示文件正常创建，false表示文件已存在
+// 创建文件 (创建空文件)
 bool DecompressionLoop::createFile(const fs::path &filePath)
 {
     try
@@ -257,7 +257,7 @@ bool DecompressionLoop::createFile(const fs::path &filePath)
         if (fs::exists(filePath))
         {
             std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
-            return false;
+            return false; // 文件已存在，跳过创建
         }
 
         // 确保父目录存在
