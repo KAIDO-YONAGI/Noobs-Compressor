@@ -2,13 +2,13 @@
 #pragma once
 
 #include <filesystem> //编译时需要强制链接为静态库
-
+// 关于编译：需要使用普通O3优化级别，且需要开启C++20标准支持（编译器选项 -std=c++20）。此外，确保链接器正确链接了所需的库，如stdc++fs（对于某些编译器）以支持文件系统功能。
+// 别开LTO（链接时优化）选项，因为它可能会导致某些符号被错误地优化掉，尤其是在使用了模板或内联函数的情况下。
 #include <fstream>
 #include <vector>
 #include <iostream>
 #include <cstring>
 #include <cstdint>
-#include <cassert>
 #include <array>
 #include <memory>
 // 命名空间
@@ -50,8 +50,8 @@ constexpr Y_flib::CompressorVersion VERSION = 0; // 版本号
 
 constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
-constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024;    // 读取的数据块大小，需要确保大于文件头大小HeaderSize和各种文件标准的最大值（可以添加检测以确保ENtry原子性）
-constexpr Y_flib::UpSizeOfBuffer DIRECTORY_BUFFER_SIZE = 16 * 1024; // 目录缓冲大小
+constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024;     // 读取的数据块大小，需要确保大于文件头大小HeaderSize和各种文件标准的最大值（可以添加检测以确保ENtry原子性）
+constexpr Y_flib::UpSizeOfBuffer HEADER_BUFFER_SIZE = 16 * 1024; // 目录缓冲大小
 
 // 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题。此外，频繁地进行flush()可能导致数据丢失
 // 分割标准上的偏移量不包含分割标准本身的大小，便于随取随用

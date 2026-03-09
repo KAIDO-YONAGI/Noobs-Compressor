@@ -68,7 +68,7 @@ void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueu
     {
         writeSymbolLinkStandard(details, tempOffset);
     }
-    if (tempOffset >= DIRECTORY_BUFFER_SIZE) // 达到缓冲大小后写入分割标准
+    if (tempOffset >= HEADER_BUFFER_SIZE) // 达到缓冲大小后写入分割标准
     {
 
         writeSeparatedStandard(tempOffset, offset);

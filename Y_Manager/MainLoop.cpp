@@ -250,13 +250,14 @@ void DecompressionLoop::createDirectory(const fs::path &directoryPath)
 }
 
 // 创建文件 (创建空文件)
-void DecompressionLoop::createFile(const fs::path &filePath)
+bool DecompressionLoop::createFile(const fs::path &filePath)
 {
     try
     {
         if (fs::exists(filePath))
         {
             std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
+            return false; // 文件已存在，跳过创建
         }
 
         // 确保父目录存在
@@ -271,4 +272,5 @@ void DecompressionLoop::createFile(const fs::path &filePath)
     {
         throw std::runtime_error("createDirectory()-Error: " + filePath.string());
     }
+    return true;
 }

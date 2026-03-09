@@ -27,7 +27,7 @@ private:
     std::filesystem::path fullPath;
     void createDirectory(const std::filesystem::path &path);
     // 创建文件 (创建空文件)
-    void createFile(const std::filesystem::path &filePath);
+    bool createFile(const std::filesystem::path &filePath);
 
 public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
