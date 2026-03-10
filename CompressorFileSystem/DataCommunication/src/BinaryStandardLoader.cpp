@@ -17,7 +17,11 @@ void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Header &hea
         if (header.directoryOffset == 0)
             throw std::runtime_error("Invalid directory offset in header");
         offset = header.directoryOffset - HEADER_SIZE;
-        std::cout << "Header loaded successfully. Directory offset: " << header.directoryOffset << ", Remaining offset: " << offset << std::endl;
+        std::cout << "Header loaded successfully.\n";
+    }
+    else
+    {
+        throw std::runtime_error("Header already loaded or file pointer not at the beginning");
     }
 }
 
@@ -47,8 +51,10 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     try
     {
         // 读取Header
-        if (inFile.tellg() == std::streampos(0))
+        if (!isReadHeader){
             loadHeaderStandard(inFile, header, buffer);
+            isReadHeader = true;
+        }
 
         if (offset == sizeof(Y_flib::SizeOfMagicNum))
         {

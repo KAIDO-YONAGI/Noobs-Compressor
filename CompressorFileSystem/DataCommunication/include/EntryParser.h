@@ -29,6 +29,8 @@ private:
     const Y_flib::DirectoryOffsetSize &tempOffset;
     size_t parserMode = 0; // 0：默认模式、1：压缩模式、2：解压模式
 
+    std::filesystem::path tempPathForRootPaser;
+
     /* 检查缓冲区读取范围是否有效，防止越界 */
     void checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize equiredSize) const;
 
@@ -94,10 +96,10 @@ private:
     std::filesystem::path pathConnector(std::string &fileName);
 
     /* 解析单个文件的元数据，将文件入队 */
-    void fileParser(Y_flib::DirectoryOffsetSize &bufferPtr);
+    void fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot);
 
     /* 解析单个目录的元数据和子元素，将目录入队 */
-    void directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr);
+    void directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot);
 
     /* 解析根目录节点，处理多路径扫描 */
     void rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, Y_flib::FileCount &countOfChildDirectory, bool &noDirec);
@@ -113,15 +115,15 @@ public:
 
     /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
     EntryParser(Y_flib::DataBlock &buffer, EntryQueue &entryQueue,
-                         EntryQueue &fileQueue, const Header &header,
-                         const Y_flib::DirectoryOffsetSize &offset,
-                         const Y_flib::DirectoryOffsetSize &tempOffset,
-                         std::vector<std::string> &filePathToScan)
+                EntryQueue &fileQueue, const Header &header,
+                const Y_flib::DirectoryOffsetSize &offset,
+                const Y_flib::DirectoryOffsetSize &tempOffset,
+                std::vector<std::string> &filePathToScan)
         : buffer(buffer), entryQueue(entryQueue),
           fileQueue(fileQueue),
           header(header),
-          offset(offset), 
-          tempOffset(tempOffset), 
+          offset(offset),
+          tempOffset(tempOffset),
           filePathToScan(filePathToScan)
     {
         parserMode = ((!filePathToScan.empty()) ? 1 : 2); // 非空表示压缩

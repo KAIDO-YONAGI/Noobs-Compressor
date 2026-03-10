@@ -26,6 +26,7 @@
 class BinaryStandardLoader
 {
 private:
+    bool isReadHeader = false;
     bool blockIsDone = false;
     bool allDone = false;   // 标记是否完成所有目录读取
     bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
@@ -46,8 +47,8 @@ private:
     Y_flib::DataBlock buffer =
         Y_flib::DataBlock(BUFFER_SIZE + 1024); // 私有buffer,预留1024字节防止溢出
 
-    void requestDone();                                                                                             // 标记块读取完成
-    void allLoopDone();                                                                                             // 标记所有循环完成并清理资源
+    void requestDone();                                                                                                 // 标记块读取完成
+    void allLoopDone();                                                                                                 // 标记所有循环完成并清理资源
     void loadBySeparatedStandard(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes); // 读取单个数据块、解密、解析
     void loadHeaderStandard(std::ifstream &inFile, Header &header, Y_flib::DataBlock &buffer);
     void loadSeparatedStandard(FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum);
