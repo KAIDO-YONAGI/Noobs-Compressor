@@ -35,7 +35,7 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
     fileDetailsParser(fileNameSize, fileName, bufferPtr);
 
     // 解析文件原大小
-    Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
+    Y_flib::FileSize originSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr);
 
     Y_flib::FileSize compressedSize = 0;
     Y_flib::FileSize lastOffset = 0;
@@ -47,7 +47,7 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize = numsParser<Y_flib::FileSize>(bufferPtr); // compressedSize
+        compressedSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
     }
 
     pathToProcess = pathConnector(fileName);
@@ -70,7 +70,7 @@ void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr)
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
 
     // 解析下级文件数量
-    Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
 
     fs::path pathToProcess = pathConnector(directoryName);
 
@@ -85,7 +85,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     // 解析逻辑根
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
-    Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
 
     countOfChildDirectory = count;
 
@@ -102,39 +102,19 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
         for (const std::string &path : filePathToScan)
         {
             fs::path fullPath = transfer.transPath(path);
-            const FlagType entryFlag = numsParser<FlagType>(bufferPtr);
+            const FlagType entryFlag = readDataFromReadedBlock<FlagType>(bufferPtr);
 
-            if (entryFlag == FlagType::File)
+            switch (entryFlag)
             {
-                Y_flib::FileNameSize fileNameSize = 0;
-                std::string fileName;
-                fileDetailsParser(fileNameSize, fileName, bufferPtr);
-                // 解析文件原大小
-                Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
-                // 记录等会需要回填的位置
-                Y_flib::FileSize offsetToFill = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-                bufferPtr += sizeof(Y_flib::FileSize);
-                EntryDetails fileDetails(
-                    fileName,
-                    fileNameSize,
-                    originSize,
-                    true,
-                    fullPath);
-                fileQueue.push({fileDetails, offsetToFill});
-            }
-            else if (entryFlag == FlagType::Directory)
-            {
-                Y_flib::FileNameSize directoryNameSize = 0;
-                std::string directoryName;
-                fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
-                // 解析下级文件数量
-                Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
+            case FlagType::File:
+                fileParser(bufferPtr);
 
-                EntryDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
-                entryQueue.push({directoryDetails, count});
-            }
-            else if (entryFlag == FlagType::SymbolLink)
-            {
+                break;
+            case FlagType::Directory:
+                directoryParser(bufferPtr);
+                break;
+            default:
+                throw std::runtime_error("rootParser()-Error:Failed to read flag");
             }
         }
         if (entryQueue.empty())
@@ -147,7 +127,7 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const FlagType entryFlag = numsParser<FlagType>(bufferPtr);
+    const FlagType entryFlag = readDataFromReadedBlock<FlagType>(bufferPtr);
     switch (entryFlag)
     {
     case FlagType::File:
@@ -155,7 +135,6 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
         fileParser(bufferPtr);
         countOfChildDirectory--;
         break;
-        // countOfD_F++;
     }
     case FlagType::Directory:
     {

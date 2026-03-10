@@ -71,7 +71,7 @@ private:
 
     /* 模板化函数：按指定类型解析数值，返回解析的值 */
     template <typename T>
-    T numsParser(Y_flib::DirectoryOffsetSize &bufferPtr)
+    T readDataFromReadedBlock(Y_flib::DirectoryOffsetSize &bufferPtr)
     {
         try
         {
@@ -85,7 +85,7 @@ private:
         catch (const std::exception &e)
         {
             throw std::runtime_error(
-                "numsParser failed at offset " +
+                "readDataFromReadedBlock failed at offset " +
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
