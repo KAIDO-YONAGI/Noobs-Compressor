@@ -221,11 +221,6 @@ Compile `main.cpp` to generate the executable.
 
 # 依赖 | Dependencies
 
-- **OpenSSL**
-
-  - `SHA256`
-  - `RAND`
-
 - **Windows 10–11 API**
 
   用于字符编码控制  
