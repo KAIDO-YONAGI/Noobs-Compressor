@@ -26,19 +26,20 @@ fs::path EntryParser::pathConnector(std::string &fileName)
     return pathToProcess;
 }
 
-void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
+void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot)
 {
     // 解析文件名偏移量
-    Y_flib::FileNameSize fileNameSize = 0;
     std::string fileName;
     fs::path pathToProcess;
-    fileDetailsParser(fileNameSize, fileName, bufferPtr);
-
-    // 解析文件原大小
-    Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
-
+    Y_flib::FileNameSize fileNameSize = 0;
     Y_flib::FileSize compressedSize = 0;
     Y_flib::FileSize lastOffset = 0;
+
+    // 解析信息，注意和下一步的顺序不能颠倒，否则会导致读写协议不对称，后续解析失败
+
+    fileDetailsParser(fileNameSize, fileName, bufferPtr);
+    // 解析文件原大小
+    Y_flib::FileSize originSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr);
 
     if (parserMode == 1) // for compression
     {
@@ -47,10 +48,14 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize = numsParser<Y_flib::FileSize>(bufferPtr); // compressedSize
+        compressedSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
     }
 
-    pathToProcess = pathConnector(fileName);
+    if (isRoot) // 如果在处理根目录下的第一级文件，就不进行路径拼接
+        pathToProcess = tempPathForRootPaser;
+
+    else
+        pathToProcess = pathConnector(fileName);
 
     EntryDetails fileDetails(
         fileName,
@@ -61,18 +66,25 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr)
     fileQueue.push({fileDetails, parserMode == 1 ? lastOffset : compressedSize});
 }
 
-void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr)
+void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot)
 {
     // 解析目录名偏移量
     // 解析目录名，后续拼接为绝对路径之后入队
     Y_flib::FileNameSize directoryNameSize = 0;
     std::string directoryName;
+    fs::path pathToProcess;
+
+    // 解析信息，注意和下一步的顺序不能颠倒，否则会导致读写协议不对称，后续解析失败
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
 
     // 解析下级文件数量
-    Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
 
-    fs::path pathToProcess = pathConnector(directoryName);
+    if (isRoot) // 如果在处理根目录下的第一级文件，就不进行路径拼接
+        pathToProcess = tempPathForRootPaser;
+
+    else
+        pathToProcess = pathConnector(directoryName);
 
     EntryDetails directoryDetails(directoryName, directoryNameSize, 0, false, pathToProcess);
     entryQueue.push({directoryDetails, count});
@@ -85,7 +97,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     // 解析逻辑根
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
-    Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
 
     countOfChildDirectory = count;
 
@@ -97,44 +109,24 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
         EntryDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
         entryQueue.push({logicalRootDetails, count});
     }
-    else if (parserMode == 1)
+    else if (parserMode == 1) // 压缩模式
     {
         for (const std::string &path : filePathToScan)
         {
-            fs::path fullPath = transfer.transPath(path);
-            const FlagType entryFlag = numsParser<FlagType>(bufferPtr);
+            tempPathForRootPaser = transfer.transPath(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
 
-            if (entryFlag == FlagType::File)
-            {
-                Y_flib::FileNameSize fileNameSize = 0;
-                std::string fileName;
-                fileDetailsParser(fileNameSize, fileName, bufferPtr);
-                // 解析文件原大小
-                Y_flib::FileSize originSize = numsParser<Y_flib::FileSize>(bufferPtr);
-                // 记录等会需要回填的位置
-                Y_flib::FileSize offsetToFill = header.directoryOffset - (offset + tempOffset) + bufferPtr;
-                bufferPtr += sizeof(Y_flib::FileSize);
-                EntryDetails fileDetails(
-                    fileName,
-                    fileNameSize,
-                    originSize,
-                    true,
-                    fullPath);
-                fileQueue.push({fileDetails, offsetToFill});
-            }
-            else if (entryFlag == FlagType::Directory)
-            {
-                Y_flib::FileNameSize directoryNameSize = 0;
-                std::string directoryName;
-                fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
-                // 解析下级文件数量
-                Y_flib::FileCount count = numsParser<Y_flib::FileCount>(bufferPtr);
+            const FlagType entryFlag = readDataFromReadedBlock<FlagType>(bufferPtr);
 
-                EntryDetails directoryDetails(directoryName, directoryNameSize, 0, false, fullPath);
-                entryQueue.push({directoryDetails, count});
-            }
-            else if (entryFlag == FlagType::SymbolLink)
+            switch (entryFlag)
             {
+            case FlagType::File:
+                fileParser(bufferPtr, true);
+                break;
+            case FlagType::Directory:
+                directoryParser(bufferPtr, true);
+                break;
+            default:
+                throw std::runtime_error("rootParser()-Error:Failed to read flag");
             }
         }
         if (entryQueue.empty())
@@ -147,19 +139,18 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const FlagType entryFlag = numsParser<FlagType>(bufferPtr);
+    const FlagType entryFlag = readDataFromReadedBlock<FlagType>(bufferPtr);
     switch (entryFlag)
     {
     case FlagType::File:
     {
-        fileParser(bufferPtr);
+        fileParser(bufferPtr, false);
         countOfChildDirectory--;
         break;
-        // countOfD_F++;
     }
     case FlagType::Directory:
     {
-        directoryParser(bufferPtr);
+        directoryParser(bufferPtr, false);
         countOfChildDirectory--;
         break;
     }

@@ -5,8 +5,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
-#include <openssl/sha.h>
-#include <openssl/rand.h>
+#include <cstdint>
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 
 /* AES-128加密算法实现 - 标准AES加密/解密、密钥扩展、预计算表优化 */

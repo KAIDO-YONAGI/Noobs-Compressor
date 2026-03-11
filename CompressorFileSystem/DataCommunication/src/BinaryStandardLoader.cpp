@@ -1,6 +1,45 @@
 #include "../include/BinaryStandardLoader.h"
 namespace fs = std::filesystem;
+void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Header &header, Y_flib::DataBlock &buffer)
+{
+    // 读取Header
+    if (inFile.tellg() == std::streampos(0))
+    {
+        StandardsReader::readDataBlock(HEADER_SIZE, inFile, buffer);
+        // 复制Header数据
+        std::memcpy(&header, buffer.data(), sizeof(Header));
+        // 验证魔数
+        if (header.magicNum_1 != MAGIC_NUM ||
+            header.magicNum_2 != MAGIC_NUM)
+        {
+            throw std::runtime_error("Invalid file format");
+        }
+        if (header.directoryOffset == 0)
+            throw std::runtime_error("Invalid directory offset in header");
+        offset = header.directoryOffset - HEADER_SIZE;
+        std::cout << "Header loaded successfully.\n";
+    }
+    else
+    {
+        throw std::runtime_error("Header already loaded or file pointer not at the beginning");
+    }
+}
 
+void BinaryStandardLoader::loadSeparatedStandard(FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum)
+{
+    flag = standardsReader.readBinaryStandards<FlagType>();
+
+    // 读取子块偏移量
+    tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    // 读取iv头
+    ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
+
+    offset -= SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时步过固定头部长度
+    if (flag != FlagType::Separated)
+    {
+        throw std::runtime_error("Invalid flag type for separated standard");
+    }
+}
 void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
 {
     StandardsReader standardsReader(inFile);
@@ -12,20 +51,9 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     try
     {
         // 读取Header
-        if (inFile.tellg() == std::streampos(0))
-        {
-            StandardsReader::readDataBlock(HEADER_SIZE, inFile, buffer);
-            // 复制Header数据
-            std::memcpy(&header, buffer.data(), sizeof(Header));
-            // 验证魔数
-            if (header.magicNum_1 != MAGIC_NUM ||
-                header.magicNum_2 != MAGIC_NUM)
-            {
-                throw std::runtime_error("Invalid file format");
-            }
-            if (header.directoryOffset == 0)
-                throw std::runtime_error("Invalid directory offset in header");
-            offset = header.directoryOffset - HEADER_SIZE;
+        if (!isReadHeader){
+            loadHeaderStandard(inFile, header, buffer);
+            isReadHeader = true;
         }
 
         if (offset == sizeof(Y_flib::SizeOfMagicNum))
@@ -45,102 +73,90 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
                 return;
 
             buffer.clear();
-            loadBySeparatedFlag(standardsReader, countOfChildDirectory, aes);
+            loadBySeparatedStandard(standardsReader, countOfChildDirectory, aes);
         }
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        throw e.what();
+        throw std::runtime_error(std::string("BinaryStandardLoader encountered an error: ") + e.what());
     }
 }
 
-void BinaryStandardLoader::loadBySeparatedFlag(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes)
+void BinaryStandardLoader::loadBySeparatedStandard(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
 
-    const FlagType flag = standardsReader.readBinaryStandards<FlagType>();
+    FlagType flag;
+    Y_flib::IvSize ivNum = 0;
+    loadSeparatedStandard(const_cast<FlagType &>(flag), standardsReader, ivNum);
 
-    if (flag == FlagType::Separated)
+    // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
+    Y_flib::DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
+
+    std::array<Y_flib::DirectoryOffsetSize, 2> blockPos = {
+        static_cast<Y_flib::DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置
+        static_cast<Y_flib::DirectoryOffsetSize>(readSize)        // 转换为读取大小(块大小)
+    };
+    blockPosition.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
+
+    // 根据偏移量读取数据块
+    StandardsReader::readDataBlock(readSize, inFile, buffer);
+
+    if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
     {
-        // 读取子块偏移量
-        tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
-        // 读取iv头
-        Y_flib::IvSize ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
+        Y_flib::DataBlock blockWithIv;
+        Y_flib::DataBlock decryptedBlock;
+        blockWithIv.resize(sizeof(Y_flib::IvSize));
+        std::memcpy(blockWithIv.data(), &ivNum, sizeof(Y_flib::IvSize));
+        blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
 
-        offset -= SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时跳过固定头部长度
+        aes.doAes(2, blockWithIv, decryptedBlock);
+        buffer.clear();
+        buffer.resize(decryptedBlock.size());
+        buffer = decryptedBlock;
+    }
+    Y_flib::DirectoryOffsetSize bufferPtr = 0;
 
-        // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
-        Y_flib::DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
-
-        std::array<Y_flib::DirectoryOffsetSize, 2> blockPos = {
-            static_cast<Y_flib::DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置
-            static_cast<Y_flib::DirectoryOffsetSize>(readSize)        // 转换为读取大小
-        };
-        blockPosition.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
-
-        // 根据偏移量读取数据块
-        StandardsReader::readDataBlock(readSize, inFile, buffer);
-
-        if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
+    while (readSize > bufferPtr)
+    {
+        while ((countOfChildDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
         {
-            Y_flib::DataBlock blockWithIv;
-            Y_flib::DataBlock decryptedBlock;
-            blockWithIv.resize(sizeof(Y_flib::IvSize));
-            std::memcpy(blockWithIv.data(), &ivNum, sizeof(Y_flib::IvSize));
-            blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
-
-            aes.doAes(2, blockWithIv, decryptedBlock);
-            buffer.clear();
-            buffer.resize(decryptedBlock.size());
-            buffer = decryptedBlock;
+            parserForLoader->parser(bufferPtr, countOfChildDirectory);
         }
-        Y_flib::DirectoryOffsetSize bufferPtr = 0;
 
-        while (readSize > bufferPtr)
+        if (!entryQueue.empty() && countOfChildDirectory == 0)
         {
-            while ((countOfChildDirectory > 0 || bufferPtr == 0) && readSize > bufferPtr)
+            // 目录队列处理逻辑
+            const fs::path &directoryPath = entryQueue.front().first.getFullPath();
+            if (!directoryQueue_ready.empty())
             {
-                parserForLoader->parser(bufferPtr, countOfChildDirectory);
-            }
-
-            if (!entryQueue.empty() && countOfChildDirectory == 0)
-            {
-                // 目录队列处理逻辑
-                const fs::path &directoryPath = entryQueue.front().first.getFullPath();
-                if (!directoryQueue_ready.empty())
-                {
-                    if (directoryQueue_ready.back() != directoryPath)
-                    {
-                        directoryQueue_ready.push(parentPath / directoryPath);
-                    }
-                }
-                else if (FirstReady)//用firstReady让第一个元素入队，避免队列判空出问题
+                if (directoryQueue_ready.back() != directoryPath)
                 {
                     directoryQueue_ready.push(parentPath / directoryPath);
-                    FirstReady = false;
-                }
-
-                entryQueue.pop();
-                if (!entryQueue.empty())
-                {
-                    countOfChildDirectory = entryQueue.front().second; // 获取子目录数量
-                    if (!entryQueue.empty())
-                        directoryQueue_ready.push(entryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
                 }
             }
-        }
-        requestDone();       // 设置块完成标志
-        if (tempOffset == 0) // tempOffset为0，说明到达末尾，减去相应偏移量
-        {
-            offset -= readSize;
-            return;
+            else if (FirstReady) // 用firstReady让第一个元素入队，避免队列判空出问题
+            {
+                directoryQueue_ready.push(parentPath / directoryPath);
+                FirstReady = false;
+            }
+
+            entryQueue.pop();
+            if (!entryQueue.empty())
+            {
+                countOfChildDirectory = entryQueue.front().second; // 获取子目录数量
+                if (!entryQueue.empty())
+                    directoryQueue_ready.push(entryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
+            }
         }
     }
-    else
-        throw std::runtime_error("loadBySeparatedFlag()-Error:Failed to read separatedFlag");
-    return;
+    requestDone();       // 设置块完成标志
+    if (tempOffset == 0) // tempOffset为0，说明到达末尾，减去相应偏移量
+    {
+        offset -= readSize;
+        return;
+    }
 }
 void BinaryStandardLoader::requestDone()
 {
@@ -189,7 +205,7 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
         inBlock.resize(blockSize);
         encryptedBlock.resize(blockSize + sizeof(Y_flib::IvSize));
 
-        locator.locateFromBegin(fstreamForRefill, startPos);                    // 定位到数据块起始位置
+        locator.locateFromBegin(fstreamForRefill, startPos); // 定位到数据块起始位置
 
         StandardsReader::readDataBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
 

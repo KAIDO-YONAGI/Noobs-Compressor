@@ -1,4 +1,8 @@
 #include "../include/My_Aes.h"
+#include <windows.h>
+#include <wincrypt.h>
+#pragma comment(lib, "advapi32.lib")
+
 Y_flib::DataBlock Aes::processDataAES(const Y_flib::DataBlock &inputBuffer, int  mode)
 {
     Y_flib::DataBlock outputBuffer;
@@ -6,11 +10,13 @@ Y_flib::DataBlock Aes::processDataAES(const Y_flib::DataBlock &inputBuffer, int 
     // 处理IV
     if (mode==1)
     { // 加密
-        // 生成随机IV
-        if (RAND_priv_bytes(iv, sizeof(iv)) != 1)
-        {
+        // 生成随机IV (使用 Windows CryptoAPI)
+        HCRYPTPROV hProv = 0;
+        if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, 0) ||
+            !CryptGenRandom(hProv, sizeof(iv), iv)) {
             throw std::runtime_error("Failed to generate random IV");
         }
+        if (hProv) CryptReleaseContext(hProv, 0);
 
         // 添加IV到输出缓冲区
         outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));

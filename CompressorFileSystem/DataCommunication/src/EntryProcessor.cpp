@@ -37,7 +37,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
     }
     catch (const std::exception &e)
     {
-        std::cerr << "entryProcessor()-Error: " << e.what() << std::endl;
+        throw std::runtime_error(std::string("EntryProcessor encountered an error: ") + e.what());
     }
 }
 

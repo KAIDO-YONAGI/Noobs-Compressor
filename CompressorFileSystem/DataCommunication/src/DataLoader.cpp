@@ -41,7 +41,6 @@ void DataLoader::dataLoader()
     }
     catch (const std::exception &e)
     {
-        // std::cerr << e.what() << '\n';
         throw std::runtime_error("Error-dataLaoder_compression()");
     }
 
