@@ -46,7 +46,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entr
     }
     catch (fs::filesystem_error &e)
     {
-        std::cerr << "binaryStandardWriter()-Error: " << e.what() << "\n";
+        throw std::runtime_error(std::string("BinaryStandardWriter encountered a filesystem error: ") + e.what());
     }
 }
 // 识别存储标准并且分发到各个写入函数

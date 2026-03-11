@@ -78,8 +78,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     }
     catch (const std::exception &e)
     {
-        std::cerr << "Error: " << e.what() << std::endl;
-        throw e.what();
+        throw std::runtime_error(std::string("BinaryStandardLoader encountered an error: ") + e.what());
     }
 }
 

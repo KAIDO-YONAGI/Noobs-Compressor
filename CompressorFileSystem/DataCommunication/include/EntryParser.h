@@ -27,7 +27,7 @@ private:
     const Header &header;
     const Y_flib::DirectoryOffsetSize &offset;
     const Y_flib::DirectoryOffsetSize &tempOffset;
-    size_t parserMode = 0; // 0：默认模式、1：压缩模式、2：解压模式
+    size_t parserMode = 0; // 0：占位、1：压缩模式、2：解压模式
 
     std::filesystem::path tempPathForRootPaser;
 
