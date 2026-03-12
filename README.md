@@ -223,8 +223,8 @@ Compile `main.cpp` to generate the executable.
 
 - **Windows 10–11 API**
 
-  用于字符编码控制  
-  Used for character encoding control
+  用于字符编码控制以及随机数生成
+  Used for character encoding control and rand() 
 
 ---
 
