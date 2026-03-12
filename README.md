@@ -223,7 +223,7 @@ Compile `main.cpp` to generate the executable.
 
 - **Windows 10–11 API**
 
-  用于字符编码控制以及随机数生成
+- 用于字符编码控制以及随机数生成
   Used for character encoding control and rand() 
 
 ---
@@ -235,5 +235,6 @@ This project is intended **for educational and learning purposes only**.
 
 使用前请务必 **备份原始文件**。  
 Please **back up your original files before using the software**.
+
 
 
