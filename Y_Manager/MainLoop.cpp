@@ -90,7 +90,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
             // 重启迭代器并且请求填充下一轮队列
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
-            
+
             if (!headerLoaderIterator.fileQueue.empty())
             { // 更新下一个文件路径(每块第一个文件)
                 EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
@@ -196,20 +196,22 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
                 loader.dataLoader(blockSize, inFile, rawData);
 
-                std::streamsize readedSize = inFile.gcount();
-                if (readedSize != static_cast<std::streamsize>(blockSize))
+                Y_flib::FileSize readedSize = inFile.gcount();
+                if (readedSize != blockSize)
                 {
-                    throw std::runtime_error("decompressionLoop()-Error: Failed to read complete data block. Expected " +
-                                             std::to_string(blockSize) + " bytes, got " + std::to_string(readedSize));
+                    throw std::runtime_error(
+                        "decompressionLoop()-Error: Failed to read complete data block. Expected " +
+                        std::to_string(blockSize) +
+                        " bytes, got " +
+                        std::to_string(readedSize));
                 }
                 // 解密数据(doAes会重新分配outputBuffer,不需要预先指定大小)
                 Y_flib::DataBlock decryptedData;
                 aes.doAes(2, rawData, decryptedData);
                 // 使用该块对应的 Huffman 树进行解压
-                size_t remainingBytes = originalSize - totalDecompressedBytes;
-                size_t maxBytesThisBlock = std::min(remainingBytes, (size_t)BUFFER_SIZE);
+                Y_flib::FileSize remainingBytes = originalSize - totalDecompressedBytes;
                 Y_flib::DataBlock decompressedData;
-                huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), maxBytesThisBlock);
+                huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), remainingBytes);
                 // 更新已解压的总字节数
                 totalDecompressedBytes += decompressedData.size();
                 // 写入解压后的数据
