@@ -85,7 +85,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
                 blockCount = 0;
             }
         }
-        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
+        while (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，循环请求读取对队列进行填充，直到符合条件为止
         {
             // 重启迭代器并且请求填充下一轮队列
             headerLoaderIterator.restartLoader();
@@ -226,7 +226,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
             headerLoaderIterator.fileQueue.pop();
         }
-        if (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，请求下一轮读取对队列进行填充
+        while (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，循环请求读取对队列进行填充，直到符合条件为止
         {
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
