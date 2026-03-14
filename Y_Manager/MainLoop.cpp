@@ -233,21 +233,94 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         }
     }
 }
+// 将路径转换为 Windows 长路径格式（添加 \\?\ 前缀）
+static std::wstring toLongPath(const std::wstring& pathStr)
+{
+    // 如果路径已经以 \\?\ 开头，直接返回
+    if (pathStr.rfind(L"\\\\?\\", 0) == 0)
+        return pathStr;
+
+    // 对于绝对路径 (C:\...)
+    if (pathStr.size() >= 2 && pathStr[1] == L':')
+    {
+        return L"\\\\?\\" + pathStr;
+    }
+    // 对于网络路径 (\\server\share)
+    else if (pathStr.size() >= 2 && pathStr[0] == L'\\' && pathStr[1] == L'\\')
+    {
+        return L"\\\\?\\UNC\\" + pathStr.substr(2);
+    }
+
+    return pathStr;
+}
+
+// 使用 Windows API 创建目录（支持长路径）
+static bool createDirectoryLongPath(const fs::path& dirPath)
+{
+    std::wstring wpath = dirPath.wstring();
+    std::wstring longPath = toLongPath(wpath);
+
+    BOOL result = CreateDirectoryW(longPath.c_str(), NULL);
+    if (!result && GetLastError() != ERROR_ALREADY_EXISTS)
+    {
+        DWORD error = GetLastError();
+        std::cerr << "CreateDirectoryW failed. Error code: " << error << ", Path length: " << longPath.size() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// 使用 Windows API 创建文件（支持长路径）
+static bool createFileLongPath(const fs::path& filePath)
+{
+    std::wstring wpath = filePath.wstring();
+    std::wstring longPath = toLongPath(wpath);
+
+    HANDLE hFile = CreateFileW(
+        longPath.c_str(),
+        GENERIC_WRITE,
+        FILE_SHARE_WRITE | FILE_SHARE_READ,
+        NULL,
+        CREATE_NEW,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    if (hFile == INVALID_HANDLE_VALUE)
+    {
+        DWORD error = GetLastError();
+        std::cerr << "CreateFileW failed. Error code: " << error << ", Path length: " << longPath.size() << std::endl;
+        return false;
+    }
+
+    CloseHandle(hFile);
+    return true;
+}
+
 void DecompressionLoop::createDirectory(const fs::path &directoryPath)
 {
     try
     {
-        // 确保父目录存在
+        // 先尝试使用 std::filesystem（支持长路径的系统会正常工作）
         if (!directoryPath.parent_path().empty() && !fs::exists(directoryPath.parent_path()))
         {
             createDirectory(directoryPath.parent_path());
         }
 
         bool created = fs::create_directory(directoryPath);
+        if (!created)
+        {
+            // 如果 std::filesystem 失败，尝试使用 Windows API 长路径
+            created = createDirectoryLongPath(directoryPath);
+            if (!created)
+            {
+                throw std::runtime_error("createDirectory()-Failed with Windows API: " + directoryPath.string());
+            }
+        }
     }
     catch (const std::exception &e)
     {
-        throw std::runtime_error("createDirectory()-Error: " + directoryPath.string());
+        throw std::runtime_error("createDirectory()-Error: " + directoryPath.string() + " - " + e.what());
     }
 }
 
@@ -268,11 +341,22 @@ bool DecompressionLoop::createFile(const fs::path &filePath)
             createDirectory(filePath.parent_path());
         }
 
+        // 先尝试使用 std::ofstream
         std::ofstream outfile(filePath);
+        if (!outfile)
+        {
+            // 如果失败，尝试使用 Windows API 长路径
+            if (!createFileLongPath(filePath))
+            {
+                throw std::runtime_error("createFile()-Error:Failed to create file: " + filePath.string() +
+                                         "\nPath length: " + std::to_string(filePath.string().size()) +
+                                         "\nPossible reasons: path too long (>260 chars) or permission denied");
+            }
+        }
     }
     catch (const fs::filesystem_error &e)
     {
-        throw std::runtime_error("createDirectory()-Error: " + filePath.string());
+        throw std::runtime_error("createFile()-Error:Filesystem error: " + filePath.string() + " - " + e.what());
     }
     return true;
 }

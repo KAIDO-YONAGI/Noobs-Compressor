@@ -2,6 +2,34 @@
 
 namespace fs = std::filesystem;
 
+// 将路径转换为 Windows 长路径格式（添加 \\?\ 前缀）
+// 这样可以突破 260 字符的限制
+static std::wstring toLongPath(const std::filesystem::path& p)
+{
+    std::wstring pathStr = p.wstring();
+
+    // 如果路径已经以 \\?\ 开头，直接返回
+    if (pathStr.rfind(L"\\\\?\\", 0) == 0)
+        return pathStr;
+
+    // 如果路径超过 240 字符，添加 \\?\ 前缀
+    if (pathStr.size() >= 240)
+    {
+        // 对于绝对路径 (C:\...)
+        if (pathStr.size() >= 2 && pathStr[1] == L':')
+        {
+            return L"\\\\?\\" + pathStr;
+        }
+        // 对于网络路径 (\\server\share)
+        else if (pathStr.size() >= 2 && pathStr[0] == L'\\' && pathStr[1] == L'\\')
+        {
+            return L"\\\\?\\UNC\\" + pathStr.substr(2);
+        }
+    }
+
+    return pathStr;
+}
+
 std::filesystem::path PathTransfer::transPath(const std::string& p)
 {
     return fs::path(p);
