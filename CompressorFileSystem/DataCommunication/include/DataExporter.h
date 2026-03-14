@@ -51,7 +51,7 @@ public:
                                     "\nPossible reasons: path too long (>260 chars), permission denied, or file locked");
         }
         this->outFile = std::move(outFile);
-    };
+    }
 
     /* 析构函数，自动关闭输出文件 */
     ~DataExporter()

@@ -4,7 +4,6 @@
 #include "FileLibrary.h"
 #include "EntryDetails.h"
 #include <queue>
-#include <windows.h>
 
 class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
 {
