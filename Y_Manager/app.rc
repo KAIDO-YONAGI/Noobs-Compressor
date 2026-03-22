@@ -5,8 +5,8 @@ IDI_APPICON ICON "YONAGII_512x512.ico"
 
 // 版本信息
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,1,0,0
-PRODUCTVERSION 1,1,0,0
+FILEVERSION 1,1,1
+PRODUCTVERSION 1,1,1
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -14,8 +14,8 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "YONAGI"
             VALUE "FileDescription", "Secure Files Compressor"
-            VALUE "FileVersion", "1.1.0.0"
-            VALUE "ProductVersion", "1.1.0.0"
+            VALUE "FileVersion", "1.1.1"
+            VALUE "ProductVersion", "1.1.1"
             VALUE "OriginalFilename", "Secure Files Compressor.exe"
             VALUE "ProductName", "Secure Files Compressor"
         END

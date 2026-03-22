@@ -62,7 +62,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
             if (magicNum != MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
-            allLoopDone(); // 完成所有循环后设置完成标志并return退出
+            setAllLoopDone(); // 完成所有循环后设置完成标志并return退出
             return;
         }
         while (offset > 0)
@@ -73,7 +73,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
                 return;
 
             buffer.clear();
-            loadBySeparatedStandard(standardsReader, countOfChildDirectory, aes);
+            loadEntryBlock(standardsReader, countOfChildDirectory, aes);
         }
     }
     catch (const std::exception &e)
@@ -82,7 +82,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     }
 }
 
-void BinaryStandardLoader::loadBySeparatedStandard(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes)
+void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes)
 {
     if (offset == 0)
         return;
@@ -151,19 +151,19 @@ void BinaryStandardLoader::loadBySeparatedStandard(StandardsReader &standardsRea
             }
         }
     }
-    requestDone();       // 设置块完成标志
+    setRequestDone();       // 设置块完成标志
     if (tempOffset == 0) // tempOffset为0，说明到达末尾，减去相应偏移量
     {
         offset -= readSize;
         return;
     }
 }
-void BinaryStandardLoader::requestDone()
+void BinaryStandardLoader::setRequestDone()
 {
 
     blockIsDone = true;
 }
-void BinaryStandardLoader::allLoopDone()
+void BinaryStandardLoader::setAllLoopDone()
 {
     if (inFile.is_open())
     {
