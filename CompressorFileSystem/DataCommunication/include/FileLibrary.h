@@ -29,7 +29,7 @@ namespace Y_flib
     using SizeOfMagicNum = uint32_t;
     using SizeOfFlag = uint8_t;
 
-    using IvSize = __uint128_t;
+    using IvSize = std::array<uint8_t, 16>;
 
     using DataBlock = std::vector<unsigned char>;
 }
@@ -50,7 +50,7 @@ constexpr Y_flib::CompressorVersion VERSION = 0; // 版本号
 
 constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
 // 实现分割方案，为分块加密和解压时的分块读取密文做准备
-constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024;     // 读取的数据块大小，需要确保大于文件头大小HeaderSize和各种文件标准的最大值（可以添加检测以确保ENtry原子性）
+constexpr Y_flib::UpSizeOfBuffer BUFFER_SIZE = 8 * 1024 * 1024;  // 读取的数据块大小，需要确保大于文件头大小HeaderSize和各种文件标准的最大值（可以添加检测以确保ENtry原子性）
 constexpr Y_flib::UpSizeOfBuffer HEADER_BUFFER_SIZE = 16 * 1024; // 目录缓冲大小
 
 // 此处采用软件层动态维护tempOffect来实现，避免了因ofstream等文件流的默认缓冲而导致的依赖文件大小的偏移量读取时的同步困难问题。此外，频繁地进行flush()可能导致数据丢失

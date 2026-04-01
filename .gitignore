@@ -1,11 +1,11 @@
 # ignore IDE setting files
 .vscode/
-
+.vs/
 # ignore build directories
 build-debug/
 build-release/
 build-size/
-
+out/
 # ignore test files
 bin/
 *.txt

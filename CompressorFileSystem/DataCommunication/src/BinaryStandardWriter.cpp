@@ -122,7 +122,7 @@ void BinaryStandardWriter::writeBlankSeparatedStandard()
 {
     standardWriter.writeBinaryStandards(FlagType::Separated, outFile);
     standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), outFile);
-    standardWriter.writeBinaryStandards(Y_flib::IvSize(0), outFile);
+    standardWriter.writeBinaryStandards(Y_flib::IvSize{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}, outFile);
 }
 // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
 void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream &File)

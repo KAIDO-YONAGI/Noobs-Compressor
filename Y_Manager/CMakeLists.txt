@@ -2,24 +2,30 @@ cmake_minimum_required(VERSION 3.20)
 
 project(SecureCompressor)
 
+# ========================
+# C++ 标准（通用写法）
+# ========================
 set(CMAKE_CXX_STANDARD 20)
-
-set(CMAKE_C_COMPILER "C:/msys64/ucrt64/bin/gcc.exe")
-set(CMAKE_CXX_COMPILER "C:/msys64/ucrt64/bin/g++.exe")
-set(WINDRES "C:/msys64/ucrt64/bin/windres.exe")
-
-set(OUTPUT_EXE "${CMAKE_SOURCE_DIR}/bin/Secure Files Compressor.exe")
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ========================
-# 资源文件
+# 不要在这里写编译器路径 ❗
 # ========================
-set(RES_OBJ "${CMAKE_BINARY_DIR}/app_res.o")
 
-add_custom_command(
-    OUTPUT ${RES_OBJ}
-    COMMAND ${WINDRES} -i ${CMAKE_SOURCE_DIR}/app.rc -o ${RES_OBJ}
-    DEPENDS ${CMAKE_SOURCE_DIR}/app.rc
-)
+# ========================
+# 资源文件（Windows）
+# ========================
+if (WIN32)
+    enable_language(RC)
+
+    set(RES_OBJ "${CMAKE_BINARY_DIR}/app_res.o")
+
+    add_custom_command(
+        OUTPUT ${RES_OBJ}
+        COMMAND windres -i ${CMAKE_SOURCE_DIR}/app.rc -o ${RES_OBJ}
+        DEPENDS ${CMAKE_SOURCE_DIR}/app.rc
+    )
+endif()
 
 # ========================
 # include 目录
@@ -65,101 +71,106 @@ set(SOURCES
     "${CMAKE_SOURCE_DIR}/../ThreadPool/src/ThreadPool.cpp"
     "${CMAKE_SOURCE_DIR}/main.cpp"
     "${CMAKE_SOURCE_DIR}/IconHandler.cpp"
-    ${RES_OBJ}
 )
+
+if (WIN32)
+    list(APPEND SOURCES ${RES_OBJ})
+endif()
 
 add_executable(SecureCompressor ${SOURCES})
 
 # ========================
-# 编译 & 链接参数
-# ========================
-# ========================
-# 不同模式的编译配置
+# 编译选项（核心通用逻辑）
 # ========================
 
-# Debug（开发用：快 + 可调试）
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+# Debug
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
-    target_compile_options(SecureCompressor PRIVATE
-        -g3
-        -Og
-        -gdwarf-4
-
-        # 保留结构但不做激进优化
-        -ffunction-sections
-        -fdata-sections
-
-        # ⚠️ 不开这些（保证调试正常）
-        # -flto
-        # -fno-exceptions
-        # -fvisibility=hidden
-    )
-
-    target_link_options(SecureCompressor PRIVATE
-        -static-libgcc
-        -static-libstdc++
-        # ⚠️ 不 strip
-    )
+    if (MSVC)
+        target_compile_options(SecureCompressor PRIVATE
+            /Zi
+            /Od
+        )
+    else()
+        target_compile_options(SecureCompressor PRIVATE
+            -g3
+            -Og
+            -gdwarf-4
+            -ffunction-sections
+            -fdata-sections
+        )
+    endif()
 
 endif()
 
+# Release
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
 
-# Release（性能优先）
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    if (MSVC)
+        target_compile_options(SecureCompressor PRIVATE
+            /O2
+            /DNDEBUG
+        )
+    else()
+        target_compile_options(SecureCompressor PRIVATE
+            -O3
+            -DNDEBUG
+            -ffunction-sections
+            -fdata-sections
+            -fvisibility=hidden
+            -fno-rtti
+        )
 
-    target_compile_options(SecureCompressor PRIVATE
-        -O3
-        -DNDEBUG
-        -ffunction-sections
-        -fdata-sections
-        -fvisibility=hidden
-        -fno-rtti
-    )
-
-    target_link_options(SecureCompressor PRIVATE
-        -Wl,--gc-sections
-        -Wl,--as-needed
-        -static
-        -static-libgcc
-        -static-libstdc++
-        -s
-    )
+        target_link_options(SecureCompressor PRIVATE
+            -Wl,--gc-sections
+            -Wl,--as-needed
+            -static-libgcc
+            -static-libstdc++
+            -s
+        )
+    endif()
 
 endif()
 
+# MinSize
+if (CMAKE_BUILD_TYPE STREQUAL "MinSize")
 
-# MinSize（极限体积版 👉 你现在主力）
-if(CMAKE_BUILD_TYPE STREQUAL "MinSize")
+    if (MSVC)
+        target_compile_options(SecureCompressor PRIVATE
+            /O1
+            /DNDEBUG
+        )
+    else()
+        target_compile_options(SecureCompressor PRIVATE
+            -Os
+            -DNDEBUG
+            -ffunction-sections
+            -fdata-sections
+            -fvisibility=hidden
+            -fno-rtti
+        )
 
-    target_compile_options(SecureCompressor PRIVATE
-        -Os
-        -DNDEBUG
-        -ffunction-sections
-        -fdata-sections
-        -fvisibility=hidden
-        -fno-rtti
-
-    )
-
-    target_link_options(SecureCompressor PRIVATE
-        -Wl,--gc-sections
-        -Wl,--as-needed
-        -static
-        -static-libgcc
-        -static-libstdc++
-        -s
-    )
+        target_link_options(SecureCompressor PRIVATE
+            -Wl,--gc-sections
+            -Wl,--as-needed
+            -static-libgcc
+            -static-libstdc++
+            -s
+        )
+    endif()
 
 endif()
 
 # ========================
-# 链接库
+# Windows 系统库
 # ========================
-target_link_libraries(SecureCompressor
-    ws2_32
-    crypt32
-    gdi32
-)
+if (WIN32)
+    target_link_libraries(SecureCompressor
+        ws2_32
+        crypt32
+        gdi32
+    )
+endif()
 
 # ========================
 # 输出路径

@@ -1,4 +1,5 @@
 #include "../include/BinaryStandardLoader.h"
+#include <algorithm>
 namespace fs = std::filesystem;
 void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Header &header, Y_flib::DataBlock &buffer)
 {
@@ -88,7 +89,7 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
         return;
 
     FlagType flag;
-    Y_flib::IvSize ivNum = 0;
+    Y_flib::IvSize ivNum{};
     loadSeparatedStandard(const_cast<FlagType &>(flag), standardsReader, ivNum);
 
     // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
@@ -103,7 +104,7 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
     // 根据偏移量读取数据块
     StandardsReader::readDataBlock(readSize, inFile, buffer);
 
-    if (ivNum != 0) // 当需要解压时，对buffer进行解密操作
+    if (std::any_of(ivNum.begin(), ivNum.end(), [](auto byte) { return byte != 0; })) // 当需要解压时，对buffer进行解密操作
     {
         Y_flib::DataBlock blockWithIv;
         Y_flib::DataBlock decryptedBlock;
