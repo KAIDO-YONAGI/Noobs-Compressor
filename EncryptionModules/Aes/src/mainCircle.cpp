@@ -101,7 +101,7 @@ void Aes::aes(char *p, int plen)
 
     for (int offset = 0; offset < plen;)
     {
-        int blockSize = std::min(16, plen - offset);
+        int blockSize = (plen - offset < 16) ? (plen - offset) : 16;
 
         // 加密反馈寄存器
         int tempArray[4][4];
@@ -148,7 +148,7 @@ void Aes::deAes(char *c, int clen)
 
     for (int offset = 0; offset < clen;)
     {
-        int blockSize = std::min(16, clen - offset);
+        int blockSize = (clen - offset < 16) ? (clen - offset) : 16;
         uint8_t cipherBackup[16] = {0};
         memcpy(cipherBackup, c + offset, blockSize);
 

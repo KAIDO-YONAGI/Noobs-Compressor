@@ -100,8 +100,6 @@ private:
     Y_flib::DataBlock buffer;    // 数据处理缓冲区
 
 public:
-    /* 默认构造函数 */
-    Aes() {};
 
     /* 初始化AES对象，哈希密钥、扩展密钥、初始化IV */
     Aes(const char *aes_key)

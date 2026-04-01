@@ -55,11 +55,6 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             // system("cls");
 
-            std::cout << "Processing file: " << filename << "\n"
-                      << std::fixed << std::setw(6) << std::setprecision(2)
-                      << (100.0 * blockCount) / totalBlocks
-                      << "% \n";
-
             Y_flib::DataBlock compressedData;
             huffmanZip.encode(data_In, compressedData);
 
@@ -67,6 +62,11 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
             dataExporter.exportCompressedData(encryptedBlock); // 读取的数据传输给exporter
             encryptedBlock.clear();
+
+            std::cout << "Processing file: " << filename << "\n"
+                      << std::fixed << std::setw(6) << std::setprecision(2)
+                      << (100.0 * blockCount) / totalBlocks
+                      << "% \n";
         }
 
         if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
