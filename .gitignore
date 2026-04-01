@@ -9,6 +9,7 @@ build-size/
 # ignore test files
 bin/
 *.txt
+!CMakeLists.txt
 *.log
 
 src/main.cpp
