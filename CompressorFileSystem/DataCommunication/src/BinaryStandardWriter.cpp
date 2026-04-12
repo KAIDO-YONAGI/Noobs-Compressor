@@ -205,6 +205,11 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
             rootDetails.setFileSize(1); // 利用大小区分符号链接
             writeSymbolLinkStandard(rootDetails, tempOffset);
         }
+        else
+        {
+            throw("entryProcessor()-Error:Unsupported file type: " + parentPath.string() + "\n");
+        }
+
     }
 }
 Y_flib::FileCount BinaryStandardWriter::countFilesInDirectory(const std::filesystem::path &filePathToScan)

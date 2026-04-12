@@ -1,45 +1,5 @@
 #include "../include/BinaryStandardLoader.h"
 
-void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Y_flib::Header &header, Y_flib::DataBlock &buffer)
-{
-    // 读取Header
-    if (inFile.tellg() == std::streampos(0))
-    {
-        StandardsReader::readDataBlock(Y_flib::Constants::HEADER_SIZE, inFile, buffer);
-        // 复制Header数据
-        std::memcpy(&header, buffer.data(), sizeof(Y_flib::Header));
-        // 验证魔数
-        if (header.magicNum_1 != Y_flib::Constants::MAGIC_NUM ||
-            header.magicNum_2 != Y_flib::Constants::MAGIC_NUM)
-        {
-            throw std::runtime_error("Invalid file format");
-        }
-        if (header.directoryOffset == 0)
-            throw std::runtime_error("Invalid directory offset in header");
-        offset = header.directoryOffset - Y_flib::Constants::HEADER_SIZE;
-        std::cout << "Header loaded successfully.\n";
-    }
-    else
-    {
-        throw std::runtime_error("Header already loaded or file pointer not at the beginning");
-    }
-}
-
-void BinaryStandardLoader::loadSeparatedStandard(Y_flib::FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum)
-{
-    flag = standardsReader.readBinaryStandards<Y_flib::FlagType>();
-
-    // 读取子块偏移量
-    tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
-    // 读取iv头
-    ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
-
-    offset -= Y_flib::Constants::SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时步过固定头部长度
-    if (flag != Y_flib::FlagType::Separated)
-    {
-        throw std::runtime_error("Invalid flag type for separated standard");
-    }
-}
 void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
 {
     StandardsReader standardsReader(inFile);
@@ -158,37 +118,47 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
         return;
     }
 }
-void BinaryStandardLoader::setRequestDone()
+void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Y_flib::Header &header, Y_flib::DataBlock &buffer)
 {
-
-    blockIsDone = true;
-}
-void BinaryStandardLoader::setAllLoopDone()
-{
-    if (inFile.is_open())
+    // 读取Header
+    if (inFile.tellg() == std::streampos(0))
     {
-        inFile.close();
-    }
-    allDone = true;
-}
-void BinaryStandardLoader::restartLoader()
-{
-    Locator locator;
-    if (!allLoopIsDone())
-    {
-        std::ifstream newInFile(loadPath, std::ios::binary);
-        if (!newInFile)
-            throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
-
-        size_t offsetToRestart = header.directoryOffset - offset;
-
-        locator.locateFromBegin(newInFile, offsetToRestart);
-        this->inFile = std::move(newInFile);
-        blockIsDone = false;
+        StandardsReader::readDataBlock(Y_flib::Constants::HEADER_SIZE, inFile, buffer);
+        // 复制Header数据
+        std::memcpy(&header, buffer.data(), sizeof(Y_flib::Header));
+        // 验证魔数
+        if (header.magicNum_1 != Y_flib::Constants::MAGIC_NUM ||
+            header.magicNum_2 != Y_flib::Constants::MAGIC_NUM)
+        {
+            throw std::runtime_error("Invalid file format");
+        }
+        if (header.directoryOffset == 0)
+            throw std::runtime_error("Invalid directory offset in header");
+        offset = header.directoryOffset - Y_flib::Constants::HEADER_SIZE;
+        std::cout << "Header loaded successfully.\n";
     }
     else
-        return;
+    {
+        throw std::runtime_error("Header already loaded or file pointer not at the beginning");
+    }
 }
+
+void BinaryStandardLoader::loadSeparatedStandard(Y_flib::FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum)
+{
+    flag = standardsReader.readBinaryStandards<Y_flib::FlagType>();
+
+    // 读取子块偏移量
+    tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    // 读取iv头
+    ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
+
+    offset -= Y_flib::Constants::SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时步过固定头部长度
+    if (flag != Y_flib::FlagType::Separated)
+    {
+        throw std::runtime_error("Invalid flag type for separated standard");
+    }
+}
+
 void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
 
 {
@@ -216,5 +186,34 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
 
         inBlock.clear();
         encryptedBlock.clear();
+    }
+}
+void BinaryStandardLoader::setRequestDone()
+{
+
+    blockIsDone = true;
+}
+void BinaryStandardLoader::setAllLoopDone()
+{
+    if (inFile.is_open())
+    {
+        inFile.close();
+    }
+    allDone = true;
+}
+void BinaryStandardLoader::restartLoader()
+{
+    Locator locator;
+    if (!allLoopIsDone())
+    {
+        std::ifstream newInFile(loadPath, std::ios::binary);
+        if (!newInFile)
+            throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
+
+        size_t offsetToRestart = header.directoryOffset - offset;
+
+        locator.locateFromBegin(newInFile, offsetToRestart);
+        this->inFile = std::move(newInFile);
+        blockIsDone = false;
     }
 }
