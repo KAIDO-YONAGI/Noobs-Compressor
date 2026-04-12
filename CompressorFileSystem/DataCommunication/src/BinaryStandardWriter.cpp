@@ -1,15 +1,14 @@
 #include "../include/BinaryStandardWriter.h"
-namespace fs = std::filesystem;
 
 void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
     try
     {
-        for (const fs::directory_entry &entry : fs::directory_iterator(file.getFilePathToScan()))
+        for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(file.getFilePathToScan()))
         {
             bool isFile = true;
             std::string name;
-            fs::path fullPath;
+            std::filesystem::path fullPath;
             Y_flib::FileNameSize sizeOfName;
             Y_flib::FileSize fileSize;
             if (entry.is_regular_file())
@@ -44,7 +43,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entr
             writeStorageStandard(details, entryQueue, tempOffset, offset);
         }
     }
-    catch (fs::filesystem_error &e)
+    catch (std::filesystem::filesystem_error &e)
     {
         throw std::runtime_error(std::string("BinaryStandardWriter encountered a filesystem error: ") + e.what());
     }
@@ -164,9 +163,9 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
     for (Y_flib::FileCount i = 0; i < num; i++)
     {
 
-        fs::path sPath = transfer.transPath(filePathToScan[i]);
+        std::filesystem::path sPath = transfer.transPath(filePathToScan[i]);
 
-        if (fs::exists(sPath))
+        if (std::filesystem::exists(sPath))
         {
             file.setFilePathToScan(sPath);
         }
@@ -175,14 +174,14 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
             throw("entryProcessor()-Error:file Not Exist: " + sPath.string() + "\n");
         }
 
-        fs::path parentPath = file.getFilePathToScan(); // 获取根目录
+        std::filesystem::path parentPath = file.getFilePathToScan(); // 获取根目录
 
         // 先写入根目录(或文件)自身（手动构造）
 
         std::string rootName = parentPath.filename().string();
         Y_flib::FileNameSize rootNameSize = rootName.size();
-        bool isFile = fs::is_regular_file(parentPath);
-        Y_flib::FileSize fileSize = isFile ? fs::file_size(parentPath) : 0;
+        bool isFile = std::filesystem::is_regular_file(parentPath);
+        Y_flib::FileSize fileSize = isFile ? std::filesystem::file_size(parentPath) : 0;
 
         EntryDetails rootDetails(
             rootName,     // 目录名 (如 "Folder")
@@ -191,7 +190,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
             isFile,       // 是否为常规文件
             parentPath    // 完整路径
         );
-        const fs::directory_entry entry(parentPath);
+        const std::filesystem::directory_entry entry(parentPath);
         if (entry.is_regular_file())
         {
             writeFileStandard(rootDetails, tempOffset);
@@ -208,24 +207,24 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
     }
 }
-Y_flib::FileCount BinaryStandardWriter::countFilesInDirectory(const fs::path &filePathToScan)
+Y_flib::FileCount BinaryStandardWriter::countFilesInDirectory(const std::filesystem::path &filePathToScan)
 {
     try
     {
-        return std::distance(fs::directory_iterator(filePathToScan), fs::directory_iterator{});
+        return std::distance(std::filesystem::directory_iterator(filePathToScan), std::filesystem::directory_iterator{});
     }
-    catch (fs::filesystem_error &e)
+    catch (std::filesystem::filesystem_error &e)
     {
         throw("countFilesInDirectory()-Error: " + std::string(e.what()) + "\n");
     }
 }
-Y_flib::FileSize BinaryStandardWriter::getFileSize(const fs::path &filePathToScan)
+Y_flib::FileSize BinaryStandardWriter::getFileSize(const std::filesystem::path &filePathToScan)
 {
     try
     {
         return locator.getFileSize(filePathToScan, outFile);
     }
-    catch (fs::filesystem_error &e)
+    catch (std::filesystem::filesystem_error &e)
     {
         std::cerr << "getFileSize()-Error: " << e.what() << "\n";
         return 0;

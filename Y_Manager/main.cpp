@@ -4,14 +4,14 @@
 #include "IconHandler.h"
 #include <windows.h>
 #include <limits>
-namespace fs = std::filesystem;
+
 
 // Windows API路径处理辅助函数
-fs::path make_path(const std::string &utf8_str)
+std::filesystem::path make_path(const std::string &utf8_str)
 {
     if (utf8_str.empty())
     {
-        return fs::path("");
+        return std::filesystem::path("");
     }
 
     // 首先尝试用 UTF-8 进行转换
@@ -34,7 +34,7 @@ fs::path make_path(const std::string &utf8_str)
             wide_str.pop_back();
         }
 
-        return fs::path(wide_str);
+        return std::filesystem::path(wide_str);
     }
 
     // UTF-8 转换成功
@@ -46,7 +46,7 @@ fs::path make_path(const std::string &utf8_str)
         wide_str.pop_back();
     }
 
-    return fs::path(wide_str);
+    return std::filesystem::path(wide_str);
 }
 
 bool path_exists(const std::string &utf8_path_str)
@@ -54,7 +54,7 @@ bool path_exists(const std::string &utf8_path_str)
     try
     {
         auto path = make_path(utf8_path_str);
-        return fs::exists(path);
+        return std::filesystem::exists(path);
     }
     catch (...)
     {
@@ -71,7 +71,7 @@ std::string get_exe_directory()
         // 获取失败或路径过长，回退到当前工作目录
         try
         {
-            return fs::current_path().string();
+            return std::filesystem::current_path().string();
         }
         catch (...)
         {
@@ -124,7 +124,7 @@ std::string current_path_string()
 {
     try
     {
-        fs::path current = fs::current_path();
+        std::filesystem::path current = std::filesystem::current_path();
         return current.string();
     }
     catch (...)
@@ -462,7 +462,7 @@ void runCompressionMode(const std::string &basePath)
         // 移除用户可能输入的后缀
         if (hasSyExtension(outputFileName))
         {
-            outputFileName = fs::path(outputFileName).stem().string();
+            outputFileName = std::filesystem::path(outputFileName).stem().string();
         }
 
         // 完整的输出文件路径
@@ -594,9 +594,9 @@ void runDecompressionMode()
             auto compressionFileAbsPath = make_path(deCompressionFilePath);
             if (!compressionFileAbsPath.is_absolute())
             {
-                compressionFileAbsPath = fs::absolute(compressionFileAbsPath);
+                compressionFileAbsPath = std::filesystem::absolute(compressionFileAbsPath);
             }
-            fs::path compressionFileDir = compressionFileAbsPath.parent_path();
+            std::filesystem::path compressionFileDir = compressionFileAbsPath.parent_path();
             std::string currentDir = compressionFileDir.string();
 
             std::string outputDirectory;
@@ -629,8 +629,8 @@ void runDecompressionMode()
                     auto output_path = make_path(outputDirectory);
 
                     // 检查父目录是否存在（输出目录本身可以不存在，会由解压程序创建）
-                    fs::path parent_dir = output_path.parent_path();
-                    if (!parent_dir.empty() && !fs::exists(parent_dir))
+                    std::filesystem::path parent_dir = output_path.parent_path();
+                    if (!parent_dir.empty() && !std::filesystem::exists(parent_dir))
                     {
                         std::cerr << "Error: Parent directory \"" << parent_dir.string() << "\" does not exist!\n";
                         std::cout << "Please enter a valid path.\n";
@@ -638,7 +638,7 @@ void runDecompressionMode()
                     }
 
                     // 如果路径存在且是文件（不是目录），报错
-                    if (fs::exists(output_path) && !fs::is_directory(output_path))
+                    if (std::filesystem::exists(output_path) && !std::filesystem::is_directory(output_path))
                     {
                         std::cerr << "Error: \"" << outputDirectory << "\" exists but is not a directory!\n";
                         std::cout << "Please enter a valid directory path.\n";
@@ -646,7 +646,7 @@ void runDecompressionMode()
                     }
 
                     // 转换为绝对路径（在当前工作目录下执行）
-                    output_path = fs::absolute(output_path);
+                    output_path = std::filesystem::absolute(output_path);
 
                     // 规范化输出目录（移除末尾斜杠）
                     outputDirectory = output_path.string();
@@ -667,14 +667,14 @@ void runDecompressionMode()
             std::string password = getRequiredInput("Enter decryption key (required): ");
 
             // 保存当前工作目录（用于异常安全恢复）
-            fs::path originalPath = fs::current_path();
+            std::filesystem::path originalPath = std::filesystem::current_path();
 
             try
             {
                 Aes aes(password.c_str());
 
                 // 将输入文件路径转换为绝对路径
-                fs::path inputFilePath;
+                std::filesystem::path inputFilePath;
                 try
                 {
                     auto input_path = make_path(deCompressionFilePath);
@@ -745,7 +745,7 @@ void runDecompressionMode()
             // 确保无论如何都恢复原工作目录
             try
             {
-                fs::current_path(originalPath);
+                std::filesystem::current_path(originalPath);
             }
             catch (...)
             {

@@ -6,7 +6,7 @@
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
 #include "../CompressionModules/heffman/include/Heffman.h"
 #include "My_Aes.h"
-
+#include <filesystem>
 class CompressionLoop
 { 
 private:

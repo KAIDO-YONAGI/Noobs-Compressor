@@ -1,10 +1,8 @@
 #include "../include/ToolClasses.h"
 
-namespace fs = std::filesystem;
-
-std::filesystem::path PathTransfer::transPath(const std::string& p)
+std::filesystem::path PathTransfer::transPath(std::string_view p)
 {
-    return fs::path(p);
+    return std::filesystem::path(p);
 }
 
 
@@ -65,15 +63,15 @@ void Locator::locateFromEnd(std::fstream& file, Y_flib::FileSize offset)
 }
 
 Y_flib::FileSize Locator::getFileSize(
-    const fs::path& filePathToScan,
+    const std::filesystem::path& filePathToScan,
     std::ofstream& outFile)
 {
     try
     {
         outFile.flush();
-        return fs::file_size(filePathToScan);
+        return std::filesystem::file_size(filePathToScan);
     }
-    catch (const fs::filesystem_error& e)
+    catch (const std::filesystem::filesystem_error& e)
     {
         std::cerr << "getFileSize() Error: " << e.what() << '\n';
         return 0;

@@ -6,7 +6,8 @@
 #include "EntryParser.h"
 #include "My_Aes.h"
 #include <queue>
-
+#include <algorithm>
+#include <cstring>
 /*
  BinaryStandardLoader - 二进制目录块读取与解析器
 

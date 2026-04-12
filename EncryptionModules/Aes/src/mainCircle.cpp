@@ -1,6 +1,5 @@
 #include "../include/My_Aes.h"
-#include <windows.h>
-#include <wincrypt.h>
+
 #pragma comment(lib, "advapi32.lib")
 
 Y_flib::DataBlock Aes::processDataAES(const Y_flib::DataBlock &inputBuffer, int  mode)

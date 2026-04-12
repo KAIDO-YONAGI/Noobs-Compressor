@@ -1,5 +1,4 @@
 #include "../include/My_Aes.h"
-#include <cstring>
 
 // 轻量级 SHA256 实现
 namespace {

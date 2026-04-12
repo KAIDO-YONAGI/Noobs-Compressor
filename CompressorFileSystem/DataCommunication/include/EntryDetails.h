@@ -1,8 +1,7 @@
 // EntryDetails.h
 #pragma once
-
 #include "FileLibrary.h"
-
+#include <filesystem>
 /* EntryDetails - 文件/目录的元数据容器
  *
  * 功能:

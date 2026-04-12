@@ -211,8 +211,8 @@ Compile `main.cpp` to generate the executable.
 -O3
 ```
 
-- 某些编译器需要链接 **stdc++fs** 以支持文件系统功能  
-  Some compilers require linking **stdc++fs** to support filesystem features
+- 某些编译器需要链接 **stdc++std::filesystem** 以支持文件系统功能  
+  Some compilers require linking **stdc++std::filesystem** to support filesystem features
 
 - **不要启用 LTO（链接时优化）**  
   **Do not enable LTO (Link Time Optimization)**

@@ -1,12 +1,12 @@
 // EntryProcessor.cpp
 #include "../include/EntryProcessor.h"
-namespace fs = std::filesystem;
 
-void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+
+void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot)
 {
 
-    fs::path oPath = fullOutPath;
-    fs::path sPath;
+    std::filesystem::path oPath = fullOutPath;
+    std::filesystem::path sPath;
 
     file.setOutPutFilePath(oPath);
 
@@ -27,7 +27,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
         {
 
             sPath = transfer.transPath(filePathToScan[i]);
-            if (!fs::is_regular_file(sPath))
+            if (!std::filesystem::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
                 binaryStandardWriter->binaryStandardWriter(file, entryQueue, tempOffset, offset); // 添加当前目录到队列以启动整个BFS递推

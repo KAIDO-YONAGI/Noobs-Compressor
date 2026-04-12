@@ -1,5 +1,4 @@
 #include "../include/EntryParser.h"
-namespace fs = std::filesystem;
 
 void EntryParser::checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize requiredSize) const
 {
@@ -13,12 +12,12 @@ void EntryParser::checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib:
     }
 }
 
-fs::path EntryParser::pathConnector(std::string &fileName)
+std::filesystem::path EntryParser::pathConnector(std::string &fileName)
 {
-    fs::path pathToProcess;
+    std::filesystem::path pathToProcess;
     if (!entryQueue.empty())
     {
-        fs::path lastPath = entryQueue.front().first.getFullPath();
+        std::filesystem::path lastPath = entryQueue.front().first.getFullPath();
         pathToProcess = lastPath / fileName;
     }
     else
@@ -30,7 +29,7 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot
 {
     // 解析文件名偏移量
     std::string fileName;
-    fs::path pathToProcess;
+    std::filesystem::path pathToProcess;
     Y_flib::FileNameSize fileNameSize = 0;
     Y_flib::FileSize compressedSize = 0;
     Y_flib::FileSize lastOffset = 0;
@@ -72,7 +71,7 @@ void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool i
     // 解析目录名，后续拼接为绝对路径之后入队
     Y_flib::FileNameSize directoryNameSize = 0;
     std::string directoryName;
-    fs::path pathToProcess;
+    std::filesystem::path pathToProcess;
 
     // 解析信息，注意和下一步的顺序不能颠倒，否则会导致读写协议不对称，后续解析失败
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
@@ -103,9 +102,9 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
 
     if (parserMode == 2) // 解压模式,把逻辑根写进队列
     {
-        fs::path root = transfer.transPath(rootForDecompression);
-        fs::path file = transfer.transPath(directoryName);
-        fs::path fullPath = root / file;
+        std::filesystem::path root = transfer.transPath(rootForDecompression);
+        std::filesystem::path file = transfer.transPath(directoryName);
+        std::filesystem::path fullPath = root / file;
         EntryDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
         entryQueue.push({logicalRootDetails, count});
     }

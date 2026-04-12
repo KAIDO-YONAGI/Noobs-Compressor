@@ -1,16 +1,13 @@
 // FileLibaray.h
 #pragma once
-
-#include <filesystem> //编译时需要强制链接为静态库
 // 关于编译：需要使用普通O3优化级别，且需要开启C++20标准支持（编译器选项 -std=c++20）。此外，确保链接器正确链接了所需的库，如stdc++fs（对于某些编译器）以支持文件系统功能。
 // 别开LTO（链接时优化）选项，因为它可能会导致某些符号被错误地优化掉，尤其是在使用了模板或内联函数的情况下。
-#include <fstream>
-#include <vector>
-#include <iostream>
-#include <cstring>
 #include <cstdint>
 #include <array>
-#include <memory>
+#include <vector>
+//关于包含文件的规则
+//只在用到头文件的cpp的.h中包含对应头文件，而不是.cpp中，或者总的库头文件中
+
 // 命名空间
 namespace Y_flib
 {

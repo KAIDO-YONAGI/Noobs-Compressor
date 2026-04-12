@@ -1,6 +1,5 @@
 #include "../include/BinaryStandardLoader.h"
-#include <algorithm>
-namespace fs = std::filesystem;
+
 void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Y_flib::Header &header, Y_flib::DataBlock &buffer)
 {
     // 读取Header
@@ -129,7 +128,7 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
         if (!entryQueue.empty() && countOfChildDirectory == 0)
         {
             // 目录队列处理逻辑
-            const fs::path &directoryPath = entryQueue.front().first.getFullPath();
+            const std::filesystem::path &directoryPath = entryQueue.front().first.getFullPath();
             if (!directoryQueue_ready.empty())
             {
                 if (directoryQueue_ready.back() != directoryPath)

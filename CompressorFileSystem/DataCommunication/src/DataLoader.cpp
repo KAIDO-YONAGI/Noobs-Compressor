@@ -1,5 +1,5 @@
 #include "../include/DataLoader.h"
-namespace fs = std::filesystem;
+
 void DataLoader::done()
 {
     if (inFile.is_open())
@@ -10,7 +10,7 @@ void DataLoader::done()
     readed = 0;
     data.clear();
 }
-void DataLoader::reset(const fs::path inPath)
+void DataLoader::reset(const std::filesystem::path inPath)
 {
     if (isDone())
     {

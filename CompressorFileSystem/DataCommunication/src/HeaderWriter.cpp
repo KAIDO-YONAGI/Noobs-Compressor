@@ -1,7 +1,6 @@
 #include "../include/HeaderWriter.h"
-namespace fs = std::filesystem;
 
-void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
+void HeaderWriter_v0::writeHeader(std::ofstream &outFile,std::filesystem::path &fullOutPath)
 {
     StandardsWriter standardWriter;
     Locator locator;
@@ -25,7 +24,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     standardWriter.writeBinaryStandards(Y_flib::Constants::HEADER_SIZE,outFile);
     locator.locateFromEnd(outFile, 0);
 }
-void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
+void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot)
 {
 
     StandardsWriter standardWriter;
@@ -46,8 +45,8 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
 
     try
     {
-        fs::path fullOutPath = fs::path(transfer.transPath(outPutFilePath));
-        if (fs::exists(fullOutPath))
+        std::filesystem::path fullOutPath = std::filesystem::path(transfer.transPath(outPutFilePath));
+        if (std::filesystem::exists(fullOutPath))
         {
             throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
         }

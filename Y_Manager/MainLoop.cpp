@@ -1,10 +1,9 @@
 #include "MainLoop.h"
-namespace fs = std::filesystem;
 
 void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
     // 初始化迭代器
-    fs::path blank;
+    std::filesystem::path blank;
     BinaryStandardLoader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
 
     Heffman huffmanZip(1);
@@ -13,7 +12,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
     Y_flib::DataBlock encryptedBlock;
 
-    fs::path loadPath;
+    std::filesystem::path loadPath;
     std::unique_ptr<DataLoader> dataLoader;
 
     Y_flib::FileSize totalBlocks = 1, blockCount = 0;
@@ -30,7 +29,7 @@ void CompressionLoop ::compressionLoop(const std::vector<std::string> &filePathT
 
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
 
-    fs::path filename = loadPath.filename();
+    std::filesystem::path filename = loadPath.filename();
     while (!headerLoaderIterator.fileQueue.empty())
     {
 
@@ -119,7 +118,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     {
         while (!headerLoaderIterator.directoryQueue_ready.empty()) // 重建目录
         {
-            fs::path dirToCreate = headerLoaderIterator.directoryQueue_ready.front();
+            std::filesystem::path dirToCreate = headerLoaderIterator.directoryQueue_ready.front();
 
             // 如果是相对路径，拼接parentPath
             if (!dirToCreate.is_absolute())
@@ -133,8 +132,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         while (!headerLoaderIterator.fileQueue.empty())
         {
             // 获取相对路径并拼接 parentPath
-            fs::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
-            fs::path fullFilePath = parentPath / relativePath;
+            std::filesystem::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
+            std::filesystem::path fullFilePath = parentPath / relativePath;
 
             createFile(fullFilePath); // 重建文件
             // 获取当前的 inFile 引用（在每个文件处理前重新获取，以避免悬挂引用）
@@ -143,8 +142,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
             locator.locateFromBegin(inFile, dataOffset); // 定位到数据区（或已处理块后）
 
-            fs::path filePath = fullFilePath;
-            fs::path filename = filePath.filename();
+            std::filesystem::path filePath = fullFilePath;
+            std::filesystem::path filename = filePath.filename();
             // system("cls");
             std::cout << "Processing file: " << filename << "\n";
             DataExporter dataExporter(filePath);
@@ -233,17 +232,17 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         }
     }
 }
-void DecompressionLoop::createDirectory(const fs::path &directoryPath)
+void DecompressionLoop::createDirectory(const std::filesystem::path &directoryPath)
 {
     try
     {
         // 确保父目录存在
-        if (!directoryPath.parent_path().empty() && !fs::exists(directoryPath.parent_path()))
+        if (!directoryPath.parent_path().empty() && !std::filesystem::exists(directoryPath.parent_path()))
         {
             createDirectory(directoryPath.parent_path());
         }
 
-        bool created = fs::create_directory(directoryPath);
+        bool created = std::filesystem::create_directory(directoryPath);
     }
     catch (const std::exception &e)
     {
@@ -252,25 +251,25 @@ void DecompressionLoop::createDirectory(const fs::path &directoryPath)
 }
 
 // 创建文件 (创建空文件)
-bool DecompressionLoop::createFile(const fs::path &filePath)
+bool DecompressionLoop::createFile(const std::filesystem::path &filePath)
 {
     try
     {
-        if (fs::exists(filePath))
+        if (std::filesystem::exists(filePath))
         {
             std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
             return false; // 文件已存在，跳过创建
         }
 
         // 确保父目录存在
-        if (!filePath.parent_path().empty() && !fs::exists(filePath.parent_path()))
+        if (!filePath.parent_path().empty() && !std::filesystem::exists(filePath.parent_path()))
         {
             createDirectory(filePath.parent_path());
         }
 
         std::ofstream outfile(filePath);
     }
-    catch (const fs::filesystem_error &e)
+    catch (const std::filesystem::filesystem_error &e)
     {
         throw std::runtime_error("createDirectory()-Error: " + filePath.string());
     }

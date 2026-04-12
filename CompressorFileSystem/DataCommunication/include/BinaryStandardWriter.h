@@ -3,6 +3,8 @@
 #include "FileLibrary.h"
 #include "ToolClasses.h"
 #include "EntryDetails.h"
+#include <filesystem>
+#include <iostream>
 
 /* BinaryStandardWriter - 二进制目录结构序列化写入器
  *

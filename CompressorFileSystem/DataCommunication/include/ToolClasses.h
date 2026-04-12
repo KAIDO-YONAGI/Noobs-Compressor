@@ -4,6 +4,9 @@
 #include "FileLibrary.h"
 #include "EntryDetails.h"
 #include <queue>
+#include <fstream>
+#include <filesystem>
+#include <iostream>
 
 class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
 {
@@ -18,7 +21,7 @@ class PathTransfer
 {
 public:
     /* 转换输入路径为fs::path，支持中文路径 */
-    std::filesystem::path transPath(const std::string &p);
+    std::filesystem::path transPath(std::string_view p);
 };
 
 /* StandardsWriter - 二进制数值写入器
