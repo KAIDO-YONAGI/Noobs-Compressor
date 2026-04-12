@@ -37,7 +37,7 @@ void DataLoader::dataLoader()
         return;
     try
     {
-        StandardsReader::readDataBlock(BUFFER_SIZE, inFile, data);
+        StandardsReader::readDataBlock(Y_flib::Constants::BUFFER_SIZE, inFile, data);
     }
     catch (const std::exception &e)
     {

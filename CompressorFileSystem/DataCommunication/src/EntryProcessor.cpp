@@ -16,7 +16,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
 
         // 预留回填偏移量的字节位置
         Y_flib::DirectoryOffsetSize tempOffset = 0; // 初始偏移量
-        Y_flib::DirectoryOffsetSize offset = HEADER_SIZE;
+        Y_flib::DirectoryOffsetSize offset = Y_flib::Constants::HEADER_SIZE;
 
         binaryStandardWriter->writeBlankSeparatedStandard();
 

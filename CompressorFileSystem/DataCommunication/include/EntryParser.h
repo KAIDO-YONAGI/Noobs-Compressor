@@ -24,7 +24,7 @@ private:
     std::vector<std::string> &filePathToScan;
     Y_flib::DataBlock &buffer;
     PathTransfer transfer;
-    const Header &header;
+    const Y_flib::Header &header;
     const Y_flib::DirectoryOffsetSize &offset;
     const Y_flib::DirectoryOffsetSize &tempOffset;
     size_t parserMode = 0; // 0：占位、1：压缩模式、2：解压模式
@@ -115,7 +115,7 @@ public:
 
     /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
     EntryParser(Y_flib::DataBlock &buffer, EntryQueue &entryQueue,
-                EntryQueue &fileQueue, const Header &header,
+                EntryQueue &fileQueue, const Y_flib::Header &header,
                 const Y_flib::DirectoryOffsetSize &offset,
                 const Y_flib::DirectoryOffsetSize &tempOffset,
                 std::vector<std::string> &filePathToScan)

@@ -10,8 +10,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
     // 文件头
-    Y_flib::CompressStrategy strategySize = STRATEGY;
-    Y_flib::CompressorVersion versionSize = VERSION;
+    Y_flib::CompressStrategy strategySize = Y_flib::Constants::STRATEGY;
+    Y_flib::CompressorVersion versionSize = Y_flib::Constants::VERSION;
     Y_flib::HeaderOffsetSize headerOffsetSize = 0;
     Y_flib::DirectoryOffsetSize directoryOffsetSize = 0;
 
@@ -21,8 +21,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,fs::path &fullOutPath)
     standardWriter.writeBinaryStandards(directoryOffsetSize,outFile);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.locateFromBegin(outFile,HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
-    standardWriter.writeBinaryStandards(HEADER_SIZE,outFile);
+    locator.locateFromBegin(outFile,Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
+    standardWriter.writeBinaryStandards(Y_flib::Constants::HEADER_SIZE,outFile);
     locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<std::string> &filePathToScan, const fs::path &fullOutPath, const std::string &logicalRoot)
@@ -35,9 +35,9 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     begin.entryProcessor(filePathToScan, fullOutPath, logicalRoot);
 
     // 回填偏移量并重定位指针至回填前的位置
-    locator.locateFromBegin(outFile, HEADER_SIZE - sizeof(MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
+    locator.locateFromBegin(outFile, Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
     Y_flib::DirectoryOffsetSize directoryOffset = locator.getFileSize(fullOutPath, outFile);
-    standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
+    standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(Y_flib::Constants::MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     locator.locateFromEnd(outFile, 0);
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)

@@ -1,23 +1,23 @@
 #include "../include/BinaryStandardLoader.h"
 #include <algorithm>
 namespace fs = std::filesystem;
-void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Header &header, Y_flib::DataBlock &buffer)
+void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Y_flib::Header &header, Y_flib::DataBlock &buffer)
 {
     // 读取Header
     if (inFile.tellg() == std::streampos(0))
     {
-        StandardsReader::readDataBlock(HEADER_SIZE, inFile, buffer);
+        StandardsReader::readDataBlock(Y_flib::Constants::HEADER_SIZE, inFile, buffer);
         // 复制Header数据
-        std::memcpy(&header, buffer.data(), sizeof(Header));
+        std::memcpy(&header, buffer.data(), sizeof(Y_flib::Header));
         // 验证魔数
-        if (header.magicNum_1 != MAGIC_NUM ||
-            header.magicNum_2 != MAGIC_NUM)
+        if (header.magicNum_1 != Y_flib::Constants::MAGIC_NUM ||
+            header.magicNum_2 != Y_flib::Constants::MAGIC_NUM)
         {
             throw std::runtime_error("Invalid file format");
         }
         if (header.directoryOffset == 0)
             throw std::runtime_error("Invalid directory offset in header");
-        offset = header.directoryOffset - HEADER_SIZE;
+        offset = header.directoryOffset - Y_flib::Constants::HEADER_SIZE;
         std::cout << "Header loaded successfully.\n";
     }
     else
@@ -26,17 +26,17 @@ void BinaryStandardLoader::loadHeaderStandard(std::ifstream &inFile, Header &hea
     }
 }
 
-void BinaryStandardLoader::loadSeparatedStandard(FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum)
+void BinaryStandardLoader::loadSeparatedStandard(Y_flib::FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum)
 {
-    flag = standardsReader.readBinaryStandards<FlagType>();
+    flag = standardsReader.readBinaryStandards<Y_flib::FlagType>();
 
     // 读取子块偏移量
     tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
     // 读取iv头
     ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
 
-    offset -= SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时步过固定头部长度
-    if (flag != FlagType::Separated)
+    offset -= Y_flib::Constants::SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时步过固定头部长度
+    if (flag != Y_flib::FlagType::Separated)
     {
         throw std::runtime_error("Invalid flag type for separated standard");
     }
@@ -60,7 +60,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
         if (offset == sizeof(Y_flib::SizeOfMagicNum))
         {
             Y_flib::SizeOfMagicNum magicNum = standardsReader.readBinaryStandards<Y_flib::SizeOfMagicNum>();
-            if (magicNum != MAGIC_NUM)
+            if (magicNum != Y_flib::Constants::MAGIC_NUM)
                 throw std::runtime_error("Invalid MAGIC_NUM");
 
             setAllLoopDone(); // 完成所有循环后设置完成标志并return退出
@@ -88,9 +88,9 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
     if (offset == 0)
         return;
 
-    FlagType flag;
+    Y_flib::FlagType flag;
     Y_flib::IvSize ivNum{};
-    loadSeparatedStandard(const_cast<FlagType &>(flag), standardsReader, ivNum);
+    loadSeparatedStandard(const_cast<Y_flib::FlagType &>(flag), standardsReader, ivNum);
 
     // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
     Y_flib::DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);

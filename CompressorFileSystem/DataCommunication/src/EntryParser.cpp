@@ -115,14 +115,14 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
         {
             tempPathForRootPaser = transfer.transPath(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
 
-            const FlagType entryFlag = readDataFromReadedBlock<FlagType>(bufferPtr);
+            const Y_flib::FlagType entryFlag = readDataFromReadedBlock<Y_flib::FlagType>(bufferPtr);
 
             switch (entryFlag)
             {
-            case FlagType::File:
+            case Y_flib::FlagType::File:
                 fileParser(bufferPtr, true);
                 break;
-            case FlagType::Directory:
+            case Y_flib::FlagType::Directory:
                 directoryParser(bufferPtr, true);
                 break;
             default:
@@ -139,22 +139,22 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const FlagType entryFlag = readDataFromReadedBlock<FlagType>(bufferPtr);
+    const Y_flib::FlagType entryFlag = readDataFromReadedBlock<Y_flib::FlagType>(bufferPtr);
     switch (entryFlag)
     {
-    case FlagType::File:
+    case Y_flib::FlagType::File:
     {
         fileParser(bufferPtr, false);
         countOfChildDirectory--;
         break;
     }
-    case FlagType::Directory:
+    case Y_flib::FlagType::Directory:
     {
         directoryParser(bufferPtr, false);
         countOfChildDirectory--;
         break;
     }
-    case FlagType::LogicalRoot:
+    case Y_flib::FlagType::LogicalRoot:
     {
         bool noDirec = false;
         rootParser(bufferPtr, filePathToScan, countOfChildDirectory, noDirec);

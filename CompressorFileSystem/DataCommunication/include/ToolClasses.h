@@ -96,7 +96,7 @@ public:
     /* 写入静态魔数标记到输出文件 */
     void appendMagicStatic(std::ofstream &outFile)
     {
-        writeBinaryStandards(MAGIC_NUM, outFile);
+        writeBinaryStandards(Y_flib::Constants::MAGIC_NUM, outFile);
     }
 };
 
