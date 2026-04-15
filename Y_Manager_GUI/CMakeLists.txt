@@ -153,6 +153,10 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
             -static-libstdc++
             -s
         )
+        # 静态链接 libwinpthread
+        target_link_libraries(SecureCompressorGUI PRIVATE
+            -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic
+        )
     endif()
 endif()
 
@@ -174,6 +178,9 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
         "Qt6Svg.dll"
         "D3Dcompiler_47.dll"
         "opengl32sw.dll"
+        "libgcc_s_seh-1.dll"    # 已静态链接
+        "libstdc++-6.dll"      # 已静态链接
+        "libwinpthread-1.dll"  # 已静态链接
     )
     set(UNNECESSARY_DIRS
         "iconengines"

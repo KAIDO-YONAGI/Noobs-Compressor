@@ -21,6 +21,7 @@
 #include <QUrl>
 #include <QPixmap>
 #include <QResizeEvent>
+#include <QSizePolicy>
 #include <memory>
 #include <vector>
 #include <string>
@@ -71,6 +72,8 @@ private:
     QString makeValidPath(const QString &input);
     void addDroppedPaths(const QList<QUrl> &urls);
     void updateBackground();
+    void updateOutputDirectory();
+    QString elideText(const QString &text, int maxWidth);
 
     // 压缩模式控件
     QListWidget *m_fileListWidget;
@@ -99,6 +102,9 @@ private:
 
     // 状态
     bool m_isProcessing;
+
+    // UI组件
+    QTabWidget *m_tabWidget;
 
     // 背景图片
     QPixmap m_backgroundPixmap;

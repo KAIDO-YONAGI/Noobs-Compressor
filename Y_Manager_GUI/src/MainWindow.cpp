@@ -43,7 +43,7 @@ void MainWindow::setupUI()
 {
     setWindowTitle(tr("Secure Files Compressor"));
     setMinimumSize(600, 400);  // 最小尺寸
-    resize(750, 500);  // 默认尺寸
+    resize(650, 400);  // 默认尺寸
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
@@ -64,8 +64,8 @@ void MainWindow::setupUI()
     mainLayout->setSpacing(15);
 
     // 创建选项卡
-    QTabWidget *tabWidget = new QTabWidget(this);
-    tabWidget->setStyleSheet(
+    m_tabWidget = new QTabWidget(this);
+    m_tabWidget->setStyleSheet(
         "QTabWidget::pane { "
         "   border: 1px solid rgba(180, 180, 180, 120); "
         "   background: rgba(255, 255, 255, 160); "
@@ -88,10 +88,10 @@ void MainWindow::setupUI()
         "   background: rgba(255, 255, 255, 160); "
         "}"
     );
-    tabWidget->addTab(createCompressionTab(), tr("Compress"));
-    tabWidget->addTab(createDecompressionTab(), tr("Decompress"));
+    m_tabWidget->addTab(createCompressionTab(), tr("Compress"));
+    m_tabWidget->addTab(createDecompressionTab(), tr("Decompress"));
 
-    mainLayout->addWidget(tabWidget);
+    mainLayout->addWidget(m_tabWidget);
 }
 
 QWidget* MainWindow::createCompressionTab()
@@ -218,7 +218,8 @@ QWidget* MainWindow::createCompressionTab()
 
     // 输出目录
     outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
-    m_outputDirEdit = new QLineEdit(getExeDirectory());
+    m_outputDirEdit = new QLineEdit();
+    m_outputDirEdit->setPlaceholderText(tr("Auto-set based on selected files"));
     outputLayout->addWidget(m_outputDirEdit, 0, 1);
     QPushButton *browseOutDirBtn = new QPushButton(tr("Browse"));
     browseOutDirBtn->setStyleSheet(btnStyle);
@@ -279,7 +280,8 @@ QWidget* MainWindow::createCompressionTab()
         "   padding: 6px; "
         "}"
     );
-    m_compressCurrentFileLabel->setWordWrap(true);
+    m_compressCurrentFileLabel->setWordWrap(false);
+    m_compressCurrentFileLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     progressLayout->addWidget(m_compressCurrentFileLabel);
 
     // 进度条
@@ -512,7 +514,8 @@ QWidget* MainWindow::createDecompressionTab()
         "   padding: 6px; "
         "}"
     );
-    m_decompressCurrentFileLabel->setWordWrap(true);
+    m_decompressCurrentFileLabel->setWordWrap(false);
+    m_decompressCurrentFileLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
     progressLayout->addWidget(m_decompressCurrentFileLabel);
 
     m_decompressProgressBar = new QProgressBar();
@@ -610,6 +613,8 @@ void MainWindow::onAddFilesClicked()
             m_fileListWidget->addItem(cleanPath);
         }
     }
+
+    updateOutputDirectory();
 }
 
 void MainWindow::onAddFolderClicked()
@@ -624,6 +629,8 @@ void MainWindow::onAddFolderClicked()
             m_fileListWidget->addItem(cleanPath);
         }
     }
+
+    updateOutputDirectory();
 }
 
 void MainWindow::onRemoveFileClicked()
@@ -632,11 +639,14 @@ void MainWindow::onRemoveFileClicked()
     for (QListWidgetItem *item : items) {
         delete m_fileListWidget->takeItem(m_fileListWidget->row(item));
     }
+
+    updateOutputDirectory();
 }
 
 void MainWindow::onClearFilesClicked()
 {
     m_fileListWidget->clear();
+    updateOutputDirectory();
 }
 
 void MainWindow::onBrowseOutputDirClicked()
@@ -792,7 +802,8 @@ void MainWindow::onCompressionDetailedProgress(const QString &filename, double f
     m_compressProgressLabel->setText(tr("Overall: %1% | Current file: %2%").arg(overallInt).arg(fileInt));
 
     if (!filename.isEmpty()) {
-        m_compressCurrentFileLabel->setText(tr("Processing: %1").arg(filename));
+        QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
+        m_compressCurrentFileLabel->setText(displayText);
         m_compressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
             .arg(overallInt, 3)
             .arg(status)
@@ -844,7 +855,8 @@ void MainWindow::onDecompressionDetailedProgress(const QString &filename, double
     m_decompressProgressLabel->setText(tr("Overall: %1% | Current file: %2%").arg(overallInt).arg(fileInt));
 
     if (!filename.isEmpty()) {
-        m_decompressCurrentFileLabel->setText(tr("Processing: %1").arg(filename));
+        QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
+        m_decompressCurrentFileLabel->setText(displayText);
         m_decompressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
             .arg(overallInt, 3)
             .arg(status)
@@ -931,7 +943,29 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 void MainWindow::dropEvent(QDropEvent *event)
 {
     const QList<QUrl> &urls = event->mimeData()->urls();
-    addDroppedPaths(urls);
+
+    // 根据当前标签页判断处理方式
+    int currentTab = m_tabWidget->currentIndex();
+
+    if (currentTab == 0) {
+        // 压缩模式 - 添加到文件列表
+        addDroppedPaths(urls);
+    } else if (currentTab == 1) {
+        // 解压模式 - 设置压缩文件
+        if (!urls.isEmpty()) {
+            QString path = urls.first().toLocalFile();
+            if (path.isEmpty()) {
+                path = urls.first().toString();
+            }
+            QString cleanPath = makeValidPath(path);
+            if (!cleanPath.isEmpty() && cleanPath.toLower().endsWith(".sy")) {
+                m_decompressFilePathEdit->setText(cleanPath);
+                // 自动设置输出目录为文件所在目录
+                QFileInfo fileInfo(cleanPath);
+                m_decompressOutputDirEdit->setText(fileInfo.absolutePath());
+            }
+        }
+    }
 }
 
 void MainWindow::addDroppedPaths(const QList<QUrl> &urls)
@@ -952,6 +986,8 @@ void MainWindow::addDroppedPaths(const QList<QUrl> &urls)
             m_fileListWidget->addItem(cleanPath);
         }
     }
+
+    updateOutputDirectory();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -1007,4 +1043,27 @@ void MainWindow::updateBackground()
     QPalette palette;
     palette.setBrush(QPalette::Window, QBrush(croppedPixmap));
     setPalette(palette);
+}
+
+void MainWindow::updateOutputDirectory()
+{
+    // 根据文件列表第一个文件更新输出目录
+    if (m_fileListWidget->count() > 0) {
+        QString firstPath = m_fileListWidget->item(0)->text();
+        QFileInfo fileInfo(firstPath);
+
+        // 无论文件还是目录，都取其父目录（所在根目录）
+        QString parentDir = fileInfo.absolutePath();
+
+        m_outputDirEdit->setText(parentDir);
+    } else {
+        // 文件列表为空时，恢复到程序所在目录
+        m_outputDirEdit->setText(getExeDirectory());
+    }
+}
+
+QString MainWindow::elideText(const QString &text, int maxWidth)
+{
+    QFontMetrics fm(m_compressCurrentFileLabel->font());
+    return fm.elidedText(text, Qt::ElideMiddle, maxWidth);
 }
