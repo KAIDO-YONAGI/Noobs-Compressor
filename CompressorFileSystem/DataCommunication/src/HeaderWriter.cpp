@@ -33,9 +33,14 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     EntryProcessor begin(outFile);
     begin.entryProcessor(filePathToScan, fullOutPath, logicalRoot);
 
+    // 先获取文件大小（在移动指针之前）
+    outFile.flush();
+    std::streampos endPos = outFile.tellp();
+    Y_flib::DirectoryOffsetSize directoryOffset = static_cast<Y_flib::DirectoryOffsetSize>(endPos);
+    std::cout << "DEBUG writeDirectory: fullOutPath=" << fullOutPath.string() << ", directoryOffset=" << directoryOffset << std::endl;
+
     // 回填偏移量并重定位指针至回填前的位置
     locator.locateFromBegin(outFile, Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
-    Y_flib::DirectoryOffsetSize directoryOffset = locator.getFileSize(fullOutPath, outFile);
     standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(Y_flib::Constants::MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     locator.locateFromEnd(outFile, 0);
 }

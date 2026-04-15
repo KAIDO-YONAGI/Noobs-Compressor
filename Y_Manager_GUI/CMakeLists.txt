@@ -120,10 +120,10 @@ target_link_libraries(SecureCompressorGUI PRIVATE
 # Windows 系统库
 # ========================
 if (WIN32)
-    # 隐藏控制台窗口
-    set_target_properties(SecureCompressorGUI PROPERTIES
-        WIN32_EXECUTABLE TRUE
-    )
+    # 调试时启用控制台窗口
+    # set_target_properties(SecureCompressorGUI PROPERTIES
+    #     WIN32_EXECUTABLE TRUE
+    # )
     target_link_libraries(SecureCompressorGUI PRIVATE
         ws2_32
         crypt32

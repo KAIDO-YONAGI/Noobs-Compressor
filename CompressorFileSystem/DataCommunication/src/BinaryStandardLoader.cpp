@@ -47,12 +47,16 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
     if (offset == 0)
         return;
 
+    std::cout << "DEBUG loadEntryBlock: offset=" << offset << std::endl;
+
     Y_flib::FlagType flag;
     Y_flib::IvSize ivNum{};
     loadSeparatedStandard(const_cast<Y_flib::FlagType &>(flag), standardsReader, ivNum);
 
     // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
     Y_flib::DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
+
+    std::cout << "DEBUG loadEntryBlock: tempOffset=" << tempOffset << ", readSize=" << readSize << std::endl;
 
     std::array<Y_flib::DirectoryOffsetSize, 2> blockPos = {
         static_cast<Y_flib::DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置

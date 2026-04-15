@@ -7,6 +7,8 @@
 #include <QDir>
 #include <stdexcept>
 #include <filesystem>
+#include <windows.h>
+#include <iostream>
 
 CompressionWorker::CompressionWorker(QObject *parent)
     : QObject(parent)
@@ -40,14 +42,8 @@ void CompressionWorker::setDecompressionParams(const QString &inputFile,
     m_isDecompression = true;
 }
 
-QString CompressionWorker::getStdString(const QString &qstr)
-{
-    return QDir::cleanPath(qstr);
-}
-
 bool CompressionWorker::validateCompressionParams()
 {
-    // 检查文件是否存在
     for (const QString &file : m_filesToCompress) {
         if (!QFileInfo::exists(file)) {
             emit finished(false, tr("File not found: %1").arg(file));
@@ -55,7 +51,6 @@ bool CompressionWorker::validateCompressionParams()
         }
     }
 
-    // 检查输出目录
     if (!QFileInfo(m_outputDir).isDir()) {
         emit finished(false, tr("Output directory not found: %1").arg(m_outputDir));
         return false;
@@ -66,7 +61,6 @@ bool CompressionWorker::validateCompressionParams()
 
 bool CompressionWorker::validateDecompressionParams()
 {
-    // 检查输入文件
     if (!QFileInfo::exists(m_decompressInputFile)) {
         emit finished(false, tr("Archive file not found: %1").arg(m_decompressInputFile));
         return false;
@@ -91,23 +85,38 @@ void CompressionWorker::doCompression()
     try {
         emit progressChanged(10, tr("Preparing files..."));
 
-        // 转换文件列表
+        // 使用QDir::toNativeSeparators统一路径分隔符
         std::vector<std::string> filePathToScan;
         for (const QString &file : m_filesToCompress) {
-            filePathToScan.push_back(getStdString(file).toStdString());
+            QString nativeFile = QDir::toNativeSeparators(file);
+            filePathToScan.push_back(nativeFile.toStdString());
+            std::cout << "DEBUG: File path [" << filePathToScan.size() << "]: " << nativeFile.toStdString() << std::endl;
         }
 
-        // 构建输出路径
-        QString outputDirClean = QDir::cleanPath(m_outputDir);
-        QString fileName = m_outputFileName.trimmed();
+        // 构建输出目录 - 统一使用反斜杠
+        QString nativeOutputDir = QDir::toNativeSeparators(m_outputDir);
+        std::string outputDirectory = nativeOutputDir.toStdString();
+
+        // 确保输出目录以反斜杠结尾
+        if (!outputDirectory.empty() && outputDirectory.back() != '\\') {
+            outputDirectory += '\\';
+        }
+        std::cout << "DEBUG: Output directory: " << outputDirectory << std::endl;
+
+        // 构建输出文件名
+        std::string outputFileName = m_outputFileName.toStdString();
 
         // 移除可能的.sy后缀
-        if (fileName.toLower().endsWith(".sy")) {
-            fileName.chop(3);
+        if (outputFileName.size() > 3 && outputFileName.substr(outputFileName.size() - 3) == ".sy") {
+            outputFileName = outputFileName.substr(0, outputFileName.size() - 3);
         }
 
-        QString compressionFilePath = outputDirClean + "/" + fileName + ".sy";
-        std::string compressionFilePathStd = compressionFilePath.toStdString();
+        // 完整的输出文件路径
+        std::string compressionFilePath = outputDirectory + outputFileName + ".sy";
+        std::cout << "DEBUG: Compression file path: " << compressionFilePath << std::endl;
+
+        // 逻辑根
+        std::string logicalRoot = outputFileName;
 
         emit progressChanged(20, tr("Creating AES encryption object..."));
 
@@ -118,26 +127,24 @@ void CompressionWorker::doCompression()
 
         // 创建HeaderWriter
         HeaderWriter headerWriter_v0;
-        std::string logicalRoot = fileName.toStdString();
-        headerWriter_v0.headerWriter(filePathToScan, compressionFilePathStd, logicalRoot);
+        headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
+
+        std::cout << "DEBUG: HeaderWriter done" << std::endl;
 
         emit progressChanged(40, tr("Starting compression..."));
 
         // 压缩
-        CompressionLoop compressor(compressionFilePathStd);
+        CompressionLoop compressor(compressionFilePath);
         compressor.compressionLoop(filePathToScan, aes);
 
         emit progressChanged(90, tr("Associating icon..."));
 
-        // 关联图标（可选）
         try {
-            IconHandler::AssociateIconToSyFile(compressionFilePathStd, "");
-        } catch (...) {
-            // 忽略图标关联错误
-        }
+            IconHandler::AssociateIconToSyFile(compressionFilePath, "");
+        } catch (...) {}
 
         emit progressChanged(100, tr("Compression completed!"));
-        emit finished(true, tr("Compression successful!\nOutput file: %1").arg(compressionFilePath));
+        emit finished(true, tr("Compression successful!\nOutput file: %1").arg(QString::fromStdString(compressionFilePath)));
 
     } catch (const std::exception &e) {
         emit finished(false, tr("Compression failed: %1").arg(QString::fromStdString(e.what())));
@@ -157,22 +164,15 @@ void CompressionWorker::doDecompression()
     try {
         emit progressChanged(10, tr("Preparing decryption..."));
 
-        // 转换路径
-        std::string inputFilePath = getStdString(m_decompressInputFile).toStdString();
-        std::string outputDirectory;
-
-        if (!m_decompressOutputDir.isEmpty()) {
-            outputDirectory = QDir::cleanPath(m_decompressOutputDir).toStdString();
-        }
+        std::string inputFilePath = m_decompressInputFile.toStdString();
+        std::string outputDirectory = m_decompressOutputDir.toStdString();
 
         emit progressChanged(20, tr("Creating AES decryption object..."));
 
-        // 创建AES对象
         Aes aes(m_decompressPassword.toStdString().c_str());
 
         emit progressChanged(30, tr("Starting decompression..."));
 
-        // 解压
         DecompressionLoop decompressor(inputFilePath, outputDirectory);
         decompressor.decompressionLoop(aes);
 
@@ -180,11 +180,10 @@ void CompressionWorker::doDecompression()
         emit finished(true, tr("Decompression successful!\nOutput directory: %1").arg(QString::fromStdString(outputDirectory)));
 
     } catch (const std::exception &e) {
-        QString errorMsg = QString::fromStdString(e.what());
         emit finished(false, tr("Decompression failed: %1\n\nPossible reasons:\n"
                                 "1. Incorrect decryption key\n"
                                 "2. Corrupted or incompatible .sy file\n"
-                                "3. Insufficient disk space").arg(errorMsg));
+                                "3. Insufficient disk space").arg(QString::fromStdString(e.what())));
     } catch (...) {
         emit finished(false, tr("Decompression failed due to unknown error"));
     }

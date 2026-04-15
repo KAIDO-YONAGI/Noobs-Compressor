@@ -47,7 +47,7 @@ void MainWindow::setupUI()
     QPixmap backgroundPixmap(":/images/background.png");
     if (!backgroundPixmap.isNull()) {
         QPalette palette;
-        palette.setBrush(QPalette::Window, QBrush(backgroundPixmap.scaled(size(), Qt::IgnoreAspectRatio, Qt::SmoothTransformation)));
+        palette.setBrush(QPalette::Window, QBrush(backgroundPixmap.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation)));
         setPalette(palette);
     }
 
