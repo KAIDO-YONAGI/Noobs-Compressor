@@ -53,7 +53,7 @@ namespace Y_flib
         Separated = '2',
         LogicalRoot = '3',
         SymbolLink = '4'
-    };
+    }; 
     namespace Constants
     {
         constexpr Y_flib::SizeOfFlag FLAG_SIZE = sizeof(Y_flib::FlagType);
