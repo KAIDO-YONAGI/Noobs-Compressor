@@ -9,9 +9,11 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # ========================
-# Qt 路径配置
+# Qt 路径配置（使用 Qt 自带的 MinGW 编译器）
 # ========================
 set(CMAKE_PREFIX_PATH "D:/qt/6.10.1/mingw_64/lib/cmake/Qt6")
+set(CMAKE_C_COMPILER "D:/qt/Tools/mingw1310_64/bin/gcc.exe")
+set(CMAKE_CXX_COMPILER "D:/qt/Tools/mingw1310_64/bin/g++.exe")
 
 # ========================
 # 资源文件
@@ -120,10 +122,10 @@ target_link_libraries(SecureCompressorGUI PRIVATE
 # Windows 系统库
 # ========================
 if (WIN32)
-    # 调试时启用控制台窗口
-    # set_target_properties(SecureCompressorGUI PROPERTIES
-    #     WIN32_EXECUTABLE TRUE
-    # )
+    # Release 模式下隐藏控制台窗口
+    set_target_properties(SecureCompressorGUI PROPERTIES
+        WIN32_EXECUTABLE TRUE
+    )
     target_link_libraries(SecureCompressorGUI PRIVATE
         ws2_32
         crypt32
