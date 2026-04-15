@@ -135,7 +135,7 @@ Some **unknown bugs** may still exist, which could cause **file data parsing fai
 
 ---
 
-## v1.0.1 — Well Done
+## v1.1.1 — Well Done
 
 封装了文件 I/O 以及若干辅助方法（例如 `seek*` 系列函数）。  
 Encapsulated file I/O operations and several helper methods (such as `seek*` functions).
@@ -189,6 +189,10 @@ Y_Manager/
 
 编译 `main.cpp` 文件即可生成可执行程序。  
 Compile `main.cpp` to generate the executable.
+
+## tips:
+
+也可以使用Y_Manager/下的cmake文件构建
 
 ---
 
