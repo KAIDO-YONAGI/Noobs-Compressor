@@ -11,11 +11,13 @@
 该项目主要用于研究**文件系统归档结构、数据压缩以及基础加密实现**。  
 The project is mainly intended for studying **file archiving structures, data compression, and basic encryption implementations**.
 
-目前程序仅提供**命令行交互（CLI）**，尚未实现图形界面（GUI）。  
-The program currently provides only a **command-line interface (CLI)** and does not include a graphical user interface (GUI).
+**当前提供两个版本**：
+- **命令行版本（CLI）**：`Y_Manager/` 目录，v1.x.x
+- **图形界面版本（GUI）**：`Y_Manager_GUI/` 目录，v2.x.x
 
-更多系统实现细节可参考源代码及相关 Markdown 文档。  
-For more implementation details, please refer to the source code and the related Markdown documents.
+**Two versions are available**:
+- **Command-line version (CLI)**: `Y_Manager/` directory, v1.x.x
+- **GUI version**: `Y_Manager_GUI/` directory, v2.x.x
 
 ---
 
@@ -38,6 +40,9 @@ For more implementation details, please refer to the source code and the related
 
 - 实现 **路径重复跳过机制**以避免部分重复文件处理  
   Implements a **duplicate-path skipping mechanism** to avoid redundant processing
+
+- **GUI 版本特性**：拖放支持、实时进度、日志输出  
+  **GUI features**: drag-and-drop support, real-time progress, log output
 
 ---
 
@@ -101,9 +106,9 @@ The project documentation includes:
   项目设计规划文档  
   Project planning document
 
-- `plan.md`  
-  AES 与压缩文件系统设计说明  
-  AES and compressed file system design documentation
+- `开发日志.md`  
+  开发时间线与技术细节  
+  Development timeline and technical details
 
 ---
 
@@ -130,12 +135,9 @@ Applied lightweight optimization and visual adjustments to the executable.
 编译优化等级从 **O2 提升到 O3**。  
 The compiler optimization level was upgraded from **O2 to O3**.
 
-仍可能存在 **未知 Bug**，在部分情况下可能导致 **文件数据解析失败**。  
-Some **unknown bugs** may still exist, which could cause **file data parsing failures** in certain cases.
-
 ---
 
-## v1.1.1 — Well Done
+## v1.1.1 — Well Done (CLI)
 
 封装了文件 I/O 以及若干辅助方法（例如 `seek*` 系列函数）。  
 Encapsulated file I/O operations and several helper methods (such as `seek*` functions).
@@ -143,28 +145,38 @@ Encapsulated file I/O operations and several helper methods (such as `seek*` fun
 修复了文件目录分块处理问题。  
 Fixed the directory block processing issue.
 
-理论上，在程序正常运行的情况下，压缩任意文件或目录时 **内存占用可稳定在 60MB 左右**。  
-In theory, as long as the program runs normally, compressing any file or directory should keep **memory usage stable around 60 MB**.
+内存占用稳定在 **60MB 左右**。  
+Memory usage is stable around **60 MB**.
 
-需要注意的是：  
-Note that:
+---
 
-编译时启用 **LTO（Link Time Optimization）** 等高级优化可能导致压缩流程异常。  
-Enabling **LTO (Link Time Optimization)** or similar advanced optimizations during compilation may cause errors in the compression process.
+## v2.0.0 — GUI Release (2026-04-16)
 
-因此建议 **仅使用 O3 优化等级进行编译**。  
-Therefore, it is recommended to **compile using only the O3 optimization level**.
+**新增功能**：
+- Qt 6 图形用户界面
+- 左右两列布局：左列输入配置，右列进度输出
+- 支持拖放文件/目录
+- 实时进度显示和日志输出
+- 精简部署（减少约 30MB）
+- UPX 压缩（减少 40-60%）
 
-当前版本 **没有已知 Bug**。  
-There are **currently no known bugs**.
+**New Features**:
+- Qt 6 graphical user interface
+- Left-right two-column layout
+- Drag-and-drop support
+- Real-time progress and log output
+- Minimal deployment (reduced by ~30MB)
+- UPX compression (reduced by 40-60%)
 
 ---
 
 # 构建指南 | Build Instructions
 
-如需自行编译程序：
+## CLI 版本构建 | CLI Build
 
-To compile the program yourself:
+如需自行编译命令行版本：
+
+To compile the CLI version yourself:
 
 ### 1 下载构建配置 | Download Build Configuration
 
@@ -190,9 +202,31 @@ Y_Manager/
 编译 `main.cpp` 文件即可生成可执行程序。  
 Compile `main.cpp` to generate the executable.
 
-## tips:
+---
 
-也可以使用Y_Manager/下的cmake文件构建
+## GUI 版本构建 | GUI Build
+
+GUI 版本位于 `Y_Manager_GUI/` 目录，需要 Qt 6 环境。
+
+The GUI version is in `Y_Manager_GUI/` directory, requires Qt 6.
+
+### 编译要求 | Requirements
+
+- **Qt 6.10.1**（使用自带的 MinGW 13.1.0）
+- **CMake 3.20+**
+- **UPX**（可选，用于压缩）
+
+### 构建步骤 | Build Steps
+
+```bash
+cd Y_Manager_GUI
+cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release -j 8
+```
+
+构建完成后，可执行文件位于 `bin/SFC/` 目录。
+
+After building, the executable is in `bin/SFC/` directory.
 
 ---
 
@@ -215,25 +249,31 @@ Compile `main.cpp` to generate the executable.
 -O3
 ```
 
-- 某些编译器需要链接 **stdc++std::filesystem** 以支持文件系统功能  
-  Some compilers require linking **stdc++std::filesystem** to support filesystem features
-
 - **不要启用 LTO（链接时优化）**  
   **Do not enable LTO (Link Time Optimization)**
+
+- **GUI 版本必须使用 Qt 自带的 MinGW**  
+  **GUI version must use Qt's bundled MinGW**
 
 ---
 
 # 依赖 | Dependencies
 
-- **OpenSSL**
+## CLI 版本 | CLI Dependencies
 
+- **OpenSSL**
   - `SHA256`
   - `RAND`
 
 - **Windows 10–11 API**
-
   用于字符编码控制以及随机数生成
   Used for character encoding control and rand() 
+
+## GUI 版本 | GUI Dependencies
+
+- **Qt 6.10.1** (Core, Widgets)
+- **MinGW 13.1.0** (Qt bundled)
+- **Windows 10–11 API**
 
 ---
 

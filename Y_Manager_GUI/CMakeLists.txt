@@ -163,3 +163,65 @@ set_target_properties(SecureCompressorGUI PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/SFC"
     OUTPUT_NAME "SecureCompressorGUI"
 )
+
+# ========================
+# 精简部署 - 使用 windeployqt 并移除不必要的 DLL
+# ========================
+if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
+    # 定义要删除的不必要文件列表
+    set(UNNECESSARY_DLLS
+        "Qt6Network.dll"
+        "Qt6Svg.dll"
+        "D3Dcompiler_47.dll"
+        "opengl32sw.dll"
+    )
+    set(UNNECESSARY_DIRS
+        "iconengines"
+        "networkinformation"
+        "tls"
+        "generic"
+        "styles"
+    )
+    set(UNNECESSARY_IMAGEFORMATS
+        "imageformats/qsvg.dll"
+    )
+
+    # 创建部署命令
+    add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+        COMMAND "D:/qt/6.10.1/mingw_64/bin/windeployqt.exe"
+                "$<TARGET_FILE:SecureCompressorGUI>"
+                --release
+                --no-translations
+        COMMENT "Deploying Qt dependencies..."
+    )
+
+    # 删除不必要的 DLL
+    foreach(DLL ${UNNECESSARY_DLLS})
+        add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_SOURCE_DIR}/bin/SFC/${DLL}"
+            COMMENT "Removing unnecessary: ${DLL}"
+        )
+    endforeach()
+
+    # 删除不必要的目录
+    foreach(DIR ${UNNECESSARY_DIRS})
+        add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_SOURCE_DIR}/bin/SFC/${DIR}"
+            COMMENT "Removing unnecessary directory: ${DIR}"
+        )
+    endforeach()
+
+    # 删除不必要的图像格式插件
+    foreach(PLUGIN ${UNNECESSARY_IMAGEFORMATS})
+        add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_SOURCE_DIR}/bin/SFC/${PLUGIN}"
+            COMMENT "Removing unnecessary plugin: ${PLUGIN}"
+        )
+    endforeach()
+
+    # 显示部署完成信息
+    add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "=== Minimal deployment complete ==="
+        COMMENT "Deployment finished"
+    )
+endif()

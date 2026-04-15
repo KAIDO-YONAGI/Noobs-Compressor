@@ -42,8 +42,8 @@ MainWindow::~MainWindow()
 void MainWindow::setupUI()
 {
     setWindowTitle(tr("Secure Files Compressor"));
-    setMinimumSize(500, 500);
-    resize(650, 650);  // 宽高比接近 1:1
+    setMinimumSize(700, 500);  // 最小尺寸
+    resize(900, 650);  // 默认尺寸，确保内容完整显示
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
@@ -78,7 +78,6 @@ void MainWindow::setupUI()
         "   border-top-left-radius: 6px; "
         "   border-top-right-radius: 6px; "
         "   font-weight: bold; "
-        "   font-size: 13px; "
         "   color: #333; "
         "} "
         "QTabBar::tab:selected { "
@@ -99,10 +98,13 @@ QWidget* MainWindow::createCompressionTab()
 {
     QWidget *tab = new QWidget();
     tab->setStyleSheet("background: transparent;");
-    QVBoxLayout *layout = new QVBoxLayout(tab);
-    layout->setSpacing(10);
 
-    // 统一的按钮样式 - 白色/灰色风格，字体抗锯齿
+    // 主垂直布局
+    QVBoxLayout *mainVLayout = new QVBoxLayout(tab);
+    mainVLayout->setSpacing(0);
+    mainVLayout->setContentsMargins(0, 0, 0, 0);
+
+    // 统一的按钮样式 - 白色/灰色风格
     QString btnStyle =
         "QPushButton { "
         "   background: rgba(255, 255, 255, 160); "
@@ -110,9 +112,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border-radius: 5px; "
         "   padding: 8px 18px; "
         "   font-weight: bold; "
-        "   font-size: 12px; "
         "   color: #333; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
         "   background: rgba(255, 255, 255, 200); "
@@ -120,7 +120,7 @@ QWidget* MainWindow::createCompressionTab()
         "} "
         "QPushButton:pressed { "
         "   background: rgba(220, 220, 220, 180); "
-        "}"
+        "} "
         "QPushButton:disabled { "
         "   background: rgba(200, 200, 200, 140); "
         "   color: #888; "
@@ -135,27 +135,38 @@ QWidget* MainWindow::createCompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   font-size: 13px; "
         "   color: #333; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
         "   padding: 0 6px; "
         "} "
-        "QLabel { background: transparent; font-size: 12px; color: #333; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; } "
+        "QLabel { background: transparent; color: #333; } "
         "QLineEdit { "
         "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
-        "   font-size: 12px; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}";
-        "   padding: 6px; "
-        "   font-size: 12px; "
-        "}";
+
+    // =============================================
+    // 内容区域容器 - 左右两列作为一个整体
+    // =============================================
+    QWidget *contentBox = new QWidget();
+    contentBox->setStyleSheet("background: transparent;");
+    QHBoxLayout *contentLayout = new QHBoxLayout(contentBox);
+    contentLayout->setSpacing(10);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+
+    // =============================================
+    // 左列 - 输入信息填写区域
+    // =============================================
+    QWidget *leftColumn = new QWidget();
+    leftColumn->setStyleSheet("background: transparent;");
+    QVBoxLayout *leftLayout = new QVBoxLayout(leftColumn);
+    leftLayout->setSpacing(10);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
 
     // === 文件列表区域 ===
     QGroupBox *fileGroup = new QGroupBox(tr("Files to Compress"));
@@ -169,7 +180,6 @@ QWidget* MainWindow::createCompressionTab()
         "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
-        "   font-size: 12px; "
         "} "
         "QListWidget::item { padding: 6px; } "
         "QListWidget::item:selected { background: rgba(200, 200, 200, 150); }"
@@ -197,10 +207,9 @@ QWidget* MainWindow::createCompressionTab()
     fileBtnLayout->addWidget(addFolderBtn);
     fileBtnLayout->addWidget(removeBtn);
     fileBtnLayout->addWidget(clearBtn);
-    fileBtnLayout->addStretch();
     fileLayout->addLayout(fileBtnLayout);
 
-    layout->addWidget(fileGroup);
+    leftLayout->addWidget(fileGroup);
 
     // === 输出设置区域 ===
     QGroupBox *outputGroup = new QGroupBox(tr("Output Settings"));
@@ -223,11 +232,22 @@ QWidget* MainWindow::createCompressionTab()
 
     // 密码
     outputLayout->addWidget(new QLabel(tr("Encryption Key:")), 2, 0);
-    m_passwordEdit = new QLineEdit("LOVEYONAGI");
-    m_passwordEdit->setEchoMode(QLineEdit::PasswordEchoOnEdit);
+    m_passwordEdit = new QLineEdit();
+    m_passwordEdit->setEchoMode(QLineEdit::Password);
+    m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
     outputLayout->addWidget(m_passwordEdit, 2, 1, 1, 2);
 
-    layout->addWidget(outputGroup);
+    leftLayout->addWidget(outputGroup);
+    leftLayout->addStretch();
+
+    // =============================================
+    // 右列 - 输出信息区域
+    // =============================================
+    QWidget *rightColumn = new QWidget();
+    rightColumn->setStyleSheet("background: transparent;");
+    QVBoxLayout *rightLayout = new QVBoxLayout(rightColumn);
+    rightLayout->setSpacing(10);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
 
     // === 进度和日志区域 ===
     QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
@@ -239,7 +259,6 @@ QWidget* MainWindow::createCompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   font-size: 13px; "
         "   color: #333; "
         "} "
         "QGroupBox::title { "
@@ -251,15 +270,13 @@ QWidget* MainWindow::createCompressionTab()
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
     progressLayout->setSpacing(8);
 
-    // 当前文件标签 - 增加高度和样式
+    // 当前文件标签
     m_compressCurrentFileLabel = new QLabel(tr("Ready"));
     m_compressCurrentFileLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   font-size: 12px; "
         "   color: #333; "
         "   padding: 6px; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}"
     );
     m_compressCurrentFileLabel->setWordWrap(true);
@@ -276,9 +293,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   text-align: center; "
-        "   font-size: 13px; "
         "   font-weight: bold; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QProgressBar::chunk { "
         "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a0a0a0, stop:1 #d0d0d0); "
@@ -292,33 +307,28 @@ QWidget* MainWindow::createCompressionTab()
     m_compressProgressLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   font-size: 12px; "
         "   color: #555; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}"
     );
     progressLayout->addWidget(m_compressProgressLabel);
 
-    // 日志框 - 增加高度，禁用自动换行
+    // 日志框 - 禁用自动换行
     m_compressLogEdit = new QTextEdit();
     m_compressLogEdit->setReadOnly(true);
-    m_compressLogEdit->setMinimumHeight(120);
-    m_compressLogEdit->setLineWrapMode(QTextEdit::NoWrap);  // 禁用自动换行
+    m_compressLogEdit->setLineWrapMode(QTextEdit::NoWrap);
     m_compressLogEdit->setStyleSheet(
         "QTextEdit { "
         "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
-        "   font-size: 12px; "
-        "   font-family: 'Consolas', 'Microsoft YaHei', monospace; "
         "   padding: 4px; "
         "}"
     );
     progressLayout->addWidget(m_compressLogEdit);
 
-    layout->addWidget(progressGroup);
+    rightLayout->addWidget(progressGroup, 1);
 
-    // === 开始按钮 ===
+    // === 开始按钮（移到右列下方） ===
     m_startCompressBtn = new QPushButton(tr("Start Compression"));
     m_startCompressBtn->setMinimumHeight(45);
     m_startCompressBtn->setStyleSheet(
@@ -327,9 +337,7 @@ QWidget* MainWindow::createCompressionTab()
         "   color: #333; "
         "   border: 2px solid rgba(150, 150, 150, 200); "
         "   border-radius: 8px; "
-        "   font-size: 14px; "
         "   font-weight: bold; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
         "   background: rgba(255, 255, 255, 200); "
@@ -344,9 +352,15 @@ QWidget* MainWindow::createCompressionTab()
         "}"
     );
     connect(m_startCompressBtn, &QPushButton::clicked, this, &MainWindow::onStartCompressionClicked);
-    layout->addWidget(m_startCompressBtn);
+    rightLayout->addWidget(m_startCompressBtn);
 
-    layout->addStretch();
+    // 添加左右两列到内容区域，设置拉伸比例（左:右 = 3:2）
+    contentLayout->addWidget(leftColumn, 3);
+    contentLayout->addWidget(rightColumn, 2);
+
+    // 内容区域添加到主布局
+    mainVLayout->addWidget(contentBox);
+
     return tab;
 }
 
@@ -354,8 +368,11 @@ QWidget* MainWindow::createDecompressionTab()
 {
     QWidget *tab = new QWidget();
     tab->setStyleSheet("background: transparent;");
-    QVBoxLayout *layout = new QVBoxLayout(tab);
-    layout->setSpacing(10);
+
+    // 主垂直布局
+    QVBoxLayout *mainVLayout = new QVBoxLayout(tab);
+    mainVLayout->setSpacing(0);
+    mainVLayout->setContentsMargins(0, 0, 0, 0);
 
     QString groupBoxStyle =
         "QGroupBox { "
@@ -365,23 +382,19 @@ QWidget* MainWindow::createDecompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   font-size: 13px; "
         "   color: #333; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
         "   padding: 0 6px; "
         "} "
-        "QLabel { background: transparent; font-size: 12px; color: #333; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; } "
+        "QLabel { background: transparent; color: #333; } "
         "QLineEdit { "
         "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
-        "   font-size: 12px; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}";
 
     QString btnStyle =
@@ -391,9 +404,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   border-radius: 5px; "
         "   padding: 8px 18px; "
         "   font-weight: bold; "
-        "   font-size: 12px; "
         "   color: #333; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
         "   background: rgba(255, 255, 255, 200); "
@@ -401,11 +412,29 @@ QWidget* MainWindow::createDecompressionTab()
         "} "
         "QPushButton:pressed { "
         "   background: rgba(220, 220, 220, 180); "
-        "}"
+        "} "
         "QPushButton:disabled { "
         "   background: rgba(200, 200, 200, 140); "
         "   color: #888; "
         "}";
+
+    // =============================================
+    // 内容区域容器 - 左右两列作为一个整体
+    // =============================================
+    QWidget *contentBox = new QWidget();
+    contentBox->setStyleSheet("background: transparent;");
+    QHBoxLayout *contentLayout = new QHBoxLayout(contentBox);
+    contentLayout->setSpacing(10);
+    contentLayout->setContentsMargins(0, 0, 0, 0);
+
+    // =============================================
+    // 左列 - 输入信息填写区域
+    // =============================================
+    QWidget *leftColumn = new QWidget();
+    leftColumn->setStyleSheet("background: transparent;");
+    QVBoxLayout *leftLayout = new QVBoxLayout(leftColumn);
+    leftLayout->setSpacing(10);
+    leftLayout->setContentsMargins(0, 0, 0, 0);
 
     // === 输入文件区域 ===
     QGroupBox *inputGroup = new QGroupBox(tr("Select Archive"));
@@ -420,7 +449,7 @@ QWidget* MainWindow::createDecompressionTab()
     connect(browseFileBtn, &QPushButton::clicked, this, &MainWindow::onBrowseDecompressFileClicked);
     inputLayout->addWidget(browseFileBtn, 0, 2);
 
-    layout->addWidget(inputGroup);
+    leftLayout->addWidget(inputGroup);
 
     // === 输出设置区域 ===
     QGroupBox *outputGroup = new QGroupBox(tr("Output Settings"));
@@ -438,9 +467,20 @@ QWidget* MainWindow::createDecompressionTab()
     outputLayout->addWidget(new QLabel(tr("Decryption Key:")), 1, 0);
     m_decompressPasswordEdit = new QLineEdit();
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
+    m_decompressPasswordEdit->setPlaceholderText(tr("Leave empty for default"));
     outputLayout->addWidget(m_decompressPasswordEdit, 1, 1, 1, 2);
 
-    layout->addWidget(outputGroup);
+    leftLayout->addWidget(outputGroup);
+    leftLayout->addStretch();
+
+    // =============================================
+    // 右列 - 输出信息区域
+    // =============================================
+    QWidget *rightColumn = new QWidget();
+    rightColumn->setStyleSheet("background: transparent;");
+    QVBoxLayout *rightLayout = new QVBoxLayout(rightColumn);
+    rightLayout->setSpacing(10);
+    rightLayout->setContentsMargins(0, 0, 0, 0);
 
     // === 进度和日志区域 ===
     QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
@@ -452,7 +492,6 @@ QWidget* MainWindow::createDecompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   font-size: 13px; "
         "   color: #333; "
         "} "
         "QGroupBox::title { "
@@ -464,15 +503,13 @@ QWidget* MainWindow::createDecompressionTab()
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
     progressLayout->setSpacing(8);
 
-    // 当前文件标签 - 增加高度和样式
+    // 当前文件标签
     m_decompressCurrentFileLabel = new QLabel(tr("Ready"));
     m_decompressCurrentFileLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   font-size: 12px; "
         "   color: #333; "
         "   padding: 6px; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}"
     );
     m_decompressCurrentFileLabel->setWordWrap(true);
@@ -488,9 +525,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   text-align: center; "
-        "   font-size: 13px; "
         "   font-weight: bold; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QProgressBar::chunk { "
         "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b0b0b0, stop:1 #e0e0e0); "
@@ -504,33 +539,28 @@ QWidget* MainWindow::createDecompressionTab()
     m_decompressProgressLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   font-size: 12px; "
         "   color: #555; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}"
     );
     progressLayout->addWidget(m_decompressProgressLabel);
 
-    // 日志框 - 增加高度，禁用自动换行
+    // 日志框 - 禁用自动换行
     m_decompressLogEdit = new QTextEdit();
     m_decompressLogEdit->setReadOnly(true);
-    m_decompressLogEdit->setMinimumHeight(120);
-    m_decompressLogEdit->setLineWrapMode(QTextEdit::NoWrap);  // 禁用自动换行
+    m_decompressLogEdit->setLineWrapMode(QTextEdit::NoWrap);
     m_decompressLogEdit->setStyleSheet(
         "QTextEdit { "
         "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
-        "   font-size: 12px; "
-        "   font-family: 'Consolas', 'Microsoft YaHei', monospace; "
         "   padding: 4px; "
         "}"
     );
     progressLayout->addWidget(m_decompressLogEdit);
 
-    layout->addWidget(progressGroup);
+    rightLayout->addWidget(progressGroup, 1);
 
-    // === 开始按钮 ===
+    // === 开始按钮（移到右列下方） ===
     m_startDecompressBtn = new QPushButton(tr("Start Decompression"));
     m_startDecompressBtn->setMinimumHeight(45);
     m_startDecompressBtn->setStyleSheet(
@@ -539,9 +569,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   color: #333; "
         "   border: 2px solid rgba(150, 150, 150, 200); "
         "   border-radius: 8px; "
-        "   font-size: 14px; "
         "   font-weight: bold; "
-        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
         "   background: rgba(255, 255, 255, 200); "
@@ -556,9 +584,15 @@ QWidget* MainWindow::createDecompressionTab()
         "}"
     );
     connect(m_startDecompressBtn, &QPushButton::clicked, this, &MainWindow::onStartDecompressionClicked);
-    layout->addWidget(m_startDecompressBtn);
+    rightLayout->addWidget(m_startDecompressBtn);
 
-    layout->addStretch();
+    // 添加左右两列到内容区域，设置拉伸比例（左:右 = 3:2）
+    contentLayout->addWidget(leftColumn, 3);
+    contentLayout->addWidget(rightColumn, 2);
+
+    // 内容区域添加到主布局
+    mainVLayout->addWidget(contentBox);
+
     return tab;
 }
 
@@ -650,8 +684,7 @@ void MainWindow::onStartCompressionClicked()
 
     QString password = m_passwordEdit->text();
     if (password.isEmpty()) {
-        QMessageBox::warning(this, tr("Error"), tr("Please enter an encryption key."));
-        return;
+        password = "LOVEYONAGI";  // 使用默认密码
     }
 
     // 收集文件列表
@@ -729,8 +762,7 @@ void MainWindow::onStartDecompressionClicked()
 
     QString password = m_decompressPasswordEdit->text();
     if (password.isEmpty()) {
-        QMessageBox::warning(this, tr("Error"), tr("Please enter the decryption key."));
-        return;
+        password = "LOVEYONAGI";  // 使用默认密码
     }
 
     QString outputDir = m_decompressOutputDirEdit->text().trimmed();
