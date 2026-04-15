@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/background.png</file>
+        <file>YONAGII_512x512.ico</file>
+    </qresource>
+</RCC>
