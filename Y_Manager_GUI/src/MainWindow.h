@@ -15,6 +15,12 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QThread>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
+#include <QPixmap>
+#include <QResizeEvent>
 #include <memory>
 #include <vector>
 #include <string>
@@ -30,6 +36,11 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
+protected:
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     // 压缩模式槽函数
@@ -58,6 +69,8 @@ private:
     QString getExeDirectory();
     bool pathExists(const QString &path);
     QString makeValidPath(const QString &input);
+    void addDroppedPaths(const QList<QUrl> &urls);
+    void updateBackground();
 
     // 压缩模式控件
     QListWidget *m_fileListWidget;
@@ -66,6 +79,8 @@ private:
     QLineEdit *m_passwordEdit;
     QPushButton *m_startCompressBtn;
     QProgressBar *m_compressProgressBar;
+    QLabel *m_compressCurrentFileLabel;
+    QLabel *m_compressProgressLabel;
     QTextEdit *m_compressLogEdit;
 
     // 解压模式控件
@@ -74,6 +89,8 @@ private:
     QLineEdit *m_decompressPasswordEdit;
     QPushButton *m_startDecompressBtn;
     QProgressBar *m_decompressProgressBar;
+    QLabel *m_decompressCurrentFileLabel;
+    QLabel *m_decompressProgressLabel;
     QTextEdit *m_decompressLogEdit;
 
     // 工作线程
@@ -82,4 +99,7 @@ private:
 
     // 状态
     bool m_isProcessing;
+
+    // 背景图片
+    QPixmap m_backgroundPixmap;
 };

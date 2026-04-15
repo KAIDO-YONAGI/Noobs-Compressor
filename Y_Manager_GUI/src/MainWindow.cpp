@@ -8,6 +8,11 @@
 #include <QPalette>
 #include <QBrush>
 #include <QFont>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
+#include <QResizeEvent>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -19,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent)
     , m_worker(nullptr)
     , m_isProcessing(false)
 {
+    // 加载背景图片（只加载一次）
+    m_backgroundPixmap.load(":/images/background.png");
+
     setupUI();
 }
 
@@ -34,23 +42,21 @@ MainWindow::~MainWindow()
 void MainWindow::setupUI()
 {
     setWindowTitle(tr("Secure Files Compressor"));
-    setMinimumSize(700, 500);
-    resize(800, 600);
+    setMinimumSize(500, 500);
+    resize(650, 650);  // 宽高比接近 1:1
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
 
-    // 设置背景图片
+    // 启用拖放
+    setAcceptDrops(true);
+
+    // 设置背景图片 - 使用裁剪模式
     QWidget *centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
-    // 加载背景图片
-    QPixmap backgroundPixmap(":/images/background.png");
-    if (!backgroundPixmap.isNull()) {
-        QPalette palette;
-        palette.setBrush(QPalette::Window, QBrush(backgroundPixmap.scaled(size(), Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation)));
-        setPalette(palette);
-    }
+    // 设置初始背景
+    updateBackground();
 
     // 主布局
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
@@ -62,11 +68,11 @@ void MainWindow::setupUI()
     tabWidget->setStyleSheet(
         "QTabWidget::pane { "
         "   border: 1px solid rgba(180, 180, 180, 120); "
-        "   background: rgba(255, 255, 255, 220); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border-radius: 8px; "
         "} "
         "QTabBar::tab { "
-        "   background: rgba(240, 240, 240, 200); "
+        "   background: rgba(240, 240, 240, 140); "
         "   padding: 10px 25px; "
         "   margin-right: 2px; "
         "   border-top-left-radius: 6px; "
@@ -76,11 +82,11 @@ void MainWindow::setupUI()
         "   color: #333; "
         "} "
         "QTabBar::tab:selected { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 180); "
         "   color: #000; "
         "} "
         "QTabBar::tab:hover { "
-        "   background: rgba(255, 255, 255, 220); "
+        "   background: rgba(255, 255, 255, 160); "
         "}"
     );
     tabWidget->addTab(createCompressionTab(), tr("Compress"));
@@ -96,33 +102,34 @@ QWidget* MainWindow::createCompressionTab()
     QVBoxLayout *layout = new QVBoxLayout(tab);
     layout->setSpacing(10);
 
-    // 统一的按钮样式 - 白色/灰色风格
+    // 统一的按钮样式 - 白色/灰色风格，字体抗锯齿
     QString btnStyle =
         "QPushButton { "
-        "   background: rgba(255, 255, 255, 230); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(180, 180, 180, 180); "
         "   border-radius: 5px; "
         "   padding: 8px 18px; "
         "   font-weight: bold; "
         "   font-size: 12px; "
         "   color: #333; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
-        "   background: rgba(245, 245, 245, 250); "
+        "   background: rgba(255, 255, 255, 200); "
         "   border: 1px solid rgba(150, 150, 150, 200); "
         "} "
         "QPushButton:pressed { "
-        "   background: rgba(220, 220, 220, 230); "
+        "   background: rgba(220, 220, 220, 180); "
         "}"
         "QPushButton:disabled { "
-        "   background: rgba(200, 200, 200, 180); "
+        "   background: rgba(200, 200, 200, 140); "
         "   color: #888; "
         "}";
 
     // 统一的GroupBox样式
     QString groupBoxStyle =
         "QGroupBox { "
-        "   background: rgba(255, 255, 255, 200); "
+        "   background: rgba(255, 255, 255, 130); "
         "   border: 1px solid rgba(200, 200, 200, 150); "
         "   border-radius: 8px; "
         "   margin-top: 12px; "
@@ -130,17 +137,22 @@ QWidget* MainWindow::createCompressionTab()
         "   font-weight: bold; "
         "   font-size: 13px; "
         "   color: #333; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
         "   padding: 0 6px; "
         "} "
-        "QLabel { background: transparent; font-size: 12px; color: #333; } "
+        "QLabel { background: transparent; font-size: 12px; color: #333; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; } "
         "QLineEdit { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
+        "   padding: 6px; "
+        "   font-size: 12px; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
+        "}";
         "   padding: 6px; "
         "   font-size: 12px; "
         "}";
@@ -154,7 +166,7 @@ QWidget* MainWindow::createCompressionTab()
     m_fileListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_fileListWidget->setStyleSheet(
         "QListWidget { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   font-size: 12px; "
@@ -221,7 +233,7 @@ QWidget* MainWindow::createCompressionTab()
     QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
     progressGroup->setStyleSheet(
         "QGroupBox { "
-        "   background: rgba(255, 255, 255, 200); "
+        "   background: rgba(255, 255, 255, 130); "
         "   border: 1px solid rgba(200, 200, 200, 150); "
         "   border-radius: 8px; "
         "   margin-top: 12px; "
@@ -237,18 +249,36 @@ QWidget* MainWindow::createCompressionTab()
         "}"
     );
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
+    progressLayout->setSpacing(8);
 
+    // 当前文件标签 - 增加高度和样式
+    m_compressCurrentFileLabel = new QLabel(tr("Ready"));
+    m_compressCurrentFileLabel->setStyleSheet(
+        "QLabel { "
+        "   background: transparent; "
+        "   font-size: 12px; "
+        "   color: #333; "
+        "   padding: 6px; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
+        "}"
+    );
+    m_compressCurrentFileLabel->setWordWrap(true);
+    progressLayout->addWidget(m_compressCurrentFileLabel);
+
+    // 进度条
     m_compressProgressBar = new QProgressBar();
     m_compressProgressBar->setValue(0);
     m_compressProgressBar->setTextVisible(true);
+    m_compressProgressBar->setMinimumHeight(28);
     m_compressProgressBar->setStyleSheet(
         "QProgressBar { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   text-align: center; "
-        "   font-size: 12px; "
-        "   height: 22px; "
+        "   font-size: 13px; "
+        "   font-weight: bold; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QProgressBar::chunk { "
         "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a0a0a0, stop:1 #d0d0d0); "
@@ -257,15 +287,31 @@ QWidget* MainWindow::createCompressionTab()
     );
     progressLayout->addWidget(m_compressProgressBar);
 
+    // 进度百分比标签
+    m_compressProgressLabel = new QLabel(tr("Overall: 0% | Current: 0%"));
+    m_compressProgressLabel->setStyleSheet(
+        "QLabel { "
+        "   background: transparent; "
+        "   font-size: 12px; "
+        "   color: #555; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
+        "}"
+    );
+    progressLayout->addWidget(m_compressProgressLabel);
+
+    // 日志框 - 增加高度，禁用自动换行
     m_compressLogEdit = new QTextEdit();
     m_compressLogEdit->setReadOnly(true);
-    m_compressLogEdit->setMaximumHeight(100);
+    m_compressLogEdit->setMinimumHeight(120);
+    m_compressLogEdit->setLineWrapMode(QTextEdit::NoWrap);  // 禁用自动换行
     m_compressLogEdit->setStyleSheet(
         "QTextEdit { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   font-size: 12px; "
+        "   font-family: 'Consolas', 'Microsoft YaHei', monospace; "
+        "   padding: 4px; "
         "}"
     );
     progressLayout->addWidget(m_compressLogEdit);
@@ -277,22 +323,23 @@ QWidget* MainWindow::createCompressionTab()
     m_startCompressBtn->setMinimumHeight(45);
     m_startCompressBtn->setStyleSheet(
         "QPushButton { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   color: #333; "
         "   border: 2px solid rgba(150, 150, 150, 200); "
         "   border-radius: 8px; "
         "   font-size: 14px; "
         "   font-weight: bold; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
-        "   background: rgba(245, 245, 245, 250); "
+        "   background: rgba(255, 255, 255, 200); "
         "   border: 2px solid rgba(120, 120, 120, 220); "
         "} "
         "QPushButton:pressed { "
-        "   background: rgba(230, 230, 230, 240); "
+        "   background: rgba(220, 220, 220, 180); "
         "} "
         "QPushButton:disabled { "
-        "   background: rgba(220, 220, 220, 200); "
+        "   background: rgba(200, 200, 200, 140); "
         "   color: #888; "
         "}"
     );
@@ -312,7 +359,7 @@ QWidget* MainWindow::createDecompressionTab()
 
     QString groupBoxStyle =
         "QGroupBox { "
-        "   background: rgba(255, 255, 255, 200); "
+        "   background: rgba(255, 255, 255, 130); "
         "   border: 1px solid rgba(200, 200, 200, 150); "
         "   border-radius: 8px; "
         "   margin-top: 12px; "
@@ -320,40 +367,43 @@ QWidget* MainWindow::createDecompressionTab()
         "   font-weight: bold; "
         "   font-size: 13px; "
         "   color: #333; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
         "   padding: 0 6px; "
         "} "
-        "QLabel { background: transparent; font-size: 12px; color: #333; } "
+        "QLabel { background: transparent; font-size: 12px; color: #333; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; } "
         "QLineEdit { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
         "   font-size: 12px; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "}";
 
     QString btnStyle =
         "QPushButton { "
-        "   background: rgba(255, 255, 255, 230); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(180, 180, 180, 180); "
         "   border-radius: 5px; "
         "   padding: 8px 18px; "
         "   font-weight: bold; "
         "   font-size: 12px; "
         "   color: #333; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
-        "   background: rgba(245, 245, 245, 250); "
+        "   background: rgba(255, 255, 255, 200); "
         "   border: 1px solid rgba(150, 150, 150, 200); "
         "} "
         "QPushButton:pressed { "
-        "   background: rgba(220, 220, 220, 230); "
+        "   background: rgba(220, 220, 220, 180); "
         "}"
         "QPushButton:disabled { "
-        "   background: rgba(200, 200, 200, 180); "
+        "   background: rgba(200, 200, 200, 140); "
         "   color: #888; "
         "}";
 
@@ -396,7 +446,7 @@ QWidget* MainWindow::createDecompressionTab()
     QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
     progressGroup->setStyleSheet(
         "QGroupBox { "
-        "   background: rgba(255, 255, 255, 200); "
+        "   background: rgba(255, 255, 255, 130); "
         "   border: 1px solid rgba(200, 200, 200, 150); "
         "   border-radius: 8px; "
         "   margin-top: 12px; "
@@ -412,18 +462,35 @@ QWidget* MainWindow::createDecompressionTab()
         "}"
     );
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
+    progressLayout->setSpacing(8);
+
+    // 当前文件标签 - 增加高度和样式
+    m_decompressCurrentFileLabel = new QLabel(tr("Ready"));
+    m_decompressCurrentFileLabel->setStyleSheet(
+        "QLabel { "
+        "   background: transparent; "
+        "   font-size: 12px; "
+        "   color: #333; "
+        "   padding: 6px; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
+        "}"
+    );
+    m_decompressCurrentFileLabel->setWordWrap(true);
+    progressLayout->addWidget(m_decompressCurrentFileLabel);
 
     m_decompressProgressBar = new QProgressBar();
     m_decompressProgressBar->setValue(0);
     m_decompressProgressBar->setTextVisible(true);
+    m_decompressProgressBar->setMinimumHeight(28);
     m_decompressProgressBar->setStyleSheet(
         "QProgressBar { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   text-align: center; "
-        "   font-size: 12px; "
-        "   height: 22px; "
+        "   font-size: 13px; "
+        "   font-weight: bold; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QProgressBar::chunk { "
         "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b0b0b0, stop:1 #e0e0e0); "
@@ -432,15 +499,31 @@ QWidget* MainWindow::createDecompressionTab()
     );
     progressLayout->addWidget(m_decompressProgressBar);
 
+    // 进度百分比标签
+    m_decompressProgressLabel = new QLabel(tr("Overall: 0% | Current: 0%"));
+    m_decompressProgressLabel->setStyleSheet(
+        "QLabel { "
+        "   background: transparent; "
+        "   font-size: 12px; "
+        "   color: #555; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
+        "}"
+    );
+    progressLayout->addWidget(m_decompressProgressLabel);
+
+    // 日志框 - 增加高度，禁用自动换行
     m_decompressLogEdit = new QTextEdit();
     m_decompressLogEdit->setReadOnly(true);
-    m_decompressLogEdit->setMaximumHeight(100);
+    m_decompressLogEdit->setMinimumHeight(120);
+    m_decompressLogEdit->setLineWrapMode(QTextEdit::NoWrap);  // 禁用自动换行
     m_decompressLogEdit->setStyleSheet(
         "QTextEdit { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   font-size: 12px; "
+        "   font-family: 'Consolas', 'Microsoft YaHei', monospace; "
+        "   padding: 4px; "
         "}"
     );
     progressLayout->addWidget(m_decompressLogEdit);
@@ -452,22 +535,23 @@ QWidget* MainWindow::createDecompressionTab()
     m_startDecompressBtn->setMinimumHeight(45);
     m_startDecompressBtn->setStyleSheet(
         "QPushButton { "
-        "   background: rgba(255, 255, 255, 240); "
+        "   background: rgba(255, 255, 255, 160); "
         "   color: #333; "
         "   border: 2px solid rgba(150, 150, 150, 200); "
         "   border-radius: 8px; "
         "   font-size: 14px; "
         "   font-weight: bold; "
+        "   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; "
         "} "
         "QPushButton:hover { "
-        "   background: rgba(245, 245, 245, 250); "
+        "   background: rgba(255, 255, 255, 200); "
         "   border: 2px solid rgba(120, 120, 120, 220); "
         "} "
         "QPushButton:pressed { "
-        "   background: rgba(230, 230, 230, 240); "
+        "   background: rgba(220, 220, 220, 180); "
         "} "
         "QPushButton:disabled { "
-        "   background: rgba(220, 220, 220, 200); "
+        "   background: rgba(200, 200, 200, 140); "
         "   color: #888; "
         "}"
     );
@@ -482,26 +566,37 @@ QWidget* MainWindow::createDecompressionTab()
 
 void MainWindow::onAddFilesClicked()
 {
-    QStringList files = QFileDialog::getOpenFileNames(this,
-        tr("Select Files"), QString(), tr("All Files (*)"));
+    // 使用非原生对话框支持多选文件
+    QFileDialog dialog(this, tr("Select Files"));
+    dialog.setFileMode(QFileDialog::ExistingFiles);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
 
-    for (const QString &file : files) {
-        QString cleanPath = makeValidPath(file);
-        if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
-            m_fileListWidget->addItem(cleanPath);
+    if (dialog.exec() == QDialog::Accepted) {
+        QStringList files = dialog.selectedFiles();
+        for (const QString &file : files) {
+            QString cleanPath = makeValidPath(file);
+            if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
+                m_fileListWidget->addItem(cleanPath);
+            }
         }
     }
 }
 
 void MainWindow::onAddFolderClicked()
 {
-    QString folder = QFileDialog::getExistingDirectory(this,
-        tr("Select Folder"), QString(), QFileDialog::ShowDirsOnly);
+    // 使用非原生对话框支持多选文件夹
+    QFileDialog dialog(this, tr("Select Folders"));
+    dialog.setFileMode(QFileDialog::Directory);
+    dialog.setOption(QFileDialog::ShowDirsOnly, true);
+    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
 
-    if (!folder.isEmpty()) {
-        QString cleanPath = makeValidPath(folder);
-        if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
-            m_fileListWidget->addItem(cleanPath);
+    if (dialog.exec() == QDialog::Accepted) {
+        QStringList folders = dialog.selectedFiles();
+        for (const QString &folder : folders) {
+            QString cleanPath = makeValidPath(folder);
+            if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
+                m_fileListWidget->addItem(cleanPath);
+            }
         }
     }
 }
@@ -570,6 +665,8 @@ void MainWindow::onStartCompressionClicked()
     m_startCompressBtn->setEnabled(false);
     m_startCompressBtn->setText(tr("Processing..."));
     m_compressProgressBar->setValue(0);
+    m_compressProgressLabel->setText(tr("Overall: 0%"));
+    m_compressCurrentFileLabel->setText(tr("Initializing..."));
     m_compressLogEdit->clear();
     m_compressLogEdit->append(tr("Starting compression..."));
 
@@ -643,6 +740,8 @@ void MainWindow::onStartDecompressionClicked()
     m_startDecompressBtn->setEnabled(false);
     m_startDecompressBtn->setText(tr("Processing..."));
     m_decompressProgressBar->setValue(0);
+    m_decompressProgressLabel->setText(tr("Overall: 0%"));
+    m_decompressCurrentFileLabel->setText(tr("Initializing..."));
     m_decompressLogEdit->clear();
     m_decompressLogEdit->append(tr("Starting decompression..."));
 
@@ -663,21 +762,23 @@ void MainWindow::onStartDecompressionClicked()
 
 void MainWindow::onCompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status)
 {
-    m_compressProgressBar->setValue(static_cast<int>(overallProgress));
+    int overallInt = static_cast<int>(overallProgress);
+    int fileInt = static_cast<int>(fileProgress);
 
-    QString logMessage;
+    m_compressProgressBar->setValue(overallInt);
+    m_compressProgressLabel->setText(tr("Overall: %1% | Current file: %2%").arg(overallInt).arg(fileInt));
+
     if (!filename.isEmpty()) {
-        logMessage = tr("[%1%] %2 - %3 (%4%)")
-            .arg(static_cast<int>(overallProgress), 3)
+        m_compressCurrentFileLabel->setText(tr("Processing: %1").arg(filename));
+        m_compressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
+            .arg(overallInt, 3)
             .arg(status)
             .arg(filename)
-            .arg(static_cast<int>(fileProgress), 3);
+            .arg(fileInt, 3));
     } else {
-        logMessage = tr("[%1%] %2")
-            .arg(static_cast<int>(overallProgress), 3)
-            .arg(status);
+        m_compressCurrentFileLabel->setText(status);
+        m_compressLogEdit->append(tr("[%1%] %2").arg(overallInt, 3).arg(status));
     }
-    m_compressLogEdit->append(logMessage);
 }
 
 void MainWindow::onCompressionFinished(bool success, const QString &message)
@@ -688,9 +789,12 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
 
     if (success) {
         m_compressProgressBar->setValue(100);
+        m_compressProgressLabel->setText(tr("Overall: 100% | Completed"));
+        m_compressCurrentFileLabel->setText(tr("Completed successfully"));
         m_compressLogEdit->append(tr("Compression completed successfully!"));
         QMessageBox::information(this, tr("Success"), message);
     } else {
+        m_compressCurrentFileLabel->setText(tr("Failed"));
         m_compressLogEdit->append(tr("Compression failed: %1").arg(message));
         QMessageBox::critical(this, tr("Error"), message);
     }
@@ -710,21 +814,23 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
 
 void MainWindow::onDecompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status)
 {
-    m_decompressProgressBar->setValue(static_cast<int>(overallProgress));
+    int overallInt = static_cast<int>(overallProgress);
+    int fileInt = static_cast<int>(fileProgress);
 
-    QString logMessage;
+    m_decompressProgressBar->setValue(overallInt);
+    m_decompressProgressLabel->setText(tr("Overall: %1% | Current file: %2%").arg(overallInt).arg(fileInt));
+
     if (!filename.isEmpty()) {
-        logMessage = tr("[%1%] %2 - %3 (%4%)")
-            .arg(static_cast<int>(overallProgress), 3)
+        m_decompressCurrentFileLabel->setText(tr("Processing: %1").arg(filename));
+        m_decompressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
+            .arg(overallInt, 3)
             .arg(status)
             .arg(filename)
-            .arg(static_cast<int>(fileProgress), 3);
+            .arg(fileInt, 3));
     } else {
-        logMessage = tr("[%1%] %2")
-            .arg(static_cast<int>(overallProgress), 3)
-            .arg(status);
+        m_decompressCurrentFileLabel->setText(status);
+        m_decompressLogEdit->append(tr("[%1%] %2").arg(overallInt, 3).arg(status));
     }
-    m_decompressLogEdit->append(logMessage);
 }
 
 void MainWindow::onDecompressionFinished(bool success, const QString &message)
@@ -735,9 +841,12 @@ void MainWindow::onDecompressionFinished(bool success, const QString &message)
 
     if (success) {
         m_decompressProgressBar->setValue(100);
+        m_decompressProgressLabel->setText(tr("Overall: 100% | Completed"));
+        m_decompressCurrentFileLabel->setText(tr("Completed successfully"));
         m_decompressLogEdit->append(tr("Decompression completed successfully!"));
         QMessageBox::information(this, tr("Success"), message);
     } else {
+        m_decompressCurrentFileLabel->setText(tr("Failed"));
         m_decompressLogEdit->append(tr("Decompression failed: %1").arg(message));
         QMessageBox::critical(this, tr("Error"), message);
     }
@@ -787,4 +896,92 @@ QString MainWindow::makeValidPath(const QString &input)
         result = result.mid(1, result.length() - 2);
     }
     return QDir::cleanPath(result);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls()) {
+        event->acceptProposedAction();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QList<QUrl> &urls = event->mimeData()->urls();
+    addDroppedPaths(urls);
+}
+
+void MainWindow::addDroppedPaths(const QList<QUrl> &urls)
+{
+    for (const QUrl &url : urls) {
+        QString path = url.toLocalFile();
+        if (path.isEmpty()) {
+            path = url.toString();
+        }
+
+        QString cleanPath = makeValidPath(path);
+        if (cleanPath.isEmpty()) {
+            continue;
+        }
+
+        // 检查是否已存在
+        if (m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
+            m_fileListWidget->addItem(cleanPath);
+        }
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    updateBackground();
+}
+
+void MainWindow::updateBackground()
+{
+    if (m_backgroundPixmap.isNull()) {
+        return;
+    }
+
+    // 获取窗口大小
+    QSize windowSize = this->size();
+
+    // 计算保持宽高比的缩放尺寸（裁剪模式：缩放到完全覆盖窗口）
+    QSize imageSize = m_backgroundPixmap.size();
+    double imageRatio = static_cast<double>(imageSize.width()) / imageSize.height();
+    double windowRatio = static_cast<double>(windowSize.width()) / windowSize.height();
+
+    QSize scaledSize;
+    if (windowRatio > imageRatio) {
+        // 窗口更宽 - 按宽度缩放，高度会超出
+        scaledSize.setWidth(windowSize.width());
+        scaledSize.setHeight(static_cast<int>(windowSize.width() / imageRatio));
+    } else {
+        // 窗口更高 - 按高度缩放，宽度会超出
+        scaledSize.setHeight(windowSize.height());
+        scaledSize.setWidth(static_cast<int>(windowSize.height() * imageRatio));
+    }
+
+    // 缩放图片
+    QPixmap scaledPixmap = m_backgroundPixmap.scaled(
+        scaledSize,
+        Qt::KeepAspectRatioByExpanding,
+        Qt::SmoothTransformation
+    );
+
+    // 居中裁剪
+    int x = (scaledPixmap.width() - windowSize.width()) / 2;
+    int y = (scaledPixmap.height() - windowSize.height()) / 2;
+
+    QPixmap croppedPixmap = scaledPixmap.copy(
+        qMax(0, x),
+        qMax(0, y),
+        windowSize.width(),
+        windowSize.height()
+    );
+
+    // 设置背景
+    QPalette palette;
+    palette.setBrush(QPalette::Window, QBrush(croppedPixmap));
+    setPalette(palette);
 }

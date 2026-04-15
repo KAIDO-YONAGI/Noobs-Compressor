@@ -160,6 +160,6 @@ endif()
 # 输出路径
 # ========================
 set_target_properties(SecureCompressorGUI PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/SFC"
     OUTPUT_NAME "SecureCompressorGUI"
 )
