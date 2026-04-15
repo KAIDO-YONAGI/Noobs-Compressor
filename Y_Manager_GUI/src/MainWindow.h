@@ -1,5 +1,18 @@
 #pragma once
-
+#include "CompressionWorker.h"
+#include <QApplication>
+#include <QStandardPaths>
+#include <QDir>
+#include <QFileInfo>
+#include <QPixmap>
+#include <QPalette>
+#include <QBrush>
+#include <QFont>
+#include <QDragEnterEvent>
+#include <QDropEvent>
+#include <QMimeData>
+#include <QUrl>
+#include <QResizeEvent>
 #include <QMainWindow>
 #include <QWidget>
 #include <QVBoxLayout>

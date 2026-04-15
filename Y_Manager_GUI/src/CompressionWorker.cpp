@@ -1,14 +1,5 @@
 #include "CompressionWorker.h"
-#include "../EncryptionModules/Aes/include/My_Aes.h"
-#include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
-#include "../Y_Manager/MainLoop.h"
-#include "../Y_Manager/IconHandler.h"
-#include <QFileInfo>
-#include <QDir>
-#include <stdexcept>
-#include <filesystem>
-#include <windows.h>
-#include <iostream>
+
 
 CompressionWorker::CompressionWorker(QObject *parent)
     : QObject(parent)

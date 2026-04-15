@@ -1,18 +1,5 @@
 #include "MainWindow.h"
-#include "CompressionWorker.h"
-#include <QApplication>
-#include <QStandardPaths>
-#include <QDir>
-#include <QFileInfo>
-#include <QPixmap>
-#include <QPalette>
-#include <QBrush>
-#include <QFont>
-#include <QDragEnterEvent>
-#include <QDropEvent>
-#include <QMimeData>
-#include <QUrl>
-#include <QResizeEvent>
+
 
 #ifdef _WIN32
 #include <windows.h>
@@ -43,7 +30,7 @@ void MainWindow::setupUI()
 {
     setWindowTitle(tr("Secure Files Compressor"));
     setMinimumSize(600, 400);  // 最小尺寸
-    resize(650, 400);  // 默认尺寸
+    resize(700, 450);  // 默认尺寸
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));

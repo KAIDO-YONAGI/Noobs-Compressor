@@ -155,7 +155,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     // 计算总文件数
     m_totalFiles = 0;
     m_processedFiles = 0;
-    // 统计队列中的文件数
+    // 初始文件数（会动态更新）
     m_totalFiles = headerLoaderIterator.fileQueue.size();
 
     while (!headerLoaderIterator.allLoopIsDone())
@@ -298,6 +298,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
         {
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(aes);
+            // 更新总文件数（新加载的文件）
+            m_totalFiles += headerLoaderIterator.fileQueue.size();
         }
     }
 
