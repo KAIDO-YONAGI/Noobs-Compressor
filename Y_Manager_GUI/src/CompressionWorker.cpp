@@ -76,14 +76,14 @@ bool CompressionWorker::validateDecompressionParams()
 
 void CompressionWorker::doCompression()
 {
-    emit progressChanged(0, tr("Validating parameters..."));
+    emit detailedProgress("", 0.0, 0.0, tr("Validating parameters..."));
 
     if (!validateCompressionParams()) {
         return;
     }
 
     try {
-        emit progressChanged(10, tr("Preparing files..."));
+        emit detailedProgress("", 0.0, 5.0, tr("Preparing files..."));
 
         // 使用QDir::toNativeSeparators统一路径分隔符
         std::vector<std::string> filePathToScan;
@@ -118,12 +118,12 @@ void CompressionWorker::doCompression()
         // 逻辑根
         std::string logicalRoot = outputFileName;
 
-        emit progressChanged(20, tr("Creating AES encryption object..."));
+        emit detailedProgress("", 0.0, 10.0, tr("Creating AES encryption object..."));
 
         // 创建AES对象
         Aes aes(m_password.toStdString().c_str());
 
-        emit progressChanged(30, tr("Writing file header..."));
+        emit detailedProgress("", 0.0, 15.0, tr("Writing file header..."));
 
         // 创建HeaderWriter
         HeaderWriter headerWriter_v0;
@@ -131,19 +131,26 @@ void CompressionWorker::doCompression()
 
         std::cout << "DEBUG: HeaderWriter done" << std::endl;
 
-        emit progressChanged(40, tr("Starting compression..."));
+        emit detailedProgress("", 0.0, 20.0, tr("Starting compression..."));
 
-        // 压缩
+        // 压缩 - 设置进度回调
         CompressionLoop compressor(compressionFilePath);
+        compressor.setProgressCallback([this](const std::string &filename, double fileProgress, double overallProgress, const std::string &status) {
+            QString qFilename = QString::fromStdString(filename);
+            QString qStatus = QString::fromStdString(status);
+            // 将整体进度映射到20%-95%的范围（预留5%给图标关联）
+            double mappedProgress = 20.0 + overallProgress * 0.75;
+            emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+        });
         compressor.compressionLoop(filePathToScan, aes);
 
-        emit progressChanged(90, tr("Associating icon..."));
+        emit detailedProgress("", 100.0, 95.0, tr("Associating icon..."));
 
         try {
             IconHandler::AssociateIconToSyFile(compressionFilePath, "");
         } catch (...) {}
 
-        emit progressChanged(100, tr("Compression completed!"));
+        emit detailedProgress("", 100.0, 100.0, tr("Completed"));
         emit finished(true, tr("Compression successful!\nOutput file: %1").arg(QString::fromStdString(compressionFilePath)));
 
     } catch (const std::exception &e) {
@@ -155,28 +162,36 @@ void CompressionWorker::doCompression()
 
 void CompressionWorker::doDecompression()
 {
-    emit progressChanged(0, tr("Validating parameters..."));
+    emit detailedProgress("", 0.0, 0.0, tr("Validating parameters..."));
 
     if (!validateDecompressionParams()) {
         return;
     }
 
     try {
-        emit progressChanged(10, tr("Preparing decryption..."));
+        emit detailedProgress("", 0.0, 5.0, tr("Preparing decryption..."));
 
         std::string inputFilePath = m_decompressInputFile.toStdString();
         std::string outputDirectory = m_decompressOutputDir.toStdString();
 
-        emit progressChanged(20, tr("Creating AES decryption object..."));
+        emit detailedProgress("", 0.0, 10.0, tr("Creating AES decryption object..."));
 
         Aes aes(m_decompressPassword.toStdString().c_str());
 
-        emit progressChanged(30, tr("Starting decompression..."));
+        emit detailedProgress("", 0.0, 15.0, tr("Starting decompression..."));
 
+        // 解压 - 设置进度回调
         DecompressionLoop decompressor(inputFilePath, outputDirectory);
+        decompressor.setProgressCallback([this](const std::string &filename, double fileProgress, double overallProgress, const std::string &status) {
+            QString qFilename = QString::fromStdString(filename);
+            QString qStatus = QString::fromStdString(status);
+            // 将整体进度映射到15%-95%的范围
+            double mappedProgress = 15.0 + overallProgress * 0.80;
+            emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+        });
         decompressor.decompressionLoop(aes);
 
-        emit progressChanged(100, tr("Decompression completed!"));
+        emit detailedProgress("", 100.0, 100.0, tr("Completed"));
         emit finished(true, tr("Decompression successful!\nOutput directory: %1").arg(QString::fromStdString(outputDirectory)));
 
     } catch (const std::exception &e) {

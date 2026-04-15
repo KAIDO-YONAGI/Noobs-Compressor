@@ -31,7 +31,8 @@ public slots:
     void doDecompression();
 
 signals:
-    void progressChanged(int percent, const QString &status);
+    // 详细进度信号: (当前文件名, 当前文件进度百分比, 整体进度百分比, 状态消息)
+    void detailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status);
     void finished(bool success, const QString &message);
 
 private:

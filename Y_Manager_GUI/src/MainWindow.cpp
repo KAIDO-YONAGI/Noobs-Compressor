@@ -7,6 +7,7 @@
 #include <QPixmap>
 #include <QPalette>
 #include <QBrush>
+#include <QFont>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -60,23 +61,26 @@ void MainWindow::setupUI()
     QTabWidget *tabWidget = new QTabWidget(this);
     tabWidget->setStyleSheet(
         "QTabWidget::pane { "
-        "   border: 1px solid rgba(255, 255, 255, 100); "
-        "   background: rgba(255, 255, 255, 180); "
+        "   border: 1px solid rgba(180, 180, 180, 120); "
+        "   background: rgba(255, 255, 255, 220); "
         "   border-radius: 8px; "
         "} "
         "QTabBar::tab { "
-        "   background: rgba(255, 255, 255, 150); "
-        "   padding: 8px 20px; "
+        "   background: rgba(240, 240, 240, 200); "
+        "   padding: 10px 25px; "
         "   margin-right: 2px; "
         "   border-top-left-radius: 6px; "
         "   border-top-right-radius: 6px; "
         "   font-weight: bold; "
+        "   font-size: 13px; "
+        "   color: #333; "
         "} "
         "QTabBar::tab:selected { "
-        "   background: rgba(255, 255, 255, 230); "
+        "   background: rgba(255, 255, 255, 240); "
+        "   color: #000; "
         "} "
         "QTabBar::tab:hover { "
-        "   background: rgba(255, 255, 255, 200); "
+        "   background: rgba(255, 255, 255, 220); "
         "}"
     );
     tabWidget->addTab(createCompressionTab(), tr("Compress"));
@@ -92,35 +96,71 @@ QWidget* MainWindow::createCompressionTab()
     QVBoxLayout *layout = new QVBoxLayout(tab);
     layout->setSpacing(10);
 
-    // === 文件列表区域 ===
-    QGroupBox *fileGroup = new QGroupBox(tr("Files to Compress"));
-    fileGroup->setStyleSheet(
+    // 统一的按钮样式 - 白色/灰色风格
+    QString btnStyle =
+        "QPushButton { "
+        "   background: rgba(255, 255, 255, 230); "
+        "   border: 1px solid rgba(180, 180, 180, 180); "
+        "   border-radius: 5px; "
+        "   padding: 8px 18px; "
+        "   font-weight: bold; "
+        "   font-size: 12px; "
+        "   color: #333; "
+        "} "
+        "QPushButton:hover { "
+        "   background: rgba(245, 245, 245, 250); "
+        "   border: 1px solid rgba(150, 150, 150, 200); "
+        "} "
+        "QPushButton:pressed { "
+        "   background: rgba(220, 220, 220, 230); "
+        "}"
+        "QPushButton:disabled { "
+        "   background: rgba(200, 200, 200, 180); "
+        "   color: #888; "
+        "}";
+
+    // 统一的GroupBox样式
+    QString groupBoxStyle =
         "QGroupBox { "
         "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(100, 100, 100, 100); "
-        "   border-radius: 6px; "
-        "   margin-top: 10px; "
-        "   padding-top: 10px; "
+        "   border: 1px solid rgba(200, 200, 200, 150); "
+        "   border-radius: 8px; "
+        "   margin-top: 12px; "
+        "   padding-top: 12px; "
         "   font-weight: bold; "
+        "   font-size: 13px; "
+        "   color: #333; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
-        "   left: 10px; "
-        "   padding: 0 5px; "
-        "}"
-    );
+        "   left: 12px; "
+        "   padding: 0 6px; "
+        "} "
+        "QLabel { background: transparent; font-size: 12px; color: #333; } "
+        "QLineEdit { "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 4px; "
+        "   padding: 6px; "
+        "   font-size: 12px; "
+        "}";
+
+    // === 文件列表区域 ===
+    QGroupBox *fileGroup = new QGroupBox(tr("Files to Compress"));
+    fileGroup->setStyleSheet(groupBoxStyle);
     QVBoxLayout *fileLayout = new QVBoxLayout(fileGroup);
 
     m_fileListWidget = new QListWidget();
     m_fileListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
     m_fileListWidget->setStyleSheet(
         "QListWidget { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
-        "   border-radius: 4px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 5px; "
+        "   font-size: 12px; "
         "} "
-        "QListWidget::item { padding: 5px; } "
-        "QListWidget::item:selected { background: rgba(100, 150, 255, 150); }"
+        "QListWidget::item { padding: 6px; } "
+        "QListWidget::item:selected { background: rgba(200, 200, 200, 150); }"
     );
     fileLayout->addWidget(m_fileListWidget);
 
@@ -131,20 +171,6 @@ QWidget* MainWindow::createCompressionTab()
     QPushButton *removeBtn = new QPushButton(tr("Remove"));
     QPushButton *clearBtn = new QPushButton(tr("Clear"));
 
-    QString btnStyle =
-        "QPushButton { "
-        "   background: rgba(255, 255, 255, 180); "
-        "   border: 1px solid rgba(100, 100, 100, 150); "
-        "   border-radius: 4px; "
-        "   padding: 6px 15px; "
-        "   font-weight: bold; "
-        "} "
-        "QPushButton:hover { "
-        "   background: rgba(255, 255, 255, 230); "
-        "} "
-        "QPushButton:pressed { "
-        "   background: rgba(200, 200, 200, 200); "
-        "}";
     addFileBtn->setStyleSheet(btnStyle);
     addFolderBtn->setStyleSheet(btnStyle);
     removeBtn->setStyleSheet(btnStyle);
@@ -166,28 +192,7 @@ QWidget* MainWindow::createCompressionTab()
 
     // === 输出设置区域 ===
     QGroupBox *outputGroup = new QGroupBox(tr("Output Settings"));
-    outputGroup->setStyleSheet(
-        "QGroupBox { "
-        "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(100, 100, 100, 100); "
-        "   border-radius: 6px; "
-        "   margin-top: 10px; "
-        "   padding-top: 10px; "
-        "   font-weight: bold; "
-        "} "
-        "QGroupBox::title { "
-        "   subcontrol-origin: margin; "
-        "   left: 10px; "
-        "   padding: 0 5px; "
-        "} "
-        "QLabel { background: transparent; } "
-        "QLineEdit { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
-        "   border-radius: 4px; "
-        "   padding: 4px; "
-        "}"
-    );
+    outputGroup->setStyleSheet(groupBoxStyle);
     QGridLayout *outputLayout = new QGridLayout(outputGroup);
 
     // 输出目录
@@ -217,16 +222,18 @@ QWidget* MainWindow::createCompressionTab()
     progressGroup->setStyleSheet(
         "QGroupBox { "
         "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(100, 100, 100, 100); "
-        "   border-radius: 6px; "
-        "   margin-top: 10px; "
-        "   padding-top: 10px; "
+        "   border: 1px solid rgba(200, 200, 200, 150); "
+        "   border-radius: 8px; "
+        "   margin-top: 12px; "
+        "   padding-top: 12px; "
         "   font-weight: bold; "
+        "   font-size: 13px; "
+        "   color: #333; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
-        "   left: 10px; "
-        "   padding: 0 5px; "
+        "   left: 12px; "
+        "   padding: 0 6px; "
         "}"
     );
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
@@ -236,14 +243,16 @@ QWidget* MainWindow::createCompressionTab()
     m_compressProgressBar->setTextVisible(true);
     m_compressProgressBar->setStyleSheet(
         "QProgressBar { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
-        "   border-radius: 4px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 5px; "
         "   text-align: center; "
+        "   font-size: 12px; "
+        "   height: 22px; "
         "} "
         "QProgressBar::chunk { "
-        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #6a5acd, stop:1 #9370db); "
-        "   border-radius: 3px; "
+        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a0a0a0, stop:1 #d0d0d0); "
+        "   border-radius: 4px; "
         "}"
     );
     progressLayout->addWidget(m_compressProgressBar);
@@ -253,9 +262,10 @@ QWidget* MainWindow::createCompressionTab()
     m_compressLogEdit->setMaximumHeight(100);
     m_compressLogEdit->setStyleSheet(
         "QTextEdit { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
-        "   border-radius: 4px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 5px; "
+        "   font-size: 12px; "
         "}"
     );
     progressLayout->addWidget(m_compressLogEdit);
@@ -267,21 +277,23 @@ QWidget* MainWindow::createCompressionTab()
     m_startCompressBtn->setMinimumHeight(45);
     m_startCompressBtn->setStyleSheet(
         "QPushButton { "
-        "   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #7b68ee, stop:1 #6a5acd); "
-        "   color: white; "
-        "   border: none; "
-        "   border-radius: 6px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   color: #333; "
+        "   border: 2px solid rgba(150, 150, 150, 200); "
+        "   border-radius: 8px; "
         "   font-size: 14px; "
         "   font-weight: bold; "
         "} "
         "QPushButton:hover { "
-        "   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #9370db, stop:1 #7b68ee); "
+        "   background: rgba(245, 245, 245, 250); "
+        "   border: 2px solid rgba(120, 120, 120, 220); "
         "} "
         "QPushButton:pressed { "
-        "   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #6a5acd, stop:1 #5a4aad); "
+        "   background: rgba(230, 230, 230, 240); "
         "} "
         "QPushButton:disabled { "
-        "   background: rgba(150, 150, 150, 200); "
+        "   background: rgba(220, 220, 220, 200); "
+        "   color: #888; "
         "}"
     );
     connect(m_startCompressBtn, &QPushButton::clicked, this, &MainWindow::onStartCompressionClicked);
@@ -301,38 +313,48 @@ QWidget* MainWindow::createDecompressionTab()
     QString groupBoxStyle =
         "QGroupBox { "
         "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(100, 100, 100, 100); "
-        "   border-radius: 6px; "
-        "   margin-top: 10px; "
-        "   padding-top: 10px; "
+        "   border: 1px solid rgba(200, 200, 200, 150); "
+        "   border-radius: 8px; "
+        "   margin-top: 12px; "
+        "   padding-top: 12px; "
         "   font-weight: bold; "
+        "   font-size: 13px; "
+        "   color: #333; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
-        "   left: 10px; "
-        "   padding: 0 5px; "
+        "   left: 12px; "
+        "   padding: 0 6px; "
         "} "
-        "QLabel { background: transparent; } "
+        "QLabel { background: transparent; font-size: 12px; color: #333; } "
         "QLineEdit { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
-        "   padding: 4px; "
+        "   padding: 6px; "
+        "   font-size: 12px; "
         "}";
 
     QString btnStyle =
         "QPushButton { "
-        "   background: rgba(255, 255, 255, 180); "
-        "   border: 1px solid rgba(100, 100, 100, 150); "
-        "   border-radius: 4px; "
-        "   padding: 6px 15px; "
+        "   background: rgba(255, 255, 255, 230); "
+        "   border: 1px solid rgba(180, 180, 180, 180); "
+        "   border-radius: 5px; "
+        "   padding: 8px 18px; "
         "   font-weight: bold; "
+        "   font-size: 12px; "
+        "   color: #333; "
         "} "
         "QPushButton:hover { "
-        "   background: rgba(255, 255, 255, 230); "
+        "   background: rgba(245, 245, 245, 250); "
+        "   border: 1px solid rgba(150, 150, 150, 200); "
         "} "
         "QPushButton:pressed { "
-        "   background: rgba(200, 200, 200, 200); "
+        "   background: rgba(220, 220, 220, 230); "
+        "}"
+        "QPushButton:disabled { "
+        "   background: rgba(200, 200, 200, 180); "
+        "   color: #888; "
         "}";
 
     // === 输入文件区域 ===
@@ -375,16 +397,18 @@ QWidget* MainWindow::createDecompressionTab()
     progressGroup->setStyleSheet(
         "QGroupBox { "
         "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(100, 100, 100, 100); "
-        "   border-radius: 6px; "
-        "   margin-top: 10px; "
-        "   padding-top: 10px; "
+        "   border: 1px solid rgba(200, 200, 200, 150); "
+        "   border-radius: 8px; "
+        "   margin-top: 12px; "
+        "   padding-top: 12px; "
         "   font-weight: bold; "
+        "   font-size: 13px; "
+        "   color: #333; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
-        "   left: 10px; "
-        "   padding: 0 5px; "
+        "   left: 12px; "
+        "   padding: 0 6px; "
         "}"
     );
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
@@ -394,14 +418,16 @@ QWidget* MainWindow::createDecompressionTab()
     m_decompressProgressBar->setTextVisible(true);
     m_decompressProgressBar->setStyleSheet(
         "QProgressBar { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
-        "   border-radius: 4px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 5px; "
         "   text-align: center; "
+        "   font-size: 12px; "
+        "   height: 22px; "
         "} "
         "QProgressBar::chunk { "
-        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #20b2aa, stop:1 #48d1cc); "
-        "   border-radius: 3px; "
+        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b0b0b0, stop:1 #e0e0e0); "
+        "   border-radius: 4px; "
         "}"
     );
     progressLayout->addWidget(m_decompressProgressBar);
@@ -411,9 +437,10 @@ QWidget* MainWindow::createDecompressionTab()
     m_decompressLogEdit->setMaximumHeight(100);
     m_decompressLogEdit->setStyleSheet(
         "QTextEdit { "
-        "   background: rgba(255, 255, 255, 230); "
-        "   border: 1px solid rgba(150, 150, 150, 100); "
-        "   border-radius: 4px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 5px; "
+        "   font-size: 12px; "
         "}"
     );
     progressLayout->addWidget(m_decompressLogEdit);
@@ -425,21 +452,23 @@ QWidget* MainWindow::createDecompressionTab()
     m_startDecompressBtn->setMinimumHeight(45);
     m_startDecompressBtn->setStyleSheet(
         "QPushButton { "
-        "   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #20b2aa, stop:1 #008b8b); "
-        "   color: white; "
-        "   border: none; "
-        "   border-radius: 6px; "
+        "   background: rgba(255, 255, 255, 240); "
+        "   color: #333; "
+        "   border: 2px solid rgba(150, 150, 150, 200); "
+        "   border-radius: 8px; "
         "   font-size: 14px; "
         "   font-weight: bold; "
         "} "
         "QPushButton:hover { "
-        "   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #48d1cc, stop:1 #20b2aa); "
+        "   background: rgba(245, 245, 245, 250); "
+        "   border: 2px solid rgba(120, 120, 120, 220); "
         "} "
         "QPushButton:pressed { "
-        "   background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #008b8b, stop:1 #006666); "
+        "   background: rgba(230, 230, 230, 240); "
         "} "
         "QPushButton:disabled { "
-        "   background: rgba(150, 150, 150, 200); "
+        "   background: rgba(220, 220, 220, 200); "
+        "   color: #888; "
         "}"
     );
     connect(m_startDecompressBtn, &QPushButton::clicked, this, &MainWindow::onStartDecompressionClicked);
@@ -551,7 +580,7 @@ void MainWindow::onStartCompressionClicked()
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &CompressionWorker::doCompression);
-    connect(m_worker, &CompressionWorker::progressChanged, this, &MainWindow::onCompressionProgress);
+    connect(m_worker, &CompressionWorker::detailedProgress, this, &MainWindow::onCompressionDetailedProgress);
     connect(m_worker, &CompressionWorker::finished, this, &MainWindow::onCompressionFinished);
 
     m_workerThread->start();
@@ -624,7 +653,7 @@ void MainWindow::onStartDecompressionClicked()
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &CompressionWorker::doDecompression);
-    connect(m_worker, &CompressionWorker::progressChanged, this, &MainWindow::onDecompressionProgress);
+    connect(m_worker, &CompressionWorker::detailedProgress, this, &MainWindow::onDecompressionDetailedProgress);
     connect(m_worker, &CompressionWorker::finished, this, &MainWindow::onDecompressionFinished);
 
     m_workerThread->start();
@@ -632,12 +661,23 @@ void MainWindow::onStartDecompressionClicked()
 
 // === 进度和状态槽函数 ===
 
-void MainWindow::onCompressionProgress(int percent, const QString &status)
+void MainWindow::onCompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status)
 {
-    m_compressProgressBar->setValue(percent);
-    if (!status.isEmpty()) {
-        m_compressLogEdit->append(status);
+    m_compressProgressBar->setValue(static_cast<int>(overallProgress));
+
+    QString logMessage;
+    if (!filename.isEmpty()) {
+        logMessage = tr("[%1%] %2 - %3 (%4%)")
+            .arg(static_cast<int>(overallProgress), 3)
+            .arg(status)
+            .arg(filename)
+            .arg(static_cast<int>(fileProgress), 3);
+    } else {
+        logMessage = tr("[%1%] %2")
+            .arg(static_cast<int>(overallProgress), 3)
+            .arg(status);
     }
+    m_compressLogEdit->append(logMessage);
 }
 
 void MainWindow::onCompressionFinished(bool success, const QString &message)
@@ -668,12 +708,23 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
     }
 }
 
-void MainWindow::onDecompressionProgress(int percent, const QString &status)
+void MainWindow::onDecompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status)
 {
-    m_decompressProgressBar->setValue(percent);
-    if (!status.isEmpty()) {
-        m_decompressLogEdit->append(status);
+    m_decompressProgressBar->setValue(static_cast<int>(overallProgress));
+
+    QString logMessage;
+    if (!filename.isEmpty()) {
+        logMessage = tr("[%1%] %2 - %3 (%4%)")
+            .arg(static_cast<int>(overallProgress), 3)
+            .arg(status)
+            .arg(filename)
+            .arg(static_cast<int>(fileProgress), 3);
+    } else {
+        logMessage = tr("[%1%] %2")
+            .arg(static_cast<int>(overallProgress), 3)
+            .arg(status);
     }
+    m_decompressLogEdit->append(logMessage);
 }
 
 void MainWindow::onDecompressionFinished(bool success, const QString &message)

@@ -46,9 +46,9 @@ private slots:
     void onStartDecompressionClicked();
 
     // 进度和状态槽函数
-    void onCompressionProgress(int percent, const QString &status);
+    void onCompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status);
     void onCompressionFinished(bool success, const QString &message);
-    void onDecompressionProgress(int percent, const QString &status);
+    void onDecompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status);
     void onDecompressionFinished(bool success, const QString &message);
 
 private:
