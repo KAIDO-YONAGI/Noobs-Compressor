@@ -42,8 +42,8 @@ MainWindow::~MainWindow()
 void MainWindow::setupUI()
 {
     setWindowTitle(tr("Secure Files Compressor"));
-    setMinimumSize(700, 500);  // 最小尺寸
-    resize(900, 650);  // 默认尺寸，确保内容完整显示
+    setMinimumSize(600, 400);  // 最小尺寸
+    resize(750, 500);  // 默认尺寸
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
@@ -600,37 +600,28 @@ QWidget* MainWindow::createDecompressionTab()
 
 void MainWindow::onAddFilesClicked()
 {
-    // 使用非原生对话框支持多选文件
-    QFileDialog dialog(this, tr("Select Files"));
-    dialog.setFileMode(QFileDialog::ExistingFiles);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    // 使用 Windows 原生对话框
+    QStringList files = QFileDialog::getOpenFileNames(this, tr("Select Files"),
+        QString(), tr("All Files (*)"));
 
-    if (dialog.exec() == QDialog::Accepted) {
-        QStringList files = dialog.selectedFiles();
-        for (const QString &file : files) {
-            QString cleanPath = makeValidPath(file);
-            if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
-                m_fileListWidget->addItem(cleanPath);
-            }
+    for (const QString &file : files) {
+        QString cleanPath = makeValidPath(file);
+        if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
+            m_fileListWidget->addItem(cleanPath);
         }
     }
 }
 
 void MainWindow::onAddFolderClicked()
 {
-    // 使用非原生对话框支持多选文件夹
-    QFileDialog dialog(this, tr("Select Folders"));
-    dialog.setFileMode(QFileDialog::Directory);
-    dialog.setOption(QFileDialog::ShowDirsOnly, true);
-    dialog.setOption(QFileDialog::DontUseNativeDialog, true);
+    // 使用 Windows 原生对话框
+    QString folder = QFileDialog::getExistingDirectory(this, tr("Select Folder"),
+        QString(), QFileDialog::ShowDirsOnly);
 
-    if (dialog.exec() == QDialog::Accepted) {
-        QStringList folders = dialog.selectedFiles();
-        for (const QString &folder : folders) {
-            QString cleanPath = makeValidPath(folder);
-            if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
-                m_fileListWidget->addItem(cleanPath);
-            }
+    if (!folder.isEmpty()) {
+        QString cleanPath = makeValidPath(folder);
+        if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
+            m_fileListWidget->addItem(cleanPath);
         }
     }
 }

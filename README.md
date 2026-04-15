@@ -158,7 +158,6 @@ Memory usage is stable around **60 MB**.
 - 支持拖放文件/目录
 - 实时进度显示和日志输出
 - 精简部署（减少约 30MB）
-- UPX 压缩（减少 40-60%）
 
 **New Features**:
 - Qt 6 graphical user interface
