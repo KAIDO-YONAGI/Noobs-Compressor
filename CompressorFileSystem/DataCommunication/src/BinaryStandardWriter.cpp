@@ -30,7 +30,8 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entr
             }
             else
                 continue; // 禁用三个基本文件类型之外的文件类型
-            name = entry.path().filename().string();
+            // 使用 u8string() 获取 UTF-8 编码的文件名，确保中文路径正确
+            name = Utf8Converter::u8_to_string(entry.path().filename().u8string());
             fullPath = entry.path();
             sizeOfName = name.size();
             EntryDetails details(
@@ -132,8 +133,10 @@ void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream
 // 符号链接标准写入函数
 void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
 {
+    // 使用 u8string() 获取 UTF-8 编码，确保中文路径正确
     Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
-    Y_flib::FileNameSize sizeOfPath = details.getFullPath().string().size();
+    std::string pathStr = Utf8Converter::u8_to_string(details.getFullPath().u8string());
+    Y_flib::FileNameSize sizeOfPath = pathStr.size();
 
     tempOffset += Y_flib::Constants::SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
 
@@ -143,7 +146,7 @@ void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib
     standardWriter.writeBinaryStandards(sizeOfPath, outFile);
 
     standardWriter.writeBinaryStandards(details.getName(), outFile);
-    standardWriter.writeBinaryStandards(details.getFullPath().string(), outFile);
+    standardWriter.writeBinaryStandards(pathStr, outFile);
 }
 void BinaryStandardWriter::writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset)
 {
@@ -171,14 +174,14 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
         else
         {
-            throw("entryProcessor()-Error:file Not Exist: " + sPath.string() + "\n");
+            throw("entryProcessor()-Error:file Not Exist: " + Utf8Converter::u8_to_string(sPath.u8string()) + "\n");
         }
 
         std::filesystem::path parentPath = file.getFilePathToScan(); // 获取根目录
 
         // 先写入根目录(或文件)自身（手动构造）
-
-        std::string rootName = parentPath.filename().string();
+        // 使用 u8string() 获取 UTF-8 编码的文件名
+        std::string rootName = Utf8Converter::u8_to_string(parentPath.filename().u8string());
         Y_flib::FileNameSize rootNameSize = rootName.size();
         bool isFile = std::filesystem::is_regular_file(parentPath);
         Y_flib::FileSize fileSize = isFile ? std::filesystem::file_size(parentPath) : 0;
@@ -207,7 +210,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
         else
         {
-            throw("entryProcessor()-Error:Unsupported file type: " + parentPath.string() + "\n");
+            throw("entryProcessor()-Error:Unsupported file type: " + Utf8Converter::u8_to_string(parentPath.u8string()) + "\n");
         }
 
     }

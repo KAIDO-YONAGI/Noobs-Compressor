@@ -8,9 +8,6 @@
 #include <filesystem>
 #include <iostream>
 
-class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
-{
-};
 /* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
  *
  * 功能:
@@ -22,6 +19,19 @@ class PathTransfer
 public:
     /* 转换输入路径为fs::path，支持中文路径 */
     std::filesystem::path transPath(std::string_view p);
+};
+
+/* Utf8Converter - UTF-8 字符串转换工具
+ *
+ * 功能:
+ *   将 std::u8string 转换为 std::string
+ *   用于处理 C++20 中 path::u8string() 返回的 char8_t 类型
+ */
+class Utf8Converter
+{
+public:
+    /* 将 std::u8string 转换为 std::string */
+    static std::string u8_to_string(const std::u8string &u8str);
 };
 
 /* StandardsWriter - 二进制数值写入器

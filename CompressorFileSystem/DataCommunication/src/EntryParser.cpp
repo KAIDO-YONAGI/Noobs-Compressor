@@ -18,7 +18,11 @@ std::filesystem::path EntryParser::pathConnector(std::string &fileName)
     if (!entryQueue.empty())
     {
         std::filesystem::path lastPath = entryQueue.front().first.getFullPath();
-        pathToProcess = lastPath / fileName;
+        // fileName 是 UTF-8 编码，需要正确转换为 path
+        // 在 Windows 上，直接从 UTF-8 字符串构造 path 可能会出错
+        // 使用 PathTransfer 进行转换
+        std::filesystem::path fileNamePath = transfer.transPath(fileName);
+        pathToProcess = lastPath / fileNamePath;
     }
     else
         throw("entryQueue is empty");

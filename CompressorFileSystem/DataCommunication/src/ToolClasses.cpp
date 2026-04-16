@@ -16,7 +16,7 @@ std::filesystem::path PathTransfer::transPath(std::string_view p)
     // MultiByteToWideChar 需要 int 类型的大小
     int inputSize = static_cast<int>(p.size());
 
-    // 计算需要的宽字符缓冲区大小
+    // 计算需要的宽字符缓冲区大小（先尝试 UTF-8）
     int wideSize = MultiByteToWideChar(
         CP_UTF8,           // 假设输入是 UTF-8
         0,
@@ -26,6 +26,7 @@ std::filesystem::path PathTransfer::transPath(std::string_view p)
         0
     );
 
+    bool useAcp = false;
     if (wideSize <= 0) {
         // UTF-8 转换失败，尝试系统默认编码 (GBK)
         wideSize = MultiByteToWideChar(
@@ -36,12 +37,14 @@ std::filesystem::path PathTransfer::transPath(std::string_view p)
             nullptr,
             0
         );
+        useAcp = true;
     }
 
     if (wideSize > 0) {
         std::wstring widePath(wideSize, 0);
+        // 使用正确的代码页进行转换
         MultiByteToWideChar(
-            CP_UTF8,
+            useAcp ? CP_ACP : CP_UTF8,
             0,
             p.data(),
             inputSize,
@@ -52,6 +55,11 @@ std::filesystem::path PathTransfer::transPath(std::string_view p)
     }
 #endif
     return std::filesystem::path(p);
+}
+
+std::string Utf8Converter::u8_to_string(const std::u8string &u8str)
+{
+    return std::string(u8str.begin(), u8str.end());
 }
 
 

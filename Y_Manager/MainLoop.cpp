@@ -22,11 +22,13 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     m_processedFiles = 0;
     for (const auto& path : filePathToScan) {
         try {
-            if (std::filesystem::is_directory(path)) {
-                for (auto it = std::filesystem::recursive_directory_iterator(path); it != std::filesystem::recursive_directory_iterator(); ++it) {
+            // 使用 PathTransfer 处理路径
+            std::filesystem::path fsPath = transfer.transPath(path);
+            if (std::filesystem::is_directory(fsPath)) {
+                for (auto it = std::filesystem::recursive_directory_iterator(fsPath); it != std::filesystem::recursive_directory_iterator(); ++it) {
                     if (it->is_regular_file()) m_totalFiles++;
                 }
-            } else if (std::filesystem::is_regular_file(path)) {
+            } else if (std::filesystem::is_regular_file(fsPath)) {
                 m_totalFiles++;
             }
         } catch (const std::exception& e) {

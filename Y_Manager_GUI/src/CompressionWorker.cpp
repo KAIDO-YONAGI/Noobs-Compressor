@@ -1,6 +1,74 @@
 #include "CompressionWorker.h"
 
 
+// Windows API路径处理辅助函数（参考命令行版本）
+static std::filesystem::path make_path(const std::string &utf8_str)
+{
+    if (utf8_str.empty())
+    {
+        return std::filesystem::path("");
+    }
+
+    // 使用 UTF-8 进行转换
+    int wide_len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, nullptr, 0);
+
+    // 如果 UTF-8 转换失败，尝试用本地代码页转换（ANSI）
+    if (wide_len == 0)
+    {
+        wide_len = MultiByteToWideChar(CP_ACP, 0, utf8_str.c_str(), -1, nullptr, 0);
+        if (wide_len == 0)
+        {
+            throw std::runtime_error("Failed to convert string to wide string");
+        }
+
+        std::wstring wide_str(wide_len, L'\0');
+        MultiByteToWideChar(CP_ACP, 0, utf8_str.c_str(), -1, &wide_str[0], wide_len);
+
+        if (!wide_str.empty() && wide_str.back() == L'\0')
+        {
+            wide_str.pop_back();
+        }
+
+        return std::filesystem::path(wide_str);
+    }
+
+    // UTF-8 转换成功
+    std::wstring wide_str(wide_len, L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), -1, &wide_str[0], wide_len);
+
+    if (!wide_str.empty() && wide_str.back() == L'\0')
+    {
+        wide_str.pop_back();
+    }
+
+    return std::filesystem::path(wide_str);
+}
+
+// 将宽字符路径转换为UTF-8字符串
+static std::string wide_to_utf8(const std::wstring &wide_str)
+{
+    if (wide_str.empty())
+    {
+        return "";
+    }
+
+    int utf8_len = WideCharToMultiByte(CP_UTF8, 0, wide_str.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (utf8_len == 0)
+    {
+        return "";
+    }
+
+    std::string utf8_str(utf8_len, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, wide_str.c_str(), -1, &utf8_str[0], utf8_len, nullptr, nullptr);
+
+    if (!utf8_str.empty() && utf8_str.back() == '\0')
+    {
+        utf8_str.pop_back();
+    }
+
+    return utf8_str;
+}
+
 CompressionWorker::CompressionWorker(QObject *parent)
     : QObject(parent)
     , m_isDecompression(false)
@@ -36,14 +104,30 @@ void CompressionWorker::setDecompressionParams(const QString &inputFile,
 bool CompressionWorker::validateCompressionParams()
 {
     for (const QString &file : m_filesToCompress) {
-        if (!QFileInfo::exists(file)) {
-            emit finished(false, tr("File not found: %1").arg(file));
+        // 使用Windows API验证路径存在性
+        std::string utf8Path = file.toUtf8().toStdString();
+        try {
+            auto path = make_path(utf8Path);
+            if (!std::filesystem::exists(path)) {
+                emit finished(false, tr("File not found: %1").arg(file));
+                return false;
+            }
+        } catch (...) {
+            emit finished(false, tr("Invalid path: %1").arg(file));
             return false;
         }
     }
 
-    if (!QFileInfo(m_outputDir).isDir()) {
-        emit finished(false, tr("Output directory not found: %1").arg(m_outputDir));
+    // 验证输出目录
+    std::string utf8OutputDir = m_outputDir.toUtf8().toStdString();
+    try {
+        auto outputPath = make_path(utf8OutputDir);
+        if (!std::filesystem::is_directory(outputPath)) {
+            emit finished(false, tr("Output directory not found: %1").arg(m_outputDir));
+            return false;
+        }
+    } catch (...) {
+        emit finished(false, tr("Invalid output directory: %1").arg(m_outputDir));
         return false;
     }
 
@@ -52,8 +136,16 @@ bool CompressionWorker::validateCompressionParams()
 
 bool CompressionWorker::validateDecompressionParams()
 {
-    if (!QFileInfo::exists(m_decompressInputFile)) {
-        emit finished(false, tr("Archive file not found: %1").arg(m_decompressInputFile));
+    // 使用Windows API验证路径存在性
+    std::string utf8Path = m_decompressInputFile.toUtf8().toStdString();
+    try {
+        auto path = make_path(utf8Path);
+        if (!std::filesystem::exists(path)) {
+            emit finished(false, tr("Archive file not found: %1").arg(m_decompressInputFile));
+            return false;
+        }
+    } catch (...) {
+        emit finished(false, tr("Invalid archive path: %1").arg(m_decompressInputFile));
         return false;
     }
 
@@ -76,21 +168,19 @@ void CompressionWorker::doCompression()
     try {
         emit detailedProgress("", 0.0, 5.0, tr("Preparing files..."));
 
-        // 使用QDir::toNativeSeparators统一路径分隔符
-        // 重要：使用 toUtf8() 确保中文路径正确编码
+        // 使用UTF-8编码的路径字符串
         std::vector<std::string> filePathToScan;
         for (const QString &file : m_filesToCompress) {
-            QString nativeFile = QDir::toNativeSeparators(file);
-            filePathToScan.push_back(nativeFile.toUtf8().toStdString());
-            std::cout << "DEBUG: File path [" << filePathToScan.size() << "]: " << nativeFile.toUtf8().toStdString() << std::endl;
+            std::string utf8Path = file.toUtf8().toStdString();
+            filePathToScan.push_back(utf8Path);
+            std::cout << "DEBUG: File path [" << filePathToScan.size() << "]: " << utf8Path << std::endl;
         }
 
-        // 构建输出目录 - 统一使用反斜杠，使用 UTF-8 编码
-        QString nativeOutputDir = QDir::toNativeSeparators(m_outputDir);
-        std::string outputDirectory = nativeOutputDir.toUtf8().toStdString();
+        // 构建输出目录路径（使用UTF-8编码）
+        std::string outputDirectory = m_outputDir.toUtf8().toStdString();
 
         // 确保输出目录以反斜杠结尾
-        if (!outputDirectory.empty() && outputDirectory.back() != '\\') {
+        if (!outputDirectory.empty() && outputDirectory.back() != '\\' && outputDirectory.back() != '/') {
             outputDirectory += '\\';
         }
         std::cout << "DEBUG: Output directory: " << outputDirectory << std::endl;
