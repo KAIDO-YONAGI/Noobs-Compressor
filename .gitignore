@@ -11,6 +11,7 @@ build/
 bin/
 *.txt
 !CMakeLists.txt
+!readme_UserGuide.txt
 *.log
 
 src/main.cpp

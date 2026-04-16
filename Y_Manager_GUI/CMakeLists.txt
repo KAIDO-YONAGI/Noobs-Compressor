@@ -173,14 +173,12 @@ set_target_properties(SimpleFilesCompressorGUI PROPERTIES
 # ========================
 if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
     # 定义要删除的不必要文件列表
+    # 注意：MinGW 运行时 DLL 需要保留，因为 Qt DLL 动态依赖它们
     set(UNNECESSARY_DLLS
         "Qt6Network.dll"
         "Qt6Svg.dll"
         "D3Dcompiler_47.dll"
         # "opengl32sw.dll"      # 保留：无 GPU 系统的软件渲染后备
-        "libgcc_s_seh-1.dll"    # 已静态链接
-        "libstdc++-6.dll"      # 已静态链接
-        "libwinpthread-1.dll"  # 已静态链接
     )
     set(UNNECESSARY_DIRS
         "iconengines"
@@ -201,6 +199,21 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
                 --no-translations
         COMMENT "Deploying Qt dependencies..."
     )
+
+    # 复制 MinGW 运行时 DLL（Qt DLL 依赖它们）
+    set(MINGW_RUNTIME_DLLS
+        "libgcc_s_seh-1.dll"
+        "libstdc++-6.dll"
+        "libwinpthread-1.dll"
+    )
+    foreach(DLL ${MINGW_RUNTIME_DLLS})
+        add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "D:/qt/Tools/mingw1120_64/bin/${DLL}"
+                "${CMAKE_SOURCE_DIR}/bin/SFC/${DLL}"
+            COMMENT "Copying MinGW runtime: ${DLL}"
+        )
+    endforeach()
 
     # 删除不必要的 DLL
     foreach(DLL ${UNNECESSARY_DLLS})

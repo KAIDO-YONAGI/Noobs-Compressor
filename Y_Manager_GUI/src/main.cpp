@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
 
     // 设置应用程序信息
     app.setApplicationName("Simple Files Compressor");
-    app.setApplicationVersion("1.0.0");
+    app.setApplicationVersion("2.0.0");
     app.setOrganizationName("YONAGI");
 
     // 设置全局字体 - 使用系统默认字体但启用抗锯齿
