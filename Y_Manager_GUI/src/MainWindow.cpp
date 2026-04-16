@@ -219,7 +219,7 @@ QWidget* MainWindow::createCompressionTab()
     outputLayout->addWidget(m_outputFileNameEdit, 1, 1, 1, 2);
 
     // 密码
-    outputLayout->addWidget(new QLabel(tr("Encryption Key:")), 2, 0);
+    outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_passwordEdit = new QLineEdit();
     m_passwordEdit->setEchoMode(QLineEdit::Password);
     m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
@@ -453,7 +453,7 @@ QWidget* MainWindow::createDecompressionTab()
     connect(browseOutBtn, &QPushButton::clicked, this, &MainWindow::onBrowseDecompressOutputClicked);
     outputLayout->addWidget(browseOutBtn, 0, 2);
 
-    outputLayout->addWidget(new QLabel(tr("Decryption Key:")), 1, 0);
+    outputLayout->addWidget(new QLabel(tr("Password:")), 1, 0);
     m_decompressPasswordEdit = new QLineEdit();
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
     m_decompressPasswordEdit->setPlaceholderText(tr("Leave empty for default"));
