@@ -1,4 +1,8 @@
 #include "MainLoop.h"
+#include <chrono>
+
+// 进度回调最小间隔（毫秒）
+static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 
 void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
 {
@@ -16,6 +20,10 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     std::unique_ptr<DataLoader> dataLoader;
 
     Y_flib::FileSize totalBlocks = 1, blockCount = 0;
+
+    // 进度回调节流
+    auto lastCallbackTime = std::chrono::steady_clock::now();
+    double lastReportedProgress = -1.0;
 
     // 计算总文件数用于进度报告
     m_totalFiles = 0;
@@ -50,6 +58,15 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
 
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
 
+    // 预分配缓冲区，在循环中复用，避免频繁内存分配
+    Y_flib::DataBlock huffTree;
+    Y_flib::DataBlock huffTreeOutPut;
+    Y_flib::DataBlock compressedData;
+    huffTree.reserve(Y_flib::Constants::BUFFER_SIZE);
+    huffTreeOutPut.reserve(Y_flib::Constants::BUFFER_SIZE);
+    compressedData.reserve(Y_flib::Constants::BUFFER_SIZE);
+    encryptedBlock.reserve(Y_flib::Constants::BUFFER_SIZE * 2);
+
     std::filesystem::path filename = loadPath.filename();
     while (!headerLoaderIterator.fileQueue.empty())
     {
@@ -66,22 +83,24 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
             huffmanZip.merge_ttabs();
             huffmanZip.gen_hefftree();
             huffmanZip.save_code_inTab();
-            Y_flib::DataBlock huffTree;
+
+            huffTree.clear();
             huffmanZip.tree_to_plat_uchar(huffTree);
-            Y_flib::DataBlock huffTreeOutPut(huffTree.size());
+            huffTreeOutPut.clear();
+            huffTreeOutPut.resize(huffTree.size());
 
             aes.doAes(1, huffTree, huffTreeOutPut);
             dataExporter.exportCompressedData(huffTreeOutPut);
 
             // system("cls");
 
-            Y_flib::DataBlock compressedData;
+            compressedData.clear();
             huffmanZip.encode(data_In, compressedData);
 
+            encryptedBlock.clear();
             aes.doAes(1, compressedData, encryptedBlock);
 
             dataExporter.exportCompressedData(encryptedBlock); // 读取的数据传输给exporter
-            encryptedBlock.clear();
 
             // 计算进度
             double fileProgress = (100.0 * blockCount) / totalBlocks;
@@ -91,15 +110,18 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
                 overallProgress = 100.0 * (m_processedFiles + fileProgress / 100.0) / m_totalFiles;
             }
 
-            // 进度回调
-            if (m_progressCallback) {
-                m_progressCallback(filename.string(), fileProgress, overallProgress, "Compressing");
-            }
+            // 进度回调节流：限制回调频率，避免UI阻塞
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallbackTime).count();
+            bool shouldReport = (elapsed >= PROGRESS_CALLBACK_INTERVAL_MS) ||
+                                (overallProgress - lastReportedProgress >= 5.0) ||  // 进度变化超过5%
+                                (blockCount == totalBlocks);  // 最后一个块必须报告
 
-            std::cout << "Processing file: " << filename << "\n"
-                      << std::fixed << std::setw(6) << std::setprecision(2)
-                      << fileProgress
-                      << "% \n";
+            if (m_progressCallback && shouldReport) {
+                m_progressCallback(filename.string(), fileProgress, overallProgress, "Compressing");
+                lastCallbackTime = now;
+                lastReportedProgress = overallProgress;
+            }
         }
 
         if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
@@ -154,6 +176,10 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     Heffman huffmanUnzip(1);
     Locator locator;
 
+    // 进度回调节流
+    auto lastCallbackTime = std::chrono::steady_clock::now();
+    double lastReportedProgress = -1.0;
+
     // 计算总文件数
     m_totalFiles = 0;
     m_processedFiles = 0;
@@ -190,13 +216,12 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
             std::filesystem::path filePath = fullFilePath;
             std::filesystem::path filename = filePath.filename();
-            // system("cls");
-            std::cout << "Processing file: " << filename << "\n";
 
-            // 进度回调 - 开始处理文件
+            // 进度回调 - 开始处理文件（首次回调立即执行）
             if (m_progressCallback) {
                 double overallProgress = m_totalFiles > 0 ? (100.0 * m_processedFiles / m_totalFiles) : 0;
                 m_progressCallback(filename.string(), 0.0, overallProgress, "Decompressing");
+                lastCallbackTime = std::chrono::steady_clock::now();
             }
 
             DataExporter dataExporter(filePath);
@@ -205,6 +230,18 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             Y_flib::FileSize originalSize = headerLoaderIterator.fileQueue.front().first.getFileSizeInDetails();
             Y_flib::FileSize totalDecompressedBytes = 0; // 跟踪已经解压的总字节数
             Y_flib::FileSize lastReportedBytes = 0;
+
+            // 预分配缓冲区，在循环中复用
+            Y_flib::DataBlock rawTreeData;
+            Y_flib::DataBlock decryptedTreeData;
+            Y_flib::DataBlock rawData;
+            Y_flib::DataBlock decryptedData;
+            Y_flib::DataBlock decompressedData;
+            rawTreeData.reserve(Y_flib::Constants::BUFFER_SIZE);
+            decryptedTreeData.reserve(Y_flib::Constants::BUFFER_SIZE);
+            rawData.reserve(Y_flib::Constants::BUFFER_SIZE);
+            decryptedData.reserve(Y_flib::Constants::BUFFER_SIZE);
+            decompressedData.reserve(Y_flib::Constants::BUFFER_SIZE * 2);
 
             // 处理文件的每个块：每个块都有独立的 Huffman 树
             while (totalDecompressedBytes < originalSize && fileCompressedSize > 0)
@@ -223,12 +260,13 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 std::streampos treeSizePos = inFile.tellg();
                 Y_flib::DirectoryOffsetSize treeBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
                 // 读取并解密树数据
-                Y_flib::DataBlock rawTreeData(treeBlockSize);
+                rawTreeData.clear();
+                rawTreeData.resize(treeBlockSize);
 
                 loader.dataLoader(treeBlockSize, inFile, rawTreeData);
 
                 std::streamsize bytesRead = inFile.gcount();
-                Y_flib::DataBlock decryptedTreeData;
+                decryptedTreeData.clear();
                 aes.doAes(2, rawTreeData, decryptedTreeData);
                 // 恢复 Huffman 树（为这个块创建新树）
                 huffmanUnzip.spawn_tree(decryptedTreeData);
@@ -245,7 +283,8 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 读取数据块大小
                 Y_flib::DirectoryOffsetSize blockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
                 // 读取加密的压缩数据
-                Y_flib::DataBlock rawData(blockSize);
+                rawData.clear();
+                rawData.resize(blockSize);
 
                 loader.dataLoader(blockSize, inFile, rawData);
 
@@ -258,12 +297,12 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                         " bytes, got " +
                         std::to_string(readedSize));
                 }
-                // 解密数据(doAes会重新分配outputBuffer,不需要预先指定大小)
-                Y_flib::DataBlock decryptedData;
+                // 解密数据
+                decryptedData.clear();
                 aes.doAes(2, rawData, decryptedData);
                 // 使用该块对应的 Huffman 树进行解压
                 Y_flib::FileSize remainingBytes = originalSize - totalDecompressedBytes;
-                Y_flib::DataBlock decompressedData;
+                decompressedData.clear();
                 huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), remainingBytes);
                 // 更新已解压的总字节数
                 totalDecompressedBytes += decompressedData.size();
@@ -274,14 +313,21 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
                 // 注意: FLAG 和 size 字段不计入 fileCompressedSize
                 fileCompressedSize -= blockSize;
 
-                // 进度回调 - 文件处理中（每解压一定量报告一次）
-                if (m_progressCallback && originalSize > 0 &&
-                    (totalDecompressedBytes - lastReportedBytes) > (originalSize / 20)) {
-                    double fileProgress = 100.0 * totalDecompressedBytes / originalSize;
-                    double overallProgress = m_totalFiles > 0 ?
-                        (100.0 * (m_processedFiles + fileProgress / 100.0) / m_totalFiles) : fileProgress;
+                // 进度回调 - 文件处理中（节流：限制回调频率）
+                auto now = std::chrono::steady_clock::now();
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallbackTime).count();
+                double fileProgress = (originalSize > 0) ? (100.0 * totalDecompressedBytes / originalSize) : 100.0;
+                double overallProgress = m_totalFiles > 0 ?
+                    (100.0 * (m_processedFiles + fileProgress / 100.0) / m_totalFiles) : fileProgress;
+
+                bool shouldReport = (elapsed >= PROGRESS_CALLBACK_INTERVAL_MS) ||
+                                    (overallProgress - lastReportedProgress >= 5.0) ||
+                                    (totalDecompressedBytes >= originalSize);
+
+                if (m_progressCallback && shouldReport) {
                     m_progressCallback(filename.string(), fileProgress, overallProgress, "Decompressing");
-                    lastReportedBytes = totalDecompressedBytes;
+                    lastCallbackTime = now;
+                    lastReportedProgress = overallProgress;
                 }
             }
             // 更新dataOffset为下一个文件的起始位置
@@ -294,6 +340,7 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
             if (m_progressCallback) {
                 double overallProgress = m_totalFiles > 0 ? (100.0 * m_processedFiles / m_totalFiles) : 100.0;
                 m_progressCallback(filename.string(), 100.0, overallProgress, "Decompressing");
+                lastCallbackTime = std::chrono::steady_clock::now();
             }
         }
         while (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone()) // 队列空但整体未完成，循环请求读取对队列进行填充，直到符合条件为止
@@ -347,6 +394,7 @@ bool DecompressionLoop::createFile(const std::filesystem::path &filePath)
         }
 
         std::ofstream outfile(filePath);
+        outfile.close(); // 显式关闭文件句柄
     }
     catch (const std::filesystem::filesystem_error &e)
     {

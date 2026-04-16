@@ -84,7 +84,16 @@ public:
         this->parentPath = parentPath;
     }
 
-    ~BinaryStandardLoader() { setAllLoopDone(); }
+    ~BinaryStandardLoader() {
+        setAllLoopDone();
+        // 析构时关闭文件流
+        if (inFile.is_open()) {
+            inFile.close();
+        }
+        if (fstreamForRefill.is_open()) {
+            fstreamForRefill.close();
+        }
+    }
 
     Y_flib::DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 

@@ -19,10 +19,26 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    // 停止工作线程
+    if (m_worker) {
+        // 请求停止工作
+        m_worker->requestStop();
+    }
+
     if (m_workerThread) {
-        m_workerThread->quit();
-        m_workerThread->wait();
+        // 等待线程完成（最多等待3秒）
+        if (!m_workerThread->wait(3000)) {
+            // 如果线程没有在规定时间内结束，强制终止
+            m_workerThread->terminate();
+            m_workerThread->wait();
+        }
         delete m_workerThread;
+        m_workerThread = nullptr;
+    }
+
+    if (m_worker) {
+        delete m_worker;
+        m_worker = nullptr;
     }
 }
 
@@ -30,7 +46,7 @@ void MainWindow::setupUI()
 {
     setWindowTitle(tr("Simple Files Compressor"));
     setMinimumSize(600, 400);  // 最小尺寸
-    resize(700, 480);  // 默认尺寸
+    resize(720, 450);  // 默认尺寸
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
@@ -791,6 +807,16 @@ void MainWindow::onCompressionDetailedProgress(const QString &filename, double f
     if (!filename.isEmpty()) {
         QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
         m_compressCurrentFileLabel->setText(displayText);
+        // 限制日志行数，防止内存无限增长
+        QTextDocument *doc = m_compressLogEdit->document();
+        if (doc->lineCount() > 500) {
+            // 更高效的清理方式：保留最近的内容
+            QTextCursor cursor(doc);
+            cursor.movePosition(QTextCursor::End);
+            cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
+            cursor.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor, 500);
+            cursor.removeSelectedText();
+        }
         m_compressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
             .arg(overallInt, 3)
             .arg(status)
@@ -844,6 +870,16 @@ void MainWindow::onDecompressionDetailedProgress(const QString &filename, double
     if (!filename.isEmpty()) {
         QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
         m_decompressCurrentFileLabel->setText(displayText);
+        // 限制日志行数，防止内存无限增长
+        QTextDocument *doc = m_decompressLogEdit->document();
+        if (doc->lineCount() > 500) {
+            // 更高效的清理方式：保留最近的内容
+            QTextCursor cursor(doc);
+            cursor.movePosition(QTextCursor::End);
+            cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
+            cursor.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor, 500);
+            cursor.removeSelectedText();
+        }
         m_decompressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
             .arg(overallInt, 3)
             .arg(status)

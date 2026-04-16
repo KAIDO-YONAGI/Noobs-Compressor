@@ -15,6 +15,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <atomic>
+#include <chrono>
 
 class CompressionWorker : public QObject
 {
@@ -35,6 +37,15 @@ public:
                                  const QString &outputDir,
                                  const QString &password);
 
+    // 请求停止工作
+    void requestStop() { m_stopRequested.store(true); }
+
+    // 检查是否请求停止
+    bool isStopRequested() const { return m_stopRequested.load(); }
+
+    // 重置停止标志
+    void resetStopFlag() { m_stopRequested.store(false); }
+
 public slots:
     void doCompression();
     void doDecompression();
@@ -49,6 +60,9 @@ private:
     bool validateDecompressionParams();
     QString getStdString(const QString &qstr);
 
+    // 节流发送进度信号
+    bool shouldEmitProgress(double currentProgress);
+
     // 压缩参数
     QStringList m_filesToCompress;
     QString m_outputDir;
@@ -62,4 +76,13 @@ private:
 
     // 状态
     bool m_isDecompression;
+
+    // 停止请求标志
+    std::atomic<bool> m_stopRequested{false};
+
+    // 进度信号节流
+    std::chrono::steady_clock::time_point m_lastProgressTime;
+    double m_lastEmittedProgress{-1.0};
+    static constexpr int PROGRESS_INTERVAL_MS = 200;  // 最小信号间隔
+    static constexpr double PROGRESS_DELTA = 2.0;     // 最小进度变化
 };

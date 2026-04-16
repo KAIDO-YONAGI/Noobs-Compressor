@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTextEdit>
+#include <QTextCursor>
 #include <QGroupBox>
 #include <QFileDialog>
 #include <QMessageBox>

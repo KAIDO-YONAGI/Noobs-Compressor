@@ -166,6 +166,15 @@ void BinaryStandardLoader::loadSeparatedStandard(Y_flib::FlagType &flag, Standar
 void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
 
 {
+    // 检查 fstreamForRefill 是否有效
+    if (!fstreamForRefill.is_open()) {
+        // 尝试重新打开
+        fstreamForRefill.open(loadPath, std::ios::binary | std::ios::in | std::ios::out);
+        if (!fstreamForRefill) {
+            throw std::runtime_error("encryptHeaderBlock()-Error: Failed to reopen fstreamForRefill: " + loadPath.string());
+        }
+    }
+
     Locator locator;
     Y_flib::DataBlock inBlock;
     Y_flib::DataBlock encryptedBlock;
@@ -199,10 +208,8 @@ void BinaryStandardLoader::setRequestDone()
 }
 void BinaryStandardLoader::setAllLoopDone()
 {
-    if (inFile.is_open())
-    {
-        inFile.close();
-    }
+    // 不在这里关闭文件流，让它们保持打开状态
+    // 文件流会在析构函数中自动关闭
     allDone = true;
 }
 void BinaryStandardLoader::restartLoader()
