@@ -11,7 +11,12 @@ set(CMAKE_AUTOUIC ON)
 # ========================
 # Qt 路径配置（Qt 6.2.4 LTS - 兼容 Windows 10 1607+）
 # ========================
-set(CMAKE_PREFIX_PATH "D:/qt/6.2.4/mingw_64/lib/cmake/Qt6")
+set(USE_STATIC_QT ON CACHE BOOL "Use statically-linked Qt build")
+if(USE_STATIC_QT)
+    set(CMAKE_PREFIX_PATH "D:/qt/6.2.4-static-mingw")
+else()
+    set(CMAKE_PREFIX_PATH "D:/qt/6.2.4/mingw_64")
+endif()
 set(CMAKE_C_COMPILER "D:/qt/Tools/mingw1120_64/bin/gcc.exe")
 set(CMAKE_CXX_COMPILER "D:/qt/Tools/mingw1120_64/bin/g++.exe")
 
@@ -126,7 +131,6 @@ target_link_libraries(SimpleFilesCompressorGUI PRIVATE
 # Windows 系统库
 # ========================
 if (WIN32)
-    # Release 模式下隐藏控制台窗口
     set_target_properties(SimpleFilesCompressorGUI PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
@@ -162,6 +166,33 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
             -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic
         )
     endif()
+
+    # 静态 Qt 额外配置
+    if(USE_STATIC_QT)
+        target_compile_definitions(SimpleFilesCompressorGUI PRIVATE
+            QT_STATICPLUGIN
+        )
+
+        # 直接链接静态插件 .a 文件
+        set(QT_STATIC_PLUGINS
+            "D:/qt/6.2.4-static-mingw/plugins/platforms/libqwindows.a"
+            "D:/qt/6.2.4-static-mingw/plugins/imageformats/libqjpeg.a"
+            "D:/qt/6.2.4-static-mingw/plugins/imageformats/libqico.a"
+            "D:/qt/6.2.4-static-mingw/plugins/imageformats/libqgif.a"
+            "D:/qt/6.2.4-static-mingw/plugins/styles/libqwindowsvistastyle.a"
+        )
+
+        target_link_libraries(SimpleFilesCompressorGUI PRIVATE
+            ${QT_STATIC_PLUGINS}
+            dwmapi
+            uxtheme
+            imm32
+            oleaut32
+            version
+            setupapi
+            fontsub
+        )
+    endif()
 endif()
 
 # ========================
@@ -173,9 +204,9 @@ set_target_properties(SimpleFilesCompressorGUI PROPERTIES
 )
 
 # ========================
-# 精简部署 - 使用 windeployqt 并移除不必要的 DLL
+# 精简部署 - 仅动态链接模式
 # ========================
-if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
+if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT USE_STATIC_QT)
     # 定义要删除的不必要文件列表
     # 注意：MinGW 运行时 DLL 需要保留，因为 Qt DLL 动态依赖它们
     set(UNNECESSARY_DLLS
