@@ -1,0 +1,28 @@
+#include <windows.h>
+
+// 定义应用程序图标资源（嵌入到exe中）
+IDI_APPICON ICON "YONAGII_512x512.ico"
+
+// 版本信息
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION 2,0,0
+PRODUCTVERSION 2,0,0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "YONAGI"
+            VALUE "FileDescription", "Simple Files Compressor (GUI)"
+            VALUE "FileVersion", "2.0.0"
+            VALUE "ProductVersion", "2.0.0"
+            VALUE "OriginalFilename", "SimpleFilesCompressorGUI.exe"
+            VALUE "ProductName", "Simple Files Compressor"
+            VALUE "InternalName", "SFC_GUI"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 1200
+    END
+END
