@@ -93,11 +93,8 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
 
             if (!headerLoaderIterator.fileQueue.empty())
             {
-                EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
-                dataLoader->reset(newLoadFile.getFullPath());
-                filename = newLoadFile.getFullPath().filename();
-                totalBlocks = (newLoadFile.getFileSizeInDetails() + Y_flib::Constants::BUFFER_SIZE - 1) / Y_flib::Constants::BUFFER_SIZE;
-                blockCount = 0;
+                prepareNextFile(dataLoader.get(), headerLoaderIterator.fileQueue.front().first,
+                                filename, totalBlocks, blockCount);
             }
         }
 
@@ -108,11 +105,8 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
 
             if (!headerLoaderIterator.fileQueue.empty())
             {
-                EntryDetails newLoadFile = headerLoaderIterator.fileQueue.front().first;
-                dataLoader->reset(newLoadFile.getFullPath());
-                filename = newLoadFile.getFullPath().filename();
-                totalBlocks = (newLoadFile.getFileSizeInDetails() + Y_flib::Constants::BUFFER_SIZE - 1) / Y_flib::Constants::BUFFER_SIZE;
-                blockCount = 0;
+                prepareNextFile(dataLoader.get(), headerLoaderIterator.fileQueue.front().first,
+                                filename, totalBlocks, blockCount);
             }
         }
     }
@@ -184,4 +178,16 @@ void CompressionLoop::reportProgress(const std::filesystem::path &filename,
         lastCallbackTime = now;
         lastReportedProgress = overallProgress;
     }
+}
+
+void CompressionLoop::prepareNextFile(DataLoader *dataLoader,
+                                      EntryDetails &fileEntry,
+                                      std::filesystem::path &filename,
+                                      Y_flib::FileSize &totalBlocks,
+                                      Y_flib::FileSize &blockCount)
+{
+    dataLoader->reset(fileEntry.getFullPath());
+    filename = fileEntry.getFullPath().filename();
+    totalBlocks = (fileEntry.getFileSizeInDetails() + Y_flib::Constants::BUFFER_SIZE - 1) / Y_flib::Constants::BUFFER_SIZE;
+    blockCount = 0;
 }

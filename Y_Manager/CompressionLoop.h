@@ -33,6 +33,13 @@ private:
                         std::chrono::steady_clock::time_point &lastCallbackTime,
                         double &lastReportedProgress);
 
+    // 准备下一个文件：重置 DataLoader 并更新进度相关变量
+    void prepareNextFile(DataLoader *dataLoader,
+                         EntryDetails &fileEntry,
+                         std::filesystem::path &filename,
+                         Y_flib::FileSize &totalBlocks,
+                         Y_flib::FileSize &blockCount);
+
 public:
     CompressionLoop(const std::string compressionFilePath)
         : compressionFilePath(compressionFilePath), m_progressCallback(nullptr), m_totalFiles(0), m_processedFiles(0)

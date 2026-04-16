@@ -24,19 +24,19 @@ public:
         : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
 
     /* 获取文件/目录名称 */
-    const std::string getName() { return name; }
+    std::string getName() const { return name; }
 
     /* 获取完整路径 */
-    const std::filesystem::path getFullPath() { return fullPath; }
+    std::filesystem::path getFullPath() const { return fullPath; }
 
     /* 获取名称长度 */
-    const Y_flib::FileNameSize getSizeOfName() { return sizeOfName; }
+    Y_flib::FileNameSize getSizeOfName() const { return sizeOfName; }
 
     /* 获取文件大小 */
-    const Y_flib::FileSize getFileSizeInDetails() { return fileSize; }
+    Y_flib::FileSize getFileSizeInDetails() const { return fileSize; }
 
     /* 检查是否为文件（false表示目录） */
-    const bool getIsFile() { return isFile; }
+    bool getIsFile() const { return isFile; }
 
     /* 更新文件大小 */
     void setFileSize(Y_flib::FileSize fileSize) { this->fileSize = fileSize; }
@@ -71,8 +71,8 @@ public:
     }
 
     /* 获取输出文件路径 */
-    const std::filesystem::path getOutPutFilePath() { return outPutFilePath; }
+    std::filesystem::path getOutPutFilePath() const { return outPutFilePath; }
 
     /* 获取要扫描的源路径 */
-    const std::filesystem::path getFilePathToScan() { return filePathToScan; }
+    std::filesystem::path getFilePathToScan() const { return filePathToScan; }
 };
