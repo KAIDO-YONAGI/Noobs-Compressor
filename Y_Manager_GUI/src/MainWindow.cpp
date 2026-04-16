@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 
 
 #ifdef _WIN32
@@ -275,27 +276,64 @@ QWidget* MainWindow::createCompressionTab()
     QVBoxLayout *modeLayout = new QVBoxLayout(modeGroup);
 
     m_compressModeCombo = new QComboBox();
-    m_compressModeCombo->addItem(tr("Huffman + AES (Default)"),
-        static_cast<int>(Y_flib::CompressionMode::HuffmanAES));
-    m_compressModeCombo->addItem(tr("Huffman Only"),
+    m_compressModeCombo->addItem(tr("Huffman Only (Default)"),
         static_cast<int>(Y_flib::CompressionMode::HuffmanOnly));
+    m_compressModeCombo->addItem(tr("Huffman + AES"),
+        static_cast<int>(Y_flib::CompressionMode::HuffmanAES));
     m_compressModeCombo->addItem(tr("AES Only"),
         static_cast<int>(Y_flib::CompressionMode::AESOnly));
     m_compressModeCombo->addItem(tr("Pack Only"),
         static_cast<int>(Y_flib::CompressionMode::PackOnly));
-    m_compressModeCombo->setCurrentIndex(1);
+    m_compressModeCombo->setCurrentIndex(0);
     m_compressModeCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_compressModeCombo->setStyleSheet(
         "QComboBox { "
         "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
-        "   padding: 6px; "
+        "   padding: 6px 20px 6px 6px; "
+        "} "
+        "QComboBox:hover { "
+        "   background: rgba(255, 255, 255, 220); "
+        "   border: 1px solid rgba(150, 150, 150, 200); "
+        "} "
+        "QComboBox:disabled { "
+        "   background: rgba(200, 200, 200, 140); "
+        "   color: #888; "
         "} "
         "QComboBox::drop-down { "
-        "   border: none; "
+        "   subcontrol-origin: padding; "
+        "   subcontrol-position: center right; "
+        "   width: 20px; "
+        "   border-left: 1px solid rgba(200, 200, 200, 180); "
+        "   border-top-right-radius: 4px; "
+        "   border-bottom-right-radius: 4px; "
+        "} "
+        "QComboBox::down-arrow { "
+        "   width: 8px; "
+        "   height: 8px; "
+        "   background: #666; "
+        "} "
+        "QComboBox::down-arrow:disabled { "
+        "   background: #aaa; "
+        "} "
+        "QComboBox QAbstractItemView { "
+        "   background: rgba(255, 255, 255, 220); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   selection-background-color: rgba(200, 200, 200, 150); "
         "}"
     );
+    connect(m_compressModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
+        Y_flib::CompressionMode mode = static_cast<Y_flib::CompressionMode>(m_compressModeCombo->currentData().toInt());
+        bool needsEncryption = Y_flib::StrategyFactory::hasEncryption(mode);
+        m_passwordEdit->setEnabled(needsEncryption);
+        if (!needsEncryption) {
+            m_passwordEdit->setPlaceholderText(tr("Not needed for this mode"));
+        } else {
+            m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
+        }
+    });
+    emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
 
     modeLayout->addWidget(m_compressModeCombo);
     rightLayout->addWidget(modeGroup);
@@ -750,13 +788,17 @@ void MainWindow::onStartCompressionClicked()
         return;
     }
 
-    QString password = m_passwordEdit->text();
-    if (password.isEmpty()) {
-        password = "LOVEYONAGI";  // 使用默认密码
-    }
-
     // 获取选择的压缩模式
     Y_flib::CompressionMode mode = static_cast<Y_flib::CompressionMode>(m_compressModeCombo->currentData().toInt());
+
+    QString password;
+    if (Y_flib::StrategyFactory::hasEncryption(mode)) {
+        password = m_passwordEdit->text();
+        if (password.isEmpty()) {
+            QMessageBox::warning(this, tr("Error"), tr("Please enter a password for encrypted mode."));
+            return;
+        }
+    }
 
     // 收集文件列表
     QStringList files;
@@ -768,6 +810,7 @@ void MainWindow::onStartCompressionClicked()
     m_isProcessing = true;
     m_startCompressBtn->setEnabled(false);
     m_startCompressBtn->setText(tr("Processing..."));
+    m_compressModeCombo->setEnabled(false);
     m_compressProgressBar->setValue(0);
     m_compressProgressLabel->setText(tr("Overall: 0%"));
     m_compressCurrentFileLabel->setText(tr("Initializing..."));
@@ -832,9 +875,6 @@ void MainWindow::onStartDecompressionClicked()
     }
 
     QString password = m_decompressPasswordEdit->text();
-    if (password.isEmpty()) {
-        password = "LOVEYONAGI";  // 使用默认密码
-    }
 
     QString outputDir = m_decompressOutputDirEdit->text().trimmed();
 
@@ -906,6 +946,7 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
     m_isProcessing = false;
     m_startCompressBtn->setEnabled(true);
     m_startCompressBtn->setText(tr("Start Compression"));
+    m_compressModeCombo->setEnabled(true);
 
     if (success) {
         m_compressProgressBar->setValue(100);

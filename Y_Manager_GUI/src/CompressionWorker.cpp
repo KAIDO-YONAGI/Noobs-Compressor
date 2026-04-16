@@ -344,6 +344,11 @@ void CompressionWorker::doDecompression()
 
         Y_flib::CompressionMode detectedMode = Y_flib::StrategyFactory::idToMode(fileHeader.strategy);
 
+        if (Y_flib::StrategyFactory::hasEncryption(detectedMode) && m_decompressPassword.isEmpty()) {
+            emit finished(false, tr("This archive requires a password. Please enter the decryption key."));
+            return;
+        }
+
         if (isStopRequested()) {
             emit finished(false, tr("Decompression cancelled by user"));
             return;
