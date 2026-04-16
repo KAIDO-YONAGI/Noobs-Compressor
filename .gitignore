@@ -1,0 +1,22 @@
+# ignore IDE setting files
+.vscode/
+.vs/
+# ignore build directories
+build-debug/
+build-release/
+build-size/
+out/
+build/
+# ignore test files
+bin/
+*.txt
+!CMakeLists.txt
+!readme_UserGuide.txt
+*.log
+
+src/main.cpp
+
+*.bin
+*.ps1
+*.bat
+*.claude
