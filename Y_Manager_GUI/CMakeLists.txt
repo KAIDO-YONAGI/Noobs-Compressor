@@ -59,7 +59,6 @@ include_directories(
 # 源文件（核心库）
 # ========================
 set(CORE_SOURCES
-    "${CMAKE_SOURCE_DIR}/../Y_Manager/IconHandler.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EntryParser.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/ToolClasses.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/DataExporter.cpp"
@@ -68,6 +67,8 @@ set(CORE_SOURCES
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/BinaryStandardWriter.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/BinaryStandardLoader.cpp"
     "${CMAKE_SOURCE_DIR}/../Y_Manager/MainLoop.cpp"
+    "${CMAKE_SOURCE_DIR}/../Y_Manager/CompressionLoop.cpp"
+    "${CMAKE_SOURCE_DIR}/../Y_Manager/DecompressionLoop.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/HeaderWriter.cpp"
     "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/src/AesFunctions.cpp"
     "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/src/mainCircle.cpp"
@@ -92,6 +93,7 @@ set(GUI_SOURCES
     "${CMAKE_SOURCE_DIR}/src/main.cpp"
     "${CMAKE_SOURCE_DIR}/src/MainWindow.cpp"
     "${CMAKE_SOURCE_DIR}/src/CompressionWorker.cpp"
+    "${CMAKE_SOURCE_DIR}/IconHandler.cpp"
 )
 
 # ========================

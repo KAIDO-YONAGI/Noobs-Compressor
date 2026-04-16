@@ -2,7 +2,7 @@
 #include "../EncryptionModules/Aes/include/My_Aes.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
 #include "../Y_Manager/MainLoop.h"
-#include "../Y_Manager/IconHandler.h"
+#include "../IconHandler.h"
 #include <QFileInfo>
 #include <QDir>
 #include <stdexcept>

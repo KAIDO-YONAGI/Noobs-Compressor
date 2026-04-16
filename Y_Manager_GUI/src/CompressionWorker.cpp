@@ -272,8 +272,7 @@ void CompressionWorker::doCompression()
             return;
         }
 
-        emit detailedProgress("", 100.0, 95.0, tr("Associating icon..."));
-
+        // 关联图标到 .sy 文件
         try {
             IconHandler::AssociateIconToSyFile(compressionFilePath, "");
         } catch (...) {}
