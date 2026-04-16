@@ -28,7 +28,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUI()
 {
-    setWindowTitle(tr("Secure Files Compressor"));
+    setWindowTitle(tr("Simple Files Compressor"));
     setMinimumSize(600, 400);  // 最小尺寸
     resize(700, 450);  // 默认尺寸
 
@@ -709,7 +709,7 @@ void MainWindow::onStartCompressionClicked()
 void MainWindow::onBrowseDecompressFileClicked()
 {
     QString file = QFileDialog::getOpenFileName(this,
-        tr("Select Archive"), QString(), tr("Secure Archives (*.sy);;All Files (*)"));
+        tr("Select Archive"), QString(), tr("Simple Archives (*.sy);;All Files (*)"));
 
     if (!file.isEmpty()) {
         m_decompressFilePathEdit->setText(makeValidPath(file));

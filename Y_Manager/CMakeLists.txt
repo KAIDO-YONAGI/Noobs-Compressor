@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(SecureCompressor)
+project(SimpleFilesCompressor)
 
 # ========================
 # C++ 标准（通用写法）
@@ -77,7 +77,7 @@ if (WIN32)
     list(APPEND SOURCES ${RES_OBJ})
 endif()
 
-add_executable(SecureCompressor ${SOURCES})
+add_executable(SimpleFilesCompressor ${SOURCES})
 
 # ========================
 # 编译选项（核心通用逻辑）
@@ -87,12 +87,12 @@ add_executable(SecureCompressor ${SOURCES})
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 
     if (MSVC)
-        target_compile_options(SecureCompressor PRIVATE
+        target_compile_options(SimpleFilesCompressor PRIVATE
             /Zi
             /Od
         )
     else()
-        target_compile_options(SecureCompressor PRIVATE
+        target_compile_options(SimpleFilesCompressor PRIVATE
             -g3
             -Og
             -gdwarf-4
@@ -107,12 +107,12 @@ endif()
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
 
     if (MSVC)
-        target_compile_options(SecureCompressor PRIVATE
+        target_compile_options(SimpleFilesCompressor PRIVATE
             /O2
             /DNDEBUG
         )
     else()
-        target_compile_options(SecureCompressor PRIVATE
+        target_compile_options(SimpleFilesCompressor PRIVATE
             -O3
             -DNDEBUG
             -ffunction-sections
@@ -121,7 +121,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
             -fno-rtti
         )
 
-        target_link_options(SecureCompressor PRIVATE
+        target_link_options(SimpleFilesCompressor PRIVATE
             -Wl,--gc-sections
             -Wl,--as-needed
             -static-libgcc
@@ -136,12 +136,12 @@ endif()
 if (CMAKE_BUILD_TYPE STREQUAL "MinSize")
 
     if (MSVC)
-        target_compile_options(SecureCompressor PRIVATE
+        target_compile_options(SimpleFilesCompressor PRIVATE
             /O1
             /DNDEBUG
         )
     else()
-        target_compile_options(SecureCompressor PRIVATE
+        target_compile_options(SimpleFilesCompressor PRIVATE
             -Os
             -DNDEBUG
             -ffunction-sections
@@ -150,7 +150,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "MinSize")
             -fno-rtti
         )
 
-        target_link_options(SecureCompressor PRIVATE
+        target_link_options(SimpleFilesCompressor PRIVATE
             -Wl,--gc-sections
             -Wl,--as-needed
             -static-libgcc
@@ -165,7 +165,7 @@ endif()
 # Windows 系统库
 # ========================
 if (WIN32)
-    target_link_libraries(SecureCompressor
+    target_link_libraries(SimpleFilesCompressor
         ws2_32
         crypt32
         gdi32
@@ -175,7 +175,7 @@ endif()
 # ========================
 # 输出路径
 # ========================
-set_target_properties(SecureCompressor PROPERTIES
+set_target_properties(SimpleFilesCompressor PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin"
-    OUTPUT_NAME "Secure Files Compressor"
+    OUTPUT_NAME "Simple Files Compressor"
 )

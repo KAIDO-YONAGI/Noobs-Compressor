@@ -13,11 +13,11 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName", "YONAGI"
-            VALUE "FileDescription", "Secure Files Compressor"
+            VALUE "FileDescription", "Simple Files Compressor"
             VALUE "FileVersion", "1.1.1"
             VALUE "ProductVersion", "1.1.1"
-            VALUE "OriginalFilename", "Secure Files Compressor.exe"
-            VALUE "ProductName", "Secure Files Compressor"
+            VALUE "OriginalFilename", "Simple Files Compressor.exe"
+            VALUE "ProductName", "Simple Files Compressor"
         END
     END
     BLOCK "VarFileInfo"

@@ -224,7 +224,7 @@ int getValidatedChoice()
     int choice = 0;
     while (true)
     {
-        std::cout << "\n======= Secure Files Compressor =======\n";
+        std::cout << "\n======= Simple Files Compressor =======\n";
         std::cout << "1. Compress files/folders\n";
         std::cout << "2. Decompress files\n";
         std::cout << "3. Exit system\n";

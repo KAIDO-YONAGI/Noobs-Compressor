@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(SecureCompressorGUI VERSION 1.0.0 LANGUAGES CXX)
+project(SimpleFilesCompressorGUI VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -97,7 +97,7 @@ set(GUI_SOURCES
 # ========================
 # 创建可执行文件
 # ========================
-add_executable(SecureCompressorGUI
+add_executable(SimpleFilesCompressorGUI
     ${CORE_SOURCES}
     ${GUI_SOURCES}
     ${RESOURCES}
@@ -107,13 +107,13 @@ add_executable(SecureCompressorGUI
 # 添加Windows资源对象
 # ========================
 if (WIN32)
-    target_sources(SecureCompressorGUI PRIVATE ${WINRES_OBJ})
+    target_sources(SimpleFilesCompressorGUI PRIVATE ${WINRES_OBJ})
 endif()
 
 # ========================
 # 链接库
 # ========================
-target_link_libraries(SecureCompressorGUI PRIVATE
+target_link_libraries(SimpleFilesCompressorGUI PRIVATE
     Qt6::Core
     Qt6::Widgets
 )
@@ -123,10 +123,10 @@ target_link_libraries(SecureCompressorGUI PRIVATE
 # ========================
 if (WIN32)
     # Release 模式下隐藏控制台窗口
-    set_target_properties(SecureCompressorGUI PROPERTIES
+    set_target_properties(SimpleFilesCompressorGUI PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
-    target_link_libraries(SecureCompressorGUI PRIVATE
+    target_link_libraries(SimpleFilesCompressorGUI PRIVATE
         ws2_32
         crypt32
         gdi32
@@ -140,13 +140,13 @@ endif()
 # ========================
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     if (NOT MSVC)
-        target_compile_options(SecureCompressorGUI PRIVATE
+        target_compile_options(SimpleFilesCompressorGUI PRIVATE
             -O3
             -DNDEBUG
             -ffunction-sections
             -fdata-sections
         )
-        target_link_options(SecureCompressorGUI PRIVATE
+        target_link_options(SimpleFilesCompressorGUI PRIVATE
             -Wl,--gc-sections
             -Wl,--as-needed
             -static-libgcc
@@ -154,7 +154,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
             -s
         )
         # 静态链接 libwinpthread
-        target_link_libraries(SecureCompressorGUI PRIVATE
+        target_link_libraries(SimpleFilesCompressorGUI PRIVATE
             -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic
         )
     endif()
@@ -163,9 +163,9 @@ endif()
 # ========================
 # 输出路径
 # ========================
-set_target_properties(SecureCompressorGUI PROPERTIES
+set_target_properties(SimpleFilesCompressorGUI PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/SFC"
-    OUTPUT_NAME "SecureCompressorGUI"
+    OUTPUT_NAME "SimpleFilesCompressorGUI"
 )
 
 # ========================
@@ -194,9 +194,9 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
     )
 
     # 创建部署命令
-    add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+    add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
         COMMAND "D:/qt/6.2.4/mingw_64/bin/windeployqt.exe"
-                "$<TARGET_FILE:SecureCompressorGUI>"
+                "$<TARGET_FILE:SimpleFilesCompressorGUI>"
                 --release
                 --no-translations
         COMMENT "Deploying Qt dependencies..."
@@ -204,7 +204,7 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
 
     # 删除不必要的 DLL
     foreach(DLL ${UNNECESSARY_DLLS})
-        add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+        add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_SOURCE_DIR}/bin/SFC/${DLL}"
             COMMENT "Removing unnecessary: ${DLL}"
         )
@@ -212,7 +212,7 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
 
     # 删除不必要的目录
     foreach(DIR ${UNNECESSARY_DIRS})
-        add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+        add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_SOURCE_DIR}/bin/SFC/${DIR}"
             COMMENT "Removing unnecessary directory: ${DIR}"
         )
@@ -220,14 +220,14 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
 
     # 删除不必要的图像格式插件
     foreach(PLUGIN ${UNNECESSARY_IMAGEFORMATS})
-        add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+        add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_SOURCE_DIR}/bin/SFC/${PLUGIN}"
             COMMENT "Removing unnecessary plugin: ${PLUGIN}"
         )
     endforeach()
 
     # 显示部署完成信息
-    add_custom_command(TARGET SecureCompressorGUI POST_BUILD
+    add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E echo "=== Minimal deployment complete ==="
         COMMENT "Deployment finished"
     )

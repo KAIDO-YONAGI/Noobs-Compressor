@@ -211,9 +211,9 @@ The GUI version is in `Y_Manager_GUI/` directory, requires Qt 6.2.4 LTS.
 
 ### 编译要求 | Requirements
 
-- **Qt 6.2.4 LTS**（使用自带的 MinGW 11.2.0）
+- **Qt 6.2.4 LTS**（使用自带的 MinGW 11.2.0）  
+  **Qt 6.2.4 LTS** (with bundled MinGW 11.2.0)
 - **CMake 3.20+**
-- **UPX**（可选，用于压缩）
 
 ### 构建步骤 | Build Steps
 
@@ -233,14 +233,19 @@ After building, the executable is in `bin/SFC/` directory.
 
 ## CLI 版本 | CLI Requirements
 
-- **操作系统**: Windows 10 及以上
-- **架构**: x64
+- **操作系统**: Windows 10 及以上  
+  **OS**: Windows 10 or later
+- **架构**: x64  
+  **Architecture**: x64
 
 ## GUI 版本 | GUI Requirements
 
-- **操作系统**: Windows 10 1809 (版本 17763, 2018年10月发布) 及以上
-- **架构**: x64
-- **用户覆盖率**: 覆盖 99%+ 的 Windows 10/11 用户
+- **操作系统**: Windows 10 1809 (版本 17763, 2018年10月发布) 及以上  
+  **OS**: Windows 10 1809 (Build 17763, released October 2018) or later
+- **架构**: x64  
+  **Architecture**: x64
+- **用户覆盖率**: 覆盖 99%+ 的 Windows 10/11 用户  
+  **Coverage**: Covers 99%+ of Windows 10/11 users
 
 ---
 
@@ -286,7 +291,8 @@ After building, the executable is in `bin/SFC/` directory.
 ## GUI 版本 | GUI Dependencies
 
 - **Qt 6.2.4 LTS** (Core, Widgets)
-- **MinGW 11.2.0** (Qt bundled)
+- **MinGW 11.2.0** (Qt bundled)  
+  MinGW 11.2.0 (Qt 自带)
 - **Windows 10–11 API**
 
 ---

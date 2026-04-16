@@ -179,7 +179,7 @@ bool IconHandler::RegisterSyFileIcon(const std::string &iconPath)
             }
 
             // 创建应用程序目录
-            std::wstring app_dir = std::wstring(appdata_path) + L"\\Secure Files Compressor";
+            std::wstring app_dir = std::wstring(appdata_path) + L"\\Simple Files Compressor";
             CreateDirectoryW(app_dir.c_str(), NULL); // 忽略错误，目录可能已存在
 
             // 图标文件路径
@@ -240,8 +240,8 @@ bool IconHandler::RegisterSyFileIcon(const std::string &iconPath)
 
         if (result == ERROR_SUCCESS && hKey)
         {
-            RegSetValueExW(hKey, L"", 0, REG_SZ, (const BYTE *)L"Secure Files Archive",
-                          (DWORD)(wcslen(L"Secure Files Archive") + 1) * sizeof(wchar_t));
+            RegSetValueExW(hKey, L"", 0, REG_SZ, (const BYTE *)L"Simple Files Archive",
+                          (DWORD)(wcslen(L"Simple Files Archive") + 1) * sizeof(wchar_t));
             RegCloseKey(hKey);
             hKey = NULL;
         }
