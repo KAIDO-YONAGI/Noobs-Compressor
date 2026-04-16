@@ -1,6 +1,8 @@
 SFC使用说明
 SFC User Guide
+
 基本操作 | Basic Operations
+
 添加文件 | Add Files
 点击按钮从本地设备中选择文件。支持多选：
 
@@ -54,10 +56,51 @@ Clear the processing queue and remove all added items.
 
 Specify the output directory for processed files.
 
+压缩模式 | Compression Mode
+压缩页右列顶部可选择压缩模式：
+
+Huffman + AES：Huffman 压缩 + AES 加密（默认，向后兼容）
+Huffman Only：仅 Huffman 压缩，不加密
+AES Only：仅 AES 加密，不压缩
+Pack Only：仅打包为 .sy 归档，不压缩不加密
+
+Select a compression mode from the dropdown at the top of the right column:
+
+Huffman + AES: Huffman compression + AES encryption (default, backward compatible)
+Huffman Only: Huffman compression only, no encryption
+AES Only: AES encryption only, no compression
+Pack Only: Archive to .sy without compression or encryption
+
 开始处理 | Start
 启动任务，按设定规则处理列表中的所有文件。
 
 Start processing all files in the list according to the configured settings.
+
+解压操作 | Decompression
+
+选择归档文件 | Select Archive
+点击 Browse 选择 .sy 归档文件，或直接拖拽 .sy 文件到窗口。
+
+Click Browse to select a .sy archive file, or drag and drop a .sy file into the window.
+
+输出设置 | Output Settings
+- 输出目录：解压文件保存位置
+- 子文件夹名（可选）：填写后将拼接到输出目录后作为最终路径
+- 密码：归档时使用的密码（留空使用默认密码）
+
+- Output Directory: Where decompressed files are saved
+- Subfolder Name (optional): Appended to the output directory path
+- Password: The password used during compression (leave empty for default)
+
+自动检测 | Auto Detection
+解压时程序会自动读取归档文件的策略号，选择对应的解压模块，无需手动指定。
+
+The program automatically reads the strategy field from the archive header and selects the appropriate decompression modules. No manual configuration needed.
+
+重置 | Reset
+点击 Reset 按钮可一键清空所有已填写的解压参数。
+
+Click the Reset button to clear all decompression fields at once.
 
 操作提示 | Tips
 处理前请确认保存路径是否正确，避免文件保存到错误位置。

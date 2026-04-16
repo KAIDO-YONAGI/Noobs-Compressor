@@ -165,7 +165,32 @@ Memory usage is stable around **60 MB**.
 - Drag-and-drop support
 - Real-time progress and log output
 - Minimal deployment (reduced by ~30MB)
-- UPX compression (reduced by 40-60%)
+
+---
+
+## v2.1.0 — Strategy (2026-04-16)
+
+**新增功能**：
+- 策略模式重构：支持 4 种压缩/加密模式
+  - Huffman + AES（向后兼容旧 .sy 文件）
+  - Huffman Only（默认，仅压缩，无加密）
+  - AES Only（仅加密，无压缩）
+  - Pack Only（仅打包，无压缩无加密）
+- 解压端自动检测：从文件头策略号自动选择对应模块，无需手动指定
+- GUI 压缩页新增模式选择器
+- GUI 解压页新增子文件夹名输入框和重置按钮
+
+**架构变更**：
+- 新增 `NullCompression` / `NullEncryption` 空实现
+- 新增 `StrategyFactory` 策略工厂
+- `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` 全面改为接口引用（`ICompression&` / `IEncryption&`）
+- 文件头 `strategy` 字段正式启用（原已预留但始终为 0）
+
+**New Features**:
+- Strategy pattern refactoring: 4 compression/encryption modes
+- Auto-detection on decompression via header strategy field
+- GUI mode selector on compression tab
+- Subfolder name input and reset button on decompression tab
 
 ---
 
