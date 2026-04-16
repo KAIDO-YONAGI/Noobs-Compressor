@@ -9,11 +9,11 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # ========================
-# Qt 路径配置（使用 Qt 自带的 MinGW 编译器）
+# Qt 路径配置（Qt 6.2.4 LTS - 兼容 Windows 10 1607+）
 # ========================
-set(CMAKE_PREFIX_PATH "D:/qt/6.10.1/mingw_64/lib/cmake/Qt6")
-set(CMAKE_C_COMPILER "D:/qt/Tools/mingw1310_64/bin/gcc.exe")
-set(CMAKE_CXX_COMPILER "D:/qt/Tools/mingw1310_64/bin/g++.exe")
+set(CMAKE_PREFIX_PATH "D:/qt/6.2.4/mingw_64/lib/cmake/Qt6")
+set(CMAKE_C_COMPILER "D:/qt/Tools/mingw1120_64/bin/gcc.exe")
+set(CMAKE_CXX_COMPILER "D:/qt/Tools/mingw1120_64/bin/g++.exe")
 
 # ========================
 # 资源文件
@@ -177,7 +177,7 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
         "Qt6Network.dll"
         "Qt6Svg.dll"
         "D3Dcompiler_47.dll"
-        "opengl32sw.dll"
+        # "opengl32sw.dll"      # 保留：无 GPU 系统的软件渲染后备
         "libgcc_s_seh-1.dll"    # 已静态链接
         "libstdc++-6.dll"      # 已静态链接
         "libwinpthread-1.dll"  # 已静态链接
@@ -186,7 +186,7 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
         "iconengines"
         "networkinformation"
         "tls"
-        "generic"
+        # "generic"             # 保留：平台插件，可能需要
         "styles"
     )
     set(UNNECESSARY_IMAGEFORMATS
@@ -195,7 +195,7 @@ if (WIN32 AND CMAKE_BUILD_TYPE STREQUAL "Release")
 
     # 创建部署命令
     add_custom_command(TARGET SecureCompressorGUI POST_BUILD
-        COMMAND "D:/qt/6.10.1/mingw_64/bin/windeployqt.exe"
+        COMMAND "D:/qt/6.2.4/mingw_64/bin/windeployqt.exe"
                 "$<TARGET_FILE:SecureCompressorGUI>"
                 --release
                 --no-translations

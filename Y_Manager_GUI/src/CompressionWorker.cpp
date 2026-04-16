@@ -77,16 +77,17 @@ void CompressionWorker::doCompression()
         emit detailedProgress("", 0.0, 5.0, tr("Preparing files..."));
 
         // 使用QDir::toNativeSeparators统一路径分隔符
+        // 重要：使用 toUtf8() 确保中文路径正确编码
         std::vector<std::string> filePathToScan;
         for (const QString &file : m_filesToCompress) {
             QString nativeFile = QDir::toNativeSeparators(file);
-            filePathToScan.push_back(nativeFile.toStdString());
-            std::cout << "DEBUG: File path [" << filePathToScan.size() << "]: " << nativeFile.toStdString() << std::endl;
+            filePathToScan.push_back(nativeFile.toUtf8().toStdString());
+            std::cout << "DEBUG: File path [" << filePathToScan.size() << "]: " << nativeFile.toUtf8().toStdString() << std::endl;
         }
 
-        // 构建输出目录 - 统一使用反斜杠
+        // 构建输出目录 - 统一使用反斜杠，使用 UTF-8 编码
         QString nativeOutputDir = QDir::toNativeSeparators(m_outputDir);
-        std::string outputDirectory = nativeOutputDir.toStdString();
+        std::string outputDirectory = nativeOutputDir.toUtf8().toStdString();
 
         // 确保输出目录以反斜杠结尾
         if (!outputDirectory.empty() && outputDirectory.back() != '\\') {
@@ -94,8 +95,8 @@ void CompressionWorker::doCompression()
         }
         std::cout << "DEBUG: Output directory: " << outputDirectory << std::endl;
 
-        // 构建输出文件名
-        std::string outputFileName = m_outputFileName.toStdString();
+        // 构建输出文件名（UTF-8编码）
+        std::string outputFileName = m_outputFileName.toUtf8().toStdString();
 
         // 移除可能的.sy后缀
         if (outputFileName.size() > 3 && outputFileName.substr(outputFileName.size() - 3) == ".sy") {
@@ -111,8 +112,8 @@ void CompressionWorker::doCompression()
 
         emit detailedProgress("", 0.0, 10.0, tr("Creating AES encryption object..."));
 
-        // 创建AES对象
-        Aes aes(m_password.toStdString().c_str());
+        // 创建AES对象（UTF-8编码）
+        Aes aes(m_password.toUtf8().toStdString().c_str());
 
         emit detailedProgress("", 0.0, 15.0, tr("Writing file header..."));
 
@@ -142,7 +143,7 @@ void CompressionWorker::doCompression()
         } catch (...) {}
 
         emit detailedProgress("", 100.0, 100.0, tr("Completed"));
-        emit finished(true, tr("Compression successful!\nOutput file: %1").arg(QString::fromStdString(compressionFilePath)));
+        emit finished(true, tr("Compression successful!\nOutput file: %1").arg(QString::fromUtf8(compressionFilePath.c_str())));
 
     } catch (const std::exception &e) {
         emit finished(false, tr("Compression failed: %1").arg(QString::fromStdString(e.what())));
@@ -162,12 +163,12 @@ void CompressionWorker::doDecompression()
     try {
         emit detailedProgress("", 0.0, 5.0, tr("Preparing decryption..."));
 
-        std::string inputFilePath = m_decompressInputFile.toStdString();
-        std::string outputDirectory = m_decompressOutputDir.toStdString();
+        std::string inputFilePath = m_decompressInputFile.toUtf8().toStdString();
+        std::string outputDirectory = m_decompressOutputDir.toUtf8().toStdString();
 
         emit detailedProgress("", 0.0, 10.0, tr("Creating AES decryption object..."));
 
-        Aes aes(m_decompressPassword.toStdString().c_str());
+        Aes aes(m_decompressPassword.toUtf8().toStdString().c_str());
 
         emit detailedProgress("", 0.0, 15.0, tr("Starting decompression..."));
 
@@ -183,7 +184,7 @@ void CompressionWorker::doDecompression()
         decompressor.decompressionLoop(aes);
 
         emit detailedProgress("", 100.0, 100.0, tr("Completed"));
-        emit finished(true, tr("Decompression successful!\nOutput directory: %1").arg(QString::fromStdString(outputDirectory)));
+        emit finished(true, tr("Decompression successful!\nOutput directory: %1").arg(QString::fromUtf8(outputDirectory.c_str())));
 
     } catch (const std::exception &e) {
         emit finished(false, tr("Decompression failed: %1\n\nPossible reasons:\n"

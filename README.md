@@ -205,13 +205,13 @@ Compile `main.cpp` to generate the executable.
 
 ## GUI 版本构建 | GUI Build
 
-GUI 版本位于 `Y_Manager_GUI/` 目录，需要 Qt 6 环境。
+GUI 版本位于 `Y_Manager_GUI/` 目录，需要 Qt 6.2.4 LTS 环境。
 
-The GUI version is in `Y_Manager_GUI/` directory, requires Qt 6.
+The GUI version is in `Y_Manager_GUI/` directory, requires Qt 6.2.4 LTS.
 
 ### 编译要求 | Requirements
 
-- **Qt 6.10.1**（使用自带的 MinGW 13.1.0）
+- **Qt 6.2.4 LTS**（使用自带的 MinGW 11.2.0）
 - **CMake 3.20+**
 - **UPX**（可选，用于压缩）
 
@@ -226,6 +226,21 @@ cmake --build build --config Release -j 8
 构建完成后，可执行文件位于 `bin/SFC/` 目录。
 
 After building, the executable is in `bin/SFC/` directory.
+
+---
+
+# 系统要求 | System Requirements
+
+## CLI 版本 | CLI Requirements
+
+- **操作系统**: Windows 10 及以上
+- **架构**: x64
+
+## GUI 版本 | GUI Requirements
+
+- **操作系统**: Windows 10 1809 (版本 17763, 2018年10月发布) 及以上
+- **架构**: x64
+- **用户覆盖率**: 覆盖 99%+ 的 Windows 10/11 用户
 
 ---
 
@@ -270,8 +285,8 @@ After building, the executable is in `bin/SFC/` directory.
 
 ## GUI 版本 | GUI Dependencies
 
-- **Qt 6.10.1** (Core, Widgets)
-- **MinGW 13.1.0** (Qt bundled)
+- **Qt 6.2.4 LTS** (Core, Widgets)
+- **MinGW 11.2.0** (Qt bundled)
 - **Windows 10–11 API**
 
 ---

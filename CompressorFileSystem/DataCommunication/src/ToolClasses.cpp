@@ -1,7 +1,56 @@
 #include "../include/ToolClasses.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 std::filesystem::path PathTransfer::transPath(std::string_view p)
 {
+#ifdef _WIN32
+    // Windows: 将 UTF-8 字符串转换为宽字符，再创建 path
+    // 这样可以正确处理中文路径
+    if (p.empty()) {
+        return std::filesystem::path();
+    }
+
+    // MultiByteToWideChar 需要 int 类型的大小
+    int inputSize = static_cast<int>(p.size());
+
+    // 计算需要的宽字符缓冲区大小
+    int wideSize = MultiByteToWideChar(
+        CP_UTF8,           // 假设输入是 UTF-8
+        0,
+        p.data(),
+        inputSize,
+        nullptr,
+        0
+    );
+
+    if (wideSize <= 0) {
+        // UTF-8 转换失败，尝试系统默认编码 (GBK)
+        wideSize = MultiByteToWideChar(
+            CP_ACP,            // 系统默认编码
+            0,
+            p.data(),
+            inputSize,
+            nullptr,
+            0
+        );
+    }
+
+    if (wideSize > 0) {
+        std::wstring widePath(wideSize, 0);
+        MultiByteToWideChar(
+            CP_UTF8,
+            0,
+            p.data(),
+            inputSize,
+            widePath.data(),
+            wideSize
+        );
+        return std::filesystem::path(widePath);
+    }
+#endif
     return std::filesystem::path(p);
 }
 
