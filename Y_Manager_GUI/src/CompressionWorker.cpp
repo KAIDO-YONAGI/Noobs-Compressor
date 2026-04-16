@@ -328,17 +328,21 @@ void CompressionWorker::doDecompression()
 
         emit detailedProgress("", 0.0, 15.0, tr("Starting decompression..."));
 
-        // 解压 - 设置进度回调，包含停止检查
+        // 解压 - 设置进度回调，包含停止检查和节流
         DecompressionLoop decompressor(inputFilePath, outputDirectory);
         decompressor.setProgressCallback([this](const std::string &filename, double fileProgress, double overallProgress, const std::string &status) {
             if (isStopRequested()) {
                 throw std::runtime_error("Operation cancelled by user");
             }
-            QString qFilename = QString::fromStdString(filename);
-            QString qStatus = QString::fromStdString(status);
             // 将整体进度映射到15%-95%的范围
             double mappedProgress = 15.0 + overallProgress * 0.80;
-            emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+
+            // 节流：限制信号发送频率
+            if (shouldEmitProgress(mappedProgress)) {
+                QString qFilename = QString::fromStdString(filename);
+                QString qStatus = QString::fromStdString(status);
+                emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+            }
         });
         decompressor.decompressionLoop(aes);
 

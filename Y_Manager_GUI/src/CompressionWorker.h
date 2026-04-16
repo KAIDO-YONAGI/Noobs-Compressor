@@ -44,7 +44,11 @@ public:
     bool isStopRequested() const { return m_stopRequested.load(); }
 
     // 重置停止标志
-    void resetStopFlag() { m_stopRequested.store(false); }
+    void resetStopFlag() {
+        m_stopRequested.store(false);
+        m_lastProgressTime = std::chrono::steady_clock::now();
+        m_lastEmittedProgress = -1.0;
+    }
 
 public slots:
     void doCompression();
