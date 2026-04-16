@@ -8,6 +8,16 @@
 #include <filesystem>
 #include <iostream>
 
+/* EntryQueue - 目录文件队列
+ *
+ * 功能:
+ *   BFS遍历中使用的队列，存储目录和文件计数对
+ *   用链表实现，支持push/pop/front/back操作
+ */
+class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
+{
+};
+
 /* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
  *
  * 功能:

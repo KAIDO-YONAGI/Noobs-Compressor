@@ -5,7 +5,7 @@
 
 # 项目简介 | Project Overview
 
-**SFC.exe** 是一个基于 **Huffman 编码与 AES 加密**实现的文件归档工具，支持对**多个文件与目录进行压缩与解压缩**。  
+**SFC.exe（SimpleFilesCompressor）** 是一个基于 **Huffman 编码与 AES 加密**实现的文件归档工具，支持对**多个文件与目录进行压缩与解压缩**。  
 **SFC.exe** is a file archiving tool based on **Huffman coding and AES encryption**, supporting **compression and decompression of multiple files and directories**.
 
 该项目主要用于研究**文件系统归档结构、数据压缩以及基础加密实现**。  
