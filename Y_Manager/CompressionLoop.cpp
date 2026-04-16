@@ -1,5 +1,8 @@
 #include "CompressionLoop.h"
+#include "../CompressionModules/heffman/include/HuffmanCompression.h"
+#include "../EncryptionModules/Aes/include/AesEncryption.h"
 #include <chrono>
+#include <memory>
 
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
@@ -10,7 +13,9 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     std::filesystem::path blank;
     BinaryStandardLoader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
 
-    Heffman huffmanZip(1);
+    // 使用接口包装类
+    Y_flib::HuffmanCompression huffmanZip(1);
+    Y_flib::AesEncryption encryption(&aes);
 
     PathTransfer transfer;
 
@@ -58,25 +63,19 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
             blockCount++;
             const Y_flib::DataBlock data_In = dataLoader->getBlock();
 
-            huffmanZip.statistic_freq(0, data_In);
-            huffmanZip.merge_ttabs();
-            huffmanZip.gen_hefftree();
-            huffmanZip.save_code_inTab();
+            // 通过接口调用压缩模块
+            huffmanZip.statistic_freq(data_In);
+            huffmanZip.build_encode_tree();
 
             huffTree.clear();
-            huffmanZip.tree_to_plat_uchar(huffTree);
-            huffTreeOutPut.clear();
-            huffTreeOutPut.resize(huffTree.size());
-
-            aes.doAes(1, huffTree, huffTreeOutPut);
+            huffmanZip.serialize_tree(huffTree);
+            encryption.encrypt(huffTree, huffTreeOutPut);
             dataExporter.exportCompressedData(huffTreeOutPut);
 
             compressedData.clear();
             huffmanZip.encode(data_In, compressedData);
 
-            encryptedBlock.clear();
-            aes.doAes(1, compressedData, encryptedBlock);
-
+            encryption.encrypt(compressedData, encryptedBlock);
             dataExporter.exportCompressedData(encryptedBlock);
 
             // 计算进度并回调

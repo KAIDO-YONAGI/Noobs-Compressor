@@ -5,6 +5,8 @@
 #include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
 #include "../CompressorFileSystem/DataCommunication/include/BinaryStandardLoader.h"
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
+#include "../CompressorFileSystem/DataCommunication/include/ICompression.h"
+#include "../CompressorFileSystem/DataCommunication/include/IEncryption.h"
 #include "../CompressionModules/heffman/include/Heffman.h"
 #include "My_Aes.h"
 #include <filesystem>
@@ -39,8 +41,8 @@ private:
     // 处理数据块
     void processDataBlock(std::ifstream &inFile,
                           const std::filesystem::path &filePath,
-                          Aes &aes,
-                          Heffman &huffmanUnzip,
+                          Y_flib::IEncryption &encryption,
+                          Y_flib::ICompression &compression,
                           Y_flib::DataBlock &rawTreeData,
                           Y_flib::DataBlock &decryptedTreeData,
                           Y_flib::DataBlock &rawData,

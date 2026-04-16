@@ -1,5 +1,8 @@
 #include "DecompressionLoop.h"
+#include "../CompressionModules/heffman/include/HuffmanCompression.h"
+#include "../EncryptionModules/Aes/include/AesEncryption.h"
 #include <chrono>
+#include <memory>
 
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
@@ -11,7 +14,9 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
     headerLoaderIterator.headerLoaderIterator(aes);
     Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
 
-    Heffman huffmanUnzip(1);
+    // 使用接口包装类
+    Y_flib::HuffmanCompression huffmanUnzip(1);
+    Y_flib::AesEncryption encryption(&aes);
     Locator locator;
 
     // 进度回调节流
@@ -105,12 +110,14 @@ void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
     decryptedData.reserve(Y_flib::Constants::BUFFER_SIZE);
     decompressedData.reserve(Y_flib::Constants::BUFFER_SIZE * 2);
 
-    Heffman huffmanUnzip(1);
+    // 使用接口包装类
+    Y_flib::HuffmanCompression huffmanUnzip(1);
+    Y_flib::AesEncryption encryption(&aes);
 
     // 处理文件的每个块
     while (totalDecompressedBytes < originalSize && fileCompressedSize > 0)
     {
-        processDataBlock(inFile, fullFilePath, aes, huffmanUnzip,
+        processDataBlock(inFile, fullFilePath, encryption, huffmanUnzip,
                          rawTreeData, decryptedTreeData, rawData, decryptedData, decompressedData,
                          fileCompressedSize, totalDecompressedBytes, originalSize, dataExporter);
 
@@ -133,8 +140,8 @@ void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
 
 void DecompressionLoop::processDataBlock(std::ifstream &inFile,
                                          const std::filesystem::path &filePath,
-                                         Aes &aes,
-                                         Heffman &huffmanUnzip,
+                                         Y_flib::IEncryption &encryption,
+                                         Y_flib::ICompression &compression,
                                          Y_flib::DataBlock &rawTreeData,
                                          Y_flib::DataBlock &decryptedTreeData,
                                          Y_flib::DataBlock &rawData,
@@ -158,14 +165,8 @@ void DecompressionLoop::processDataBlock(std::ifstream &inFile,
     rawTreeData.resize(treeBlockSize);
     loader.dataLoader(treeBlockSize, inFile, rawTreeData);
 
-    decryptedTreeData.clear();
-    aes.doAes(2, rawTreeData, decryptedTreeData);
-    huffmanUnzip.spawn_tree(decryptedTreeData);
-
-    if (huffmanUnzip.getTreeRoot() == nullptr)
-    {
-        throw std::runtime_error("decompressionLoop()-Error: Failed to spawn Huffman tree - tree root is NULL");
-    }
+    encryption.decrypt(rawTreeData, decryptedTreeData);
+    compression.deserialize_tree(decryptedTreeData);
 
     fileCompressedSize -= treeBlockSize;
 
@@ -187,12 +188,11 @@ void DecompressionLoop::processDataBlock(std::ifstream &inFile,
     }
 
     // 解密并解压
-    decryptedData.clear();
-    aes.doAes(2, rawData, decryptedData);
+    encryption.decrypt(rawData, decryptedData);
 
     Y_flib::FileSize remainingBytes = originalSize - totalDecompressedBytes;
     decompressedData.clear();
-    huffmanUnzip.decode(decryptedData, decompressedData, BitHandler(), remainingBytes);
+    compression.decode(decryptedData, decompressedData, remainingBytes);
 
     totalDecompressedBytes += decompressedData.size();
 
