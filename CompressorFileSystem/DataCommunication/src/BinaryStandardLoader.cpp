@@ -1,6 +1,7 @@
 #include "../include/BinaryStandardLoader.h"
+#include "../include/StrategyFactory.h"
 
-void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
+void BinaryStandardLoader::headerLoaderIterator(Y_flib::IEncryption &encryption)
 {
     StandardsReader standardsReader(inFile);
     Locator locator;
@@ -33,7 +34,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
                 return;
 
             buffer.clear();
-            loadEntryBlock(standardsReader, countOfChildDirectory, aes);
+            loadEntryBlock(standardsReader, countOfChildDirectory, encryption);
         }
     }
     catch (const std::exception &e)
@@ -42,7 +43,7 @@ void BinaryStandardLoader::headerLoaderIterator(Aes &aes)
     }
 }
 
-void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes)
+void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Y_flib::IEncryption &encryption)
 {
     if (offset == 0)
         return;
@@ -75,7 +76,7 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
         std::memcpy(blockWithIv.data(), &ivNum, sizeof(Y_flib::IvSize));
         blockWithIv.insert(blockWithIv.end(), buffer.begin(), buffer.end());
 
-        aes.doAes(2, blockWithIv, decryptedBlock);
+        encryption.decrypt(blockWithIv, decryptedBlock);
         buffer.clear();
         buffer.resize(decryptedBlock.size());
         buffer = decryptedBlock;
@@ -163,9 +164,12 @@ void BinaryStandardLoader::loadSeparatedStandard(Y_flib::FlagType &flag, Standar
     }
 }
 
-void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
-
+void BinaryStandardLoader::encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode)
 {
+    // 非加密模式下，目录块保持明文，无需加密回填
+    if (!Y_flib::StrategyFactory::hasEncryption(mode))
+        return;
+
     // 检查 fstreamForRefill 是否有效
     if (!fstreamForRefill.is_open()) {
         // 尝试重新打开
@@ -192,7 +196,7 @@ void BinaryStandardLoader::encryptHeaderBlock(Aes &aes)
 
         StandardsReader::readDataBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
 
-        aes.doAes(1, inBlock, encryptedBlock);
+        encryption.encrypt(inBlock, encryptedBlock);
         locator.locateFromBegin(fstreamForRefill, startPos - sizeof(Y_flib::IvSize)); // 定位回数据块起始位置，准备回写加密数据
 
         StandardsWriter::writeDataBlock(blockSize + sizeof(Y_flib::IvSize), fstreamForRefill, encryptedBlock); // 回写加密数据

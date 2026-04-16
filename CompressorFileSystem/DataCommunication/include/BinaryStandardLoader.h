@@ -4,7 +4,7 @@
 #include "ToolClasses.h"
 #include "EntryDetails.h"
 #include "EntryParser.h"
-#include "My_Aes.h"
+#include "IEncryption.h"
 #include <queue>
 #include <algorithm>
 #include <cstring>
@@ -50,12 +50,12 @@ private:
 
     void setRequestDone();                                                                                                 // 标记块读取完成
     void setAllLoopDone();                                                                                                 // 标记所有循环完成并清理资源
-    void loadEntryBlock(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Aes &aes); // 读取单个数据块、解密、解析
+    void loadEntryBlock(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Y_flib::IEncryption &encryption); // 读取单个数据块、解密、解析
     void loadHeaderStandard(std::ifstream &inFile, Y_flib::Header &header, Y_flib::DataBlock &buffer);
     void loadSeparatedStandard(Y_flib::FlagType &flag, StandardsReader &standardsReader, Y_flib::IvSize &ivNum);
 
 public:
-    void headerLoaderIterator(Aes &aes); // 主读取循环：逐块读取、解密、解析目录结构
+    void headerLoaderIterator(Y_flib::IEncryption &encryption); // 主读取循环：逐块读取、解密、解析目录结构
 
     // 压缩时队列
     EntryQueue fileQueue;                                                  // 文件队列
@@ -97,6 +97,8 @@ public:
 
     Y_flib::DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 
+    Y_flib::CompressStrategy getStrategy() const { return header.strategy; } // 获取文件头中的策略号
+
     bool allLoopIsDone() { return allDone; } // 检查所有读取是否完成
 
     bool loaderRequestIsDone() { return blockIsDone; } // 检查当前块读取是否完成
@@ -105,5 +107,5 @@ public:
 
     void restartLoader(); // 重新打开文件并定位到当前偏移
 
-    void encryptHeaderBlock(Aes &aes); // 在压缩流程中读取完目录信息就直接加密并回填目录块到文件（读信息->填目录->读目录->加密回填 其中的后两步）
+    void encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode); // 在压缩流程中读取完目录信息就直接加密并回填目录块到文件
 };

@@ -5,8 +5,8 @@
 #include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
 #include "../CompressorFileSystem/DataCommunication/include/BinaryStandardLoader.h"
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
-#include "../CompressionModules/heffman/include/Heffman.h"
-#include "My_Aes.h"
+#include "../CompressorFileSystem/DataCommunication/include/ICompression.h"
+#include "../CompressorFileSystem/DataCommunication/include/IEncryption.h"
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -51,5 +51,8 @@ public:
         m_progressCallback = callback;
     }
 
-    void compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes);
+    void compressionLoop(const std::vector<std::string> &filePathToScan,
+                         Y_flib::IEncryption &encryption,
+                         Y_flib::ICompression &compression,
+                         Y_flib::CompressionMode mode);
 };

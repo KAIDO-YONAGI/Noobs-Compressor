@@ -7,8 +7,6 @@
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
 #include "../CompressorFileSystem/DataCommunication/include/ICompression.h"
 #include "../CompressorFileSystem/DataCommunication/include/IEncryption.h"
-#include "../CompressionModules/heffman/include/Heffman.h"
-#include "My_Aes.h"
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -27,12 +25,14 @@ private:
     Y_flib::FileSize m_totalFiles;
     Y_flib::FileSize m_processedFiles;
 
+    Y_flib::IEncryption *m_encryption = nullptr;
+    Y_flib::ICompression *m_compression = nullptr;
+
     // 处理目录队列
     void processDirectories(BinaryStandardLoader &headerLoaderIterator);
 
     // 处理单个文件
     void processFile(BinaryStandardLoader &headerLoaderIterator,
-                     Aes &aes,
                      Locator &locator,
                      Y_flib::DirectoryOffsetSize &dataOffset,
                      std::chrono::steady_clock::time_point &lastCallbackTime,
@@ -88,5 +88,5 @@ public:
         m_progressCallback = callback;
     }
 
-    void decompressionLoop(Aes &aes);
+    void decompressionLoop(Y_flib::IEncryption &encryption, Y_flib::ICompression &compression);
 };

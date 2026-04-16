@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(SimpleFilesCompressorGUI VERSION 1.0.0 LANGUAGES CXX)
+project(SimpleFilesCompressorGUI VERSION 2.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,6 +66,8 @@ set(CORE_SOURCES
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EntryProcessor.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/BinaryStandardWriter.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/BinaryStandardLoader.cpp"
+    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/NullCompression.cpp"
+    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/StrategyFactory.cpp"
     "${CMAKE_SOURCE_DIR}/../Y_Manager/MainLoop.cpp"
     "${CMAKE_SOURCE_DIR}/../Y_Manager/CompressionLoop.cpp"
     "${CMAKE_SOURCE_DIR}/../Y_Manager/DecompressionLoop.cpp"

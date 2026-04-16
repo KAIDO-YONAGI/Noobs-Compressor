@@ -1,21 +1,18 @@
 #include "CompressionLoop.h"
-#include "../CompressionModules/heffman/include/HuffmanCompression.h"
-#include "../EncryptionModules/Aes/include/AesEncryption.h"
 #include <chrono>
 #include <memory>
 
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 
-void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathToScan, Aes &aes)
+void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathToScan,
+                                       Y_flib::IEncryption &encryption,
+                                       Y_flib::ICompression &compression,
+                                       Y_flib::CompressionMode mode)
 {
     // 初始化迭代器
     std::filesystem::path blank;
     BinaryStandardLoader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
-
-    // 使用接口包装类
-    Y_flib::HuffmanCompression huffmanZip(1);
-    Y_flib::AesEncryption encryption(&aes);
 
     PathTransfer transfer;
 
@@ -33,7 +30,7 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     // 计算总文件数用于进度报告
     countTotalFiles(filePathToScan, transfer);
 
-    headerLoaderIterator.headerLoaderIterator(aes); // 执行第一次操作，把根目录载入
+    headerLoaderIterator.headerLoaderIterator(encryption); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
     {
         EntryDetails loadFile = headerLoaderIterator.fileQueue.front().first;
@@ -64,16 +61,16 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
             const Y_flib::DataBlock data_In = dataLoader->getBlock();
 
             // 通过接口调用压缩模块
-            huffmanZip.statistic_freq(data_In);
-            huffmanZip.build_encode_tree();
+            compression.statistic_freq(data_In);
+            compression.build_encode_tree();
 
             huffTree.clear();
-            huffmanZip.serialize_tree(huffTree);
+            compression.serialize_tree(huffTree);
             encryption.encrypt(huffTree, huffTreeOutPut);
             dataExporter.exportCompressedData(huffTreeOutPut);
 
             compressedData.clear();
-            huffmanZip.encode(data_In, compressedData);
+            compression.encode(data_In, compressedData);
 
             encryption.encrypt(compressedData, encryptedBlock);
             dataExporter.exportCompressedData(encryptedBlock);
@@ -100,7 +97,7 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
         while (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone())
         {
             headerLoaderIterator.restartLoader();
-            headerLoaderIterator.headerLoaderIterator(aes);
+            headerLoaderIterator.headerLoaderIterator(encryption);
 
             if (!headerLoaderIterator.fileQueue.empty())
             {
@@ -109,7 +106,7 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
             }
         }
     }
-    headerLoaderIterator.encryptHeaderBlock(aes);
+    headerLoaderIterator.encryptHeaderBlock(encryption, mode);
 
     // 完成回调
     if (m_progressCallback)

@@ -1,22 +1,20 @@
 #include "DecompressionLoop.h"
-#include "../CompressionModules/heffman/include/HuffmanCompression.h"
-#include "../EncryptionModules/Aes/include/AesEncryption.h"
 #include <chrono>
 #include <memory>
 
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 
-void DecompressionLoop::decompressionLoop(Aes &aes)
+void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_flib::ICompression &compression)
 {
+    m_encryption = &encryption;
+    m_compression = &compression;
+
     std::vector<std::string> blank;
     BinaryStandardLoader headerLoaderIterator(fullPath.string(), blank, parentPath);
-    headerLoaderIterator.headerLoaderIterator(aes);
+    headerLoaderIterator.headerLoaderIterator(encryption);
     Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
 
-    // 使用接口包装类
-    Y_flib::HuffmanCompression huffmanUnzip(1);
-    Y_flib::AesEncryption encryption(&aes);
     Locator locator;
 
     // 进度回调节流
@@ -34,13 +32,13 @@ void DecompressionLoop::decompressionLoop(Aes &aes)
 
         while (!headerLoaderIterator.fileQueue.empty())
         {
-            processFile(headerLoaderIterator, aes, locator, dataOffset, lastCallbackTime, lastReportedProgress);
+            processFile(headerLoaderIterator, locator, dataOffset, lastCallbackTime, lastReportedProgress);
         }
 
         while (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone())
         {
             headerLoaderIterator.restartLoader();
-            headerLoaderIterator.headerLoaderIterator(aes);
+            headerLoaderIterator.headerLoaderIterator(encryption);
             m_totalFiles += headerLoaderIterator.fileQueue.size();
         }
     }
@@ -69,7 +67,6 @@ void DecompressionLoop::processDirectories(BinaryStandardLoader &headerLoaderIte
 }
 
 void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
-                                    Aes &aes,
                                     Locator &locator,
                                     Y_flib::DirectoryOffsetSize &dataOffset,
                                     std::chrono::steady_clock::time_point &lastCallbackTime,
@@ -110,14 +107,10 @@ void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
     decryptedData.reserve(Y_flib::Constants::BUFFER_SIZE);
     decompressedData.reserve(Y_flib::Constants::BUFFER_SIZE * 2);
 
-    // 使用接口包装类
-    Y_flib::HuffmanCompression huffmanUnzip(1);
-    Y_flib::AesEncryption encryption(&aes);
-
     // 处理文件的每个块
     while (totalDecompressedBytes < originalSize && fileCompressedSize > 0)
     {
-        processDataBlock(inFile, fullFilePath, encryption, huffmanUnzip,
+        processDataBlock(inFile, fullFilePath, *m_encryption, *m_compression,
                          rawTreeData, decryptedTreeData, rawData, decryptedData, decompressedData,
                          fileCompressedSize, totalDecompressedBytes, originalSize, dataExporter);
 

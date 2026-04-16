@@ -1,4 +1,5 @@
 #include "CompressionWorker.h"
+#include <cstring>
 
 
 // 节流逻辑：限制信号发送频率
@@ -90,6 +91,7 @@ static std::string wide_to_utf8(const std::wstring &wide_str)
 CompressionWorker::CompressionWorker(QObject *parent)
     : QObject(parent)
     , m_isDecompression(false)
+    , m_mode(Y_flib::CompressionMode::HuffmanAES)
 {
 }
 
@@ -100,12 +102,14 @@ CompressionWorker::~CompressionWorker()
 void CompressionWorker::setCompressionParams(const QStringList &files,
                                               const QString &outputDir,
                                               const QString &fileName,
-                                              const QString &password)
+                                              const QString &password,
+                                              Y_flib::CompressionMode mode)
 {
     m_filesToCompress = files;
     m_outputDir = outputDir;
     m_outputFileName = fileName;
     m_password = password;
+    m_mode = mode;
     m_isDecompression = false;
 }
 
@@ -226,10 +230,10 @@ void CompressionWorker::doCompression()
             return;
         }
 
-        emit detailedProgress("", 0.0, 10.0, tr("Creating AES encryption object..."));
+        emit detailedProgress("", 0.0, 10.0, tr("Creating strategy modules..."));
 
-        // 创建AES对象（UTF-8编码）
-        Aes aes(m_password.toUtf8().toStdString().c_str());
+        // 使用策略工厂创建压缩和加密模块
+        auto modules = Y_flib::StrategyFactory::createModules(m_mode, m_password.toUtf8().toStdString());
 
         if (isStopRequested()) {
             emit finished(false, tr("Compression cancelled by user"));
@@ -238,9 +242,9 @@ void CompressionWorker::doCompression()
 
         emit detailedProgress("", 0.0, 15.0, tr("Writing file header..."));
 
-        // 创建HeaderWriter
+        // 创建HeaderWriter，传入策略模式
         HeaderWriter headerWriter_v0;
-        headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
+        headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot, m_mode);
 
         if (isStopRequested()) {
             emit finished(false, tr("Compression cancelled by user"));
@@ -265,7 +269,7 @@ void CompressionWorker::doCompression()
                 emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
             }
         });
-        compressor.compressionLoop(filePathToScan, aes);
+        compressor.compressionLoop(filePathToScan, *modules.encryption, *modules.compression, m_mode);
 
         if (isStopRequested()) {
             emit finished(false, tr("Compression cancelled by user"));
@@ -316,9 +320,39 @@ void CompressionWorker::doDecompression()
             return;
         }
 
-        emit detailedProgress("", 0.0, 10.0, tr("Creating AES decryption object..."));
+        // 从文件头读取策略号
+        emit detailedProgress("", 0.0, 8.0, tr("Reading archive header..."));
+        PathTransfer transfer;
+        std::ifstream probeFile(transfer.transPath(inputFilePath), std::ios::binary);
+        if (!probeFile)
+            throw std::runtime_error("Failed to open archive file for header reading");
 
-        Aes aes(m_decompressPassword.toUtf8().toStdString().c_str());
+        Y_flib::DataBlock headerBuf(Y_flib::Constants::HEADER_SIZE);
+        probeFile.read(reinterpret_cast<char*>(headerBuf.data()), Y_flib::Constants::HEADER_SIZE);
+        if (!probeFile)
+            throw std::runtime_error("Failed to read archive header");
+        probeFile.close();
+
+        Y_flib::Header fileHeader;
+        std::memcpy(&fileHeader, headerBuf.data(), sizeof(Y_flib::Header));
+
+        if (fileHeader.magicNum_1 != Y_flib::Constants::MAGIC_NUM ||
+            fileHeader.magicNum_2 != Y_flib::Constants::MAGIC_NUM)
+        {
+            throw std::runtime_error("Invalid archive file format");
+        }
+
+        Y_flib::CompressionMode detectedMode = Y_flib::StrategyFactory::idToMode(fileHeader.strategy);
+
+        if (isStopRequested()) {
+            emit finished(false, tr("Decompression cancelled by user"));
+            return;
+        }
+
+        emit detailedProgress("", 0.0, 10.0, tr("Creating strategy modules..."));
+
+        // 使用策略工厂根据文件头创建对应模块
+        auto modules = Y_flib::StrategyFactory::createModules(detectedMode, m_decompressPassword.toUtf8().toStdString());
 
         if (isStopRequested()) {
             emit finished(false, tr("Decompression cancelled by user"));
@@ -343,7 +377,7 @@ void CompressionWorker::doDecompression()
                 emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
             }
         });
-        decompressor.decompressionLoop(aes);
+        decompressor.decompressionLoop(*modules.encryption, *modules.compression);
 
         if (isStopRequested()) {
             emit finished(false, tr("Decompression cancelled by user"));

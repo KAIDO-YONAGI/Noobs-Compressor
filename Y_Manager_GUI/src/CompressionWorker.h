@@ -1,6 +1,7 @@
 #pragma once
-#include "../EncryptionModules/Aes/include/My_Aes.h"
+#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
+#include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
 #include "../Y_Manager/MainLoop.h"
 #include "../IconHandler.h"
 #include <QFileInfo>
@@ -30,7 +31,8 @@ public:
     void setCompressionParams(const QStringList &files,
                                const QString &outputDir,
                                const QString &fileName,
-                               const QString &password);
+                               const QString &password,
+                               Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES);
 
     // 设置解压参数
     void setDecompressionParams(const QString &inputFile,
@@ -72,6 +74,7 @@ private:
     QString m_outputDir;
     QString m_outputFileName;
     QString m_password;
+    Y_flib::CompressionMode m_mode;
 
     // 解压参数
     QString m_decompressInputFile;
