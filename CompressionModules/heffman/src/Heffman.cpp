@@ -43,7 +43,7 @@ void Heffman::merge_ttabs(){
         }
         ++iter_ttabs;  // 递增外层迭代器
     }
-    //清空线程表
+    //清空线程表（只清空数据，保留容量以便复用）
     for(auto& tab : thread_tabs)
     {
         tab.clear();
@@ -65,6 +65,7 @@ void Heffman::gen_hefftree(){
         destroy_tree(treeroot);
         treeroot = nullptr;
     }
+
     auto heap = gen_minheap();
     while (heap->size() != 1)
     {

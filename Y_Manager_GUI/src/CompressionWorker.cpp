@@ -1,5 +1,24 @@
 #include "CompressionWorker.h"
+#include <cstring>
 
+
+// 节流逻辑：限制信号发送频率
+bool CompressionWorker::shouldEmitProgress(double currentProgress)
+{
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastProgressTime).count();
+
+    // 条件：时间间隔足够 或 进度变化足够 或 完成时
+    bool shouldEmit = (elapsed >= PROGRESS_INTERVAL_MS) ||
+                      (currentProgress - m_lastEmittedProgress >= PROGRESS_DELTA) ||
+                      (currentProgress >= 100.0);
+
+    if (shouldEmit) {
+        m_lastProgressTime = now;
+        m_lastEmittedProgress = currentProgress;
+    }
+    return shouldEmit;
+}
 
 // Windows API路径处理辅助函数（参考命令行版本）
 static std::filesystem::path make_path(const std::string &utf8_str)
@@ -72,6 +91,7 @@ static std::string wide_to_utf8(const std::wstring &wide_str)
 CompressionWorker::CompressionWorker(QObject *parent)
     : QObject(parent)
     , m_isDecompression(false)
+    , m_mode(Y_flib::CompressionMode::HuffmanAES)
 {
 }
 
@@ -82,12 +102,14 @@ CompressionWorker::~CompressionWorker()
 void CompressionWorker::setCompressionParams(const QStringList &files,
                                               const QString &outputDir,
                                               const QString &fileName,
-                                              const QString &password)
+                                              const QString &password,
+                                              Y_flib::CompressionMode mode)
 {
     m_filesToCompress = files;
     m_outputDir = outputDir;
     m_outputFileName = fileName;
     m_password = password;
+    m_mode = mode;
     m_isDecompression = false;
 }
 
@@ -159,6 +181,7 @@ bool CompressionWorker::validateDecompressionParams()
 
 void CompressionWorker::doCompression()
 {
+    resetStopFlag();  // 重置停止标志
     emit detailedProgress("", 0.0, 0.0, tr("Validating parameters..."));
 
     if (!validateCompressionParams()) {
@@ -166,6 +189,11 @@ void CompressionWorker::doCompression()
     }
 
     try {
+        if (isStopRequested()) {
+            emit finished(false, tr("Compression cancelled by user"));
+            return;
+        }
+
         emit detailedProgress("", 0.0, 5.0, tr("Preparing files..."));
 
         // 使用UTF-8编码的路径字符串
@@ -173,7 +201,6 @@ void CompressionWorker::doCompression()
         for (const QString &file : m_filesToCompress) {
             std::string utf8Path = file.toUtf8().toStdString();
             filePathToScan.push_back(utf8Path);
-            std::cout << "DEBUG: File path [" << filePathToScan.size() << "]: " << utf8Path << std::endl;
         }
 
         // 构建输出目录路径（使用UTF-8编码）
@@ -183,7 +210,6 @@ void CompressionWorker::doCompression()
         if (!outputDirectory.empty() && outputDirectory.back() != '\\' && outputDirectory.back() != '/') {
             outputDirectory += '\\';
         }
-        std::cout << "DEBUG: Output directory: " << outputDirectory << std::endl;
 
         // 构建输出文件名（UTF-8编码）
         std::string outputFileName = m_outputFileName.toUtf8().toStdString();
@@ -195,39 +221,62 @@ void CompressionWorker::doCompression()
 
         // 完整的输出文件路径
         std::string compressionFilePath = outputDirectory + outputFileName + ".sy";
-        std::cout << "DEBUG: Compression file path: " << compressionFilePath << std::endl;
 
         // 逻辑根
         std::string logicalRoot = outputFileName;
 
-        emit detailedProgress("", 0.0, 10.0, tr("Creating AES encryption object..."));
+        if (isStopRequested()) {
+            emit finished(false, tr("Compression cancelled by user"));
+            return;
+        }
 
-        // 创建AES对象（UTF-8编码）
-        Aes aes(m_password.toUtf8().toStdString().c_str());
+        emit detailedProgress("", 0.0, 10.0, tr("Creating strategy modules..."));
+
+        // 使用策略工厂创建压缩和加密模块
+        auto modules = Y_flib::StrategyFactory::createModules(m_mode, m_password.toUtf8().toStdString());
+
+        if (isStopRequested()) {
+            emit finished(false, tr("Compression cancelled by user"));
+            return;
+        }
 
         emit detailedProgress("", 0.0, 15.0, tr("Writing file header..."));
 
-        // 创建HeaderWriter
+        // 创建HeaderWriter，传入策略模式
         HeaderWriter headerWriter_v0;
-        headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot);
+        headerWriter_v0.headerWriter(filePathToScan, compressionFilePath, logicalRoot, m_mode);
 
-        std::cout << "DEBUG: HeaderWriter done" << std::endl;
+        if (isStopRequested()) {
+            emit finished(false, tr("Compression cancelled by user"));
+            return;
+        }
 
         emit detailedProgress("", 0.0, 20.0, tr("Starting compression..."));
 
-        // 压缩 - 设置进度回调
+        // 压缩 - 设置进度回调，包含停止检查和节流
         CompressionLoop compressor(compressionFilePath);
         compressor.setProgressCallback([this](const std::string &filename, double fileProgress, double overallProgress, const std::string &status) {
-            QString qFilename = QString::fromStdString(filename);
-            QString qStatus = QString::fromStdString(status);
+            if (isStopRequested()) {
+                throw std::runtime_error("Operation cancelled by user");
+            }
             // 将整体进度映射到20%-95%的范围（预留5%给图标关联）
             double mappedProgress = 20.0 + overallProgress * 0.75;
-            emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+
+            // 节流：限制信号发送频率
+            if (shouldEmitProgress(mappedProgress)) {
+                QString qFilename = QString::fromStdString(filename);
+                QString qStatus = QString::fromStdString(status);
+                emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+            }
         });
-        compressor.compressionLoop(filePathToScan, aes);
+        compressor.compressionLoop(filePathToScan, *modules.encryption, *modules.compression, m_mode);
 
-        emit detailedProgress("", 100.0, 95.0, tr("Associating icon..."));
+        if (isStopRequested()) {
+            emit finished(false, tr("Compression cancelled by user"));
+            return;
+        }
 
+        // 关联图标到 .sy 文件
         try {
             IconHandler::AssociateIconToSyFile(compressionFilePath, "");
         } catch (...) {}
@@ -236,7 +285,11 @@ void CompressionWorker::doCompression()
         emit finished(true, tr("Compression successful!\nOutput file: %1").arg(QString::fromUtf8(compressionFilePath.c_str())));
 
     } catch (const std::exception &e) {
-        emit finished(false, tr("Compression failed: %1").arg(QString::fromStdString(e.what())));
+        if (std::string(e.what()) == "Operation cancelled by user") {
+            emit finished(false, tr("Compression cancelled by user"));
+        } else {
+            emit finished(false, tr("Compression failed: %1").arg(QString::fromStdString(e.what())));
+        }
     } catch (...) {
         emit finished(false, tr("Compression failed due to unknown error"));
     }
@@ -244,6 +297,7 @@ void CompressionWorker::doCompression()
 
 void CompressionWorker::doDecompression()
 {
+    resetStopFlag();  // 重置停止标志
     emit detailedProgress("", 0.0, 0.0, tr("Validating parameters..."));
 
     if (!validateDecompressionParams()) {
@@ -251,36 +305,102 @@ void CompressionWorker::doDecompression()
     }
 
     try {
+        if (isStopRequested()) {
+            emit finished(false, tr("Decompression cancelled by user"));
+            return;
+        }
+
         emit detailedProgress("", 0.0, 5.0, tr("Preparing decryption..."));
 
         std::string inputFilePath = m_decompressInputFile.toUtf8().toStdString();
         std::string outputDirectory = m_decompressOutputDir.toUtf8().toStdString();
 
-        emit detailedProgress("", 0.0, 10.0, tr("Creating AES decryption object..."));
+        if (isStopRequested()) {
+            emit finished(false, tr("Decompression cancelled by user"));
+            return;
+        }
 
-        Aes aes(m_decompressPassword.toUtf8().toStdString().c_str());
+        // 从文件头读取策略号
+        emit detailedProgress("", 0.0, 8.0, tr("Reading archive header..."));
+        PathTransfer transfer;
+        std::ifstream probeFile(transfer.transPath(inputFilePath), std::ios::binary);
+        if (!probeFile)
+            throw std::runtime_error("Failed to open archive file for header reading");
+
+        Y_flib::DataBlock headerBuf(Y_flib::Constants::HEADER_SIZE);
+        probeFile.read(reinterpret_cast<char*>(headerBuf.data()), Y_flib::Constants::HEADER_SIZE);
+        if (!probeFile)
+            throw std::runtime_error("Failed to read archive header");
+        probeFile.close();
+
+        Y_flib::Header fileHeader;
+        std::memcpy(&fileHeader, headerBuf.data(), sizeof(Y_flib::Header));
+
+        if (fileHeader.magicNum_1 != Y_flib::Constants::MAGIC_NUM ||
+            fileHeader.magicNum_2 != Y_flib::Constants::MAGIC_NUM)
+        {
+            throw std::runtime_error("Invalid archive file format");
+        }
+
+        Y_flib::CompressionMode detectedMode = Y_flib::StrategyFactory::idToMode(fileHeader.strategy);
+
+        if (Y_flib::StrategyFactory::hasEncryption(detectedMode) && m_decompressPassword.isEmpty()) {
+            emit finished(false, tr("This archive requires a password. Please enter the decryption key."));
+            return;
+        }
+
+        if (isStopRequested()) {
+            emit finished(false, tr("Decompression cancelled by user"));
+            return;
+        }
+
+        emit detailedProgress("", 0.0, 10.0, tr("Creating strategy modules..."));
+
+        // 使用策略工厂根据文件头创建对应模块
+        auto modules = Y_flib::StrategyFactory::createModules(detectedMode, m_decompressPassword.toUtf8().toStdString());
+
+        if (isStopRequested()) {
+            emit finished(false, tr("Decompression cancelled by user"));
+            return;
+        }
 
         emit detailedProgress("", 0.0, 15.0, tr("Starting decompression..."));
 
-        // 解压 - 设置进度回调
+        // 解压 - 设置进度回调，包含停止检查和节流
         DecompressionLoop decompressor(inputFilePath, outputDirectory);
         decompressor.setProgressCallback([this](const std::string &filename, double fileProgress, double overallProgress, const std::string &status) {
-            QString qFilename = QString::fromStdString(filename);
-            QString qStatus = QString::fromStdString(status);
+            if (isStopRequested()) {
+                throw std::runtime_error("Operation cancelled by user");
+            }
             // 将整体进度映射到15%-95%的范围
             double mappedProgress = 15.0 + overallProgress * 0.80;
-            emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+
+            // 节流：限制信号发送频率
+            if (shouldEmitProgress(mappedProgress)) {
+                QString qFilename = QString::fromStdString(filename);
+                QString qStatus = QString::fromStdString(status);
+                emit detailedProgress(qFilename, fileProgress, mappedProgress, qStatus);
+            }
         });
-        decompressor.decompressionLoop(aes);
+        decompressor.decompressionLoop(*modules.encryption, *modules.compression);
+
+        if (isStopRequested()) {
+            emit finished(false, tr("Decompression cancelled by user"));
+            return;
+        }
 
         emit detailedProgress("", 100.0, 100.0, tr("Completed"));
         emit finished(true, tr("Decompression successful!\nOutput directory: %1").arg(QString::fromUtf8(outputDirectory.c_str())));
 
     } catch (const std::exception &e) {
-        emit finished(false, tr("Decompression failed: %1\n\nPossible reasons:\n"
-                                "1. Incorrect decryption key\n"
-                                "2. Corrupted or incompatible .sy file\n"
-                                "3. Insufficient disk space").arg(QString::fromStdString(e.what())));
+        if (std::string(e.what()) == "Operation cancelled by user") {
+            emit finished(false, tr("Decompression cancelled by user"));
+        } else {
+            emit finished(false, tr("Decompression failed: %1\n\nPossible reasons:\n"
+                                    "1. Incorrect decryption key\n"
+                                    "2. Corrupted or incompatible .sy file\n"
+                                    "3. Insufficient disk space").arg(QString::fromStdString(e.what())));
+        }
     } catch (...) {
         emit finished(false, tr("Decompression failed due to unknown error"));
     }

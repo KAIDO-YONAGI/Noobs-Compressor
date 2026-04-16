@@ -1,4 +1,6 @@
 #include "MainWindow.h"
+#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 
 
 #ifdef _WIN32
@@ -19,10 +21,26 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    // 停止工作线程
+    if (m_worker) {
+        // 请求停止工作
+        m_worker->requestStop();
+    }
+
     if (m_workerThread) {
-        m_workerThread->quit();
-        m_workerThread->wait();
+        // 等待线程完成（最多等待3秒）
+        if (!m_workerThread->wait(3000)) {
+            // 如果线程没有在规定时间内结束，强制终止
+            m_workerThread->terminate();
+            m_workerThread->wait();
+        }
         delete m_workerThread;
+        m_workerThread = nullptr;
+    }
+
+    if (m_worker) {
+        delete m_worker;
+        m_worker = nullptr;
     }
 }
 
@@ -30,7 +48,7 @@ void MainWindow::setupUI()
 {
     setWindowTitle(tr("Simple Files Compressor"));
     setMinimumSize(600, 400);  // 最小尺寸
-    resize(700, 450);  // 默认尺寸
+    resize(720, 450);  // 默认尺寸
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
@@ -219,7 +237,7 @@ QWidget* MainWindow::createCompressionTab()
     outputLayout->addWidget(m_outputFileNameEdit, 1, 1, 1, 2);
 
     // 密码
-    outputLayout->addWidget(new QLabel(tr("Encryption Key:")), 2, 0);
+    outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_passwordEdit = new QLineEdit();
     m_passwordEdit->setEchoMode(QLineEdit::Password);
     m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
@@ -236,6 +254,89 @@ QWidget* MainWindow::createCompressionTab()
     QVBoxLayout *rightLayout = new QVBoxLayout(rightColumn);
     rightLayout->setSpacing(10);
     rightLayout->setContentsMargins(0, 0, 0, 0);
+
+    // === 压缩模式选择器 ===
+    QGroupBox *modeGroup = new QGroupBox(tr("Compression Mode"));
+    modeGroup->setStyleSheet(
+        "QGroupBox { "
+        "   background: rgba(255, 255, 255, 130); "
+        "   border: 1px solid rgba(200, 200, 200, 150); "
+        "   border-radius: 8px; "
+        "   margin-top: 12px; "
+        "   padding-top: 12px; "
+        "   font-weight: bold; "
+        "   color: #333; "
+        "} "
+        "QGroupBox::title { "
+        "   subcontrol-origin: margin; "
+        "   left: 12px; "
+        "   padding: 0 6px; "
+        "}"
+    );
+    QVBoxLayout *modeLayout = new QVBoxLayout(modeGroup);
+
+    m_compressModeCombo = new QComboBox();
+    m_compressModeCombo->addItem(tr("Huffman Only (Default)"),
+        static_cast<int>(Y_flib::CompressionMode::HuffmanOnly));
+    m_compressModeCombo->addItem(tr("Huffman + AES"),
+        static_cast<int>(Y_flib::CompressionMode::HuffmanAES));
+    m_compressModeCombo->addItem(tr("AES Only"),
+        static_cast<int>(Y_flib::CompressionMode::AESOnly));
+    m_compressModeCombo->addItem(tr("Pack Only"),
+        static_cast<int>(Y_flib::CompressionMode::PackOnly));
+    m_compressModeCombo->setCurrentIndex(0);
+    m_compressModeCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    m_compressModeCombo->setStyleSheet(
+        "QComboBox { "
+        "   background: rgba(255, 255, 255, 180); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   border-radius: 4px; "
+        "   padding: 6px 20px 6px 6px; "
+        "} "
+        "QComboBox:hover { "
+        "   background: rgba(255, 255, 255, 220); "
+        "   border: 1px solid rgba(150, 150, 150, 200); "
+        "} "
+        "QComboBox:disabled { "
+        "   background: rgba(200, 200, 200, 140); "
+        "   color: #888; "
+        "} "
+        "QComboBox::drop-down { "
+        "   subcontrol-origin: padding; "
+        "   subcontrol-position: center right; "
+        "   width: 20px; "
+        "   border-left: 1px solid rgba(200, 200, 200, 180); "
+        "   border-top-right-radius: 4px; "
+        "   border-bottom-right-radius: 4px; "
+        "} "
+        "QComboBox::down-arrow { "
+        "   width: 8px; "
+        "   height: 8px; "
+        "   background: #666; "
+        "} "
+        "QComboBox::down-arrow:disabled { "
+        "   background: #aaa; "
+        "} "
+        "QComboBox QAbstractItemView { "
+        "   background: rgba(255, 255, 255, 220); "
+        "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   selection-background-color: rgba(200, 200, 200, 150); "
+        "}"
+    );
+    connect(m_compressModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
+        Y_flib::CompressionMode mode = static_cast<Y_flib::CompressionMode>(m_compressModeCombo->currentData().toInt());
+        bool needsEncryption = Y_flib::StrategyFactory::hasEncryption(mode);
+        m_passwordEdit->setEnabled(needsEncryption);
+        if (!needsEncryption) {
+            m_passwordEdit->setPlaceholderText(tr("Not needed for this mode"));
+        } else {
+            m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
+        }
+    });
+    emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
+
+    modeLayout->addWidget(m_compressModeCombo);
+    rightLayout->addWidget(modeGroup);
 
     // === 进度和日志区域 ===
     QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
@@ -453,13 +554,30 @@ QWidget* MainWindow::createDecompressionTab()
     connect(browseOutBtn, &QPushButton::clicked, this, &MainWindow::onBrowseDecompressOutputClicked);
     outputLayout->addWidget(browseOutBtn, 0, 2);
 
-    outputLayout->addWidget(new QLabel(tr("Decryption Key:")), 1, 0);
+    outputLayout->addWidget(new QLabel(tr("Subfolder Name:")), 1, 0);
+    m_decompressSubfolderEdit = new QLineEdit();
+    m_decompressSubfolderEdit->setPlaceholderText(tr("Optional: append to output path"));
+    outputLayout->addWidget(m_decompressSubfolderEdit, 1, 1, 1, 2);
+
+    outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_decompressPasswordEdit = new QLineEdit();
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
     m_decompressPasswordEdit->setPlaceholderText(tr("Leave empty for default"));
-    outputLayout->addWidget(m_decompressPasswordEdit, 1, 1, 1, 2);
+    outputLayout->addWidget(m_decompressPasswordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
+
+    // === 重置按钮 ===
+    QPushButton *resetDecompressBtn = new QPushButton(tr("Reset"));
+    resetDecompressBtn->setStyleSheet(btnStyle);
+    connect(resetDecompressBtn, &QPushButton::clicked, this, [this]() {
+        m_decompressFilePathEdit->clear();
+        m_decompressOutputDirEdit->clear();
+        m_decompressSubfolderEdit->clear();
+        m_decompressPasswordEdit->clear();
+    });
+    leftLayout->addWidget(resetDecompressBtn);
+
     leftLayout->addStretch();
 
     // =============================================
@@ -670,9 +788,16 @@ void MainWindow::onStartCompressionClicked()
         return;
     }
 
-    QString password = m_passwordEdit->text();
-    if (password.isEmpty()) {
-        password = "LOVEYONAGI";  // 使用默认密码
+    // 获取选择的压缩模式
+    Y_flib::CompressionMode mode = static_cast<Y_flib::CompressionMode>(m_compressModeCombo->currentData().toInt());
+
+    QString password;
+    if (Y_flib::StrategyFactory::hasEncryption(mode)) {
+        password = m_passwordEdit->text();
+        if (password.isEmpty()) {
+            QMessageBox::warning(this, tr("Error"), tr("Please enter a password for encrypted mode."));
+            return;
+        }
     }
 
     // 收集文件列表
@@ -685,6 +810,7 @@ void MainWindow::onStartCompressionClicked()
     m_isProcessing = true;
     m_startCompressBtn->setEnabled(false);
     m_startCompressBtn->setText(tr("Processing..."));
+    m_compressModeCombo->setEnabled(false);
     m_compressProgressBar->setValue(0);
     m_compressProgressLabel->setText(tr("Overall: 0%"));
     m_compressCurrentFileLabel->setText(tr("Initializing..."));
@@ -694,7 +820,7 @@ void MainWindow::onStartCompressionClicked()
     // 创建工作线程
     m_workerThread = new QThread();
     m_worker = new CompressionWorker();
-    m_worker->setCompressionParams(files, outputDir, fileName, password);
+    m_worker->setCompressionParams(files, outputDir, fileName, password, mode);
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, m_worker, &CompressionWorker::doCompression);
@@ -749,11 +875,14 @@ void MainWindow::onStartDecompressionClicked()
     }
 
     QString password = m_decompressPasswordEdit->text();
-    if (password.isEmpty()) {
-        password = "LOVEYONAGI";  // 使用默认密码
-    }
 
     QString outputDir = m_decompressOutputDirEdit->text().trimmed();
+
+    // 如果填写了子文件夹名，拼接到输出路径
+    QString subfolder = m_decompressSubfolderEdit->text().trimmed();
+    if (!subfolder.isEmpty()) {
+        outputDir = outputDir + "/" + subfolder;
+    }
 
     // 设置UI状态
     m_isProcessing = true;
@@ -791,6 +920,16 @@ void MainWindow::onCompressionDetailedProgress(const QString &filename, double f
     if (!filename.isEmpty()) {
         QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
         m_compressCurrentFileLabel->setText(displayText);
+        // 限制日志行数，防止内存无限增长
+        QTextDocument *doc = m_compressLogEdit->document();
+        if (doc->lineCount() > 500) {
+            // 更高效的清理方式：保留最近的内容
+            QTextCursor cursor(doc);
+            cursor.movePosition(QTextCursor::End);
+            cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
+            cursor.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor, 500);
+            cursor.removeSelectedText();
+        }
         m_compressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
             .arg(overallInt, 3)
             .arg(status)
@@ -807,6 +946,7 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
     m_isProcessing = false;
     m_startCompressBtn->setEnabled(true);
     m_startCompressBtn->setText(tr("Start Compression"));
+    m_compressModeCombo->setEnabled(true);
 
     if (success) {
         m_compressProgressBar->setValue(100);
@@ -844,6 +984,16 @@ void MainWindow::onDecompressionDetailedProgress(const QString &filename, double
     if (!filename.isEmpty()) {
         QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
         m_decompressCurrentFileLabel->setText(displayText);
+        // 限制日志行数，防止内存无限增长
+        QTextDocument *doc = m_decompressLogEdit->document();
+        if (doc->lineCount() > 500) {
+            // 更高效的清理方式：保留最近的内容
+            QTextCursor cursor(doc);
+            cursor.movePosition(QTextCursor::End);
+            cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
+            cursor.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor, 500);
+            cursor.removeSelectedText();
+        }
         m_decompressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
             .arg(overallInt, 3)
             .arg(status)
