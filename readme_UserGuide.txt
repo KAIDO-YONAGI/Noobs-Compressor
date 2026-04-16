@@ -10,6 +10,30 @@ Click to select files from your local device. Multi-selection is supported:
 
 Hold Shift to select a consecutive range of files
 Hold Ctrl (Windows) or Command (Mac) to select multiple non-consecutive files
+
+拖拽操作 | Drag & Drop
+将文件或文件夹直接拖入软件窗口，路径将自动识别并添加到列表。
+
+Drag and drop files or folders directly into the application window to automatically add them to the list.
+
+操作方式 | How to Use
+
+选中一个或多个文件或文件夹，按住鼠标左键拖入列表区域，松开即可完成添加。
+
+Select one or more files or folders, hold the left mouse button, drag them into the list area, and release to add.
+
+支持类型 | Supported Types
+
+支持同时拖入混合内容，如多个文件和文件夹的组合。
+
+Mixed content is supported, such as a combination of multiple files and folders.
+
+自动去重 | Auto Deduplication
+
+系统会自动检测并跳过列表中已存在的重复路径。
+
+The system automatically detects and skips duplicate paths already in the list.
+
 添加文件夹 | Add Folder
 选择一个文件夹，将文件夹内的所有文件添加至待处理列表。
 
@@ -34,29 +58,6 @@ Specify the output directory for processed files.
 启动任务，按设定规则处理列表中的所有文件。
 
 Start processing all files in the list according to the configured settings.
-
-拖拽操作 | Drag & Drop
-将文件或文件夹直接拖入软件窗口，路径将自动识别并添加到列表。
-
-Drag and drop files or folders directly into the application window to automatically add them to the list.
-
-操作方式 | How to Use
-
-选中一个或多个文件或文件夹，按住鼠标左键拖入列表区域，松开即可完成添加。
-
-Select one or more files or folders, hold the left mouse button, drag them into the list area, and release to add.
-
-支持类型 | Supported Types
-
-支持同时拖入混合内容，如多个文件和文件夹的组合。
-
-Mixed content is supported, such as a combination of multiple files and folders.
-
-自动去重 | Auto Deduplication
-
-系统会自动检测并跳过列表中已存在的重复路径。
-
-The system automatically detects and skips duplicate paths already in the list.
 
 操作提示 | Tips
 处理前请确认保存路径是否正确，避免文件保存到错误位置。
