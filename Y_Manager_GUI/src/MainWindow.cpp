@@ -30,7 +30,7 @@ void MainWindow::setupUI()
 {
     setWindowTitle(tr("Simple Files Compressor"));
     setMinimumSize(600, 400);  // 最小尺寸
-    resize(700, 450);  // 默认尺寸
+    resize(700, 480);  // 默认尺寸
 
     // 设置窗口图标
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
