@@ -32,6 +32,15 @@ namespace Y_flib
 
     using ConstSize= uint64_t;
 
+    // 压缩模式策略枚举
+    enum class CompressionMode : uint8_t
+    {
+        HuffmanAES  = 0, // 默认：Huffman压缩 + AES加密（向后兼容）
+        HuffmanOnly = 1, // 仅Huffman压缩，无加密
+        AESOnly     = 2, // 仅AES加密，无压缩
+        PackOnly    = 3  // 仅打包，无压缩无加密
+    };
+
     // 文件标准相关
 
 #pragma pack(push, 1)

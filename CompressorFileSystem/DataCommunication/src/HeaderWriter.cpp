@@ -1,6 +1,7 @@
 #include "../include/HeaderWriter.h"
+#include "../include/StrategyFactory.h"
 
-void HeaderWriter_v0::writeHeader(std::ofstream &outFile,std::filesystem::path &fullOutPath)
+void HeaderWriter_v0::writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath, Y_flib::CompressionMode mode)
 {
     StandardsWriter standardWriter;
     Locator locator;
@@ -8,8 +9,8 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile,std::filesystem::path &
     {
         throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
     }
-    // 文件头
-    Y_flib::CompressStrategy strategySize = Y_flib::Constants::STRATEGY;
+    // 文件头 - 使用传入的策略模式
+    Y_flib::CompressStrategy strategySize = Y_flib::StrategyFactory::modeToId(mode);
     Y_flib::CompressorVersion versionSize = Y_flib::Constants::VERSION;
     Y_flib::HeaderOffsetSize headerOffsetSize = 0;
     Y_flib::DirectoryOffsetSize directoryOffsetSize = 0;
@@ -44,7 +45,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(Y_flib::Constants::MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     locator.locateFromEnd(outFile, 0);
 }
-void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot)
+void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode)
 {
     PathTransfer transfer;
 
@@ -67,7 +68,7 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
             StandardsWriter standardWriter;
             // 写入表示文件起始的4字节魔数
             standardWriter.appendMagicStatic(outFile);
-            writeHeader(outFile,fullOutPath); // 文件头结束--包含魔数一共11字节(已回填)
+            writeHeader(outFile,fullOutPath, mode); // 文件头结束--包含魔数一共11字节(已回填)
 
             standardWriter.appendMagicStatic(outFile);
 

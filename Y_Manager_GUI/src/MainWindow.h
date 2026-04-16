@@ -24,6 +24,7 @@
 #include <QLabel>
 #include <QProgressBar>
 #include <QTextEdit>
+#include <QTextCursor>
 #include <QGroupBox>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -34,6 +35,7 @@
 #include <QUrl>
 #include <QPixmap>
 #include <QResizeEvent>
+#include <QComboBox>
 #include <QSizePolicy>
 #include <memory>
 #include <vector>
@@ -89,6 +91,7 @@ private:
     QString elideText(const QString &text, int maxWidth);
 
     // 压缩模式控件
+    QComboBox *m_compressModeCombo;
     QListWidget *m_fileListWidget;
     QLineEdit *m_outputDirEdit;
     QLineEdit *m_outputFileNameEdit;
@@ -102,6 +105,7 @@ private:
     // 解压模式控件
     QLineEdit *m_decompressFilePathEdit;
     QLineEdit *m_decompressOutputDirEdit;
+    QLineEdit *m_decompressSubfolderEdit;
     QLineEdit *m_decompressPasswordEdit;
     QPushButton *m_startDecompressBtn;
     QProgressBar *m_decompressProgressBar;

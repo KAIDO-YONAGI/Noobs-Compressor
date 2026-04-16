@@ -5,8 +5,8 @@ IDI_APPICON ICON "YONAGII_512x512.ico"
 
 // 版本信息
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 2,0,0
-PRODUCTVERSION 2,0,0
+FILEVERSION 2,1,0
+PRODUCTVERSION 2,1,0
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
@@ -14,8 +14,8 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "YONAGI"
             VALUE "FileDescription", "Simple Files Compressor (GUI)"
-            VALUE "FileVersion", "2.0.0"
-            VALUE "ProductVersion", "2.0.0"
+            VALUE "FileVersion", "2.1.0"
+            VALUE "ProductVersion", "2.1.0"
             VALUE "OriginalFilename", "SimpleFilesCompressorGUI.exe"
             VALUE "ProductName", "Simple Files Compressor"
             VALUE "InternalName", "SFC_GUI"

@@ -1,8 +1,9 @@
 #pragma once
-#include "../EncryptionModules/Aes/include/My_Aes.h"
+#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
+#include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
 #include "../Y_Manager/MainLoop.h"
-#include "../Y_Manager/IconHandler.h"
+#include "../IconHandler.h"
 #include <QFileInfo>
 #include <QDir>
 #include <stdexcept>
@@ -15,6 +16,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <atomic>
+#include <chrono>
 
 class CompressionWorker : public QObject
 {
@@ -28,12 +31,26 @@ public:
     void setCompressionParams(const QStringList &files,
                                const QString &outputDir,
                                const QString &fileName,
-                               const QString &password);
+                               const QString &password,
+                               Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES);
 
     // 设置解压参数
     void setDecompressionParams(const QString &inputFile,
                                  const QString &outputDir,
                                  const QString &password);
+
+    // 请求停止工作
+    void requestStop() { m_stopRequested.store(true); }
+
+    // 检查是否请求停止
+    bool isStopRequested() const { return m_stopRequested.load(); }
+
+    // 重置停止标志
+    void resetStopFlag() {
+        m_stopRequested.store(false);
+        m_lastProgressTime = std::chrono::steady_clock::now();
+        m_lastEmittedProgress = -1.0;
+    }
 
 public slots:
     void doCompression();
@@ -49,11 +66,15 @@ private:
     bool validateDecompressionParams();
     QString getStdString(const QString &qstr);
 
+    // 节流发送进度信号
+    bool shouldEmitProgress(double currentProgress);
+
     // 压缩参数
     QStringList m_filesToCompress;
     QString m_outputDir;
     QString m_outputFileName;
     QString m_password;
+    Y_flib::CompressionMode m_mode;
 
     // 解压参数
     QString m_decompressInputFile;
@@ -62,4 +83,13 @@ private:
 
     // 状态
     bool m_isDecompression;
+
+    // 停止请求标志
+    std::atomic<bool> m_stopRequested{false};
+
+    // 进度信号节流
+    std::chrono::steady_clock::time_point m_lastProgressTime;
+    double m_lastEmittedProgress{-1.0};
+    static constexpr int PROGRESS_INTERVAL_MS = 200;  // 最小信号间隔
+    static constexpr double PROGRESS_DELTA = 2.0;     // 最小进度变化
 };
