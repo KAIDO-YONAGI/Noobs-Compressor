@@ -79,7 +79,7 @@ public:
         }
         else
         {
-            parentPath = std::filesystem::path(outputDirectory);
+            parentPath = transfer.transPath(outputDirectory);
         }
     }
 
