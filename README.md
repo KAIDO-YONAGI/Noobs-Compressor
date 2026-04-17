@@ -196,13 +196,21 @@ Memory usage is stable around **60 MB**.
 - Background image optimized: PNG → JPEG, embedded resource reduced from 11MB to 1.8MB
 - Fixed Chinese character path garbling during decompression
 
-**架构变更 / Architecture Changes**：
-- 新增 `NullCompression` / `NullEncryption` 空实现 / Added `NullCompression` / `NullEncryption` null implementations
-- 新增 `StrategyFactory` 策略工厂 / Added `StrategyFactory`
-- `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` 全面改为接口引用（`ICompression&` / `IEncryption&`）/ Refactored to use interface references
-- 文件头 `strategy` 字段正式启用 / Header `strategy` field now in use
-- `CMakeLists.txt` 新增 `USE_STATIC_QT` 开关，支持静态/动态链接切换 / Added `USE_STATIC_QT` toggle for static/dynamic linking
-- LGPL v3 合规声明 / LGPL v3 compliance notice
+**架构变更**：
+- 新增 `NullCompression` / `NullEncryption` 空实现
+- 新增 `StrategyFactory` 策略工厂
+- `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` 全面改为接口引用（`ICompression&` / `IEncryption&`）
+- 文件头 `strategy` 字段正式启用（原已预留但始终为 0）
+- `CMakeLists.txt` 新增 `USE_STATIC_QT` 开关，支持静态/动态链接切换
+- LGPL v3 合规声明
+
+**Architecture Changes**:
+- Added `NullCompression` / `NullEncryption` null implementations
+- Added `StrategyFactory`
+- Refactored `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` to use interface references (`ICompression&` / `IEncryption&`)
+- Header `strategy` field now in use
+- Added `USE_STATIC_QT` CMake toggle for static/dynamic linking
+- LGPL v3 compliance notice
 
 ---
 
