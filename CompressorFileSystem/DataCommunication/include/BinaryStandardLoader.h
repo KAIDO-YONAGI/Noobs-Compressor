@@ -76,8 +76,7 @@ public:
 
         if (!inFile)
             throw std::runtime_error("BinaryStandardLoader()-Error:Failed to open inFile" + inPath);
-        if (!fstreamForRefill)
-            throw std::runtime_error("BinaryStandardLoader()-Error:Failed to open fstreamForRefill" + inPath);
+        // fstreamForRefill 用于压缩时回填加密目录块，解压时不需要写权限，允许打开失败
 
         this->filePathToScan = filePathToScan;
         this->parserForLoader = std::make_unique<EntryParser>(buffer, entryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);

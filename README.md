@@ -57,8 +57,8 @@ Because compression relies solely on Huffman coding, the **compression ratio is 
 程序采用**分块处理策略**，在路径长度正常的情况下：  
 The program uses a **block-processing strategy**, and under normal path length conditions:
 
-- **内存峰值约为 64MB**  
-  **Peak memory usage is approximately 64 MB**
+- **内存峰值约为 100MB**  
+  **Peak memory usage is approximately 100 MB**
 
 测试环境：  
 Test scenario:

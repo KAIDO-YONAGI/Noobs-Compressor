@@ -159,11 +159,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Release")
             -Wl,--as-needed
             -static-libgcc
             -static-libstdc++
+            -static
             -s
-        )
-        # 静态链接 libwinpthread
-        target_link_libraries(SimpleFilesCompressorGUI PRIVATE
-            -Wl,-Bstatic -lwinpthread -Wl,-Bdynamic
         )
     endif()
 
