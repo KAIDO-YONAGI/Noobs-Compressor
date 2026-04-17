@@ -179,18 +179,30 @@ Memory usage is stable around **60 MB**.
 - 解压端自动检测：从文件头策略号自动选择对应模块，无需手动指定
 - GUI 压缩页新增模式选择器
 - GUI 解压页新增子文件夹名输入框和重置按钮
-
-**架构变更**：
-- 新增 `NullCompression` / `NullEncryption` 空实现
-- 新增 `StrategyFactory` 策略工厂
-- `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` 全面改为接口引用（`ICompression&` / `IEncryption&`）
-- 文件头 `strategy` 字段正式启用（原已预留但始终为 0）
+- **Qt 6.2.4 静态链接**：部署体积从 57MB 缩减至 16MB（单 exe，无 DLL 依赖）
+- 背景图片优化：PNG → JPEG，嵌入资源从 11MB 减至 1.8MB
+- 修复解压中文输出目录乱码问题
 
 **New Features**:
 - Strategy pattern refactoring: 4 compression/encryption modes
+  - Huffman + AES (backward compatible with legacy .sy files)
+  - Huffman Only (default, compression only, no encryption)
+  - AES Only (encryption only, no compression)
+  - Pack Only (archive only, no compression or encryption)
 - Auto-detection on decompression via header strategy field
 - GUI mode selector on compression tab
 - Subfolder name input and reset button on decompression tab
+- **Qt 6.2.4 static linking**: package size reduced from 57MB to 16MB (single exe, no DLL dependencies)
+- Background image optimized: PNG → JPEG, embedded resource reduced from 11MB to 1.8MB
+- Fixed Chinese character path garbling during decompression
+
+**架构变更 / Architecture Changes**：
+- 新增 `NullCompression` / `NullEncryption` 空实现 / Added `NullCompression` / `NullEncryption` null implementations
+- 新增 `StrategyFactory` 策略工厂 / Added `StrategyFactory`
+- `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` 全面改为接口引用（`ICompression&` / `IEncryption&`）/ Refactored to use interface references
+- 文件头 `strategy` 字段正式启用 / Header `strategy` field now in use
+- `CMakeLists.txt` 新增 `USE_STATIC_QT` 开关，支持静态/动态链接切换 / Added `USE_STATIC_QT` toggle for static/dynamic linking
+- LGPL v3 合规声明 / LGPL v3 compliance notice
 
 ---
 
@@ -236,15 +248,43 @@ The GUI version is in `Y_Manager_GUI/` directory, requires Qt 6.2.4 LTS.
 
 ### 编译要求 | Requirements
 
-- **Qt 6.2.4 LTS**（使用自带的 MinGW 11.2.0）  
+- **Qt 6.2.4 LTS**（使用自带的 MinGW 11.2.0）
   **Qt 6.2.4 LTS** (with bundled MinGW 11.2.0)
 - **CMake 3.20+**
+- **静态链接模式**：需要预编译的 Qt 6.2.4 静态库（`D:/qt/6.2.4-static-mingw/`）
+  **Static linking mode**: requires pre-built Qt 6.2.4 static libraries
 
-### 构建步骤 | Build Steps
+### 构建步骤（静态链接） | Build Steps (Static)
+
+使用 `build_static.bat` 脚本构建（推荐）：
+
+Use `build_static.bat` to build (recommended):
+
+```bash
+# 在 cmd.exe 中运行
+cd Y_Manager_GUI
+build_static.bat
+```
+
+或手动构建：
+
+Or build manually:
 
 ```bash
 cd Y_Manager_GUI
-cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=ON
+cmake --build build --parallel
+```
+
+构建完成后，单 exe 位于 `bin/SFC/` 目录，无需任何 DLL。
+
+After building, a single exe is in `bin/SFC/` directory with no DLL dependencies.
+
+### 构建步骤（动态链接） | Build Steps (Dynamic)
+
+```bash
+cd Y_Manager_GUI
+cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=OFF
 cmake --build build --config Release -j 8
 ```
 
@@ -265,12 +305,12 @@ After building, the executable is in `bin/SFC/` directory.
 
 ## GUI 版本 | GUI Requirements
 
-- **操作系统**: Windows 10 1809 (版本 17763, 2018年10月发布) 及以上  
-  **OS**: Windows 10 1809 (Build 17763, released October 2018) or later
-- **架构**: x64  
+- **操作系统**: Windows 10 1607+（静态链接版本）/ Windows 10 1809+（动态链接版本）
+  **OS**: Windows 10 1607+ (static build) / Windows 10 1809+ (dynamic build)
+- **架构**: x64
   **Architecture**: x64
-- **用户覆盖率**: 覆盖 99%+ 的 Windows 10/11 用户  
-  **Coverage**: Covers 99%+ of Windows 10/11 users
+- **部署体积**: 静态链接 16MB（单 exe）/ 动态链接 57MB（exe + DLL + 插件）
+  **Package size**: 16MB static (single exe) / 57MB dynamic (exe + DLLs + plugins)
 
 ---
 
@@ -316,9 +356,12 @@ After building, the executable is in `bin/SFC/` directory.
 ## GUI 版本 | GUI Dependencies
 
 - **Qt 6.2.4 LTS** (Core, Widgets)
-- **MinGW 11.2.0** (Qt bundled)  
+- **MinGW 11.2.0** (Qt bundled)
   MinGW 11.2.0 (Qt 自带)
 - **Windows 10–11 API**
+- **静态链接模式额外依赖**：
+  - Qt 6.2.4 静态库（`D:/qt/6.2.4-static-mingw/`）
+  - Windows 系统库：dwmapi, uxtheme, imm32, oleaut32, version, setupapi, fontsub
 
 ---
 
