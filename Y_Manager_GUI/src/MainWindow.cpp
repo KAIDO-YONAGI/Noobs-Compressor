@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     , m_isProcessing(false)
 {
     // 加载背景图片（只加载一次）
-    m_backgroundPixmap.load(":/images/background.png");
+    m_backgroundPixmap.load(":/images/background.jpg");
 
     setupUI();
 }
