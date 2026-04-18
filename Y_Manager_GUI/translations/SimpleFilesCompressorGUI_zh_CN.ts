@@ -12,37 +12,37 @@
     <message>
         <location filename="../src/CompressionWorker.cpp" line="67"/>
         <source>File not found: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到文件：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="73"/>
         <source>Invalid path: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>路径无效：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="83"/>
         <source>Output directory not found: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到输出目录：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="89"/>
         <source>Invalid output directory: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>输出目录无效：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="102"/>
         <source>Archive file not found: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>未找到压缩包文件：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="108"/>
         <source>Invalid archive path: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>压缩包路径无效：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="114"/>
         <source>Only .sy files can be decompressed</source>
-        <translation type="unfinished"></translation>
+        <translation>仅支持解压 .sy 文件</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="124"/>
@@ -85,17 +85,18 @@
         <location filename="../src/CompressionWorker.cpp" line="224"/>
         <source>Compression successful!
 Output file: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>压缩成功！
+输出文件：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="234"/>
         <source>Compression failed: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>压缩失败：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="239"/>
         <source>Compression failed due to unknown error</source>
-        <translation type="unfinished"></translation>
+        <translation>压缩失败：发生未知错误</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="257"/>
@@ -120,7 +121,7 @@ Output file: %1</source>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="303"/>
         <source>This archive requires a password. Please enter the decryption key.</source>
-        <translation type="unfinished"></translation>
+        <translation>此压缩包需要密码，请输入解密密钥。</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="325"/>
@@ -131,7 +132,8 @@ Output file: %1</source>
         <location filename="../src/CompressionWorker.cpp" line="355"/>
         <source>Decompression successful!
 Output directory: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>解压成功！
+输出目录：%1</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="365"/>
@@ -141,12 +143,17 @@ Possible reasons:
 1. Incorrect decryption key
 2. Corrupted or incompatible .sy file
 3. Insufficient disk space</source>
-        <translation type="unfinished"></translation>
+        <translation>解压失败：%1
+
+可能原因：
+1. 解密密钥错误
+2. .sy 文件已损坏或不兼容
+3. 磁盘空间不足</translation>
     </message>
     <message>
         <location filename="../src/CompressionWorker.cpp" line="374"/>
         <source>Decompression failed due to unknown error</source>
-        <translation type="unfinished"></translation>
+        <translation>解压失败：发生未知错误</translation>
     </message>
 </context>
 <context>
@@ -205,15 +212,15 @@ Possible reasons:
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="232"/>
-        <source>Auto-set based on selected files</source>
-        <translation>根据所选文件自动设置</translation>
+        <source>Auto-filled from selected items</source>
+        <translation>根据所选项目自动填充</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="234"/>
         <location filename="../src/MainWindow.cpp" line="542"/>
         <location filename="../src/MainWindow.cpp" line="557"/>
         <source>Browse</source>
-        <translation>浏览</translation>
+        <translation>选择</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="240"/>
@@ -221,10 +228,26 @@ Possible reasons:
         <translation>输出文件名：</translation>
     </message>
     <message>
+        <location filename="../src/MainWindow.cpp" line="248"/>
+        <source>Example: SHINKU_YONAGI</source>
+        <translation>例如：SHINKU_YONAGI</translation>
+    </message>
+    <message>
         <location filename="../src/MainWindow.cpp" line="245"/>
         <location filename="../src/MainWindow.cpp" line="567"/>
         <source>Password:</source>
         <translation>密码：</translation>
+    </message>
+    <message>
+        <location filename="../src/MainWindow.cpp" line="254"/>
+        <location filename="../src/MainWindow.cpp" line="444"/>
+        <source>Enter a password</source>
+        <translation>请输入密码</translation>
+    </message>
+    <message>
+        <location filename="../src/MainWindow.cpp" line="676"/>
+        <source>Enter a password if needed</source>
+        <translation>如有需要请输入密码</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="248"/>
@@ -260,7 +283,7 @@ Possible reasons:
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="336"/>
-        <source>Not needed for this mode</source>
+        <source>No password needed for this mode</source>
         <translation>此模式无需密码</translation>
     </message>
     <message>
@@ -294,6 +317,11 @@ Possible reasons:
         <translation>选择压缩包</translation>
     </message>
     <message>
+        <location filename="../src/MainWindow.cpp" line="654"/>
+        <source>Choose a .sy archive file</source>
+        <translation>选择 .sy 压缩包文件</translation>
+    </message>
+    <message>
         <location filename="../src/MainWindow.cpp" line="539"/>
         <source>Archive File (.sy):</source>
         <translation>压缩包文件（.sy）：</translation>
@@ -305,8 +333,8 @@ Possible reasons:
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="564"/>
-        <source>Optional: append to output path</source>
-        <translation>可选：追加到输出路径</translation>
+        <source>Optional: create a subfolder</source>
+        <translation>可选：创建子文件夹</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="576"/>
@@ -339,6 +367,11 @@ Possible reasons:
         <location filename="../src/MainWindow.cpp" line="857"/>
         <source>Select Output Directory</source>
         <translation>选择输出目录</translation>
+    </message>
+    <message>
+        <location filename="../src/MainWindow.cpp" line="670"/>
+        <source>Choose an output folder</source>
+        <translation>选择输出文件夹</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="780"/>

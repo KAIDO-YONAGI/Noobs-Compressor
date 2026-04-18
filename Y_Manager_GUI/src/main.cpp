@@ -15,6 +15,26 @@ QString normalizeLocaleName(QString localeName)
     return localeName;
 }
 
+bool isChineseLocale(const QString &localeName)
+{
+    return normalizeLocaleName(localeName).startsWith(QStringLiteral("zh"), Qt::CaseInsensitive);
+}
+
+void appendChineseFallback(QStringList &candidates)
+{
+    const QString simplifiedChinese = QStringLiteral("zh_CN");
+    if (!candidates.contains(simplifiedChinese, Qt::CaseInsensitive))
+    {
+        candidates.append(simplifiedChinese);
+    }
+
+    const QString chineseLanguage = QStringLiteral("zh");
+    if (!candidates.contains(chineseLanguage, Qt::CaseInsensitive))
+    {
+        candidates.append(chineseLanguage);
+    }
+}
+
 void appendLocaleCandidate(QStringList &candidates, const QString &localeName)
 {
     const QString normalized = normalizeLocaleName(localeName);
@@ -46,6 +66,11 @@ QStringList preferredLocales()
     const QString languageOverride = normalizeLocaleName(qEnvironmentVariable("SFC_GUI_LANGUAGE"));
     if (!languageOverride.isEmpty() && languageOverride.compare("system", Qt::CaseInsensitive) != 0)
     {
+        if (!isChineseLocale(languageOverride))
+        {
+            return locales;
+        }
+
         appendLocaleCandidate(locales, languageOverride);
 
         const QLocale overrideLocale(languageOverride);
@@ -54,15 +79,27 @@ QStringList preferredLocales()
             appendLocaleCandidate(locales, uiLanguage);
         }
         appendLocaleCandidate(locales, overrideLocale.name());
+        appendChineseFallback(locales);
     }
     else
     {
         const QLocale systemLocale = QLocale::system();
+        bool hasChinesePreference = false;
+
         for (const QString &uiLanguage : systemLocale.uiLanguages())
         {
+            hasChinesePreference = hasChinesePreference || isChineseLocale(uiLanguage);
             appendLocaleCandidate(locales, uiLanguage);
         }
+        hasChinesePreference = hasChinesePreference || isChineseLocale(systemLocale.name());
+
+        if (!hasChinesePreference)
+        {
+            return {};
+        }
+
         appendLocaleCandidate(locales, systemLocale.name());
+        appendChineseFallback(locales);
     }
 
     return locales;

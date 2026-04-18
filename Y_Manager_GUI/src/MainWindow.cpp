@@ -4,6 +4,7 @@
 #include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 
 #include <filesystem>
+#include <QCoreApplication>
 
 
 #ifdef _WIN32
@@ -11,6 +12,111 @@
 #endif
 
 using Y_flib::EncodingUtils;
+
+namespace
+{
+QString localizeWorkerDialogMessage(const QString &message)
+{
+    const auto translate = [](const char *sourceText) {
+        return QCoreApplication::translate("CompressionWorker", sourceText);
+    };
+
+    const QString fileNotFoundPrefix = QStringLiteral("File not found: ");
+    if (message.startsWith(fileNotFoundPrefix))
+    {
+        return translate("File not found: %1").arg(message.mid(fileNotFoundPrefix.size()));
+    }
+
+    const QString invalidPathPrefix = QStringLiteral("Invalid path: ");
+    if (message.startsWith(invalidPathPrefix))
+    {
+        return translate("Invalid path: %1").arg(message.mid(invalidPathPrefix.size()));
+    }
+
+    const QString outputDirNotFoundPrefix = QStringLiteral("Output directory not found: ");
+    if (message.startsWith(outputDirNotFoundPrefix))
+    {
+        return translate("Output directory not found: %1").arg(message.mid(outputDirNotFoundPrefix.size()));
+    }
+
+    const QString invalidOutputDirPrefix = QStringLiteral("Invalid output directory: ");
+    if (message.startsWith(invalidOutputDirPrefix))
+    {
+        return translate("Invalid output directory: %1").arg(message.mid(invalidOutputDirPrefix.size()));
+    }
+
+    const QString archiveNotFoundPrefix = QStringLiteral("Archive file not found: ");
+    if (message.startsWith(archiveNotFoundPrefix))
+    {
+        return translate("Archive file not found: %1").arg(message.mid(archiveNotFoundPrefix.size()));
+    }
+
+    const QString invalidArchivePrefix = QStringLiteral("Invalid archive path: ");
+    if (message.startsWith(invalidArchivePrefix))
+    {
+        return translate("Invalid archive path: %1").arg(message.mid(invalidArchivePrefix.size()));
+    }
+
+    if (message == QStringLiteral("Only .sy files can be decompressed"))
+    {
+        return translate("Only .sy files can be decompressed");
+    }
+
+    const QString compressionSuccessPrefix = QStringLiteral("Compression successful!\nOutput file: ");
+    if (message.startsWith(compressionSuccessPrefix))
+    {
+        return translate("Compression successful!\nOutput file: %1")
+            .arg(message.mid(compressionSuccessPrefix.size()));
+    }
+
+    const QString compressionFailedPrefix = QStringLiteral("Compression failed: ");
+    if (message.startsWith(compressionFailedPrefix))
+    {
+        return translate("Compression failed: %1").arg(message.mid(compressionFailedPrefix.size()));
+    }
+
+    if (message == QStringLiteral("Compression failed due to unknown error"))
+    {
+        return translate("Compression failed due to unknown error");
+    }
+
+    if (message == QStringLiteral("This archive requires a password. Please enter the decryption key."))
+    {
+        return translate("This archive requires a password. Please enter the decryption key.");
+    }
+
+    const QString decompressionSuccessPrefix = QStringLiteral("Decompression successful!\nOutput directory: ");
+    if (message.startsWith(decompressionSuccessPrefix))
+    {
+        return translate("Decompression successful!\nOutput directory: %1")
+            .arg(message.mid(decompressionSuccessPrefix.size()));
+    }
+
+    const QString decompressionFailedPrefix = QStringLiteral("Decompression failed: ");
+    const QString decompressionFailedSuffix = QStringLiteral("\n\nPossible reasons:\n"
+                                                             "1. Incorrect decryption key\n"
+                                                             "2. Corrupted or incompatible .sy file\n"
+                                                             "3. Insufficient disk space");
+    if (message.startsWith(decompressionFailedPrefix) && message.endsWith(decompressionFailedSuffix))
+    {
+        const QString reason = message.mid(
+            decompressionFailedPrefix.size(),
+            message.size() - decompressionFailedPrefix.size() - decompressionFailedSuffix.size());
+        return translate("Decompression failed: %1\n\nPossible reasons:\n"
+                         "1. Incorrect decryption key\n"
+                         "2. Corrupted or incompatible .sy file\n"
+                         "3. Insufficient disk space")
+            .arg(reason);
+    }
+
+    if (message == QStringLiteral("Decompression failed due to unknown error"))
+    {
+        return translate("Decompression failed due to unknown error");
+    }
+
+    return message;
+}
+} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -158,6 +264,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
+        "   placeholder-text-color: rgba(110, 110, 110, 180); "
         "}";
 
     // =============================================
@@ -229,7 +336,7 @@ QWidget* MainWindow::createCompressionTab()
     // 输出目录
     outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
     m_outputDirEdit = new QLineEdit();
-    m_outputDirEdit->setPlaceholderText(tr("Auto-set based on selected files"));
+    m_outputDirEdit->setPlaceholderText(tr("Auto-filled from selected items"));
     outputLayout->addWidget(m_outputDirEdit, 0, 1);
     QPushButton *browseOutDirBtn = new QPushButton(tr("Browse"));
     browseOutDirBtn->setStyleSheet(btnStyle);
@@ -238,14 +345,15 @@ QWidget* MainWindow::createCompressionTab()
 
     // 输出文件名
     outputLayout->addWidget(new QLabel(tr("Output Filename:")), 1, 0);
-    m_outputFileNameEdit = new QLineEdit("SHINKU_YONAGI");
+    m_outputFileNameEdit = new QLineEdit();
+    m_outputFileNameEdit->setPlaceholderText(tr("Example: SHINKU_YONAGI"));
     outputLayout->addWidget(m_outputFileNameEdit, 1, 1, 1, 2);
 
     // 密码
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_passwordEdit = new QLineEdit();
     m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_passwordEdit->setPlaceholderText(tr(""));
+    m_passwordEdit->setPlaceholderText(tr("Enter a password"));
     outputLayout->addWidget(m_passwordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
@@ -333,9 +441,9 @@ QWidget* MainWindow::createCompressionTab()
         bool needsEncryption = Y_flib::StrategyFactory::hasEncryption(mode);
         m_passwordEdit->setEnabled(needsEncryption);
         if (!needsEncryption) {
-            m_passwordEdit->setPlaceholderText(tr("Not needed for this mode"));
+            m_passwordEdit->setPlaceholderText(tr("No password needed for this mode"));
         } else {
-            m_passwordEdit->setPlaceholderText(tr(""));
+            m_passwordEdit->setPlaceholderText(tr("Enter a password"));
         }
     });
     emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
@@ -410,6 +518,10 @@ QWidget* MainWindow::createCompressionTab()
     // 日志框 - 禁用自动换行
     m_compressLogEdit = new QTextEdit();
     m_compressLogEdit->setReadOnly(true);
+    m_compressLogEdit->setTextInteractionFlags(Qt::NoTextInteraction);
+    m_compressLogEdit->setFocusPolicy(Qt::NoFocus);
+    m_compressLogEdit->setCursor(Qt::ArrowCursor);
+    m_compressLogEdit->viewport()->setCursor(Qt::ArrowCursor);
     m_compressLogEdit->setLineWrapMode(QTextEdit::NoWrap);
     m_compressLogEdit->setStyleSheet(
         "QTextEdit { "
@@ -490,6 +602,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
+        "   placeholder-text-color: rgba(110, 110, 110, 180); "
         "}";
 
     QString btnStyle =
@@ -538,6 +651,7 @@ QWidget* MainWindow::createDecompressionTab()
 
     inputLayout->addWidget(new QLabel(tr("Archive File (.sy):")), 0, 0);
     m_decompressFilePathEdit = new QLineEdit();
+    m_decompressFilePathEdit->setPlaceholderText(tr("Choose a .sy archive file"));
     inputLayout->addWidget(m_decompressFilePathEdit, 0, 1);
     QPushButton *browseFileBtn = new QPushButton(tr("Browse"));
     browseFileBtn->setStyleSheet(btnStyle);
@@ -553,6 +667,7 @@ QWidget* MainWindow::createDecompressionTab()
 
     outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
     m_decompressOutputDirEdit = new QLineEdit();
+    m_decompressOutputDirEdit->setPlaceholderText(tr("Choose an output folder"));
     outputLayout->addWidget(m_decompressOutputDirEdit, 0, 1);
     QPushButton *browseOutBtn = new QPushButton(tr("Browse"));
     browseOutBtn->setStyleSheet(btnStyle);
@@ -561,13 +676,13 @@ QWidget* MainWindow::createDecompressionTab()
 
     outputLayout->addWidget(new QLabel(tr("Subfolder Name:")), 1, 0);
     m_decompressSubfolderEdit = new QLineEdit();
-    m_decompressSubfolderEdit->setPlaceholderText(tr("Optional: append to output path"));
+    m_decompressSubfolderEdit->setPlaceholderText(tr("Optional: create a subfolder"));
     outputLayout->addWidget(m_decompressSubfolderEdit, 1, 1, 1, 2);
 
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_decompressPasswordEdit = new QLineEdit();
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_decompressPasswordEdit->setPlaceholderText(tr(""));
+    m_decompressPasswordEdit->setPlaceholderText(tr("Enter a password if needed"));
     outputLayout->addWidget(m_decompressPasswordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
@@ -660,6 +775,10 @@ QWidget* MainWindow::createDecompressionTab()
     // 日志框 - 禁用自动换行
     m_decompressLogEdit = new QTextEdit();
     m_decompressLogEdit->setReadOnly(true);
+    m_decompressLogEdit->setTextInteractionFlags(Qt::NoTextInteraction);
+    m_decompressLogEdit->setFocusPolicy(Qt::NoFocus);
+    m_decompressLogEdit->setCursor(Qt::ArrowCursor);
+    m_decompressLogEdit->viewport()->setCursor(Qt::ArrowCursor);
     m_decompressLogEdit->setLineWrapMode(QTextEdit::NoWrap);
     m_decompressLogEdit->setStyleSheet(
         "QTextEdit { "
@@ -948,6 +1067,8 @@ void MainWindow::onCompressionDetailedProgress(const QString &filename, double f
 
 void MainWindow::onCompressionFinished(bool success, const QString &message)
 {
+    const QString dialogMessage = localizeWorkerDialogMessage(message);
+
     m_isProcessing = false;
     m_startCompressBtn->setEnabled(true);
     m_startCompressBtn->setText(tr("Start Compression"));
@@ -958,11 +1079,11 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
         m_compressProgressLabel->setText(tr("Overall: 100% | Completed"));
         m_compressCurrentFileLabel->setText(tr("Completed successfully"));
         m_compressLogEdit->append(tr("Compression completed successfully!"));
-        QMessageBox::information(this, tr("Success"), message);
+        QMessageBox::information(this, tr("Success"), dialogMessage);
     } else {
         m_compressCurrentFileLabel->setText(tr("Failed"));
         m_compressLogEdit->append(tr("Compression failed: %1").arg(message));
-        QMessageBox::critical(this, tr("Error"), message);
+        QMessageBox::critical(this, tr("Error"), dialogMessage);
     }
 
     // 清理工作线程
@@ -1012,6 +1133,8 @@ void MainWindow::onDecompressionDetailedProgress(const QString &filename, double
 
 void MainWindow::onDecompressionFinished(bool success, const QString &message)
 {
+    const QString dialogMessage = localizeWorkerDialogMessage(message);
+
     m_isProcessing = false;
     m_startDecompressBtn->setEnabled(true);
     m_startDecompressBtn->setText(tr("Start Decompression"));
@@ -1021,11 +1144,11 @@ void MainWindow::onDecompressionFinished(bool success, const QString &message)
         m_decompressProgressLabel->setText(tr("Overall: 100% | Completed"));
         m_decompressCurrentFileLabel->setText(tr("Completed successfully"));
         m_decompressLogEdit->append(tr("Decompression completed successfully!"));
-        QMessageBox::information(this, tr("Success"), message);
+        QMessageBox::information(this, tr("Success"), dialogMessage);
     } else {
         m_decompressCurrentFileLabel->setText(tr("Failed"));
         m_decompressLogEdit->append(tr("Decompression failed: %1").arg(message));
-        QMessageBox::critical(this, tr("Error"), message);
+        QMessageBox::critical(this, tr("Error"), dialogMessage);
     }
 
     // 清理工作线程

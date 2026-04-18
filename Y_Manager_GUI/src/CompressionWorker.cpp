@@ -64,13 +64,13 @@ bool CompressionWorker::validateCompressionParams()
         {
             if (!std::filesystem::exists(EncodingUtils::qStringToPath(file)))
             {
-                emit finished(false, tr("File not found: %1").arg(file));
+                emit finished(false, QStringLiteral("File not found: %1").arg(file));
                 return false;
             }
         }
         catch (...)
         {
-            emit finished(false, tr("Invalid path: %1").arg(file));
+            emit finished(false, QStringLiteral("Invalid path: %1").arg(file));
             return false;
         }
     }
@@ -80,13 +80,13 @@ bool CompressionWorker::validateCompressionParams()
         const std::filesystem::path outputPath = EncodingUtils::qStringToPath(m_outputDir);
         if (!std::filesystem::is_directory(outputPath))
         {
-            emit finished(false, tr("Output directory not found: %1").arg(m_outputDir));
+            emit finished(false, QStringLiteral("Output directory not found: %1").arg(m_outputDir));
             return false;
         }
     }
     catch (...)
     {
-        emit finished(false, tr("Invalid output directory: %1").arg(m_outputDir));
+        emit finished(false, QStringLiteral("Invalid output directory: %1").arg(m_outputDir));
         return false;
     }
 
@@ -99,19 +99,19 @@ bool CompressionWorker::validateDecompressionParams()
     {
         if (!std::filesystem::exists(EncodingUtils::qStringToPath(m_decompressInputFile)))
         {
-            emit finished(false, tr("Archive file not found: %1").arg(m_decompressInputFile));
+            emit finished(false, QStringLiteral("Archive file not found: %1").arg(m_decompressInputFile));
             return false;
         }
     }
     catch (...)
     {
-        emit finished(false, tr("Invalid archive path: %1").arg(m_decompressInputFile));
+        emit finished(false, QStringLiteral("Invalid archive path: %1").arg(m_decompressInputFile));
         return false;
     }
 
     if (!m_decompressInputFile.toLower().endsWith(".sy"))
     {
-        emit finished(false, tr("Only .sy files can be decompressed"));
+        emit finished(false, QStringLiteral("Only .sy files can be decompressed"));
         return false;
     }
 
@@ -221,22 +221,24 @@ void CompressionWorker::doCompression()
         }
 
         emit detailedProgress("", 100.0, 100.0, tr("Completed"));
-        emit finished(true, tr("Compression successful!\nOutput file: %1").arg(EncodingUtils::pathToQString(compressionFilePath)));
+        emit finished(true, QStringLiteral("Compression successful!\nOutput file: %1")
+                                 .arg(EncodingUtils::pathToQString(compressionFilePath)));
     }
     catch (const std::exception &e)
     {
         if (std::string(e.what()) == "Operation cancelled by user")
         {
-            emit finished(false, tr("Compression cancelled by user"));
+            emit finished(false, QStringLiteral("Compression cancelled by user"));
         }
         else
         {
-            emit finished(false, tr("Compression failed: %1").arg(EncodingUtils::utf8ToQString(e.what())));
+            emit finished(false, QStringLiteral("Compression failed: %1")
+                                     .arg(EncodingUtils::utf8ToQString(e.what())));
         }
     }
     catch (...)
     {
-        emit finished(false, tr("Compression failed due to unknown error"));
+        emit finished(false, QStringLiteral("Compression failed due to unknown error"));
     }
 }
 
@@ -300,7 +302,7 @@ void CompressionWorker::doDecompression()
 
         if (Y_flib::StrategyFactory::hasEncryption(detectedMode) && m_decompressPassword.isEmpty())
         {
-            emit finished(false, tr("This archive requires a password. Please enter the decryption key."));
+            emit finished(false, QStringLiteral("This archive requires a password. Please enter the decryption key."));
             return;
         }
 
@@ -352,25 +354,26 @@ void CompressionWorker::doDecompression()
         }
 
         emit detailedProgress("", 100.0, 100.0, tr("Completed"));
-        emit finished(true, tr("Decompression successful!\nOutput directory: %1").arg(EncodingUtils::pathToQString(outputDirectoryPath)));
+        emit finished(true, QStringLiteral("Decompression successful!\nOutput directory: %1")
+                                 .arg(EncodingUtils::pathToQString(outputDirectoryPath)));
     }
     catch (const std::exception &e)
     {
         if (std::string(e.what()) == "Operation cancelled by user")
         {
-            emit finished(false, tr("Decompression cancelled by user"));
+            emit finished(false, QStringLiteral("Decompression cancelled by user"));
         }
         else
         {
-            emit finished(false, tr("Decompression failed: %1\n\nPossible reasons:\n"
-                                    "1. Incorrect decryption key\n"
-                                    "2. Corrupted or incompatible .sy file\n"
-                                    "3. Insufficient disk space")
-                                    .arg(EncodingUtils::utf8ToQString(e.what())));
+            emit finished(false, QStringLiteral("Decompression failed: %1\n\nPossible reasons:\n"
+                                                "1. Incorrect decryption key\n"
+                                                "2. Corrupted or incompatible .sy file\n"
+                                                "3. Insufficient disk space")
+                                     .arg(EncodingUtils::utf8ToQString(e.what())));
         }
     }
     catch (...)
     {
-        emit finished(false, tr("Decompression failed due to unknown error"));
+        emit finished(false, QStringLiteral("Decompression failed due to unknown error"));
     }
 }
