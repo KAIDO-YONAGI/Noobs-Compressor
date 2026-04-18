@@ -8,7 +8,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
     std::filesystem::path oPath = fullOutPath;
     std::filesystem::path sPath;
 
-    file.setOutPutFilePath(oPath);
+    file.setOutputFilePath(oPath);
 
     try
     {

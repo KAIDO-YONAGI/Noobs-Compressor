@@ -42,7 +42,7 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot
 
     fileDetailsParser(fileNameSize, fileName, bufferPtr);
     // 解析文件原大小
-    Y_flib::FileSize originSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr);
+    Y_flib::FileSize originSize = readDataFromReadBlock<Y_flib::FileSize>(bufferPtr);
 
     if (parserMode == 1) // for compression
     {
@@ -51,11 +51,11 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
+        compressedSize = readDataFromReadBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
     }
 
     if (isRoot) // 如果在处理根目录下的第一级文件，就不进行路径拼接
-        pathToProcess = tempPathForRootPaser;
+        pathToProcess = tempPathForRootParser;
 
     else
         pathToProcess = pathConnector(fileName);
@@ -81,10 +81,10 @@ void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool i
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
 
     // 解析下级文件数量
-    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadBlock<Y_flib::FileCount>(bufferPtr);
 
     if (isRoot) // 如果在处理根目录下的第一级文件，就不进行路径拼接
-        pathToProcess = tempPathForRootPaser;
+        pathToProcess = tempPathForRootParser;
 
     else
         pathToProcess = pathConnector(directoryName);
@@ -100,7 +100,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     // 解析逻辑根
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
-    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadBlock<Y_flib::FileCount>(bufferPtr);
 
     countOfChildDirectory = count;
 
@@ -116,9 +116,9 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     {
         for (const std::string &path : filePathToScan)
         {
-            tempPathForRootPaser = transfer.transPath(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
+            tempPathForRootParser = transfer.transPath(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
 
-            const Y_flib::FlagType entryFlag = readDataFromReadedBlock<Y_flib::FlagType>(bufferPtr);
+            const Y_flib::FlagType entryFlag = readDataFromReadBlock<Y_flib::FlagType>(bufferPtr);
 
             switch (entryFlag)
             {
@@ -142,7 +142,7 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const Y_flib::FlagType entryFlag = readDataFromReadedBlock<Y_flib::FlagType>(bufferPtr);
+    const Y_flib::FlagType entryFlag = readDataFromReadBlock<Y_flib::FlagType>(bufferPtr);
     switch (entryFlag)
     {
     case Y_flib::FlagType::File:

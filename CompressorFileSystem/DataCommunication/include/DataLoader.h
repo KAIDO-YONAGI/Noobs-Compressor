@@ -26,7 +26,7 @@ private:
     Y_flib::FileSize fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
-    Y_flib::FileSize readed = 0;
+    Y_flib::FileSize readCount = 0;
 
     /* 标记读取完成状态 */
     void done();
@@ -48,7 +48,7 @@ public:
     void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
 
     /* 重置指针到上次读取的位置 */
-    void resetByLastReaded();
+    void resetByLastRead();
 
     /* 默认构造函数 */
     DataLoader() {}

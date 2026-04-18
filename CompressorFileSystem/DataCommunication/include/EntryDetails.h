@@ -51,7 +51,7 @@ public:
 class FilePath
 {
 private:
-    std::filesystem::path outPutFilePath;
+    std::filesystem::path outputFilePath;
     std::filesystem::path filePathToScan;
 
 public:
@@ -59,9 +59,9 @@ public:
     FilePath() {}
 
     /* 设置输出文件路径 */
-    void setOutPutFilePath(const std::filesystem::path outPutFilePath)
+    void setOutputFilePath(const std::filesystem::path outputFilePath)
     {
-        this->outPutFilePath = outPutFilePath;
+        this->outputFilePath = outputFilePath;
     }
 
     /* 用于重新设置要扫描的源路径，复用对象 */
@@ -71,7 +71,7 @@ public:
     }
 
     /* 获取输出文件路径 */
-    std::filesystem::path getOutPutFilePath() const { return outPutFilePath; }
+    std::filesystem::path getOutputFilePath() const { return outputFilePath; }
 
     /* 获取要扫描的源路径 */
     std::filesystem::path getFilePathToScan() const { return filePathToScan; }

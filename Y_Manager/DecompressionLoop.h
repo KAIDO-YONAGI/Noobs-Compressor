@@ -21,9 +21,9 @@ class DecompressionLoop
 private:
     std::filesystem::path parentPath;
     std::filesystem::path fullPath;
-    ProgressCallback m_progressCallback;
-    Y_flib::FileSize m_totalFiles;
-    Y_flib::FileSize m_processedFiles;
+    ProgressCallback progressCallback;
+    Y_flib::FileSize totalFiles;
+    Y_flib::FileSize processedFiles;
 
     Y_flib::IEncryption *m_encryption = nullptr;
     Y_flib::ICompression *m_compression = nullptr;
@@ -68,7 +68,7 @@ private:
 
 public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
-        : m_progressCallback(nullptr), m_totalFiles(0), m_processedFiles(0)
+        : progressCallback(nullptr), totalFiles(0), processedFiles(0)
     {
         PathTransfer transfer;
         fullPath = transfer.transPath(deCompressionFilePath);
@@ -85,7 +85,7 @@ public:
 
     void setProgressCallback(ProgressCallback callback)
     {
-        m_progressCallback = callback;
+        progressCallback = callback;
     }
 
     void decompressionLoop(Y_flib::IEncryption &encryption, Y_flib::ICompression &compression);

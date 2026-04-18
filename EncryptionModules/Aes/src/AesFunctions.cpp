@@ -116,7 +116,7 @@ void Aes::splitIntToArray(int num, int array[4]) {
     array[3] = num & 0x000000ff;
 }
 
-void Aes::leftLoop4int(int array[4], int step) {
+void Aes::leftLoop4Int(int array[4], int step) {
     int temp[4];
     for(int i = 0; i < 4; i++)
         temp[i] = array[i];
@@ -140,7 +140,7 @@ int Aes::mergeArrayToInt(int array[4]) {
 int Aes::T(int num, int round) {
     int numArray[4];
     splitIntToArray(num, numArray);
-    leftLoop4int(numArray, 1);
+    leftLoop4Int(numArray, 1);
 
     for(int i = 0; i < 4; i++)
         numArray[i] = getNumFromSBox(numArray[i]);
@@ -187,9 +187,9 @@ void Aes::shiftRows(int array[4][4]) {
         rowFour[i] = array[3][i];
     }
 
-    leftLoop4int(rowTwo, 1);
-    leftLoop4int(rowThree, 2);
-    leftLoop4int(rowFour, 3);
+    leftLoop4Int(rowTwo, 1);
+    leftLoop4Int(rowThree, 2);
+    leftLoop4Int(rowFour, 3);
 
     for(int i = 0; i < 4; i++) {
         array[1][i] = rowTwo[i];
@@ -228,7 +228,7 @@ void Aes::deSubBytes(int array[4][4]) {
             array[i][j] = getNumFromS1Box(array[i][j]);
 }
 
-void Aes::rightLoop4int(int array[4], int step) {
+void Aes::rightLoop4Int(int array[4], int step) {
     int temp[4];
     for(int i = 0; i < 4; i++)
         temp[i] = array[i];
@@ -250,9 +250,9 @@ void Aes::deShiftRows(int array[4][4]) {
         rowFour[i] = array[3][i];
     }
 
-    rightLoop4int(rowTwo, 1);
-    rightLoop4int(rowThree, 2);
-    rightLoop4int(rowFour, 3);
+    rightLoop4Int(rowTwo, 1);
+    rightLoop4Int(rowThree, 2);
+    rightLoop4Int(rowFour, 3);
 
     for(int i = 0; i < 4; i++) {
         array[1][i] = rowTwo[i];
@@ -273,7 +273,7 @@ void Aes::deMixColumns(int array[4][4]) {
     }
 }
 
-void Aes::addRoundTowArray(int aArray[4][4], int bArray[4][4]) {
+void Aes::addRoundTwoArray(int aArray[4][4], int bArray[4][4]) {
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
             aArray[i][j] = aArray[i][j] ^ bArray[i][j];
@@ -295,7 +295,7 @@ void Aes::getArrayFrom4W(int i, int array[4][4]) {
     }
 }
 
-void Aes::hash_to_16bytes(const char* input, uint8_t* output) {
+void Aes::hashTo16Bytes(const char* input, uint8_t* output) {
     uint8_t hash[32];
     sha256((const uint8_t*)input, strlen(input), hash);
     memcpy(output, hash, 16);

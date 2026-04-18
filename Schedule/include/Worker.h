@@ -10,7 +10,7 @@
  */
 
 
-#include "Datacmnctor.h"
+#include "DataConnector.h"
 
 class Worker
 {
@@ -18,7 +18,7 @@ public:
     virtual ~Worker() = default;
 
 public:
-    virtual void work(Datacmnctor*) = 0;
+    virtual void work(DataConnector*) = 0;
 };
 
 #endif //WORKER_H_INTERFACE

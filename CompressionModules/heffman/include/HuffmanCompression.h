@@ -16,28 +16,28 @@ namespace Y_flib
     class HuffmanCompression : public ICompression
     {
     public:
-        explicit HuffmanCompression(int thread_nums = 1) : m_heffman(std::make_unique<Heffman>(thread_nums)) {}
+        explicit HuffmanCompression(int threadNums = 1) : huffman(std::make_unique<Huffman>(threadNums)) {}
 
         void compress(const DataBlock &input, DataBlock &metadataOut, DataBlock &output) override
         {
-            m_heffman->statistic_freq(0, input);
-            m_heffman->merge_ttabs();
-            m_heffman->gen_hefftree();
-            m_heffman->save_code_inTab();
-            m_heffman->tree_to_plat_uchar(metadataOut);
-            m_heffman->encode(input, output);
+            huffman->statisticFreq(0, input);
+            huffman->mergeTtabs();
+            huffman->genHefftree();
+            huffman->saveCodeInTab();
+            huffman->treeToPlatUchar(metadataOut);
+            huffman->encode(input, output);
         }
 
         void decompress(const DataBlock &metadata, const DataBlock &input, DataBlock &output, size_t originalSize) override
         {
-            m_heffman->spawn_tree(const_cast<DataBlock &>(metadata));
-            m_heffman->decode(input, output, BitHandler(), originalSize);
+            huffman->spawnTree(const_cast<DataBlock &>(metadata));
+            huffman->decode(input, output, BitHandler(), originalSize);
         }
 
-        Heffman *get_heffman() { return m_heffman.get(); }
+        Huffman *getHuffman() { return huffman.get(); }
 
     private:
-        std::unique_ptr<Heffman> m_heffman;
+        std::unique_ptr<Huffman> huffman;
     };
 
 } // namespace Y_flib

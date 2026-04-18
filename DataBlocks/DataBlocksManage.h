@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include <algorithm>
-#include "../Schedule/include/Datacmnctor.h" 
+#include "../Schedule/include/DataConnector.h"
 
 /**
  * 数据块列表类
@@ -27,7 +27,7 @@ namespace sfc
         std::vector<block_t>::const_iterator cbegin();
         std::vector<block_t>::iterator end();
         std::vector<block_t>::const_iterator cend();
-        void check_and_fix();
+        void checkAndFix();
 
     private:
         std::vector<block_t> blocks;
@@ -41,21 +41,21 @@ namespace sfc
  * 包含两个块列表，轮转in块和out块的属性
  * 
  */
-class DataBlocksManage: public Datacmnctor
+class DataBlocksManage: public DataConnector
 {
 public:
     DataBlocksManage(int);
     ~DataBlocksManage();
 
-    sfc::blocks_t* get_input_blocks() override;    
-    sfc::blocks_t* get_output_blocks() override;
+    sfc::blocks_t* getInputBlocks() override;
+    sfc::blocks_t* getOutputBlocks() override;
     void done() override;
 
 private:
-    sfc::DataBlocks blockss[2];
-    uint8_t which_out;
+    sfc::DataBlocks dataBlocksArray[2];
+    uint8_t whichOut;
 
-    void rotate_io();
+    void rotateIo();
 };
 
 

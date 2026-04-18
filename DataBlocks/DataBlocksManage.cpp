@@ -1,8 +1,8 @@
 #include "DataBlocksManage.h"
 using namespace sfc;
 
-DataBlocks::DataBlocks(int blocks_nums):
-blocks(blocks_nums)
+DataBlocks::DataBlocks(int blockNums):
+blocks(blockNums)
 { }
 
 DataBlocks::~DataBlocks()
@@ -52,7 +52,7 @@ std::vector<block_t>::const_iterator DataBlocks::cend()
     return blocks.cend();
 }
 
-void DataBlocks::check_and_fix()
+void DataBlocks::checkAndFix()
 {
     auto it = std::remove_if(
         blocks.begin(),
@@ -68,32 +68,32 @@ void DataBlocks::check_and_fix()
 }
 
 
-DataBlocksManage::DataBlocksManage(int blocks_nums):
-which_out(1), blockss{DataBlocks(blocks_nums), DataBlocks(blocks_nums)}
+DataBlocksManage::DataBlocksManage(int blockNums):
+whichOut(1), dataBlocksArray{DataBlocks(blockNums), DataBlocks(blockNums)}
 { }
 
 DataBlocksManage::~DataBlocksManage()
 { }
 
-sfc::blocks_t* DataBlocksManage::get_input_blocks()
+sfc::blocks_t* DataBlocksManage::getInputBlocks()
 {
-    return &blockss[1 - which_out];
+    return &dataBlocksArray[1 - whichOut];
 }
 
-sfc::blocks_t* DataBlocksManage:: get_output_blocks()
+sfc::blocks_t* DataBlocksManage:: getOutputBlocks()
 {
-    return &blockss[which_out];
+    return &dataBlocksArray[whichOut];
 }
 
 //FIXME: 模块算法完成后调用done
 void DataBlocksManage::done()
 {
-    rotate_io();
-    blockss[1 - which_out].clear();
-    blockss[which_out].check_and_fix();
+    rotateIo();
+    dataBlocksArray[1 - whichOut].clear();
+    dataBlocksArray[whichOut].checkAndFix();
 }
 
-void DataBlocksManage::rotate_io()
+void DataBlocksManage::rotateIo()
 {
-    which_out = (which_out + 1) % 2;
+    whichOut = (whichOut + 1) % 2;
 }

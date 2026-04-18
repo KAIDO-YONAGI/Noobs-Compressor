@@ -1,40 +1,40 @@
 #include "../include/GetFreq.h"
 
-GetFreq::GetFreq(Heffman* heffcore):
+GetFreq::GetFreq(Huffman* heffcore):
     heffman(heffcore), tpool(new ThreadPool())
 { }
 
 GetFreq::~GetFreq()
 { }
 
-void GetFreq::work(Datacmnctor *datacmnctor)
+void GetFreq::work(DataConnector *datacmnctor)
 {
-    in_blocks = datacmnctor->get_input_blocks();
-    if(in_blocks == NULL)
+    inBlocks = datacmnctor->getInputBlocks();
+    if(inBlocks == NULL)
     {
         //TODO: 异常处理
         return;
     }
-    if(in_blocks->size() == 0)
+    if(inBlocks->size() == 0)
     {
         //TODO: 异常处理
         return;
     }
 
-    if(in_blocks->size() == 1)
-        heffman->statistic_freq(0, in_blocks->at(0));
-    else 
+    if(inBlocks->size() == 1)
+        heffman->statisticFreq(0, inBlocks->at(0));
+    else
     {
         //多线程（需要阻塞主线程）
         std::vector<std::future<void>> results;
-        std::vector<ptask_t> tasks;
-        check_tpool();
-        for(int i = 0; i < in_blocks->size(); ++i)
+        std::vector<PTaskT> tasks;
+        checkTpool();
+        for(int i = 0; i < inBlocks->size(); ++i)
         {
-            auto task = gen_task(i);
+            auto task = genTask(i);
             tasks.push_back(task);
             results.push_back(task->get_future());
-            tpool->add_task(std::to_string(i), [task]() { (*task)(); });
+            tpool->addTask(std::to_string(i), [task]() { (*task)(); });
         }
         for(auto& result : results)
         {
@@ -43,37 +43,37 @@ void GetFreq::work(Datacmnctor *datacmnctor)
     }
 }
 
-void GetFreq::check_tpool()
+void GetFreq::checkTpool()
 {
-    int thread_nums = tpool->get_thread_nums();
-    if(in_blocks->size() == thread_nums)
+    int threadNums = tpool->getThreadNums();
+    if(inBlocks->size() == threadNums)
         return;
-    else if(in_blocks->size() < thread_nums)
+    else if(inBlocks->size() < threadNums)
     {
-        for(int i = in_blocks->size(); i < thread_nums; ++i)
+        for(int i = inBlocks->size(); i < threadNums; ++i)
         {
-            tpool->del_thread(std::to_string(i));
+            tpool->delThread(std::to_string(i));
         }
     }
     else
     {
-        for(int i = thread_nums; i < in_blocks->size(); ++i)
+        for(int i = threadNums; i < inBlocks->size(); ++i)
         {
-            tpool->new_thread(std::to_string(i));
+            tpool->newThread(std::to_string(i));
         }
     }
 }
 
 void GetFreq::work(const int& i)
 {
-    heffman->statistic_freq(i, in_blocks->at(i)); 
+    heffman->statisticFreq(i, inBlocks->at(i));
 }
 
-GetFreq::ptask_t GetFreq::gen_task(const int& i)
+GetFreq::PTaskT GetFreq::genTask(const int& i)
 {
     std::packaged_task<void()> *task_ptr = new std::packaged_task<void()>(
         [this, i] { this->work(i); }
     );
-    ptask_t task(task_ptr);
+    PTaskT task(task_ptr);
     return task;
 }

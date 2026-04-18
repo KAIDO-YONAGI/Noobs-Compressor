@@ -29,10 +29,10 @@ private:
     const Y_flib::DirectoryOffsetSize &tempOffset;
     size_t parserMode = 0; // 0：占位、1：压缩模式、2：解压模式
 
-    std::filesystem::path tempPathForRootPaser;
+    std::filesystem::path tempPathForRootParser;
 
     /* 检查缓冲区读取范围是否有效，防止越界 */
-    void checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize equiredSize) const;
+    void checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize requiredSize) const;
 
     /* 模板化函数：解析文件名长度和内容，安全构造std::string */
     template <typename T>
@@ -73,7 +73,7 @@ private:
 
     /* 模板化函数：按指定类型解析数值，返回解析的值 */
     template <typename T>
-    T readDataFromReadedBlock(Y_flib::DirectoryOffsetSize &bufferPtr)
+    T readDataFromReadBlock(Y_flib::DirectoryOffsetSize &bufferPtr)
     {
         try
         {
@@ -87,7 +87,7 @@ private:
         catch (const std::exception &e)
         {
             throw std::runtime_error(
-                "readDataFromReadedBlock failed at offset " +
+                "readDataFromReadBlock failed at offset " +
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }

@@ -22,9 +22,9 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
     double lastReportedProgress = -1.0;
 
     // 计算总文件数
-    m_totalFiles = 0;
-    m_processedFiles = 0;
-    m_totalFiles = headerLoaderIterator.fileQueue.size();
+    totalFiles = 0;
+    processedFiles = 0;
+    totalFiles = headerLoaderIterator.fileQueue.size();
 
     while (!headerLoaderIterator.allLoopIsDone())
     {
@@ -39,22 +39,22 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
         {
             headerLoaderIterator.restartLoader();
             headerLoaderIterator.headerLoaderIterator(encryption);
-            m_totalFiles += headerLoaderIterator.fileQueue.size();
+            totalFiles += headerLoaderIterator.fileQueue.size();
         }
     }
 
     // 完成回调
-    if (m_progressCallback)
+    if (progressCallback)
     {
-        m_progressCallback("", 100.0, 100.0, "Completed");
+        progressCallback("", 100.0, 100.0, "Completed");
     }
 }
 
 void DecompressionLoop::processDirectories(BinaryStandardLoader &headerLoaderIterator)
 {
-    while (!headerLoaderIterator.directoryQueue_ready.empty())
+    while (!headerLoaderIterator.directoryQueueReady.empty())
     {
-        std::filesystem::path dirToCreate = headerLoaderIterator.directoryQueue_ready.front();
+        std::filesystem::path dirToCreate = headerLoaderIterator.directoryQueueReady.front();
 
         if (!dirToCreate.is_absolute())
         {
@@ -62,7 +62,7 @@ void DecompressionLoop::processDirectories(BinaryStandardLoader &headerLoaderIte
         }
 
         createDirectory(dirToCreate);
-        headerLoaderIterator.directoryQueue_ready.pop();
+        headerLoaderIterator.directoryQueueReady.pop();
     }
 }
 
@@ -84,10 +84,10 @@ void DecompressionLoop::processFile(
     std::filesystem::path filename = fullFilePath.filename();
 
     // 进度回调 - 开始处理文件
-    if (m_progressCallback)
+    if (progressCallback)
     {
-        double overallProgress = m_totalFiles > 0 ? (100.0 * m_processedFiles / m_totalFiles) : 0;
-        m_progressCallback(filename.string(), 0.0, overallProgress, "Decompressing");
+        double overallProgress = totalFiles > 0 ? (100.0 * processedFiles / totalFiles) : 0;
+        progressCallback(filename.string(), 0.0, overallProgress, "Decompressing");
         lastCallbackTime = std::chrono::steady_clock::now();
     }
 
@@ -121,13 +121,13 @@ void DecompressionLoop::processFile(
 
     dataOffset = inFile.tellg();
     headerLoaderIterator.fileQueue.pop();
-    m_processedFiles++;
+    processedFiles++;
 
     // 进度回调 - 文件完成
-    if (m_progressCallback)
+    if (progressCallback)
     {
-        double overallProgress = m_totalFiles > 0 ? (100.0 * m_processedFiles / m_totalFiles) : 100.0;
-        m_progressCallback(filename.string(), 100.0, overallProgress, "Decompressing");
+        double overallProgress = totalFiles > 0 ? (100.0 * processedFiles / totalFiles) : 100.0;
+        progressCallback(filename.string(), 100.0, overallProgress, "Decompressing");
         lastCallbackTime = std::chrono::steady_clock::now();
     }
 }
@@ -206,15 +206,15 @@ void DecompressionLoop::reportProgress(
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallbackTime).count();
     double fileProgress = (originalSize > 0) ? (100.0 * totalDecompressedBytes / originalSize) : 100.0;
-    double overallProgress = m_totalFiles > 0 ? (100.0 * (m_processedFiles + fileProgress / 100.0) / m_totalFiles) : fileProgress;
+    double overallProgress = totalFiles > 0 ? (100.0 * (processedFiles + fileProgress / 100.0) / totalFiles) : fileProgress;
 
     bool shouldReport = (elapsed >= PROGRESS_CALLBACK_INTERVAL_MS) ||
                         (overallProgress - lastReportedProgress >= 5.0) ||
                         (totalDecompressedBytes >= originalSize);
 
-    if (m_progressCallback && shouldReport)
+    if (progressCallback && shouldReport)
     {
-        m_progressCallback(filename.string(), fileProgress, overallProgress, "Decompressing");
+        progressCallback(filename.string(), fileProgress, overallProgress, "Decompressing");
         lastCallbackTime = now;
         lastReportedProgress = overallProgress;
     }

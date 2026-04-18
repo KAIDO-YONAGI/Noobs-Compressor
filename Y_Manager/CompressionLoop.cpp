@@ -5,10 +5,11 @@
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 
-void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathToScan,
-                                       Y_flib::IEncryption &encryption,
-                                       Y_flib::ICompression &compression,
-                                       Y_flib::CompressionMode mode)
+void CompressionLoop::compressionLoop(
+    const std::vector<std::string> &filePathToScan,
+    Y_flib::IEncryption &encryption,
+    Y_flib::ICompression &compression,
+    Y_flib::CompressionMode mode)
 {
     // 初始化迭代器
     std::filesystem::path blank;
@@ -31,7 +32,7 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     countTotalFiles(filePathToScan, transfer);
 
     headerLoaderIterator.headerLoaderIterator(encryption); // 执行第一次操作，把根目录载入
-    if (!headerLoaderIterator.fileQueue.empty())    // 单个文件特殊处理
+    if (!headerLoaderIterator.fileQueue.empty())           // 单个文件特殊处理
     {
         EntryDetails loadFile = headerLoaderIterator.fileQueue.front().first;
         loadPath = loadFile.getFullPath();
@@ -80,7 +81,7 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
             dataExporter.thisFileIsDone(offsetToFill);
 
             headerLoaderIterator.fileQueue.pop();
-            m_processedFiles++;
+            processedFiles++;
 
             if (!headerLoaderIterator.fileQueue.empty())
             {
@@ -104,16 +105,16 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     headerLoaderIterator.encryptHeaderBlock(encryption, mode);
 
     // 完成回调
-    if (m_progressCallback)
+    if (progressCallback)
     {
-        m_progressCallback("", 100.0, 100.0, "Completed");
+        progressCallback("", 100.0, 100.0, "Completed");
     }
 }
 
 void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathToScan, PathTransfer &transfer)
 {
-    m_totalFiles = 0;
-    m_processedFiles = 0;
+    totalFiles = 0;
+    processedFiles = 0;
     for (const auto &path : filePathToScan)
     {
         try
@@ -125,12 +126,12 @@ void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathTo
                      it != std::filesystem::recursive_directory_iterator(); ++it)
                 {
                     if (it->is_regular_file())
-                        m_totalFiles++;
+                        totalFiles++;
                 }
             }
             else if (std::filesystem::is_regular_file(fsPath))
             {
-                m_totalFiles++;
+                totalFiles++;
             }
         }
         catch (const std::exception &e)
@@ -144,17 +145,18 @@ void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathTo
     }
 }
 
-void CompressionLoop::reportProgress(const std::filesystem::path &filename,
-                                     Y_flib::FileSize blockCount,
-                                     Y_flib::FileSize totalBlocks,
-                                     std::chrono::steady_clock::time_point &lastCallbackTime,
-                                     double &lastReportedProgress)
+void CompressionLoop::reportProgress(
+    const std::filesystem::path &filename,
+    Y_flib::FileSize blockCount,
+    Y_flib::FileSize totalBlocks,
+    std::chrono::steady_clock::time_point &lastCallbackTime,
+    double &lastReportedProgress)
 {
     double fileProgress = (100.0 * blockCount) / totalBlocks;
-    double overallProgress = m_totalFiles > 0 ? (100.0 * m_processedFiles / m_totalFiles) : 0;
-    if (m_totalFiles > 0)
+    double overallProgress = totalFiles > 0 ? (100.0 * processedFiles / totalFiles) : 0;
+    if (totalFiles > 0)
     {
-        overallProgress = 100.0 * (m_processedFiles + fileProgress / 100.0) / m_totalFiles;
+        overallProgress = 100.0 * (processedFiles + fileProgress / 100.0) / totalFiles;
     }
 
     auto now = std::chrono::steady_clock::now();
@@ -163,19 +165,20 @@ void CompressionLoop::reportProgress(const std::filesystem::path &filename,
                         (overallProgress - lastReportedProgress >= 5.0) ||
                         (blockCount == totalBlocks);
 
-    if (m_progressCallback && shouldReport)
+    if (progressCallback && shouldReport)
     {
-        m_progressCallback(filename.string(), fileProgress, overallProgress, "Compressing");
+        progressCallback(filename.string(), fileProgress, overallProgress, "Compressing");
         lastCallbackTime = now;
         lastReportedProgress = overallProgress;
     }
 }
 
-void CompressionLoop::prepareNextFile(DataLoader *dataLoader,
-                                      EntryDetails &fileEntry,
-                                      std::filesystem::path &filename,
-                                      Y_flib::FileSize &totalBlocks,
-                                      Y_flib::FileSize &blockCount)
+void CompressionLoop::prepareNextFile(
+    DataLoader *dataLoader,
+    EntryDetails &fileEntry,
+    std::filesystem::path &filename,
+    Y_flib::FileSize &totalBlocks,
+    Y_flib::FileSize &blockCount)
 {
     dataLoader->reset(fileEntry.getFullPath());
     filename = fileEntry.getFullPath().filename();

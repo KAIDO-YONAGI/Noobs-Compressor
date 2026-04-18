@@ -45,13 +45,13 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(Y_flib::Constants::MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
     locator.locateFromEnd(outFile, 0);
 }
-void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode)
+void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outputFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode)
 {
     PathTransfer transfer;
 
     try
     {
-        std::filesystem::path fullOutPath = std::filesystem::path(transfer.transPath(outPutFilePath));
+        std::filesystem::path fullOutPath = std::filesystem::path(transfer.transPath(outputFilePath));
         if (std::filesystem::exists(fullOutPath))
         {
             throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
