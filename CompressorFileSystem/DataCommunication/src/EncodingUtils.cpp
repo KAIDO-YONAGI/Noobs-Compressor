@@ -9,6 +9,8 @@
 #include <locale>
 #endif
 
+namespace Y_flib
+{
 std::filesystem::path EncodingUtils::pathFromUtf8(std::string_view utf8)
 {
     if (utf8.empty())
@@ -128,3 +130,4 @@ QString EncodingUtils::pathToQString(const std::filesystem::path &path)
     return utf8ToQString(pathToUtf8(path));
 }
 #endif
+} // namespace Y_flib

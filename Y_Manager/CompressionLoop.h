@@ -34,8 +34,8 @@ private:
                         double &lastReportedProgress);
 
     // 准备下一个文件：重置 DataLoader 并更新进度相关变量
-    void prepareNextFile(DataLoader *dataLoader,
-                         EntryDetails &fileEntry,
+    void prepareNextFile(Y_flib::DataLoader *dataLoader,
+                         Y_flib::EntryDetails &fileEntry,
                          std::filesystem::path &filename,
                          Y_flib::FileSize &totalBlocks,
                          Y_flib::FileSize &blockCount);

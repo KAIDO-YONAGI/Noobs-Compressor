@@ -24,6 +24,8 @@
    restartLoader(): 重新初始化读取状态
    encryptHeaderBlock(): 加密并回填目录块
 */
+namespace Y_flib
+{
 class BinaryStandardLoader
 {
 private:
@@ -107,3 +109,4 @@ public:
 
     void encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode); // 在压缩流程中读取完目录信息就直接加密并回填目录块到文件
 };
+} // namespace Y_flib

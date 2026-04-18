@@ -1,6 +1,8 @@
 #include "../include/BinaryStandardLoader.h"
 #include "../include/StrategyFactory.h"
 
+namespace Y_flib
+{
 void BinaryStandardLoader::headerLoaderIterator(Y_flib::IEncryption &encryption)
 {
     StandardsReader standardsReader(inFile);
@@ -232,3 +234,4 @@ void BinaryStandardLoader::restartLoader()
         blockIsDone = false;
     }
 }
+} // namespace Y_flib

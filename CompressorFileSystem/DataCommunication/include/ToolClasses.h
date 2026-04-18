@@ -9,6 +9,9 @@
 #include <filesystem>
 #include <iostream>
 
+namespace Y_flib
+{
+
 /* EntryQueue - 目录文件队列
  *
  * 功能:
@@ -219,3 +222,4 @@ public:
     /* 获取输出文件的当前大小 */
     Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
 };
+} // namespace Y_flib

@@ -1,6 +1,8 @@
 #include "../include/HeaderWriter.h"
 #include "../include/StrategyFactory.h"
 
+namespace Y_flib
+{
 void HeaderWriter_v0::writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath, Y_flib::CompressionMode mode)
 {
     StandardsWriter standardWriter;
@@ -87,3 +89,4 @@ void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, 
         throw std::runtime_error(std::string("HeaderWriter encountered an error: ") + e.what());
     }
 }
+} // namespace Y_flib

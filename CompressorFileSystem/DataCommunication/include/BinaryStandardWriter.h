@@ -20,6 +20,8 @@
  *   writeLogicalRoot(): 写入逻辑根节点，用于多文件任务
  *   writeBlankSeparatedStandard(): 写入分隔符标记
  */
+namespace Y_flib
+{
 class BinaryStandardWriter
 {
 private:
@@ -67,3 +69,4 @@ public:
     /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
     void binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 };
+} // namespace Y_flib

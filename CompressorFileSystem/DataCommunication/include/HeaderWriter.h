@@ -11,6 +11,8 @@
  *   支持多版本实现的运行时切换
  *   分离头部格式和目录写入的具体实现
  */
+namespace Y_flib
+{
 class HeaderWriter_Interface
 {
 public:
@@ -83,3 +85,4 @@ public:
         writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };
 };
+} // namespace Y_flib

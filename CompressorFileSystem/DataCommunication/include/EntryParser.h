@@ -16,6 +16,8 @@
  *   parser(): 主解析函数，处理缓冲区中的目录数据
  *   setRootForDecompression(): 设置解压时的根路径
  */
+namespace Y_flib
+{
 class EntryParser
 {
 private:
@@ -131,3 +133,4 @@ public:
     /* 主解析函数，处理缓冲区中的目录数据块 */
     void parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCount &countOfChildDirectory);
 };
+} // namespace Y_flib

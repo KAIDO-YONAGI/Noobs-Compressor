@@ -2,6 +2,12 @@
 #include <chrono>
 #include <memory>
 
+using Y_flib::BinaryStandardLoader;
+using Y_flib::DataExporter;
+using Y_flib::DataLoader;
+using Y_flib::EncodingUtils;
+using Y_flib::EntryDetails;
+
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 
@@ -172,8 +178,8 @@ void CompressionLoop::reportProgress(
 }
 
 void CompressionLoop::prepareNextFile(
-    DataLoader *dataLoader,
-    EntryDetails &fileEntry,
+    Y_flib::DataLoader *dataLoader,
+    Y_flib::EntryDetails &fileEntry,
     std::filesystem::path &filename,
     Y_flib::FileSize &totalBlocks,
     Y_flib::FileSize &blockCount)

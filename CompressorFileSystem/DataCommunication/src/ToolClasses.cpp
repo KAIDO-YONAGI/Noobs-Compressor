@@ -1,5 +1,7 @@
 #include "../include/ToolClasses.h"
 
+namespace Y_flib
+{
 std::filesystem::path PathTransfer::transPath(std::string_view p)
 {
     return EncodingUtils::pathFromUtf8(p);
@@ -81,3 +83,4 @@ Y_flib::FileSize Locator::getFileSize(
         return 0;
     }
 }
+} // namespace Y_flib

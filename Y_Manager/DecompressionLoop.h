@@ -29,11 +29,11 @@ private:
     Y_flib::ICompression *m_compression = nullptr;
 
     // 处理目录队列
-    void processDirectories(BinaryStandardLoader &headerLoaderIterator);
+    void processDirectories(Y_flib::BinaryStandardLoader &headerLoaderIterator);
 
     // 处理单个文件
-    void processFile(BinaryStandardLoader &headerLoaderIterator,
-                     Locator &locator,
+    void processFile(Y_flib::BinaryStandardLoader &headerLoaderIterator,
+                     Y_flib::Locator &locator,
                      Y_flib::DirectoryOffsetSize &dataOffset,
                      std::chrono::steady_clock::time_point &lastCallbackTime,
                      double &lastReportedProgress);
@@ -51,7 +51,7 @@ private:
                           Y_flib::FileSize &fileCompressedSize,
                           Y_flib::FileSize &totalDecompressedBytes,
                           Y_flib::FileSize originalSize,
-                          DataExporter &dataExporter);
+                          Y_flib::DataExporter &dataExporter);
 
     // 报告进度
     void reportProgress(const std::filesystem::path &filename,
@@ -70,7 +70,7 @@ public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
         : progressCallback(nullptr), totalFiles(0), processedFiles(0)
     {
-        fullPath = EncodingUtils::pathFromUtf8(deCompressionFilePath);
+        fullPath = Y_flib::EncodingUtils::pathFromUtf8(deCompressionFilePath);
 
         if (outputDirectory.empty() || outputDirectory == ".")
         {
@@ -78,7 +78,7 @@ public:
         }
         else
         {
-            parentPath = EncodingUtils::pathFromUtf8(outputDirectory);
+            parentPath = Y_flib::EncodingUtils::pathFromUtf8(outputDirectory);
         }
     }
 

@@ -25,6 +25,8 @@
  * 5. u8ToString() 只用于承接 char8_t / std::u8string 数据，
  *    典型场景是 std::filesystem::path::u8string()。
  */
+namespace Y_flib
+{
 class EncodingUtils
 {
 public:
@@ -57,3 +59,4 @@ public:
     static QString pathToQString(const std::filesystem::path &path);
 #endif
 };
+} // namespace Y_flib

@@ -2,6 +2,13 @@
 #include <chrono>
 #include <memory>
 
+using Y_flib::BinaryStandardLoader;
+using Y_flib::DataExporter;
+using Y_flib::DataLoader;
+using Y_flib::EncodingUtils;
+using Y_flib::Locator;
+using Y_flib::StandardsReader;
+
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 

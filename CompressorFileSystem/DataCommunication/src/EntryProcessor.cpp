@@ -1,6 +1,8 @@
 // EntryProcessor.cpp
 #include "../include/EntryProcessor.h"
 
+namespace Y_flib
+{
 
 void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot)
 {
@@ -56,3 +58,4 @@ void EntryProcessor::flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &te
         entryQueue.pop();
     }
 }
+} // namespace Y_flib

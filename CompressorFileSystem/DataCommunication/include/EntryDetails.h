@@ -9,6 +9,8 @@
  *   包括名称、大小、类型和完整路径
  *   用于目录遍历和二进制序列化过程中传递信息
  */
+namespace Y_flib
+{
 class EntryDetails
 {
 private:
@@ -76,3 +78,4 @@ public:
     /* 获取要扫描的源路径 */
     std::filesystem::path getFilePathToScan() const { return filePathToScan; }
 };
+} // namespace Y_flib

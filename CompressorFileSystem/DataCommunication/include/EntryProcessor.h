@@ -17,6 +17,8 @@
  * 公共接口:
  *   entryProcessor(): 主入口函数，启动文件系统扫描和处理
  */
+namespace Y_flib
+{
 class EntryProcessor
 {
 private:
@@ -45,3 +47,4 @@ public:
     /* 主处理函数，执行指定路径的文件系统扫描和二进制序列化 */
     void entryProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot);
 };
+} // namespace Y_flib

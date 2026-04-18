@@ -10,6 +10,8 @@
 #include <windows.h>
 #endif
 
+using Y_flib::EncodingUtils;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_workerThread(nullptr)

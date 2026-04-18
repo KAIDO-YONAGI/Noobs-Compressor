@@ -18,6 +18,8 @@
  *   isDone(): 检查是否读取完成
  *   reset(): 重新初始化并打开文件
  */
+namespace Y_flib
+{
 class DataLoader
 {
 private:
@@ -70,3 +72,4 @@ public:
         }
     }
 };
+} // namespace Y_flib

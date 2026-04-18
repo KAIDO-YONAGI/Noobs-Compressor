@@ -1,5 +1,7 @@
 #include "../include/DataLoader.h"
 
+namespace Y_flib
+{
 void DataLoader::done()
 {
     if (inFile.is_open())
@@ -61,3 +63,4 @@ void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, 
         throw std::runtime_error("Error-dataLaoder_decompression()");
     }
 }
+} // namespace Y_flib

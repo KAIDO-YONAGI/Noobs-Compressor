@@ -6,6 +6,9 @@
 #include <stdexcept>
 #include <vector>
 
+using Y_flib::EncodingUtils;
+using Y_flib::HeaderWriter;
+
 bool CompressionWorker::shouldEmitProgress(double currentProgress)
 {
     const auto now = std::chrono::steady_clock::now();

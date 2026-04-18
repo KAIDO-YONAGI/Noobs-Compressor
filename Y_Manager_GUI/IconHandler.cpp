@@ -9,6 +9,8 @@
 #include <vector>
 #include <algorithm>
 
+using Y_flib::EncodingUtils;
+
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "ole32.lib")
 

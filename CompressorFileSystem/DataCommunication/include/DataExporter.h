@@ -21,6 +21,8 @@
  *   thisFileIsDone(): 更新当前文件的完成位置
  *   getProcessedY_flib::FileSize(): 获取已处理数据大小
  */
+namespace Y_flib
+{
 class DataExporter
 {
 private:
@@ -76,3 +78,4 @@ public:
     /* 写入解压数据块到输出文件 */
     void exportDecompressedData(const Y_flib::DataBlock &data);
 };
+} // namespace Y_flib

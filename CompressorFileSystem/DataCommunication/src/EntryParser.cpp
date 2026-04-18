@@ -1,5 +1,7 @@
 #include "../include/EntryParser.h"
 
+namespace Y_flib
+{
 void EntryParser::checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize requiredSize) const
 {
     if (blockPosition + requiredSize > buffer.size())
@@ -172,3 +174,4 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     }
     }
 }
+} // namespace Y_flib

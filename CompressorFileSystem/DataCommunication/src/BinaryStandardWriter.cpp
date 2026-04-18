@@ -1,5 +1,7 @@
 #include "../include/BinaryStandardWriter.h"
 
+namespace Y_flib
+{
 void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
     try
@@ -238,3 +240,4 @@ Y_flib::FileSize BinaryStandardWriter::getFileSize(const std::filesystem::path &
         return 0;
     }
 }
+} // namespace Y_flib
