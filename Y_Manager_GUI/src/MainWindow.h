@@ -82,12 +82,14 @@ private:
     void setupUI();
     QWidget* createCompressionTab();
     QWidget* createDecompressionTab();
-    QString getExeDirectory();
     bool pathExists(const QString &path);
     QString makeValidPath(const QString &input);
     void addDroppedPaths(const QList<QUrl> &urls);
     void updateBackground();
     void updateOutputDirectory();
+    void updateOutputFileName();
+    QString primaryCompressionInputPath() const;
+    QString suggestedOutputFileName(const QString &inputPath) const;
     QString elideText(const QString &text, int maxWidth);
 
     // 压缩模式控件
@@ -119,7 +121,6 @@ private:
 
     // 状态
     bool m_isProcessing;
-
     // UI组件
     QTabWidget *m_tabWidget;
 

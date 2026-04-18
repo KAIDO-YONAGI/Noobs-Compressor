@@ -7,10 +7,6 @@
 #include <QCoreApplication>
 
 
-#ifdef _WIN32
-#include <windows.h>
-#endif
-
 using Y_flib::EncodingUtils;
 
 namespace
@@ -157,7 +153,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUI()
 {
-    setWindowTitle(tr("Simple Files Compressor"));
+    setWindowTitle(tr("Compressor By Yonagi"));
     setMinimumSize(600, 400);  // 最小尺寸
     resize(720, 450);  // 默认尺寸
 
@@ -183,25 +179,29 @@ void MainWindow::setupUI()
     m_tabWidget = new QTabWidget(this);
     m_tabWidget->setStyleSheet(
         "QTabWidget::pane { "
-        "   border: 1px solid rgba(180, 180, 180, 120); "
+        "   border-left: 1px solid rgba(180, 180, 180, 120); "
+        "   border-right: 1px solid rgba(180, 180, 180, 120); "
+        "   border-bottom: 1px solid rgba(180, 180, 180, 120); "
+        "   border-top: 0px; "
         "   background: rgba(255, 255, 255, 160); "
         "   border-radius: 8px; "
+        "   border-top-left-radius: 0px; "
         "} "
         "QTabBar::tab { "
-        "   background: rgba(240, 240, 240, 140); "
+        "   background: rgba(118, 176, 232, 79); "
         "   padding: 10px 25px; "
         "   margin-right: 2px; "
         "   border-top-left-radius: 6px; "
         "   border-top-right-radius: 6px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: rgba(248, 251, 255, 235); "
         "} "
         "QTabBar::tab:selected { "
-        "   background: rgba(255, 255, 255, 180); "
-        "   color: #000; "
+        "   background: rgba(83, 149, 217, 100); "
+        "   color: rgba(255, 255, 255, 245); "
         "} "
         "QTabBar::tab:hover { "
-        "   background: rgba(255, 255, 255, 160); "
+        "   background: rgba(98, 164, 230, 89); "
         "}"
     );
     m_tabWidget->addTab(createCompressionTab(), tr("Compress"));
@@ -228,7 +228,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border-radius: 5px; "
         "   padding: 8px 18px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QPushButton:hover { "
         "   background: rgba(255, 255, 255, 200); "
@@ -239,7 +239,7 @@ QWidget* MainWindow::createCompressionTab()
         "} "
         "QPushButton:disabled { "
         "   background: rgba(200, 200, 200, 140); "
-        "   color: #888; "
+        "   color: #8d98a6; "
         "}";
 
     // 统一的GroupBox样式
@@ -251,20 +251,21 @@ QWidget* MainWindow::createCompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
-        "   padding: 0 6px; "
+        "   padding: 0 8px 8px 8px; "
         "} "
-        "QLabel { background: transparent; color: #333; } "
+        "QLabel { background: transparent; color: #4f5d6e; } "
         "QLineEdit { "
         "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
-        "   placeholder-text-color: rgba(110, 110, 110, 180); "
+        "   color: #4f5d6e; "
+        "   placeholder-text-color: rgba(142, 149, 161, 190); "
         "}";
 
     // =============================================
@@ -297,10 +298,15 @@ QWidget* MainWindow::createCompressionTab()
         "   background: rgba(255, 255, 255, 160); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
+        "   color: #4f5d6e; "
         "} "
         "QListWidget::item { padding: 6px; } "
         "QListWidget::item:selected { background: rgba(200, 200, 200, 150); }"
     );
+    connect(m_fileListWidget, &QListWidget::itemSelectionChanged, this, [this]() {
+        updateOutputDirectory();
+        updateOutputFileName();
+    });
     fileLayout->addWidget(m_fileListWidget);
 
     // 文件操作按钮
@@ -378,12 +384,12 @@ QWidget* MainWindow::createCompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
-        "   padding: 0 6px; "
+        "   padding: 0 8px 8px 8px; "
         "}"
     );
     QVBoxLayout *modeLayout = new QVBoxLayout(modeGroup);
@@ -405,6 +411,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px 20px 6px 6px; "
+        "   color: #4f5d6e; "
         "} "
         "QComboBox:hover { "
         "   background: rgba(255, 255, 255, 220); "
@@ -412,7 +419,7 @@ QWidget* MainWindow::createCompressionTab()
         "} "
         "QComboBox:disabled { "
         "   background: rgba(200, 200, 200, 140); "
-        "   color: #888; "
+        "   color: #8d98a6; "
         "} "
         "QComboBox::drop-down { "
         "   subcontrol-origin: padding; "
@@ -433,6 +440,7 @@ QWidget* MainWindow::createCompressionTab()
         "QComboBox QAbstractItemView { "
         "   background: rgba(255, 255, 255, 220); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
+        "   color: #4f5d6e; "
         "   selection-background-color: rgba(200, 200, 200, 150); "
         "}"
     );
@@ -461,12 +469,12 @@ QWidget* MainWindow::createCompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
-        "   padding: 0 6px; "
+        "   padding: 0 8px 8px 8px; "
         "}"
     );
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
@@ -477,7 +485,7 @@ QWidget* MainWindow::createCompressionTab()
     m_compressCurrentFileLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "   padding: 6px; "
         "}"
     );
@@ -497,6 +505,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border-radius: 5px; "
         "   text-align: center; "
         "   font-weight: bold; "
+        "   color: #4f5d6e; "
         "} "
         "QProgressBar::chunk { "
         "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a0a0a0, stop:1 #d0d0d0); "
@@ -510,7 +519,7 @@ QWidget* MainWindow::createCompressionTab()
     m_compressProgressLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   color: #555; "
+        "   color: #667487; "
         "}"
     );
     progressLayout->addWidget(m_compressProgressLabel);
@@ -529,6 +538,7 @@ QWidget* MainWindow::createCompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   padding: 4px; "
+        "   color: #4f5d6e; "
         "}"
     );
     progressLayout->addWidget(m_compressLogEdit);
@@ -541,7 +551,7 @@ QWidget* MainWindow::createCompressionTab()
     m_startCompressBtn->setStyleSheet(
         "QPushButton { "
         "   background: rgba(255, 255, 255, 160); "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "   border: 2px solid rgba(150, 150, 150, 200); "
         "   border-radius: 8px; "
         "   font-weight: bold; "
@@ -555,7 +565,7 @@ QWidget* MainWindow::createCompressionTab()
         "} "
         "QPushButton:disabled { "
         "   background: rgba(200, 200, 200, 140); "
-        "   color: #888; "
+        "   color: #8d98a6; "
         "}"
     );
     connect(m_startCompressBtn, &QPushButton::clicked, this, &MainWindow::onStartCompressionClicked);
@@ -589,20 +599,21 @@ QWidget* MainWindow::createDecompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
-        "   padding: 0 6px; "
+        "   padding: 0 8px 8px 8px; "
         "} "
-        "QLabel { background: transparent; color: #333; } "
+        "QLabel { background: transparent; color: #4f5d6e; } "
         "QLineEdit { "
         "   background: rgba(255, 255, 255, 180); "
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 4px; "
         "   padding: 6px; "
-        "   placeholder-text-color: rgba(110, 110, 110, 180); "
+        "   color: #4f5d6e; "
+        "   placeholder-text-color: rgba(142, 149, 161, 190); "
         "}";
 
     QString btnStyle =
@@ -612,7 +623,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   border-radius: 5px; "
         "   padding: 8px 18px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QPushButton:hover { "
         "   background: rgba(255, 255, 255, 200); "
@@ -623,7 +634,7 @@ QWidget* MainWindow::createDecompressionTab()
         "} "
         "QPushButton:disabled { "
         "   background: rgba(200, 200, 200, 140); "
-        "   color: #888; "
+        "   color: #8d98a6; "
         "}";
 
     // =============================================
@@ -719,12 +730,12 @@ QWidget* MainWindow::createDecompressionTab()
         "   margin-top: 12px; "
         "   padding-top: 12px; "
         "   font-weight: bold; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "} "
         "QGroupBox::title { "
         "   subcontrol-origin: margin; "
         "   left: 12px; "
-        "   padding: 0 6px; "
+        "   padding: 0 8px 8px 8px; "
         "}"
     );
     QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
@@ -735,7 +746,7 @@ QWidget* MainWindow::createDecompressionTab()
     m_decompressCurrentFileLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "   padding: 6px; "
         "}"
     );
@@ -754,6 +765,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   border-radius: 5px; "
         "   text-align: center; "
         "   font-weight: bold; "
+        "   color: #4f5d6e; "
         "} "
         "QProgressBar::chunk { "
         "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b0b0b0, stop:1 #e0e0e0); "
@@ -767,7 +779,7 @@ QWidget* MainWindow::createDecompressionTab()
     m_decompressProgressLabel->setStyleSheet(
         "QLabel { "
         "   background: transparent; "
-        "   color: #555; "
+        "   color: #667487; "
         "}"
     );
     progressLayout->addWidget(m_decompressProgressLabel);
@@ -786,6 +798,7 @@ QWidget* MainWindow::createDecompressionTab()
         "   border: 1px solid rgba(200, 200, 200, 180); "
         "   border-radius: 5px; "
         "   padding: 4px; "
+        "   color: #4f5d6e; "
         "}"
     );
     progressLayout->addWidget(m_decompressLogEdit);
@@ -798,7 +811,7 @@ QWidget* MainWindow::createDecompressionTab()
     m_startDecompressBtn->setStyleSheet(
         "QPushButton { "
         "   background: rgba(255, 255, 255, 160); "
-        "   color: #333; "
+        "   color: #4f5d6e; "
         "   border: 2px solid rgba(150, 150, 150, 200); "
         "   border-radius: 8px; "
         "   font-weight: bold; "
@@ -812,7 +825,7 @@ QWidget* MainWindow::createDecompressionTab()
         "} "
         "QPushButton:disabled { "
         "   background: rgba(200, 200, 200, 140); "
-        "   color: #888; "
+        "   color: #8d98a6; "
         "}"
     );
     connect(m_startDecompressBtn, &QPushButton::clicked, this, &MainWindow::onStartDecompressionClicked);
@@ -844,6 +857,7 @@ void MainWindow::onAddFilesClicked()
     }
 
     updateOutputDirectory();
+    updateOutputFileName();
 }
 
 void MainWindow::onAddFolderClicked()
@@ -860,6 +874,7 @@ void MainWindow::onAddFolderClicked()
     }
 
     updateOutputDirectory();
+    updateOutputFileName();
 }
 
 void MainWindow::onRemoveFileClicked()
@@ -870,12 +885,14 @@ void MainWindow::onRemoveFileClicked()
     }
 
     updateOutputDirectory();
+    updateOutputFileName();
 }
 
 void MainWindow::onClearFilesClicked()
 {
     m_fileListWidget->clear();
     updateOutputDirectory();
+    updateOutputFileName();
 }
 
 void MainWindow::onBrowseOutputDirClicked()
@@ -932,7 +949,10 @@ void MainWindow::onStartCompressionClicked()
 
     // 设置UI状态
     m_isProcessing = true;
+    m_tabWidget->setCurrentIndex(0);
+    m_tabWidget->setTabEnabled(1, false);
     m_startCompressBtn->setEnabled(false);
+    m_startDecompressBtn->setEnabled(false);
     m_startCompressBtn->setText(tr("Processing..."));
     m_compressModeCombo->setEnabled(false);
     m_compressProgressBar->setValue(0);
@@ -1010,6 +1030,9 @@ void MainWindow::onStartDecompressionClicked()
 
     // 设置UI状态
     m_isProcessing = true;
+    m_tabWidget->setCurrentIndex(1);
+    m_tabWidget->setTabEnabled(0, false);
+    m_startCompressBtn->setEnabled(false);
     m_startDecompressBtn->setEnabled(false);
     m_startDecompressBtn->setText(tr("Processing..."));
     m_decompressProgressBar->setValue(0);
@@ -1070,7 +1093,10 @@ void MainWindow::onCompressionFinished(bool success, const QString &message)
     const QString dialogMessage = localizeWorkerDialogMessage(message);
 
     m_isProcessing = false;
+    m_tabWidget->setTabEnabled(0, true);
+    m_tabWidget->setTabEnabled(1, true);
     m_startCompressBtn->setEnabled(true);
+    m_startDecompressBtn->setEnabled(true);
     m_startCompressBtn->setText(tr("Start Compression"));
     m_compressModeCombo->setEnabled(true);
 
@@ -1136,6 +1162,9 @@ void MainWindow::onDecompressionFinished(bool success, const QString &message)
     const QString dialogMessage = localizeWorkerDialogMessage(message);
 
     m_isProcessing = false;
+    m_tabWidget->setTabEnabled(0, true);
+    m_tabWidget->setTabEnabled(1, true);
+    m_startCompressBtn->setEnabled(true);
     m_startDecompressBtn->setEnabled(true);
     m_startDecompressBtn->setText(tr("Start Decompression"));
 
@@ -1165,19 +1194,6 @@ void MainWindow::onDecompressionFinished(bool success, const QString &message)
 }
 
 // === 辅助函数 ===
-
-QString MainWindow::getExeDirectory()
-{
-#ifdef _WIN32
-    wchar_t exePath[MAX_PATH];
-    DWORD length = GetModuleFileNameW(NULL, exePath, MAX_PATH);
-    if (length > 0 && length < MAX_PATH) {
-        QFileInfo fi(EncodingUtils::pathToQString(std::filesystem::path(exePath)));
-        return fi.absolutePath();
-    }
-#endif
-    return QDir::currentPath();
-}
 
 bool MainWindow::pathExists(const QString &path)
 {
@@ -1256,6 +1272,7 @@ void MainWindow::addDroppedPaths(const QList<QUrl> &urls)
     }
 
     updateOutputDirectory();
+    updateOutputFileName();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event)
@@ -1315,19 +1332,59 @@ void MainWindow::updateBackground()
 
 void MainWindow::updateOutputDirectory()
 {
-    // 根据文件列表第一个文件更新输出目录
-    if (m_fileListWidget->count() > 0) {
-        QString firstPath = m_fileListWidget->item(0)->text();
-        QFileInfo fileInfo(firstPath);
+    const QString inputPath = primaryCompressionInputPath();
+    if (!inputPath.isEmpty()) {
+        QFileInfo fileInfo(inputPath);
 
         // 无论文件还是目录，都取其父目录（所在根目录）
         QString parentDir = fileInfo.absolutePath();
 
         m_outputDirEdit->setText(parentDir);
     } else {
-        // 文件列表为空时，恢复到程序所在目录
-        m_outputDirEdit->setText(getExeDirectory());
+        m_outputDirEdit->clear();
     }
+}
+
+void MainWindow::updateOutputFileName()
+{
+    const QString inputPath = primaryCompressionInputPath();
+    if (inputPath.isEmpty()) {
+        m_outputFileNameEdit->clear();
+        return;
+    }
+
+    m_outputFileNameEdit->setText(suggestedOutputFileName(inputPath));
+}
+
+QString MainWindow::primaryCompressionInputPath() const
+{
+    const QList<QListWidgetItem *> selectedItems = m_fileListWidget->selectedItems();
+    if (!selectedItems.isEmpty()) {
+        return selectedItems.first()->text();
+    }
+
+    if (m_fileListWidget->count() > 0) {
+        return m_fileListWidget->item(0)->text();
+    }
+
+    return {};
+}
+
+QString MainWindow::suggestedOutputFileName(const QString &inputPath) const
+{
+    const QFileInfo fileInfo(inputPath);
+    QString suggestedName;
+
+    if (fileInfo.isDir()) {
+        suggestedName = fileInfo.fileName();
+    } else {
+        suggestedName = fileInfo.completeBaseName();
+        if (suggestedName.isEmpty()) {
+            suggestedName = fileInfo.fileName();
+        }
+    }
+
+    return suggestedName.trimmed();
 }
 
 QString MainWindow::elideText(const QString &text, int maxWidth)

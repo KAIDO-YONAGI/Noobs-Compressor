@@ -13,11 +13,11 @@ BEGIN
         BLOCK "040904B0"
         BEGIN
             VALUE "CompanyName", "YONAGI"
-            VALUE "FileDescription", "Simple Files Compressor (GUI)"
+            VALUE "FileDescription", "Compressor By Yonagi (GUI)"
             VALUE "FileVersion", "2.1.0"
             VALUE "ProductVersion", "2.1.0"
             VALUE "OriginalFilename", "SimpleFilesCompressorGUI.exe"
-            VALUE "ProductName", "Simple Files Compressor"
+            VALUE "ProductName", "Compressor By Yonagi"
             VALUE "InternalName", "SFC_GUI"
         END
     END
