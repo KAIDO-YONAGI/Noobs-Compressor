@@ -1,6 +1,8 @@
 #include "../include/BinaryStandardLoader.h"
 #include "../include/StrategyFactory.h"
 
+namespace Y_flib
+{
 void BinaryStandardLoader::headerLoaderIterator(Y_flib::IEncryption &encryption)
 {
     StandardsReader standardsReader(inFile);
@@ -94,17 +96,17 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
         {
             // 目录队列处理逻辑
             const std::filesystem::path &directoryPath = entryQueue.front().first.getFullPath();
-            if (!directoryQueue_ready.empty())
+            if (!directoryQueueReady.empty())
             {
-                if (directoryQueue_ready.back() != directoryPath)
+                if (directoryQueueReady.back() != directoryPath)
                 {
-                    directoryQueue_ready.push(parentPath / directoryPath);
+                    directoryQueueReady.push(parentPath / directoryPath);
                 }
             }
-            else if (FirstReady) // 用firstReady让第一个元素入队，避免队列判空出问题
+            else if (firstReady) // 用firstReady让第一个元素入队，避免队列判空出问题
             {
-                directoryQueue_ready.push(parentPath / directoryPath);
-                FirstReady = false;
+                directoryQueueReady.push(parentPath / directoryPath);
+                firstReady = false;
             }
 
             entryQueue.pop();
@@ -112,7 +114,7 @@ void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_fl
             {
                 countOfChildDirectory = entryQueue.front().second; // 获取子目录数量
                 if (!entryQueue.empty())
-                    directoryQueue_ready.push(entryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
+                    directoryQueueReady.push(entryQueue.front().first.getFullPath()); // pop前将当前目录加入，确保完整性
             }
         }
     }
@@ -175,7 +177,7 @@ void BinaryStandardLoader::encryptHeaderBlock(Y_flib::IEncryption &encryption, Y
         // 尝试重新打开
         fstreamForRefill.open(loadPath, std::ios::binary | std::ios::in | std::ios::out);
         if (!fstreamForRefill) {
-            throw std::runtime_error("encryptHeaderBlock()-Error: Failed to reopen fstreamForRefill: " + loadPath.string());
+            throw std::runtime_error("encryptHeaderBlock()-Error: Failed to reopen fstreamForRefill: " + EncodingUtils::pathToUtf8(loadPath));
         }
     }
 
@@ -232,3 +234,4 @@ void BinaryStandardLoader::restartLoader()
         blockIsDone = false;
     }
 }
+} // namespace Y_flib

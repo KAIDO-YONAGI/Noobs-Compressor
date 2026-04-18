@@ -1,5 +1,5 @@
-#ifndef HEFFMAN_TYPE_H
-#define HEFFMAN_TYPE_H
+#ifndef HUFFMAN_TYPE_H
+#define HUFFMAN_TYPE_H
 
 #include <queue>
 #include <stack>
@@ -8,40 +8,40 @@
 #include <cstdint>
 #include "../../DataBlocks/DataBlocksManage.h"
 
-using freq_t = uint64_t;
-using codelen_t = uint8_t;
-using code_t = std::vector<uint8_t>;
+using FreqT = uint64_t;
+using CodeLenT = uint8_t;
+using CodeT = std::vector<uint8_t>;
 
 /**
- * Chardata类：存储一个字符的编码信息
+ * CharData类：存储一个字符的编码信息
  * 参数列表：
  *     freq：频率
- *     codelen：编码长度
+ *     codeLen：编码长度
  *     code：编码
  * 函数功能：
  *     add()：频率加1
- *     add(const Chardata&)：合并频率到此对象
+ *     add(const CharData&)：合并频率到此对象
  */
 
-struct Chardata{
-    Chardata();
+struct CharData{
+    CharData();
 
-    freq_t freq;
-    codelen_t codelen;
-    code_t code;
+    FreqT freq;
+    CodeLenT codeLen;
+    CodeT code;
 
     void add();
-    void add(const Chardata&);
+    void add(const CharData&);
 };
 
 /**
  * Heffmap类：字符到字符信息的映射
  */
 
-typedef  
+typedef
 std::unordered_map<
-    unsigned char, 
-    Chardata
+    unsigned char,
+    CharData
 >
 Heffmap;
 
@@ -52,34 +52,34 @@ Heffmap;
 typedef std::vector<Heffmap> Heffmaps;
 
 /**
- * Hefftreenode：编码树节点
+ * HeffTreeNode：编码树节点
  */
 
 
-struct Hefftreenode{
+struct HeffTreeNode{
     unsigned char data;
-    freq_t freq;
-    struct Hefftreenode* left;
-    struct Hefftreenode* right;
-    bool isleaf;
+    FreqT freq;
+    struct HeffTreeNode* left;
+    struct HeffTreeNode* right;
+    bool isLeaf;
 
-    Hefftreenode(
-        const unsigned char data, 
-        freq_t freq, 
-        struct Hefftreenode* left, 
-        struct Hefftreenode* right, 
-        bool isleaf=false
-    );    
+    HeffTreeNode(
+        const unsigned char data,
+        FreqT freq,
+        struct HeffTreeNode* left,
+        struct HeffTreeNode* right,
+        bool isLeaf=false
+    );
 
-    Hefftreenode(const unsigned char data, freq_t freq, bool isleaf):
-        Hefftreenode(data, freq, NULL, NULL, isleaf) { }
+    HeffTreeNode(const unsigned char data, FreqT freq, bool isLeaf):
+        HeffTreeNode(data, freq, NULL, NULL, isLeaf) { }
 /*
-    Hefftreenode(
-        const char c, 
-        freq_t freq, 
-        struct Hefftreenode* left, 
-        struct Hefftreenode* right, 
-        bool isleaf=false
+    HeffTreeNode(
+        const char c,
+        FreqT freq,
+        struct HeffTreeNode* left,
+        struct HeffTreeNode* right,
+        bool isLeaf=false
     );*/
 };
 
@@ -90,7 +90,7 @@ struct Hefftreenode{
 
 struct CompareHeap
 {
-    bool operator()(const Hefftreenode* n1, const Hefftreenode* n2){
+    bool operator()(const HeffTreeNode* n1, const HeffTreeNode* n2){
         // priority_queue是最大堆，要实现最小堆需要反转比较
         // 返回true表示n1优先级低于n2，会被排在后面
         // 我们希望频率小的在堆顶，所以频率大的应该优先级低
@@ -98,8 +98,8 @@ struct CompareHeap
     }
 };
 
-using Minheap = 
-std::priority_queue<Hefftreenode*, std::vector<Hefftreenode*>, CompareHeap>;
+using Minheap =
+std::priority_queue<HeffTreeNode*, std::vector<HeffTreeNode*>, CompareHeap>;
 
 /**
  * PathStack：节点路径栈
@@ -107,14 +107,14 @@ std::priority_queue<Hefftreenode*, std::vector<Hefftreenode*>, CompareHeap>;
 
 struct PathStack
 {
-    code_t codeblocks;
-    codelen_t codelen;
+    CodeT codeBlocks;
+    CodeLenT codeLen;
 
-    PathStack() : codelen(0) { }
+    PathStack() : codeLen(0) { }
 
     void push(int bit);
     void pop();
-    void writecode(Chardata& cdata);
+    void writeCode(CharData& cdata);
 };
 
 /**
@@ -132,15 +132,15 @@ struct PathStack
 struct BitHandler
 {
     unsigned char byte;
-    uint8_t bitlen;
-    uint64_t bytecount;
-    int valued_bits;
+    uint8_t bitLen;
+    uint64_t byteCount;
+    int valuedBits;
 
-    BitHandler() : byte(0), bitlen(0), bytecount(0), valued_bits(0) { }
+    BitHandler() : byte(0), bitLen(0), byteCount(0), valuedBits(0) { }
 
-    void handle(code_t& codeblocks, codelen_t codelen, sfc::block_t&);
-    void handle(unsigned char, std::vector<uint8_t>&, uint8_t valid_bits = 8);
-    void handle_last();
+    void handle(CodeT& codeBlocks, CodeLenT codeLen, sfc::block_t&);
+    void handle(unsigned char, std::vector<uint8_t>&, uint8_t validBits = 8);
+    void handleLast();
 };
 
-#endif //HEFFMAN_TYPE_H
+#endif //HUFFMAN_TYPE_H

@@ -8,7 +8,7 @@
 
 namespace sfc
 {
-    using task_queue = std::queue< std::function<void()> >;
+    using TaskQueue = std::queue< std::function<void()> >;
 }
 
 /**
@@ -21,12 +21,12 @@ namespace sfc
  *     私有变量：
  *     mtx：锁
  *     condition：条件变量
- *     taskqueue：任务队列，存储被包装的函数
+ *     taskQueue：任务队列，存储被包装的函数
  * 
  * 成员函数：
  *     对外提供：
- *     add_task()：添加任务，并尝试唤醒线程
- *     get_task()：取出任务，若队列空挂起该线程
+ *     addTask()：添加任务，并尝试唤醒线程
+ *     getTask()：取出任务，若队列空挂起该线程
  */
 
 class MonitorTaskQueue 
@@ -40,19 +40,19 @@ public:
 private:
     std::mutex mtx;
     std::condition_variable condition;    
-    sfc::task_queue taskqueue;
+    sfc::TaskQueue taskQueue;
 
 public:
-    template<typename T> void add_task(T&& task);
-    std::function<void()> get_task();
+    template<typename T> void addTask(T&& task);
+    std::function<void()> getTask();
 
 };
 
 template<typename T>
-void MonitorTaskQueue::add_task(T&& task)
+void MonitorTaskQueue::addTask(T&& task)
 {
     std::unique_lock<std::mutex> lock(mtx);
-    taskqueue.push(std::function<void()>(std::forward<T>(task)));
+    taskQueue.push(std::function<void()>(std::forward<T>(task)));
     condition.notify_one();
 }
 

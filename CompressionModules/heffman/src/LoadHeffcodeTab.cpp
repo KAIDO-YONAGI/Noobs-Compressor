@@ -1,42 +1,42 @@
 #include "../include/LoadHeffcodeTab.h"
 
-LoadHeffcodeTab::LoadHeffcodeTab(Heffman* heffcore):
+LoadHeffcodeTab::LoadHeffcodeTab(Huffman* heffcore):
 heffman(heffcore)
 { }
 
-void LoadHeffcodeTab::work(Datacmnctor* datacmnctor)
+void LoadHeffcodeTab::work(DataConnector* dataConnector)
 {
-    in_blocks = datacmnctor->get_input_blocks();
-    
-    root = spawn_tree(in_blocks->at(0));
-    heffman->receiveTreRroot(root);
+    inBlocks = dataConnector->getInputBlocks();
+
+    root = spawnTree(inBlocks->at(0));
+    heffman->receiveTreeRoot(root);
 }
 
-Hefftreenode* LoadHeffcodeTab::spawn_tree(sfc::block_t& in_block)
+HeffTreeNode* LoadHeffcodeTab::spawnTree(sfc::block_t& inBlock)
 {
-    std::stack<Hefftreenode*> stack;
+    std::stack<HeffTreeNode*> stack;
 
-    auto iter_ib = in_block.cbegin();
-    if(*iter_ib != 'F')
+    auto iterIb = inBlock.cbegin();
+    if(*iterIb != 'F')
     {
         //TODO: 解析编码表异常，验证错误
     }
-    ++iter_ib;
-    while(iter_ib != in_block.cend())
+    ++iterIb;
+    while(iterIb != inBlock.cend())
     {
-        Hefftreenode *node = NULL;
-        if(iter_ib + 1 == in_block.cend())
+        HeffTreeNode *node = NULL;
+        if(iterIb + 1 == inBlock.cend())
         {
             //TODO: 解析编码表异常，数据缺失
         }
-        if(*iter_ib == 'r')
+        if(*iterIb == 'r')
         {
-            node = new Hefftreenode(*++iter_ib, 0, false);
+            node = new HeffTreeNode(*++iterIb, 0, false);
             stack.push(node);
         }
-        else if(*iter_ib == 'l')
+        else if(*iterIb == 'l')
         {
-            node = new Hefftreenode(*++iter_ib, 0, true);
+            node = new HeffTreeNode(*++iterIb, 0, true);
             while(!stack.empty() && connectNode(stack.top(), node))
             {
                 stack.pop();
@@ -46,7 +46,7 @@ Hefftreenode* LoadHeffcodeTab::spawn_tree(sfc::block_t& in_block)
         {
             //TODO: 解析编码表异常，创建节点失败
         }
-        ++iter_ib;
+        ++iterIb;
     }
 
     while(stack.size() != 1)
@@ -54,7 +54,7 @@ Hefftreenode* LoadHeffcodeTab::spawn_tree(sfc::block_t& in_block)
     return stack.top();
 }
 
-bool LoadHeffcodeTab::connectNode(Hefftreenode* p, Hefftreenode* c)
+bool LoadHeffcodeTab::connectNode(HeffTreeNode* p, HeffTreeNode* c)
 {
     if(p->left == NULL)
     {
@@ -68,4 +68,3 @@ bool LoadHeffcodeTab::connectNode(Hefftreenode* p, Hefftreenode* c)
     }
     return false;
 }
-

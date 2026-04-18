@@ -18,6 +18,8 @@
  *   isDone(): 检查是否读取完成
  *   reset(): 重新初始化并打开文件
  */
+namespace Y_flib
+{
 class DataLoader
 {
 private:
@@ -26,7 +28,7 @@ private:
     Y_flib::FileSize fileSize = 0;
     std::ifstream inFile;
     bool loadIsDone = false;
-    Y_flib::FileSize readed = 0;
+    Y_flib::FileSize readCount = 0;
 
     /* 标记读取完成状态 */
     void done();
@@ -48,7 +50,7 @@ public:
     void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
 
     /* 重置指针到上次读取的位置 */
-    void resetByLastReaded();
+    void resetByLastRead();
 
     /* 默认构造函数 */
     DataLoader() {}
@@ -58,7 +60,7 @@ public:
         : inFile(inPath, std::ios::binary) // 使用初始化列表
     {
         if (!inFile.is_open())
-            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + inPath.string());
+            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + EncodingUtils::pathToUtf8(inPath));
     }
 
     /* 析构函数，自动关闭文件流 */
@@ -70,3 +72,4 @@ public:
         }
     }
 };
+} // namespace Y_flib

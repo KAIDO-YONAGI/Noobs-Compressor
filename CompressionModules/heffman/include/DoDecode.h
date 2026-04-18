@@ -15,15 +15,15 @@
 class DoDecode: public Worker
 {
 public:
-    DoDecode(Heffman*);
+    DoDecode(Huffman*);
     ~DoDecode();
 
-    void work(Datacmnctor*) override;
+    void work(DataConnector*) override;
 
 private:
-    std::shared_ptr<Heffman> heffman;
-    sfc::blocks_t* in_blocks;
-    sfc::blocks_t* out_blocks;
+    std::shared_ptr<Huffman> heffman;
+    sfc::blocks_t* inBlocks;
+    sfc::blocks_t* outBlocks;
 
 };
 

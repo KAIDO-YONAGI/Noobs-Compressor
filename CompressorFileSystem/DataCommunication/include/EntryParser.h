@@ -16,6 +16,8 @@
  *   parser(): 主解析函数，处理缓冲区中的目录数据
  *   setRootForDecompression(): 设置解压时的根路径
  */
+namespace Y_flib
+{
 class EntryParser
 {
 private:
@@ -23,16 +25,15 @@ private:
     EntryQueue &fileQueue;
     std::vector<std::string> &filePathToScan;
     Y_flib::DataBlock &buffer;
-    PathTransfer transfer;
     const Y_flib::Header &header;
     const Y_flib::DirectoryOffsetSize &offset;
     const Y_flib::DirectoryOffsetSize &tempOffset;
     size_t parserMode = 0; // 0：占位、1：压缩模式、2：解压模式
 
-    std::filesystem::path tempPathForRootPaser;
+    std::filesystem::path tempPathForRootParser;
 
     /* 检查缓冲区读取范围是否有效，防止越界 */
-    void checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize equiredSize) const;
+    void checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize requiredSize) const;
 
     /* 模板化函数：解析文件名长度和内容，安全构造std::string */
     template <typename T>
@@ -73,7 +74,7 @@ private:
 
     /* 模板化函数：按指定类型解析数值，返回解析的值 */
     template <typename T>
-    T readDataFromReadedBlock(Y_flib::DirectoryOffsetSize &bufferPtr)
+    T readDataFromReadBlock(Y_flib::DirectoryOffsetSize &bufferPtr)
     {
         try
         {
@@ -87,7 +88,7 @@ private:
         catch (const std::exception &e)
         {
             throw std::runtime_error(
-                "readDataFromReadedBlock failed at offset " +
+                "readDataFromReadBlock failed at offset " +
                 std::to_string(bufferPtr) + ": " + e.what());
         }
     }
@@ -132,3 +133,4 @@ public:
     /* 主解析函数，处理缓冲区中的目录数据块 */
     void parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCount &countOfChildDirectory);
 };
+} // namespace Y_flib

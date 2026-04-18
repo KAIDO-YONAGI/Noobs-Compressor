@@ -2,218 +2,218 @@
 #include <stdexcept>
 #include <iostream>
 
-//TODO: 检查方法中in_block使用完是否清空
+//TODO: 检查方法中inBlock使用完是否清空
 
-Heffman::Heffman(int thread_nums):
-    treeroot(NULL)
+Huffman::Huffman(int threadNums):
+    treeRoot(NULL)
     {
 
     }
 
-Heffman::~Heffman() {
-    destroy_tree(treeroot);
+Huffman::~Huffman() {
+    destroyTree(treeRoot);
 }
 
-void Heffman::statistic_freq(const int thread_id, const sfc::block_t& in_block)
+void Huffman::statisticFreq(const int threadId, const sfc::block_t& inBlock)
 {
-    // 确保thread_tabs足够大
-    if (thread_id >= (int)thread_tabs.size()) {
-        thread_tabs.resize(thread_id + 1);
+    // 确保threadTabs足够大
+    if (threadId >= (int)threadTabs.size()) {
+        threadTabs.resize(threadId + 1);
     }
 
-    Heffmap &threadTab = thread_tabs[thread_id];
-    for(auto& c: in_block)
+    Heffmap &threadTab = threadTabs[threadId];
+    for(auto& c: inBlock)
     {
         threadTab[c].freq++;
     }
 }
 
-void Heffman::merge_ttabs(){
-    hashtab.clear(); //清空旧的表
-    auto iter_ttabs = thread_tabs.cbegin();
-    auto ttabsend = thread_tabs.cend();
+void Huffman::mergeTtabs(){
+    hashTab.clear(); //清空旧的表
+    auto iter_ttabs = threadTabs.cbegin();
+    auto ttabsend = threadTabs.cend();
     while (iter_ttabs != ttabsend)
     {
         auto iter = iter_ttabs->cbegin();
         auto ttabend = iter_ttabs->cend();
         while (iter != ttabend)
         {
-            hashtab[iter->first].add(iter->second);
+            hashTab[iter->first].add(iter->second);
             ++iter;  // 必须递增迭代器，否则会无限循环
         }
         ++iter_ttabs;  // 递增外层迭代器
     }
     //清空线程表（只清空数据，保留容量以便复用）
-    for(auto& tab : thread_tabs)
+    for(auto& tab : threadTabs)
     {
         tab.clear();
     }
 }
 
-std::unique_ptr<Minheap> Heffman::gen_minheap(){
+std::unique_ptr<Minheap> Huffman::genMinheap(){
     auto heap = std::make_unique<Minheap>();
-    for(auto map : hashtab){
-        Hefftreenode *node = new Hefftreenode(map.first, map.second.freq, true);
+    for(auto map : hashTab){
+        HeffTreeNode *node = new HeffTreeNode(map.first, map.second.freq, true);
         heap->push(node);
     }
     return heap;
 } 
 
-void Heffman::gen_hefftree(){
+void Huffman::genHefftree(){
     //清空旧的树
-    if (treeroot != nullptr) {
-        destroy_tree(treeroot);
-        treeroot = nullptr;
+    if (treeRoot != nullptr) {
+        destroyTree(treeRoot);
+        treeRoot = nullptr;
     }
 
-    auto heap = gen_minheap();
+    auto heap = genMinheap();
     while (heap->size() != 1)
     {
-        Hefftreenode* left = heap->top();
+        HeffTreeNode* left = heap->top();
         heap->pop();
-        Hefftreenode* right = heap->top();
+        HeffTreeNode* right = heap->top();
         heap->pop();
-        Hefftreenode* parnt = new Hefftreenode('\0', left->freq+right->freq, left, right);
+        HeffTreeNode* parnt = new HeffTreeNode('\0', left->freq+right->freq, left, right);
         heap->push(parnt);
     }
-    treeroot = heap->top();
+    treeRoot = heap->top();
 }
 
-void Heffman::save_code_inTab(){
+void Huffman::saveCodeInTab(){
     // 重置pathStack
-    pathStack.codeblocks.clear();
-    pathStack.codelen = 0;
+    pathStack.codeBlocks.clear();
+    pathStack.codeLen = 0;
 
     // 处理特殊情况：只有一个字符时，树的根节点本身就是叶子节点
-    if(treeroot != nullptr && treeroot->isleaf == true) {
+    if(treeRoot != nullptr && treeRoot->isLeaf == true) {
         // 为这个唯一的字符分配编码 "0"
-        pathStack.codeblocks.clear();
-        pathStack.codeblocks.push_back(0);
-        pathStack.codelen = 1;
-        pathStack.writecode(hashtab[treeroot->data]);
-        pathStack.codeblocks.clear();
-        pathStack.codelen = 0;
+        pathStack.codeBlocks.clear();
+        pathStack.codeBlocks.push_back(0);
+        pathStack.codeLen = 1;
+        pathStack.writeCode(hashTab[treeRoot->data]);
+        pathStack.codeBlocks.clear();
+        pathStack.codeLen = 0;
     } else {
-        run_save_code_inTab(treeroot);
+        runSaveCodeInTab(treeRoot);
     }
 }
 
-void Heffman::run_save_code_inTab(Hefftreenode* root){
+void Huffman::runSaveCodeInTab(HeffTreeNode* root){
     if(root == NULL) return;
 
-    if(root->isleaf == true){
-        pathStack.writecode(hashtab[root->data]);
+    if(root->isLeaf == true){
+        pathStack.writeCode(hashTab[root->data]);
         return;  // 直接返回，不需要pop，因为调用者会pop
     }
     pathStack.push(0);
-    run_save_code_inTab(root->left);
+    runSaveCodeInTab(root->left);
     pathStack.pop();
     pathStack.push(1);
-    run_save_code_inTab(root->right);
+    runSaveCodeInTab(root->right);
     pathStack.pop();
 }
 
-void Heffman::encode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitoutput){
+void Huffman::encode(const sfc::block_t& inBlock, sfc::block_t& outBlock, BitHandler bitOutput){
     // 在数据块开始前写入填充位数标记（1字节）
     // 这个字节稍后会被更新为实际的填充位数
-    size_t padding_bits_pos = out_block.size();
-    out_block.push_back(0);  // 占位符，稍后更新
+    size_t paddingBitsPos = outBlock.size();
+    outBlock.push_back(0);  // 占位符，稍后更新
 
 
 
 
-    size_t chars_encoded = 0;
-    for(auto& c: in_block){
+    size_t charsEncoded = 0;
+    for(auto& c: inBlock){
         // 检查字符是否在编码表中
-        if(hashtab.find(c) == hashtab.end() || hashtab[c].codelen == 0) {
+        if(hashTab.find(c) == hashTab.end() || hashTab[c].codeLen == 0) {
             throw std::runtime_error("Character not in Huffman encoding table");
         }
-        bitoutput.handle(hashtab[c].code, hashtab[c].codelen, out_block);
-        chars_encoded++;
+        bitOutput.handle(hashTab[c].code, hashTab[c].codeLen, outBlock);
+        charsEncoded++;
     }
 
     // 处理最后不足8位的字节
-    bitoutput.handle_last();
-    uint8_t padding_bits = 0;
-    if(bitoutput.bitlen > 0) {
-        padding_bits = 8 - bitoutput.bitlen;  // 计算填充的位数
-        out_block.push_back(bitoutput.byte);
+    bitOutput.handleLast();
+    uint8_t paddingBits = 0;
+    if(bitOutput.bitLen > 0) {
+        paddingBits = 8 - bitOutput.bitLen;  // 计算填充的位数
+        outBlock.push_back(bitOutput.byte);
     } 
 
     // 更新填充位数标记
-    out_block[padding_bits_pos] = padding_bits;
+    outBlock[paddingBitsPos] = paddingBits;
 }
 
-bool Heffman::findchar(Hefftreenode* &now, unsigned char& result, uint8_t toward){
+bool Huffman::findchar(HeffTreeNode* &now, unsigned char& result, uint8_t toward){
     if(toward == 0){
         now = now->left;
     } else {
         now = now->right;
     }
-    if(now != NULL && now->isleaf == true){
+    if(now != NULL && now->isLeaf == true){
         result = now->data;
-        now = treeroot;
+        now = treeRoot;
         return true;  // 找到了一个字符
     }
     return false;  // 还在树的中间节点
 }
 
-void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitHandler bitinput, size_t maxOutputSize){
-    if(in_block.size() < 1) {
+void Huffman::decode(const sfc::block_t& inBlock, sfc::block_t& outBlock, BitHandler bitInput, size_t maxOutputSize){
+    if(inBlock.size() < 1) {
         throw std::runtime_error("decode: input block too small (missing padding bits marker)");
     }
 
     // 读取填充位数标记（第一个字节）
-    uint8_t padding_bits = in_block[0];
-    if(padding_bits > 7) {
-        throw std::runtime_error("decode: invalid padding bits value: " + std::to_string(padding_bits));
+    uint8_t paddingBits = inBlock[0];
+    if(paddingBits > 7) {
+        throw std::runtime_error("decode: invalid padding bits value: " + std::to_string(paddingBits));
     }
 
-    Hefftreenode *now = treeroot;
-    std::vector<uint8_t> treepath;  // 不预分配元素,只在需要时push_back
-    treepath.reserve(8);  // 预留容量避免重新分配
+    HeffTreeNode *now = treeRoot;
+    std::vector<uint8_t> treePath;  // 不预分配元素,只在需要时push_back
+    treePath.reserve(8);  // 预留容量避免重新分配
     unsigned char result = 0;
-    size_t total_bits_processed = 0;
-    size_t chars_decoded = 0;
+    size_t totalBitsProcessed = 0;
+    size_t charsDecoded = 0;
 
     // 预留足够空间避免频繁重新分配
-    out_block.reserve(in_block.size() * 2);
+    outBlock.reserve(inBlock.size() * 2);
 
-    // 计算最后有填充的字节位置（如果padding_bits>0，最后一个字节才有填充）
-    // 如果padding_bits==0，使用SIZE_MAX表示没有字节有填充（避免误匹配索引0）
-    size_t last_byte_idx = (padding_bits > 0) ? (in_block.size() - 1) : SIZE_MAX;
+    // 计算最后有填充的字节位置（如果paddingBits>0，最后一个字节才有填充）
+    // 如果paddingBits==0，使用SIZE_MAX表示没有字节有填充（避免误匹配索引0）
+    size_t lastByteIdx = (paddingBits > 0) ? (inBlock.size() - 1) : SIZE_MAX;
 
     // 特殊处理：如果树只有一个叶子节点（根节点本身就是叶子），直接根据比特数量输出字符
-    if(treeroot != nullptr && treeroot->isleaf == true) {
+    if(treeRoot != nullptr && treeRoot->isLeaf == true) {
         // 计算总比特数
-        size_t total_bits = 0;
-        for(size_t idx = 1; idx < in_block.size(); ++idx) {
-            size_t valid_bits = (idx == last_byte_idx && padding_bits > 0) ? (8 - padding_bits) : 8;
-            total_bits += valid_bits;
+        size_t totalBits = 0;
+        for(size_t idx = 1; idx < inBlock.size(); ++idx) {
+            size_t validBits = (idx == lastByteIdx && paddingBits > 0) ? (8 - paddingBits) : 8;
+            totalBits += validBits;
         }
 
         // 对于单叶子树，每一比特代表一个字符
-        for(size_t i = 0; i < total_bits && out_block.size() < maxOutputSize; ++i) {
-            out_block.push_back(treeroot->data);
+        for(size_t i = 0; i < totalBits && outBlock.size() < maxOutputSize; ++i) {
+            outBlock.push_back(treeRoot->data);
         }
         return;
     }
 
     // 从第二个字节开始处理（跳过填充位数标记）
-    for(size_t idx = 1; idx < in_block.size(); ++idx)
+    for(size_t idx = 1; idx < inBlock.size(); ++idx)
     {
-        unsigned char c = in_block[idx];
+        unsigned char c = inBlock[idx];
 
         // 只有当这是最后有填充的字节时，才考虑填充位
-        uint8_t valid_bits = (idx == last_byte_idx && padding_bits > 0) ? (8 - padding_bits) : 8;
+        uint8_t validBits = (idx == lastByteIdx && paddingBits > 0) ? (8 - paddingBits) : 8;
 
 
-        bitinput.handle(c, treepath, valid_bits);
-        total_bits_processed += valid_bits;
+        bitInput.handle(c, treePath, validBits);
+        totalBitsProcessed += validBits;
 
 
 
-        for(auto toward: treepath)
+        for(auto toward: treePath)
         {
             if(now == NULL) {
                 break;
@@ -225,52 +225,52 @@ void Heffman::decode(const sfc::block_t& in_block, sfc::block_t& out_block, BitH
             // 如果找到了字符，输出它
             if(foundChar){
                 // 在push之前检查是否已达到maxOutputSize
-                if(out_block.size() >= maxOutputSize) {
+                if(outBlock.size() >= maxOutputSize) {
                     return;
                 }
-                out_block.push_back(result);
-                chars_decoded++;
+                outBlock.push_back(result);
+                charsDecoded++;
             }
             else if(now == NULL) {
                 break;
             }
         }
-        treepath.clear();
+        treePath.clear();
     }
 
 }
 
-Hefftreenode* Heffman::getTreeRoot()
+HeffTreeNode* Huffman::getTreeRoot()
 {
-    return treeroot;
+    return treeRoot;
 }
 
-void Heffman::receiveTreRroot(Hefftreenode* root)
+void Huffman::receiveTreeRoot(HeffTreeNode* root)
 {
-    treeroot = root;
+    treeRoot = root;
 }
 
-void Heffman::destroy_tree(Hefftreenode* node) {
+void Huffman::destroyTree(HeffTreeNode* node) {
     if(node == NULL) return;
-    destroy_tree(node->left);
-    destroy_tree(node->right);
+    destroyTree(node->left);
+    destroyTree(node->right);
     delete node;
 }
 
 //序列化编码树并输出
-void Heffman::tree_to_plat_uchar(sfc::block_t& out_block)
+void Huffman::treeToPlatUchar(sfc::block_t& outBlock)
 {
-    std::stack<Hefftreenode*> stack;
-    auto root = treeroot;
+    std::stack<HeffTreeNode*> stack;
+    auto root = treeRoot;
     stack.push(root);
-    out_block.push_back('F');
+    outBlock.push_back('F');
     while(stack.empty() == false)
     {
         auto cur = stack.top();
         stack.pop();
-        if(cur->isleaf == false)
+        if(cur->isLeaf == false)
         {
-            out_block.push_back('r');
+            outBlock.push_back('r');
             if(cur->right==NULL || cur->left==NULL)
             {
                 //TODO: 树错误
@@ -279,49 +279,49 @@ void Heffman::tree_to_plat_uchar(sfc::block_t& out_block)
             stack.push(cur->left);
         }
         else
-            out_block.push_back('l');
-        out_block.push_back(cur->data);    
+            outBlock.push_back('l');
+        outBlock.push_back(cur->data);    
     }
 }
 
 //解析编码表并加载树
-void Heffman::spawn_tree(sfc::block_t& in_block)
+void Huffman::spawnTree(sfc::block_t& inBlock)
 {
     // 清空旧的树,避免内存泄漏和状态污染
-    if (treeroot != nullptr) {
-        destroy_tree(treeroot);
-        treeroot = nullptr;
+    if (treeRoot != nullptr) {
+        destroyTree(treeRoot);
+        treeRoot = nullptr;
     } 
-    std::stack<Hefftreenode*> stack;
+    std::stack<HeffTreeNode*> stack;
 
-    auto iter_ib = in_block.cbegin();
+    auto iter_ib = inBlock.cbegin();
     if(*iter_ib != 'F')
     {
-        throw std::runtime_error("spawn_tree: Invalid tree format - missing 'F' header");
+        throw std::runtime_error("spawnTree: Invalid tree format - missing 'F' header");
     }
     ++iter_ib;
 
-    Hefftreenode* lastNode = nullptr;  // 记录最后处理的节点
+    HeffTreeNode* lastNode = nullptr;  // 记录最后处理的节点
 
-    while(iter_ib != in_block.cend())
+    while(iter_ib != inBlock.cend())
     {
-        Hefftreenode *node = NULL;
-        if(iter_ib + 1 == in_block.cend())
+        HeffTreeNode *node = NULL;
+        if(iter_ib + 1 == inBlock.cend())
         {
-            throw std::runtime_error("spawn_tree: Incomplete data - missing node data");
+            throw std::runtime_error("spawnTree: Incomplete data - missing node data");
         }
         if(*iter_ib == 'r')
         {
-            node = new Hefftreenode(*++iter_ib, 0, false);
+            node = new HeffTreeNode(*++iter_ib, 0, false);
             stack.push(node);
         }
         else if(*iter_ib == 'l')
         {
-            node = new Hefftreenode(*++iter_ib, 0, true);
+            node = new HeffTreeNode(*++iter_ib, 0, true);
             // 叶子节点需要连接到栈顶的父节点
             while(!stack.empty())
             {
-                Hefftreenode* parent = stack.top();
+                HeffTreeNode* parent = stack.top();
                 bool parentComplete = connectNode(parent, node);
 
                 if(parentComplete)
@@ -339,7 +339,7 @@ void Heffman::spawn_tree(sfc::block_t& in_block)
         }
         if(node == NULL)
         {
-            throw std::runtime_error("spawn_tree: Failed to create node");
+            throw std::runtime_error("spawnTree: Failed to create node");
         }
         lastNode = node;  // 记录最后的节点
         ++iter_ib;
@@ -348,30 +348,30 @@ void Heffman::spawn_tree(sfc::block_t& in_block)
     // 如果栈空了,说味著整棵树已经构建完成,根节点在lastNode中
     if(stack.empty())
     {
-        treeroot = lastNode;
+        treeRoot = lastNode;
     }
     else if(stack.size() == 1)
     {
-        treeroot = stack.top();
+        treeRoot = stack.top();
     }
     else
     {
-        throw std::runtime_error("spawn_tree: Invalid tree structure - stack size is " +
+        throw std::runtime_error("spawnTree: Invalid tree structure - stack size is " +
                                 std::to_string(stack.size()) + ", expected 0 or 1");
     }
 
     // 统计树中的叶子节点数量（即有多少个不同的字符）
-    size_t leaf_count = countLeaves(treeroot);
+    size_t leafCount = countLeaves(treeRoot);
 }
 
 // 计算树中的叶子节点数量
-size_t Heffman::countLeaves(Hefftreenode* node) {
+size_t Huffman::countLeaves(HeffTreeNode* node) {
     if(node == NULL) return 0;
-    if(node->isleaf) return 1;
+    if(node->isLeaf) return 1;
     return countLeaves(node->left) + countLeaves(node->right);
 }
 
-bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)
+bool Huffman::connectNode(HeffTreeNode* p, HeffTreeNode* c)
 {
     if(p == NULL || c == NULL)
     {
@@ -391,18 +391,18 @@ bool Heffman::connectNode(Hefftreenode* p, Hefftreenode* c)
 }
 
 // 调试方法：打印编码表统计信息
-void Heffman::debugPrintCodeStats() {
+void Huffman::debugPrintCodeStats() {
 
 
-    int total_bits = 0;
-    int max_codelen = 0;
-    int min_codelen = 999;
+    int totalBits = 0;
+    int maxCodeLen = 0;
+    int minCodeLen = 999;
 
-    for(const auto& pair : hashtab) {
-        const Chardata& cd = pair.second;
-        if(cd.codelen > max_codelen) max_codelen = cd.codelen;
-        if(cd.codelen < min_codelen) min_codelen = cd.codelen;
-        total_bits += cd.codelen;
+    for(const auto& pair : hashTab) {
+        const CharData& cd = pair.second;
+        if(cd.codeLen > maxCodeLen) maxCodeLen = cd.codeLen;
+        if(cd.codeLen < minCodeLen) minCodeLen = cd.codeLen;
+        totalBits += cd.codeLen;
     }
 
 }

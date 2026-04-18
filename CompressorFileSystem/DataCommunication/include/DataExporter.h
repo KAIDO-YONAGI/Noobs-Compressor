@@ -21,6 +21,8 @@
  *   thisFileIsDone(): 更新当前文件的完成位置
  *   getProcessedY_flib::FileSize(): 获取已处理数据大小
  */
+namespace Y_flib
+{
 class DataExporter
 {
 private:
@@ -39,15 +41,17 @@ public:
         // 先检查文件是否存在
         if (!std::filesystem::exists(outPath))
         {
-            throw std::runtime_error("DataExporter()-Error:File does not exist: " + outPath.string() +
-                                    "\nPath length: " + std::to_string(outPath.string().size()));
+            const std::string utf8Path = EncodingUtils::pathToUtf8(outPath);
+            throw std::runtime_error("DataExporter()-Error:File does not exist: " + utf8Path +
+                                    "\nPath length: " + std::to_string(utf8Path.size()));
         }
 
         std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in);
         if (!outFile)
         {
-            throw std::runtime_error("DataExporter()-Error:Failed to open outFile: " + outPath.string() +
-                                    "\nPath length: " + std::to_string(outPath.string().size()) +
+            const std::string utf8Path = EncodingUtils::pathToUtf8(outPath);
+            throw std::runtime_error("DataExporter()-Error:Failed to open outFile: " + utf8Path +
+                                    "\nPath length: " + std::to_string(utf8Path.size()) +
                                     "\nPossible reasons: path too long (>260 chars), permission denied, or file locked");
         }
         this->outFile = std::move(outFile);
@@ -74,3 +78,4 @@ public:
     /* 写入解压数据块到输出文件 */
     void exportDecompressedData(const Y_flib::DataBlock &data);
 };
+} // namespace Y_flib

@@ -1,5 +1,7 @@
 #include "../include/EntryParser.h"
 
+namespace Y_flib
+{
 void EntryParser::checkBounds(Y_flib::DirectoryOffsetSize blockPosition, Y_flib::FileNameSize requiredSize) const
 {
     if (blockPosition + requiredSize > buffer.size())
@@ -21,7 +23,7 @@ std::filesystem::path EntryParser::pathConnector(std::string &fileName)
         // fileName 是 UTF-8 编码，需要正确转换为 path
         // 在 Windows 上，直接从 UTF-8 字符串构造 path 可能会出错
         // 使用 PathTransfer 进行转换
-        std::filesystem::path fileNamePath = transfer.transPath(fileName);
+        std::filesystem::path fileNamePath = EncodingUtils::pathFromUtf8(fileName);
         pathToProcess = lastPath / fileNamePath;
     }
     else
@@ -42,7 +44,7 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot
 
     fileDetailsParser(fileNameSize, fileName, bufferPtr);
     // 解析文件原大小
-    Y_flib::FileSize originSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr);
+    Y_flib::FileSize originSize = readDataFromReadBlock<Y_flib::FileSize>(bufferPtr);
 
     if (parserMode == 1) // for compression
     {
@@ -51,11 +53,11 @@ void EntryParser::fileParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot
     }
     else if (parserMode == 2) // for decompression
     {
-        compressedSize = readDataFromReadedBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
+        compressedSize = readDataFromReadBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
     }
 
     if (isRoot) // 如果在处理根目录下的第一级文件，就不进行路径拼接
-        pathToProcess = tempPathForRootPaser;
+        pathToProcess = tempPathForRootParser;
 
     else
         pathToProcess = pathConnector(fileName);
@@ -81,10 +83,10 @@ void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool i
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
 
     // 解析下级文件数量
-    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadBlock<Y_flib::FileCount>(bufferPtr);
 
     if (isRoot) // 如果在处理根目录下的第一级文件，就不进行路径拼接
-        pathToProcess = tempPathForRootPaser;
+        pathToProcess = tempPathForRootParser;
 
     else
         pathToProcess = pathConnector(directoryName);
@@ -100,14 +102,14 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     // 解析逻辑根
     fileDetailsParser(directoryNameSize, directoryName, bufferPtr);
     // 解析下级文件数量
-    Y_flib::FileCount count = readDataFromReadedBlock<Y_flib::FileCount>(bufferPtr);
+    Y_flib::FileCount count = readDataFromReadBlock<Y_flib::FileCount>(bufferPtr);
 
     countOfChildDirectory = count;
 
     if (parserMode == 2) // 解压模式,把逻辑根写进队列
     {
-        std::filesystem::path root = transfer.transPath(rootForDecompression);
-        std::filesystem::path file = transfer.transPath(directoryName);
+        std::filesystem::path root = EncodingUtils::pathFromUtf8(rootForDecompression);
+        std::filesystem::path file = EncodingUtils::pathFromUtf8(directoryName);
         std::filesystem::path fullPath = root / file;
         EntryDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
         entryQueue.push({logicalRootDetails, count});
@@ -116,9 +118,9 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     {
         for (const std::string &path : filePathToScan)
         {
-            tempPathForRootPaser = transfer.transPath(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
+            tempPathForRootParser = EncodingUtils::pathFromUtf8(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
 
-            const Y_flib::FlagType entryFlag = readDataFromReadedBlock<Y_flib::FlagType>(bufferPtr);
+            const Y_flib::FlagType entryFlag = readDataFromReadBlock<Y_flib::FlagType>(bufferPtr);
 
             switch (entryFlag)
             {
@@ -142,7 +144,7 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     if (tempOffset <= bufferPtr && tempOffset != 0)
         return;
 
-    const Y_flib::FlagType entryFlag = readDataFromReadedBlock<Y_flib::FlagType>(bufferPtr);
+    const Y_flib::FlagType entryFlag = readDataFromReadBlock<Y_flib::FlagType>(bufferPtr);
     switch (entryFlag)
     {
     case Y_flib::FlagType::File:
@@ -172,3 +174,4 @@ void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCou
     }
     }
 }
+} // namespace Y_flib

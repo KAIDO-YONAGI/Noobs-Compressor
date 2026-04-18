@@ -7,33 +7,33 @@ ThreadPool::~ThreadPool()
 {
 }
 
-void ThreadPool::new_thread(const std::string& trd_name)
+void ThreadPool::newThread(const std::string& trdName)
 {
-    if(threads.find(trd_name) != threads.end())
+    if(threads.find(trdName) != threads.end())
     {
         return; //接日志或异常
     }
-    auto res = threads.try_emplace(trd_name);
-    ++thread_nums;
+    auto res = threads.try_emplace(trdName);
+    ++threadNums;
     if(!res.second)
     {
         //接日志或异常
-        threads.erase(trd_name);
-        --thread_nums;
+        threads.erase(trdName);
+        --threadNums;
     }
 }
 
-void ThreadPool::del_thread(const std::string& trd_name)
+void ThreadPool::delThread(const std::string& trdName)
 {
-    if(threads.find(trd_name) == threads.end())
+    if(threads.find(trdName) == threads.end())
     {
         return;
     }
-    threads.erase(trd_name);
-    --thread_nums;
+    threads.erase(trdName);
+    --threadNums;
 }
 
-int ThreadPool::get_thread_nums()
+int ThreadPool::getThreadNums()
 {
-    return thread_nums;
+    return threadNums;
 }

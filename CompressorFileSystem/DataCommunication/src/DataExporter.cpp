@@ -1,5 +1,7 @@
 #include "../include/DataExporter.h"
 
+namespace Y_flib
+{
 void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
 {
     std::streamoff currentPos = outFile.tellp();
@@ -12,7 +14,7 @@ void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
 void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
 {
     locator.locateFromBegin(outFile, offsetToFill);
-    standardWriter.writeBinaryStandards(processedFileSize, outFile);//回填处理后大小
+    standardWriter.writeBinaryStandards(processedFileSize, outFile); // Backfill processed size
     locator.locateFromEnd(outFile, 0);
     processedFileSize = 0;
 }
@@ -26,11 +28,12 @@ void DataExporter::exportCompressedData(const Y_flib::DataBlock &data)
     locator.locateFromEnd(outFile, 0);
     binaryStandardWriter.writeBlankSeparatedStandardForEncryption(outFile);
 
-    StandardsWriter::writeDataBlock(dataSize, outFile, data); // 直接写入数据块到输出文件
+    StandardsWriter::writeDataBlock(dataSize, outFile, data); // Write block directly to output file
     processedFileSize += dataSize;
 
     thisBlockIsDone(dataSize);
 }
+
 void DataExporter::exportDecompressedData(const Y_flib::DataBlock &data)
 {
     locator.locateFromEnd(outFile, 0);
@@ -38,3 +41,4 @@ void DataExporter::exportDecompressedData(const Y_flib::DataBlock &data)
     StandardsWriter::writeDataBlock(dataSize, outFile, data);
     processedFileSize += dataSize;
 }
+} // namespace Y_flib

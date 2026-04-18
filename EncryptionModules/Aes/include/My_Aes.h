@@ -14,6 +14,26 @@
 /* AES-128加密算法实现 - 标准AES加密/解密、密钥扩展、预计算表优化 */
 class Aes
 {
+    public:
+
+    /* 初始化AES对象，哈希密钥、扩展密钥、初始化IV */
+    Aes(const char *aesKey)
+    {
+        hashTo16Bytes(aesKey, aesKey16Bytes);
+        extendKey(reinterpret_cast<const char *>(aesKey16Bytes));
+        memset(iv, 0, sizeof(iv));
+    }
+
+    /* 析构函数，安全清除内存中的密钥副本 */
+    ~Aes()
+    {
+        // 安全清除密钥
+        memset(const_cast<uint8_t *>(aesKey16Bytes), 0, 16);
+    }
+
+    /* 统一加密/解密接口，mode=1加密、mode=2解密。自动分块处理 */
+    void doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
+
 private:
     /* 提取32位整数的高4比特，返回0-15 */
     int getLeft4Bit(int num);
@@ -40,10 +60,10 @@ private:
     void splitIntToArray(int num, int array[4]);
 
     /* 数组循环左移指定步数，RotWord操作 */
-    void leftLoop4int(int array[4], int step);
+    void leftLoop4Int(int array[4], int step);
 
     /* 数组循环右移指定步数，InvShiftRows操作 */
-    void rightLoop4int(int array[4], int step);
+    void rightLoop4Int(int array[4], int step);
 
     /* 将4字节数组合并为32位整数，大端序 */
     int mergeArrayToInt(int array[4]);
@@ -76,7 +96,7 @@ private:
     void deMixColumns(int array[4][4]);
 
     /* 两个4x4矩阵异或，状态矩阵运算 */
-    void addRoundTowArray(int aArray[4][4], int bArray[4][4]);
+    void addRoundTwoArray(int aArray[4][4], int bArray[4][4]);
 
     /* 从轮密钥字数组提取状态矩阵，AddRoundKey中使用 */
     void getArrayFrom4W(int i, int array[4][4]);
@@ -85,10 +105,10 @@ private:
     void convertArrayToStr(int array[4][4], char *str);
 
     /* 将任意长度密钥哈希为128位，使用SHA-256并截取前16字节 */
-    void hash_to_16bytes(const char *input, uint8_t *output);
+    void hashTo16Bytes(const char *input, uint8_t *output);
 
     /* 分块处理AES加密/解密，按16字节分块 */
-    Y_flib::DataBlock processDataAES(const Y_flib::DataBlock &inputBuffer, int mode);
+    Y_flib::DataBlock processDataAes(const Y_flib::DataBlock &inputBuffer, int mode);
 
     /* AES加密，10轮加密循环 */
     void aes(char *p, int plen);
@@ -98,29 +118,10 @@ private:
 
     int w[44];                   // 44个32位轮密钥字(w[0]-w[43])
     uint8_t iv[16];              // 初始化向量(当前实现为全0)
-    const char *aes_key;         // 用户密钥指针(保存参考)
-    uint8_t aes_key_16bytes[16]; // 128位主密钥(哈希后)
+    const char *aesKey;         // 用户密钥指针(保存参考)
+    uint8_t aesKey16Bytes[16]; // 128位主密钥(哈希后)
     Y_flib::DataBlock buffer;    // 数据处理缓冲区
 
-public:
-
-    /* 初始化AES对象，哈希密钥、扩展密钥、初始化IV */
-    Aes(const char *aes_key)
-    {
-        hash_to_16bytes(aes_key, aes_key_16bytes);
-        extendKey(reinterpret_cast<const char *>(aes_key_16bytes));
-        memset(iv, 0, sizeof(iv));
-    }
-
-    /* 析构函数，安全清除内存中的密钥副本 */
-    ~Aes()
-    {
-        // 安全清除密钥
-        memset(const_cast<uint8_t *>(aes_key_16bytes), 0, 16);
-    }
-
-    /* 统一加密/解密接口，mode=1加密、mode=2解密。自动分块处理 */
-    void doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
 
 private:
     const unsigned int Rcon[10] = {

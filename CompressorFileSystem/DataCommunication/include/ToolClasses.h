@@ -3,10 +3,14 @@
 
 #include "FileLibrary.h"
 #include "EntryDetails.h"
+#include "EncodingUtils.h"
 #include <queue>
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+
+namespace Y_flib
+{
 
 /* EntryQueue - 目录文件队列
  *
@@ -41,7 +45,7 @@ class Utf8Converter
 {
 public:
     /* 将 std::u8string 转换为 std::string */
-    static std::string u8_to_string(const std::u8string &u8str);
+    static std::string u8_to_string(std::u8string_view u8str);
 };
 
 /* StandardsWriter - 二进制数值写入器
@@ -218,3 +222,4 @@ public:
     /* 获取输出文件的当前大小 */
     Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
 };
+} // namespace Y_flib

@@ -30,6 +30,8 @@ namespace Y_flib
 
     using DataBlock = std::vector<unsigned char>;
 
+    using MetadataMarker = uint8_t;
+
     using ConstSize= uint64_t;
 
     // 压缩模式策略枚举

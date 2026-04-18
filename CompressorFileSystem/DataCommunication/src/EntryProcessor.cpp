@@ -1,6 +1,8 @@
 // EntryProcessor.cpp
 #include "../include/EntryProcessor.h"
 
+namespace Y_flib
+{
 
 void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot)
 {
@@ -8,7 +10,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
     std::filesystem::path oPath = fullOutPath;
     std::filesystem::path sPath;
 
-    file.setOutPutFilePath(oPath);
+    file.setOutputFilePath(oPath);
 
     try
     {
@@ -26,7 +28,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
         for (Y_flib::FileCount i = 0; i < num; i++)
         {
 
-            sPath = transfer.transPath(filePathToScan[i]);
+            sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
             if (!std::filesystem::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);
@@ -56,3 +58,4 @@ void EntryProcessor::flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &te
         entryQueue.pop();
     }
 }
+} // namespace Y_flib

@@ -2,7 +2,7 @@
 
 #pragma comment(lib, "advapi32.lib")
 
-Y_flib::DataBlock Aes::processDataAES(const Y_flib::DataBlock &inputBuffer, int  mode)
+Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int  mode)
 {
     Y_flib::DataBlock outputBuffer;
 
@@ -81,7 +81,7 @@ void Aes::doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBloc
 
     try
     {
-        outputBuffer=processDataAES(inputBuffer, mode);
+        outputBuffer=processDataAes(inputBuffer, mode);
     }
     catch (const std::exception &e)
     {

@@ -1,11 +1,16 @@
 #include "MainWindow.h"
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
 #include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
+
+#include <filesystem>
 
 
 #ifdef _WIN32
 #include <windows.h>
 #endif
+
+using Y_flib::EncodingUtils;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -240,7 +245,7 @@ QWidget* MainWindow::createCompressionTab()
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_passwordEdit = new QLineEdit();
     m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
+    m_passwordEdit->setPlaceholderText(tr(""));
     outputLayout->addWidget(m_passwordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
@@ -330,7 +335,7 @@ QWidget* MainWindow::createCompressionTab()
         if (!needsEncryption) {
             m_passwordEdit->setPlaceholderText(tr("Not needed for this mode"));
         } else {
-            m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
+            m_passwordEdit->setPlaceholderText(tr(""));
         }
     });
     emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
@@ -562,7 +567,7 @@ QWidget* MainWindow::createDecompressionTab()
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_decompressPasswordEdit = new QLineEdit();
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_decompressPasswordEdit->setPlaceholderText(tr("Leave empty for default"));
+    m_decompressPasswordEdit->setPlaceholderText(tr(""));
     outputLayout->addWidget(m_decompressPasswordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
@@ -1044,8 +1049,7 @@ QString MainWindow::getExeDirectory()
     wchar_t exePath[MAX_PATH];
     DWORD length = GetModuleFileNameW(NULL, exePath, MAX_PATH);
     if (length > 0 && length < MAX_PATH) {
-        QString path = QString::fromWCharArray(exePath, length);
-        QFileInfo fi(path);
+        QFileInfo fi(EncodingUtils::pathToQString(std::filesystem::path(exePath)));
         return fi.absolutePath();
     }
 #endif
@@ -1054,7 +1058,11 @@ QString MainWindow::getExeDirectory()
 
 bool MainWindow::pathExists(const QString &path)
 {
-    return QFileInfo::exists(path);
+    try {
+        return std::filesystem::exists(EncodingUtils::qStringToPath(path));
+    } catch (...) {
+        return false;
+    }
 }
 
 QString MainWindow::makeValidPath(const QString &input)

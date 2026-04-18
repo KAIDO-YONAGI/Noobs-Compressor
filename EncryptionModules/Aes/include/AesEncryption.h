@@ -13,27 +13,27 @@ namespace Y_flib
     class AesEncryption : public IEncryption
     {
     public:
-        explicit AesEncryption(Aes *aes) : m_aes(aes) {}
+        explicit AesEncryption(Aes *aes) : aes(aes) {}
 
         void encrypt(const DataBlock &input, DataBlock &output) override
         {
             output.clear();
             output.resize(input.size());  // AES-CFB 无填充
-            m_aes->doAes(1, input, output);
+            aes->doAes(1, input, output);
         }
 
         void decrypt(const DataBlock &input, DataBlock &output) override
         {
             output.clear();
             output.resize(input.size());  // AES-CFB 无填充
-            m_aes->doAes(2, input, output);
+            aes->doAes(2, input, output);
         }
 
         // 获取底层 Aes 对象
-        Aes *get_aes() { return m_aes; }
+        Aes *getAes() { return aes; }
 
     private:
-        Aes *m_aes;
+        Aes *aes;
     };
 
 } // namespace Y_flib

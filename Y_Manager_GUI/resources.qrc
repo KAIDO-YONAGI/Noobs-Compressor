@@ -3,4 +3,7 @@
         <file>images/background.jpg</file>
         <file>YONAGII_512x512.ico</file>
     </qresource>
+    <qresource prefix="/i18n">
+        <file alias="SimpleFilesCompressorGUI_zh_CN.qm">translations/SimpleFilesCompressorGUI_zh_CN.qm</file>
+    </qresource>
 </RCC>

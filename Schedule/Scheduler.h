@@ -1,7 +1,7 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
-#include "include/Datacmnctor.h"
+#include "include/DataConnector.h"
 #include "include/Strategy.h"
 #include "include/Worker.h"
 #include <vector>
@@ -13,9 +13,9 @@ public:
     ~Scheduler();
 
 private:
-    std::vector<Strategy*> strategys;
-    std::vector<std::vector<Worker*>> worker_groups;
-    std::vector<Datacmnctor*> datacmnctors;
+    std::vector<Strategy*> strategies;
+    std::vector<std::vector<Worker*>> workerGroups;
+    std::vector<DataConnector*> dataConnectors;
 
 public:
     

@@ -4,41 +4,21 @@
 namespace Y_flib
 {
 
-void NullCompression::statistic_freq(const DataBlock &data)
+void NullCompression::compress(const DataBlock &input, DataBlock &metadataOut, DataBlock &output)
 {
-    m_lastBlockSize = data.size();
-}
+    // 写入 9 字节 metadata：标记字节 + 原始数据大小
+    metadataOut.clear();
+    metadataOut.resize(1 + sizeof(FileSize));
+    metadataOut[0] = NULL_COMPRESSION_MARKER;
+    FileSize size = static_cast<FileSize>(input.size());
+    std::memcpy(metadataOut.data() + 1, &size, sizeof(FileSize));
 
-void NullCompression::build_encode_tree()
-{
-    // no-op
-}
-
-void NullCompression::serialize_tree(DataBlock &outTree)
-{
-    outTree.clear();
-    outTree.resize(1 + sizeof(uint64_t));
-    outTree[0] = NULL_TREE_MARKER;
-    uint64_t size = static_cast<uint64_t>(m_lastBlockSize);
-    std::memcpy(outTree.data() + 1, &size, sizeof(uint64_t));
-}
-
-void NullCompression::deserialize_tree(const DataBlock &inTree)
-{
-    if (inTree.size() < 1 + sizeof(uint64_t) || inTree[0] != NULL_TREE_MARKER)
-        return;
-    uint64_t size = 0;
-    std::memcpy(&size, inTree.data() + 1, sizeof(uint64_t));
-    m_lastBlockSize = static_cast<size_t>(size);
-}
-
-void NullCompression::encode(const DataBlock &input, DataBlock &output)
-{
     output = input;
 }
 
-void NullCompression::decode(const DataBlock &input, DataBlock &output, size_t originalSize)
+void NullCompression::decompress(const DataBlock &metadata, const DataBlock &input, DataBlock &output, size_t originalSize)
 {
+    // 透传数据，按 originalSize 截断（处理最后一个不完整块）
     size_t copySize = (originalSize < input.size()) ? originalSize : input.size();
     output.assign(input.begin(), input.begin() + copySize);
 }

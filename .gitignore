@@ -6,6 +6,9 @@
 build-debug/
 build-release/
 build-size/
+build-local/
+build-local-*/
+cmake-build-*/
 out/
 build/
 # ignore test files

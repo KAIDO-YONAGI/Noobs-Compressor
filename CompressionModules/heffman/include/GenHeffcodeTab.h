@@ -17,17 +17,17 @@
 class GenHeffcodeTab: public Worker
 {
 public:
-    GenHeffcodeTab(Heffman*);
+    GenHeffcodeTab(Huffman*);
     ~GenHeffcodeTab() = default;
 
-    void work(Datacmnctor*) override;
+    void work(DataConnector*) override;
 
 private:
-    std::shared_ptr<Heffman> heffman;
-    Hefftreenode *root;
-    sfc::blocks_t *out_blocks;
+    std::shared_ptr<Huffman> heffman;
+    HeffTreeNode *root;
+    sfc::blocks_t *outBlocks;
 
-    void tree_to_plat_uchar(sfc::block_t&);
+    void treeToPlatUchar(sfc::block_t&);
 };
 
 

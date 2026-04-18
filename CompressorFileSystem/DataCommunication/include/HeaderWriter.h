@@ -11,6 +11,8 @@
  *   支持多版本实现的运行时切换
  *   分离头部格式和目录写入的具体实现
  */
+namespace Y_flib
+{
 class HeaderWriter_Interface
 {
 public:
@@ -69,7 +71,7 @@ public:
         : writer(std::move(impl)) {}
 
     /* 主写入函数，统一处理文件头和目录结构的序列化 */
-    void headerWriter(const std::vector<std::string> &filePathToScan, std::string &outPutFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES);
+    void headerWriter(const std::vector<std::string> &filePathToScan, std::string &outputFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES);
 
     /* 委托写入文件头到指定策略实现 */
     void writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath, Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES)
@@ -83,3 +85,4 @@ public:
         writer->writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot);
     };
 };
+} // namespace Y_flib

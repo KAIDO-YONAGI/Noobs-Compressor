@@ -19,12 +19,12 @@ class CompressionLoop
 {
 private:
     std::string compressionFilePath;
-    ProgressCallback m_progressCallback;
-    Y_flib::FileSize m_totalFiles;
-    Y_flib::FileSize m_processedFiles;
+    ProgressCallback progressCallback;
+    Y_flib::FileSize totalFiles;
+    Y_flib::FileSize processedFiles;
 
     // 计算总文件数
-    void countTotalFiles(const std::vector<std::string> &filePathToScan, PathTransfer &transfer);
+    void countTotalFiles(const std::vector<std::string> &filePathToScan);
 
     // 报告进度
     void reportProgress(const std::filesystem::path &filename,
@@ -34,21 +34,21 @@ private:
                         double &lastReportedProgress);
 
     // 准备下一个文件：重置 DataLoader 并更新进度相关变量
-    void prepareNextFile(DataLoader *dataLoader,
-                         EntryDetails &fileEntry,
+    void prepareNextFile(Y_flib::DataLoader *dataLoader,
+                         Y_flib::EntryDetails &fileEntry,
                          std::filesystem::path &filename,
                          Y_flib::FileSize &totalBlocks,
                          Y_flib::FileSize &blockCount);
 
 public:
     CompressionLoop(const std::string compressionFilePath)
-        : compressionFilePath(compressionFilePath), m_progressCallback(nullptr), m_totalFiles(0), m_processedFiles(0)
+        : compressionFilePath(compressionFilePath), progressCallback(nullptr), totalFiles(0), processedFiles(0)
     {
     }
 
     void setProgressCallback(ProgressCallback callback)
     {
-        m_progressCallback = callback;
+        progressCallback = callback;
     }
 
     void compressionLoop(const std::vector<std::string> &filePathToScan,

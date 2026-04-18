@@ -27,6 +27,12 @@ set(RESOURCES
     "${CMAKE_SOURCE_DIR}/resources.qrc"
 )
 
+set(APP_TRANSLATION_FILES
+    "${CMAKE_SOURCE_DIR}/translations/SimpleFilesCompressorGUI_zh_CN.qm"
+)
+
+option(SFC_COPY_EXTERNAL_TRANSLATIONS "Copy replaceable translation files next to the executable" OFF)
+
 # ========================
 # Windows资源
 # ========================
@@ -64,6 +70,7 @@ include_directories(
 # 源文件（核心库）
 # ========================
 set(CORE_SOURCES
+    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EncodingUtils.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EntryParser.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/ToolClasses.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/DataExporter.cpp"
@@ -199,6 +206,19 @@ set_target_properties(SimpleFilesCompressorGUI PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin/SFC"
     OUTPUT_NAME "SimpleFilesCompressorGUI"
 )
+
+if(SFC_COPY_EXTERNAL_TRANSLATIONS)
+    foreach(QM_FILE ${APP_TRANSLATION_FILES})
+        get_filename_component(QM_FILE_NAME "${QM_FILE}" NAME)
+        add_custom_command(TARGET SimpleFilesCompressorGUI POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/bin/SFC/translations"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${QM_FILE}"
+                "${CMAKE_SOURCE_DIR}/bin/SFC/translations/${QM_FILE_NAME}"
+            COMMENT "Copying UI translation: ${QM_FILE_NAME}"
+        )
+    endforeach()
+endif()
 
 # ========================
 # 精简部署 - 仅动态链接模式

@@ -1,47 +1,47 @@
 #include "../include/DoEncode.h"
 
-DoEncode::DoEncode(Heffman* heffcore):
-heffman(heffcore), in_blocks(NULL), out_blocks(NULL),
+DoEncode::DoEncode(Huffman* heffcore):
+heffman(heffcore), inBlocks(NULL), outBlocks(NULL),
 tpool(new ThreadPool())
 { }
 
 DoEncode::~DoEncode()
 { }
 
-void DoEncode::work(Datacmnctor* datacmnctor)
+void DoEncode::work(DataConnector* datacmnctor)
 {
-    in_blocks = datacmnctor->get_input_blocks();
-    out_blocks = datacmnctor->get_output_blocks();
-    if(in_blocks == NULL)
+    inBlocks = datacmnctor->getInputBlocks();
+    outBlocks = datacmnctor->getOutputBlocks();
+    if(inBlocks == NULL)
     {
         //TODO: 异常处理
         return;
     }
-    if(out_blocks == NULL)
+    if(outBlocks == NULL)
     {
         //TODO: 异常处理
         return;
     }
-    if(in_blocks->size() == 0)
+    if(inBlocks->size() == 0)
     {
         //TODO: 异常处理
         return;
     }
 
-    if(in_blocks->size() == 1)
-        heffman->encode(in_blocks->at(0), out_blocks->at(0));
+    if(inBlocks->size() == 1)
+        heffman->encode(inBlocks->at(0), outBlocks->at(0));
     else
     {
         std::vector<std::future<void>> results;
-        std::vector<ptask_t> tasks;
-        check_tpool();
-        for(int i = 0; i < in_blocks->size(); ++i)
+        std::vector<PTaskT> tasks;
+        checkTpool();
+        for(int i = 0; i < inBlocks->size(); ++i)
         {
-            auto task = gen_task(i);
+            auto task = genTask(i);
             tasks.push_back(task);
             results.push_back(task->get_future());
             // 创建一个可调用的包装器
-            tpool->add_task(std::to_string(i), [task]() { (*task)(); });
+            tpool->addTask(std::to_string(i), [task]() { (*task)(); });
         }
         for(auto& result: results)
         {
@@ -50,37 +50,37 @@ void DoEncode::work(Datacmnctor* datacmnctor)
     }
 }
 
-void DoEncode::check_tpool()
+void DoEncode::checkTpool()
 {
-    int thread_nums = tpool->get_thread_nums();
-    if(in_blocks->size() == thread_nums)
+    int threadNums = tpool->getThreadNums();
+    if(inBlocks->size() == threadNums)
         return;
-    else if(in_blocks->size() < thread_nums)
+    else if(inBlocks->size() < threadNums)
     {
-        for(int i = in_blocks->size(); i < thread_nums; ++i)
+        for(int i = inBlocks->size(); i < threadNums; ++i)
         {
-            tpool->del_thread(std::to_string(i));
+            tpool->delThread(std::to_string(i));
         }
     }
     else
     {
-        for(int i = thread_nums; i < in_blocks->size(); ++i)
+        for(int i = threadNums; i < inBlocks->size(); ++i)
         {
-            tpool->new_thread(std::to_string(i));
+            tpool->newThread(std::to_string(i));
         }
     }
 }
 
 void DoEncode::work(const int& thread_id)
 {
-    heffman->encode(in_blocks->at(thread_id), out_blocks->at(thread_id));
+    heffman->encode(inBlocks->at(thread_id), outBlocks->at(thread_id));
 }
 
-DoEncode::ptask_t DoEncode::gen_task(const int& thread_id)
+DoEncode::PTaskT DoEncode::genTask(const int& thread_id)
 {
     std::packaged_task<void()> *task_ptr = new std::packaged_task<void()>(
         [this, thread_id] { this->work(thread_id); }
     );
-    ptask_t task(task_ptr);
+    PTaskT task(task_ptr);
     return task;
 }

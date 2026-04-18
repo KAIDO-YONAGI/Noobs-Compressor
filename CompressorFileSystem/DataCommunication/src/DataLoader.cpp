@@ -1,5 +1,7 @@
 #include "../include/DataLoader.h"
 
+namespace Y_flib
+{
 void DataLoader::done()
 {
     if (inFile.is_open())
@@ -7,7 +9,7 @@ void DataLoader::done()
         inFile.close();
     }
     loadIsDone = true;
-    readed = 0;
+    readCount = 0;
     data.clear();
 }
 void DataLoader::reset(const std::filesystem::path inPath)
@@ -20,16 +22,16 @@ void DataLoader::reset(const std::filesystem::path inPath)
         }
         inFile = std::ifstream(inPath, std::ios::binary);
         if (!inFile)
-            throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + inPath.string());
+            throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + EncodingUtils::pathToUtf8(inPath));
         loadIsDone = false;
     }
     else
-        throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + inPath.string());
+        throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + EncodingUtils::pathToUtf8(inPath));
 }
-void DataLoader::resetByLastReaded()
+void DataLoader::resetByLastRead()
 {
     Locator locator;
-    locator.locateFromBegin(inFile, readed);
+    locator.locateFromBegin(inFile, readCount);
 }
 void DataLoader::dataLoader()
 {
@@ -48,7 +50,7 @@ void DataLoader::dataLoader()
     {
         done();
     }
-    readed += inFile.gcount();
+    readCount += inFile.gcount();
 }
 void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data)
 {
@@ -61,3 +63,4 @@ void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, 
         throw std::runtime_error("Error-dataLaoder_decompression()");
     }
 }
+} // namespace Y_flib
