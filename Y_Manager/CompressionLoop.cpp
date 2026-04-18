@@ -42,11 +42,9 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
     DataExporter dataExporter(transfer.transPath(compressionFilePath));
 
     // 预分配缓冲区，在循环中复用，避免频繁内存分配
-    Y_flib::DataBlock huffTree;
-    Y_flib::DataBlock huffTreeOutPut;
+    Y_flib::DataBlock metadata;
     Y_flib::DataBlock compressedData;
-    huffTree.reserve(Y_flib::Constants::BUFFER_SIZE);
-    huffTreeOutPut.reserve(Y_flib::Constants::BUFFER_SIZE);
+    metadata.reserve(Y_flib::Constants::BUFFER_SIZE);
     compressedData.reserve(Y_flib::Constants::BUFFER_SIZE);
     encryptedBlock.reserve(Y_flib::Constants::BUFFER_SIZE * 2);
 
@@ -61,17 +59,14 @@ void CompressionLoop::compressionLoop(const std::vector<std::string> &filePathTo
             const Y_flib::DataBlock data_In = dataLoader->getBlock();
 
             // 通过接口调用压缩模块
-            compression.statistic_freq(data_In);
-            compression.build_encode_tree();
-
-            huffTree.clear();
-            compression.serialize_tree(huffTree);
-            encryption.encrypt(huffTree, huffTreeOutPut);
-            dataExporter.exportCompressedData(huffTreeOutPut);
-
+            metadata.clear();
             compressedData.clear();
-            compression.encode(data_In, compressedData);
+            compression.compress(data_In, metadata, compressedData);
 
+            encryption.encrypt(metadata, encryptedBlock);
+            dataExporter.exportCompressedData(encryptedBlock);
+
+            encryptedBlock.clear();
             encryption.encrypt(compressedData, encryptedBlock);
             dataExporter.exportCompressedData(encryptedBlock);
 

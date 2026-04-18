@@ -66,11 +66,12 @@ void DecompressionLoop::processDirectories(BinaryStandardLoader &headerLoaderIte
     }
 }
 
-void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
-                                    Locator &locator,
-                                    Y_flib::DirectoryOffsetSize &dataOffset,
-                                    std::chrono::steady_clock::time_point &lastCallbackTime,
-                                    double &lastReportedProgress)
+void DecompressionLoop::processFile(
+    BinaryStandardLoader &headerLoaderIterator,
+    Locator &locator,
+    Y_flib::DirectoryOffsetSize &dataOffset,
+    std::chrono::steady_clock::time_point &lastCallbackTime,
+    double &lastReportedProgress)
 {
     std::filesystem::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
     std::filesystem::path fullFilePath = parentPath / relativePath;
@@ -96,13 +97,13 @@ void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
     Y_flib::FileSize totalDecompressedBytes = 0;
 
     // 预分配缓冲区
-    Y_flib::DataBlock rawTreeData;
-    Y_flib::DataBlock decryptedTreeData;
+    Y_flib::DataBlock rawMetadata;
+    Y_flib::DataBlock decryptedMetadata;
     Y_flib::DataBlock rawData;
     Y_flib::DataBlock decryptedData;
     Y_flib::DataBlock decompressedData;
-    rawTreeData.reserve(Y_flib::Constants::BUFFER_SIZE);
-    decryptedTreeData.reserve(Y_flib::Constants::BUFFER_SIZE);
+    rawMetadata.reserve(Y_flib::Constants::BUFFER_SIZE);
+    decryptedMetadata.reserve(Y_flib::Constants::BUFFER_SIZE);
     rawData.reserve(Y_flib::Constants::BUFFER_SIZE);
     decryptedData.reserve(Y_flib::Constants::BUFFER_SIZE);
     decompressedData.reserve(Y_flib::Constants::BUFFER_SIZE * 2);
@@ -111,7 +112,7 @@ void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
     while (totalDecompressedBytes < originalSize && fileCompressedSize > 0)
     {
         processDataBlock(inFile, fullFilePath, *m_encryption, *m_compression,
-                         rawTreeData, decryptedTreeData, rawData, decryptedData, decompressedData,
+                         rawMetadata, decryptedMetadata, rawData, decryptedData, decompressedData,
                          fileCompressedSize, totalDecompressedBytes, originalSize, dataExporter);
 
         // 进度回调
@@ -131,37 +132,37 @@ void DecompressionLoop::processFile(BinaryStandardLoader &headerLoaderIterator,
     }
 }
 
-void DecompressionLoop::processDataBlock(std::ifstream &inFile,
-                                         const std::filesystem::path &filePath,
-                                         Y_flib::IEncryption &encryption,
-                                         Y_flib::ICompression &compression,
-                                         Y_flib::DataBlock &rawTreeData,
-                                         Y_flib::DataBlock &decryptedTreeData,
-                                         Y_flib::DataBlock &rawData,
-                                         Y_flib::DataBlock &decryptedData,
-                                         Y_flib::DataBlock &decompressedData,
-                                         Y_flib::FileSize &fileCompressedSize,
-                                         Y_flib::FileSize &totalDecompressedBytes,
-                                         Y_flib::FileSize originalSize,
-                                         DataExporter &dataExporter)
+void DecompressionLoop::processDataBlock(
+    std::ifstream &inFile,
+    const std::filesystem::path &filePath,
+    Y_flib::IEncryption &encryption,
+    Y_flib::ICompression &compression,
+    Y_flib::DataBlock &rawMetadata,
+    Y_flib::DataBlock &decryptedMetadata,
+    Y_flib::DataBlock &rawData,
+    Y_flib::DataBlock &decryptedData,
+    Y_flib::DataBlock &decompressedData,
+    Y_flib::FileSize &fileCompressedSize,
+    Y_flib::FileSize &totalDecompressedBytes,
+    Y_flib::FileSize originalSize,
+    DataExporter &dataExporter)
 {
     StandardsReader numReader(inFile);
     DataLoader loader(filePath);
 
     // 读取分隔标志
     if (!(numReader.readBinaryStandards<Y_flib::FlagType>() == Y_flib::FlagType::Separated))
-        throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before tree block");
+        throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before metadata block");
 
-    // 读取 Huffman 树块
-    Y_flib::DirectoryOffsetSize treeBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
-    rawTreeData.clear();
-    rawTreeData.resize(treeBlockSize);
-    loader.dataLoader(treeBlockSize, inFile, rawTreeData);
+    // 读取 metadata 块
+    Y_flib::DirectoryOffsetSize metadataBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    rawMetadata.clear();
+    rawMetadata.resize(metadataBlockSize);
+    loader.dataLoader(metadataBlockSize, inFile, rawMetadata);
 
-    encryption.decrypt(rawTreeData, decryptedTreeData);
-    compression.deserialize_tree(decryptedTreeData);
+    encryption.decrypt(rawMetadata, decryptedMetadata);
 
-    fileCompressedSize -= treeBlockSize;
+    fileCompressedSize -= metadataBlockSize;
 
     // 读取数据块
     if (!(numReader.readBinaryStandards<Y_flib::FlagType>() == Y_flib::FlagType::Separated))
@@ -185,7 +186,7 @@ void DecompressionLoop::processDataBlock(std::ifstream &inFile,
 
     Y_flib::FileSize remainingBytes = originalSize - totalDecompressedBytes;
     decompressedData.clear();
-    compression.decode(decryptedData, decompressedData, remainingBytes);
+    compression.decompress(decryptedMetadata, decryptedData, decompressedData, remainingBytes);
 
     totalDecompressedBytes += decompressedData.size();
 
@@ -195,11 +196,12 @@ void DecompressionLoop::processDataBlock(std::ifstream &inFile,
     fileCompressedSize -= blockSize;
 }
 
-void DecompressionLoop::reportProgress(const std::filesystem::path &filename,
-                                       Y_flib::FileSize totalDecompressedBytes,
-                                       Y_flib::FileSize originalSize,
-                                       std::chrono::steady_clock::time_point &lastCallbackTime,
-                                       double &lastReportedProgress)
+void DecompressionLoop::reportProgress(
+    const std::filesystem::path &filename,
+    Y_flib::FileSize totalDecompressedBytes,
+    Y_flib::FileSize originalSize,
+    std::chrono::steady_clock::time_point &lastCallbackTime,
+    double &lastReportedProgress)
 {
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallbackTime).count();
