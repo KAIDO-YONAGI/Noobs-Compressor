@@ -135,13 +135,17 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
     QTranslator appTranslator;
 
-    app.setApplicationName("Simple Files Compressor");
+    const bool isChineseUi = loadApplicationTranslator(app, appTranslator);
+
+    app.setApplicationName("Compressor By Yonagi");
+    app.setApplicationDisplayName(QCoreApplication::translate("MainWindow", "Compressor By Yonagi"));
     app.setApplicationVersion("2.1.0");
     app.setOrganizationName("YONAGI");
 
-    loadApplicationTranslator(app, appTranslator);
-
     QFont font = app.font();
+    if (!isChineseUi) {
+        font.setFamily(QStringLiteral("Segoe UI"));
+    }
     font.setStyleStrategy(QFont::PreferAntialias);
     font.setHintingPreference(QFont::PreferFullHinting);
     app.setFont(font);

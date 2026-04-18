@@ -160,8 +160,8 @@ Possible reasons:
     <name>MainWindow</name>
     <message>
         <location filename="../src/MainWindow.cpp" line="54"/>
-        <source>Simple Files Compressor</source>
-        <translation>简易文件压缩器</translation>
+        <source>Compressor By Yonagi</source>
+        <translation>世凪的压缩软件</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="101"/>
