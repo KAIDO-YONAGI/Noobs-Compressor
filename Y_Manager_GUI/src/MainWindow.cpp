@@ -1,7 +1,9 @@
 #include "MainWindow.h"
+#include "PlaceholderLineEdit.h"
 #include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
 
 #include <filesystem>
+#include <QColor>
 #include <QCoreApplication>
 
 using Y_flib::EncodingUtils;
@@ -206,6 +208,31 @@ void MainWindow::updateBackground()
     QPalette palette;
     palette.setBrush(QPalette::Window, QBrush(croppedPixmap));
     setPalette(palette);
+}
+
+void MainWindow::applyPlaceholderPalette(QLineEdit *lineEdit) const
+{
+    if (!lineEdit) {
+        return;
+    }
+
+    if (auto *placeholderLineEdit = dynamic_cast<PlaceholderLineEdit *>(lineEdit)) {
+        placeholderLineEdit->setGhostTextColor(QColor(178, 186, 196));
+    }
+}
+
+void MainWindow::setPlaceholderHint(QLineEdit *lineEdit, const QString &text) const
+{
+    if (!lineEdit) {
+        return;
+    }
+
+    if (auto *placeholderLineEdit = dynamic_cast<PlaceholderLineEdit *>(lineEdit)) {
+        placeholderLineEdit->setGhostText(text);
+        return;
+    }
+
+    lineEdit->setPlaceholderText(text);
 }
 
 QString MainWindow::elideText(const QString &text, int maxWidth)
