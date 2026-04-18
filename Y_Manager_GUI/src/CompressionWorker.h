@@ -1,21 +1,15 @@
 #pragma once
-#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
+
 #include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
+#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 #include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
-#include "../Y_Manager/MainLoop.h"
 #include "../IconHandler.h"
-#include <QFileInfo>
-#include <QDir>
-#include <stdexcept>
-#include <filesystem>
-#include <windows.h>
-#include <iostream>
+#include "../Y_Manager/MainLoop.h"
+
 #include <QObject>
 #include <QString>
 #include <QStringList>
-#include <memory>
-#include <vector>
-#include <string>
+
 #include <atomic>
 #include <chrono>
 
@@ -24,29 +18,31 @@ class CompressionWorker : public QObject
     Q_OBJECT
 
 public:
+    /*
+     * 调用须知:
+     * 1. 这里持有的 QString 路径只在 Qt 界面层暂存。
+     * 2. 一旦进入文件系统访问、压缩主循环或策略模块，统一先通过 EncodingUtils
+     *    转成 UTF-8 / std::filesystem::path，避免再混用 toStdString() 或
+     *    QString::fromStdString() 处理路径。
+     */
     explicit CompressionWorker(QObject *parent = nullptr);
     ~CompressionWorker();
 
-    // 设置压缩参数
     void setCompressionParams(const QStringList &files,
-                               const QString &outputDir,
-                               const QString &fileName,
-                               const QString &password,
-                               Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES);
+                              const QString &outputDir,
+                              const QString &fileName,
+                              const QString &password,
+                              Y_flib::CompressionMode mode = Y_flib::CompressionMode::HuffmanAES);
 
-    // 设置解压参数
     void setDecompressionParams(const QString &inputFile,
-                                 const QString &outputDir,
-                                 const QString &password);
+                                const QString &outputDir,
+                                const QString &password);
 
-    // 请求停止工作
     void requestStop() { m_stopRequested.store(true); }
-
-    // 检查是否请求停止
     bool isStopRequested() const { return m_stopRequested.load(); }
 
-    // 重置停止标志
-    void resetStopFlag() {
+    void resetStopFlag()
+    {
         m_stopRequested.store(false);
         m_lastProgressTime = std::chrono::steady_clock::now();
         m_lastEmittedProgress = -1.0;
@@ -57,39 +53,28 @@ public slots:
     void doDecompression();
 
 signals:
-    // 详细进度信号: (当前文件名, 当前文件进度百分比, 整体进度百分比, 状态消息)
     void detailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status);
     void finished(bool success, const QString &message);
 
 private:
     bool validateCompressionParams();
     bool validateDecompressionParams();
-    QString getStdString(const QString &qstr);
-
-    // 节流发送进度信号
     bool shouldEmitProgress(double currentProgress);
 
-    // 压缩参数
     QStringList m_filesToCompress;
     QString m_outputDir;
     QString m_outputFileName;
     QString m_password;
-    Y_flib::CompressionMode m_mode;
+    Y_flib::CompressionMode m_mode{Y_flib::CompressionMode::HuffmanAES};
 
-    // 解压参数
     QString m_decompressInputFile;
     QString m_decompressOutputDir;
     QString m_decompressPassword;
 
-    // 状态
-    bool m_isDecompression;
-
-    // 停止请求标志
     std::atomic<bool> m_stopRequested{false};
-
-    // 进度信号节流
     std::chrono::steady_clock::time_point m_lastProgressTime;
     double m_lastEmittedProgress{-1.0};
-    static constexpr int PROGRESS_INTERVAL_MS = 200;  // 最小信号间隔
-    static constexpr double PROGRESS_DELTA = 2.0;     // 最小进度变化
+
+    static constexpr int PROGRESS_INTERVAL_MS = 200;
+    static constexpr double PROGRESS_DELTA = 2.0;
 };

@@ -21,21 +21,21 @@ public:
     ~Thread();
 
 private:
-    std::thread a_thread;
-    MonitorTaskQueue tasks;
- 
-    void thread_running();
+    std::thread aThread;
+    MonitorTaskQueue taskQueue;
+
+    void threadRunning();
 
 public:
 
-    template<typename T> void add_task(T&&);
+    template<typename T> void addTask(T&&);
     
 };
 
 template<typename T>
-void Thread::add_task(T&& task)
+void Thread::addTask(T&& task)
 {
-    tasks.add_task(std::forward<T>(task));
+    taskQueue.addTask(std::forward<T>(task));
 }
 
 #endif

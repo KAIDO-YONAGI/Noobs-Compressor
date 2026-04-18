@@ -1,5 +1,7 @@
 #include "../include/BinaryStandardWriter.h"
 
+namespace Y_flib
+{
 void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
 {
     try
@@ -31,7 +33,7 @@ void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entr
             else
                 continue; // 禁用三个基本文件类型之外的文件类型
             // 使用 u8string() 获取 UTF-8 编码的文件名，确保中文路径正确
-            name = Utf8Converter::u8_to_string(entry.path().filename().u8string());
+            name = EncodingUtils::u8ToString(entry.path().filename().u8string());
             fullPath = entry.path();
             sizeOfName = name.size();
             EntryDetails details(
@@ -135,7 +137,7 @@ void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib
 {
     // 使用 u8string() 获取 UTF-8 编码，确保中文路径正确
     Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
-    std::string pathStr = Utf8Converter::u8_to_string(details.getFullPath().u8string());
+    std::string pathStr = EncodingUtils::pathToUtf8(details.getFullPath());
     Y_flib::FileNameSize sizeOfPath = pathStr.size();
 
     tempOffset += Y_flib::Constants::SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
@@ -166,7 +168,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
     for (Y_flib::FileCount i = 0; i < num; i++)
     {
 
-        std::filesystem::path sPath = transfer.transPath(filePathToScan[i]);
+        std::filesystem::path sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
 
         if (std::filesystem::exists(sPath))
         {
@@ -174,14 +176,14 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
         else
         {
-            throw("entryProcessor()-Error:file Not Exist: " + Utf8Converter::u8_to_string(sPath.u8string()) + "\n");
+            throw("entryProcessor()-Error:file Not Exist: " + EncodingUtils::pathToUtf8(sPath) + "\n");
         }
 
         std::filesystem::path parentPath = file.getFilePathToScan(); // 获取根目录
 
         // 先写入根目录(或文件)自身（手动构造）
         // 使用 u8string() 获取 UTF-8 编码的文件名
-        std::string rootName = Utf8Converter::u8_to_string(parentPath.filename().u8string());
+        std::string rootName = EncodingUtils::u8ToString(parentPath.filename().u8string());
         Y_flib::FileNameSize rootNameSize = rootName.size();
         bool isFile = std::filesystem::is_regular_file(parentPath);
         Y_flib::FileSize fileSize = isFile ? std::filesystem::file_size(parentPath) : 0;
@@ -210,7 +212,7 @@ void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::stri
         }
         else
         {
-            throw("entryProcessor()-Error:Unsupported file type: " + Utf8Converter::u8_to_string(parentPath.u8string()) + "\n");
+            throw("entryProcessor()-Error:Unsupported file type: " + EncodingUtils::pathToUtf8(parentPath) + "\n");
         }
 
     }
@@ -238,3 +240,4 @@ Y_flib::FileSize BinaryStandardWriter::getFileSize(const std::filesystem::path &
         return 0;
     }
 }
+} // namespace Y_flib

@@ -21,19 +21,19 @@ class DecompressionLoop
 private:
     std::filesystem::path parentPath;
     std::filesystem::path fullPath;
-    ProgressCallback m_progressCallback;
-    Y_flib::FileSize m_totalFiles;
-    Y_flib::FileSize m_processedFiles;
+    ProgressCallback progressCallback;
+    Y_flib::FileSize totalFiles;
+    Y_flib::FileSize processedFiles;
 
     Y_flib::IEncryption *m_encryption = nullptr;
     Y_flib::ICompression *m_compression = nullptr;
 
     // 处理目录队列
-    void processDirectories(BinaryStandardLoader &headerLoaderIterator);
+    void processDirectories(Y_flib::BinaryStandardLoader &headerLoaderIterator);
 
     // 处理单个文件
-    void processFile(BinaryStandardLoader &headerLoaderIterator,
-                     Locator &locator,
+    void processFile(Y_flib::BinaryStandardLoader &headerLoaderIterator,
+                     Y_flib::Locator &locator,
                      Y_flib::DirectoryOffsetSize &dataOffset,
                      std::chrono::steady_clock::time_point &lastCallbackTime,
                      double &lastReportedProgress);
@@ -43,15 +43,15 @@ private:
                           const std::filesystem::path &filePath,
                           Y_flib::IEncryption &encryption,
                           Y_flib::ICompression &compression,
-                          Y_flib::DataBlock &rawTreeData,
-                          Y_flib::DataBlock &decryptedTreeData,
+                          Y_flib::DataBlock &rawMetadata,
+                          Y_flib::DataBlock &decryptedMetadata,
                           Y_flib::DataBlock &rawData,
                           Y_flib::DataBlock &decryptedData,
                           Y_flib::DataBlock &decompressedData,
                           Y_flib::FileSize &fileCompressedSize,
                           Y_flib::FileSize &totalDecompressedBytes,
                           Y_flib::FileSize originalSize,
-                          DataExporter &dataExporter);
+                          Y_flib::DataExporter &dataExporter);
 
     // 报告进度
     void reportProgress(const std::filesystem::path &filename,
@@ -68,10 +68,9 @@ private:
 
 public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
-        : m_progressCallback(nullptr), m_totalFiles(0), m_processedFiles(0)
+        : progressCallback(nullptr), totalFiles(0), processedFiles(0)
     {
-        PathTransfer transfer;
-        fullPath = transfer.transPath(deCompressionFilePath);
+        fullPath = Y_flib::EncodingUtils::pathFromUtf8(deCompressionFilePath);
 
         if (outputDirectory.empty() || outputDirectory == ".")
         {
@@ -79,13 +78,13 @@ public:
         }
         else
         {
-            parentPath = transfer.transPath(outputDirectory);
+            parentPath = Y_flib::EncodingUtils::pathFromUtf8(outputDirectory);
         }
     }
 
     void setProgressCallback(ProgressCallback callback)
     {
-        m_progressCallback = callback;
+        progressCallback = callback;
     }
 
     void decompressionLoop(Y_flib::IEncryption &encryption, Y_flib::ICompression &compression);

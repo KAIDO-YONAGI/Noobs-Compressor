@@ -8,51 +8,36 @@
 namespace Y_flib
 {
     /**
-     * Huffman 压缩实现
-     * 包装 Heffman 类，实现 ICompression 接口
+     * Huffman 压缩的 ICompression 实现
+     *
+     * compress 内部流程：统计频率 → 合并频率表 → 生成编码树 → 生成编码表 → 序列化树(metadataOut) → 编码(output)
+     * decompress 内部流程：从 metadata 反序列化编码树 → 解码
      */
     class HuffmanCompression : public ICompression
     {
     public:
-        explicit HuffmanCompression(int mode = 1) : m_heffman(std::make_unique<Heffman>(mode)) {}
+        explicit HuffmanCompression(int threadNums = 1) : huffman(std::make_unique<Huffman>(threadNums)) {}
 
-        void statistic_freq(const DataBlock &data) override
+        void compress(const DataBlock &input, DataBlock &metadataOut, DataBlock &output) override
         {
-            m_heffman->statistic_freq(0, data);
-            m_heffman->merge_ttabs();
+            huffman->statisticFreq(0, input);
+            huffman->mergeTtabs();
+            huffman->genHefftree();
+            huffman->saveCodeInTab();
+            huffman->treeToPlatUchar(metadataOut);
+            huffman->encode(input, output);
         }
 
-        void build_encode_tree() override
+        void decompress(const DataBlock &metadata, const DataBlock &input, DataBlock &output, size_t originalSize) override
         {
-            m_heffman->gen_hefftree();
-            m_heffman->save_code_inTab();
+            huffman->spawnTree(const_cast<DataBlock &>(metadata));
+            huffman->decode(input, output, BitHandler(), originalSize);
         }
 
-        void serialize_tree(DataBlock &outTree) override
-        {
-            m_heffman->tree_to_plat_uchar(outTree);
-        }
-
-        void deserialize_tree(const DataBlock &inTree) override
-        {
-            m_heffman->spawn_tree(const_cast<DataBlock &>(inTree));
-        }
-
-        void encode(const DataBlock &input, DataBlock &output) override
-        {
-            m_heffman->encode(input, output);
-        }
-
-        void decode(const DataBlock &input, DataBlock &output, size_t originalSize) override
-        {
-            m_heffman->decode(input, output, BitHandler(), originalSize);
-        }
-
-        // 获取底层 Heffman 对象（用于特殊操作）
-        Heffman *get_heffman() { return m_heffman.get(); }
+        Huffman *getHuffman() { return huffman.get(); }
 
     private:
-        std::unique_ptr<Heffman> m_heffman;
+        std::unique_ptr<Huffman> huffman;
     };
 
 } // namespace Y_flib

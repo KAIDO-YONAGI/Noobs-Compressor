@@ -2,20 +2,20 @@
 
 Thread::Thread()
 {
-    a_thread = std::thread(&Thread::thread_running, this);
+    aThread = std::thread(&Thread::threadRunning, this);
 }
 
-void Thread::thread_running()
+void Thread::threadRunning()
 {
     while(true)
     {
-        auto task = tasks.get_task();
+        auto task = taskQueue.getTask();
         task();
     }
 }
 
 Thread::~Thread()
 {
-    if (a_thread.joinable())
-        a_thread.join();
+    if (aThread.joinable())
+        aThread.join();
 }

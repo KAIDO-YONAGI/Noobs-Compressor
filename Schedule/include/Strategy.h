@@ -2,7 +2,7 @@
 #define STRATEGY_H_INTERFACE
 
 #include "Worker.h"
-#include "Datacmnctor.h"
+#include "DataConnector.h"
 #include <vector>
 /**
  * 为策略模式设计的策略接口
@@ -10,7 +10,7 @@
  * 使用不同的策略。
  * 
  * 纯虚函数：
- *     use_strategy(//args);
+ *     useStrategy(//args);
  *     接受需要被该策略调度的一组工人，
  *     和数据交互接口。
  */
@@ -23,9 +23,9 @@ public:
 private:
 
 public:
-    virtual void use_strategy(
+    virtual void useStrategy(
         std::vector<Worker*>,
-        Datacmnctor*
+        DataConnector*
     ) = 0;
 };
 

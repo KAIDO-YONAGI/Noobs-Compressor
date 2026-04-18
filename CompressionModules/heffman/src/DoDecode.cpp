@@ -1,39 +1,39 @@
 #include "../include/DoDecode.h"
 
-DoDecode::DoDecode(Heffman* heffcore):
-    heffman(heffcore), in_blocks(NULL), out_blocks(NULL)
+DoDecode::DoDecode(Huffman* heffcore):
+    heffman(heffcore), inBlocks(NULL), outBlocks(NULL)
 { }
 
 DoDecode::~DoDecode()
 { }
 
-void DoDecode::work(Datacmnctor* datacmnctor)
+void DoDecode::work(DataConnector* datacmnctor)
 {
-    in_blocks = datacmnctor->get_input_blocks();
-    out_blocks = datacmnctor->get_output_blocks();
+    inBlocks = datacmnctor->getInputBlocks();
+    outBlocks = datacmnctor->getOutputBlocks();
 
-    if(in_blocks == NULL)
+    if(inBlocks == NULL)
     {
         //TODO: 异常处理
         return;
     }
-    if(out_blocks == NULL)
+    if(outBlocks == NULL)
     {
         //TODO: 异常处理
         return;
     }
-    if(in_blocks->size() == 0)
+    if(inBlocks->size() == 0)
     {
         //TODO: 异常处理
         return;
     }
-    auto iter_inbs = in_blocks->cbegin();
-    auto iter_outbs = out_blocks->begin();
-    while(iter_inbs != in_blocks->cend())
+    auto iter_inbs = inBlocks->cbegin();
+    auto iter_outbs = outBlocks->begin();
+    while(iter_inbs != inBlocks->cend())
     {
         heffman->decode(*iter_inbs, *iter_outbs);
         ++iter_outbs; //TODO: 需要在缓冲块类中保证out数量严格等于in
-        if(iter_outbs == out_blocks->end())
+        if(iter_outbs == outBlocks->end())
         {
             //TODO: 输出块不足异常，与日志
             return;

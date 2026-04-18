@@ -24,13 +24,15 @@
    restartLoader(): 重新初始化读取状态
    encryptHeaderBlock(): 加密并回填目录块
 */
+namespace Y_flib
+{
 class BinaryStandardLoader
 {
 private:
     bool isReadHeader = false;
     bool blockIsDone = false;
     bool allDone = false;   // 标记是否完成所有目录读取
-    bool FirstReady = true; // 标记当前是否是目录就绪队列第一个元素
+    bool firstReady = true; // 标记当前是否是目录就绪队列第一个元素
 
     Y_flib::FileCount countOfChildDirectory = 0; // 当前处理中或退出时目录下子目录或文件数量
     Y_flib::FileSize offset = 0;                 // 当前剩余字节数
@@ -42,7 +44,6 @@ private:
     std::fstream fstreamForRefill;
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
 
-    PathTransfer transfer;
     Y_flib::Header header;                                // 私有化存储当前文件头信息
     std::unique_ptr<EntryParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
     Y_flib::DataBlock buffer =
@@ -63,12 +64,12 @@ public:
     std::vector<std::array<Y_flib::DirectoryOffsetSize, 2>> blockPosition; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列
-    std::queue<std::filesystem::path> directoryQueue_ready; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
+    std::queue<std::filesystem::path> directoryQueueReady; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
 
     BinaryStandardLoader() {};
     BinaryStandardLoader(const std::string inPath, std::vector<std::string> filePathToScan, std::filesystem::path parentPath)
     {
-        this->loadPath = transfer.transPath(inPath);
+        this->loadPath = EncodingUtils::pathFromUtf8(inPath);
 
         this->inFile = std::ifstream(loadPath, std::ios::binary);
 
@@ -108,3 +109,4 @@ public:
 
     void encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode); // 在压缩流程中读取完目录信息就直接加密并回填目录块到文件
 };
+} // namespace Y_flib

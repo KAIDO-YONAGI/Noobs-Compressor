@@ -9,6 +9,8 @@
  *   包括名称、大小、类型和完整路径
  *   用于目录遍历和二进制序列化过程中传递信息
  */
+namespace Y_flib
+{
 class EntryDetails
 {
 private:
@@ -51,7 +53,7 @@ public:
 class FilePath
 {
 private:
-    std::filesystem::path outPutFilePath;
+    std::filesystem::path outputFilePath;
     std::filesystem::path filePathToScan;
 
 public:
@@ -59,9 +61,9 @@ public:
     FilePath() {}
 
     /* 设置输出文件路径 */
-    void setOutPutFilePath(const std::filesystem::path outPutFilePath)
+    void setOutputFilePath(const std::filesystem::path outputFilePath)
     {
-        this->outPutFilePath = outPutFilePath;
+        this->outputFilePath = outputFilePath;
     }
 
     /* 用于重新设置要扫描的源路径，复用对象 */
@@ -71,8 +73,9 @@ public:
     }
 
     /* 获取输出文件路径 */
-    std::filesystem::path getOutPutFilePath() const { return outPutFilePath; }
+    std::filesystem::path getOutputFilePath() const { return outputFilePath; }
 
     /* 获取要扫描的源路径 */
     std::filesystem::path getFilePathToScan() const { return filePathToScan; }
 };
+} // namespace Y_flib

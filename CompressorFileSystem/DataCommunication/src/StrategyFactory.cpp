@@ -8,21 +8,21 @@ namespace
 {
     class OwnedAesEncryption : public Y_flib::IEncryption
     {
-        std::unique_ptr<Aes> m_ownedAes;
-        Y_flib::AesEncryption m_impl;
+        std::unique_ptr<Aes> ownedAes;
+        Y_flib::AesEncryption impl;
 
     public:
         OwnedAesEncryption(std::unique_ptr<Aes> aes)
-            : m_ownedAes(std::move(aes)), m_impl(m_ownedAes.get()) {}
+            : ownedAes(std::move(aes)), impl(ownedAes.get()) {}
 
         void encrypt(const Y_flib::DataBlock &input, Y_flib::DataBlock &output) override
         {
-            m_impl.encrypt(input, output);
+            impl.encrypt(input, output);
         }
 
         void decrypt(const Y_flib::DataBlock &input, Y_flib::DataBlock &output) override
         {
-            m_impl.decrypt(input, output);
+            impl.decrypt(input, output);
         }
     };
 }
