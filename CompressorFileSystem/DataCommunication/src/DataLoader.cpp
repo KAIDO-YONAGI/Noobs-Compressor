@@ -20,11 +20,11 @@ void DataLoader::reset(const std::filesystem::path inPath)
         }
         inFile = std::ifstream(inPath, std::ios::binary);
         if (!inFile)
-            throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + inPath.string());
+            throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + EncodingUtils::pathToUtf8(inPath));
         loadIsDone = false;
     }
     else
-        throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + inPath.string());
+        throw std::runtime_error("reset()-Error:inFile is still open, cannot reset to new path:" + EncodingUtils::pathToUtf8(inPath));
 }
 void DataLoader::resetByLastRead()
 {

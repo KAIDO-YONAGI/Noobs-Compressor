@@ -64,6 +64,7 @@ include_directories(
 # 源文件（核心库）
 # ========================
 set(CORE_SOURCES
+    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EncodingUtils.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EntryParser.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/ToolClasses.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/DataExporter.cpp"

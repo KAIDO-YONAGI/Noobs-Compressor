@@ -26,7 +26,7 @@ void EntryProcessor::entryProcessor(const  std::vector<std::string> &filePathToS
         for (Y_flib::FileCount i = 0; i < num; i++)
         {
 
-            sPath = transfer.transPath(filePathToScan[i]);
+            sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
             if (!std::filesystem::is_regular_file(sPath))
             {
                 file.setFilePathToScan(sPath);

@@ -58,7 +58,7 @@ public:
         : inFile(inPath, std::ios::binary) // 使用初始化列表
     {
         if (!inFile.is_open())
-            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + inPath.string());
+            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + EncodingUtils::pathToUtf8(inPath));
     }
 
     /* 析构函数，自动关闭文件流 */

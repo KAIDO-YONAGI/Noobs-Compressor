@@ -1,4 +1,5 @@
 #include "IconHandler.h"
+#include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
 #include <shlobj.h>
 #include <shellapi.h>
 #include <winuser.h>
@@ -16,24 +17,12 @@
 
 std::wstring IconHandler::Utf8ToWide(const std::string &utf8)
 {
-    if (utf8.empty())
-        return L"";
-
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, NULL, 0);
-    std::vector<wchar_t> buffer(size_needed);
-    MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, buffer.data(), size_needed);
-    return std::wstring(buffer.data());
+    return EncodingUtils::utf8ToWide(utf8);
 }
 
 std::string IconHandler::WideToUtf8(const std::wstring &wide)
 {
-    if (wide.empty())
-        return "";
-
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, NULL, 0, NULL, NULL);
-    std::vector<char> buffer(size_needed);
-    WideCharToMultiByte(CP_UTF8, 0, wide.c_str(), -1, buffer.data(), size_needed, NULL, NULL);
-    return std::string(buffer.data());
+    return EncodingUtils::wideToUtf8(wide);
 }
 
 

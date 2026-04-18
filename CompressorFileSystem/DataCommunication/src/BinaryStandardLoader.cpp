@@ -175,7 +175,7 @@ void BinaryStandardLoader::encryptHeaderBlock(Y_flib::IEncryption &encryption, Y
         // 尝试重新打开
         fstreamForRefill.open(loadPath, std::ios::binary | std::ios::in | std::ios::out);
         if (!fstreamForRefill) {
-            throw std::runtime_error("encryptHeaderBlock()-Error: Failed to reopen fstreamForRefill: " + loadPath.string());
+            throw std::runtime_error("encryptHeaderBlock()-Error: Failed to reopen fstreamForRefill: " + EncodingUtils::pathToUtf8(loadPath));
         }
     }
 

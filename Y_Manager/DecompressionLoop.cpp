@@ -11,7 +11,7 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
     m_compression = &compression;
 
     std::vector<std::string> blank;
-    BinaryStandardLoader headerLoaderIterator(fullPath.string(), blank, parentPath);
+    BinaryStandardLoader headerLoaderIterator(EncodingUtils::pathToUtf8(fullPath), blank, parentPath);
     headerLoaderIterator.headerLoaderIterator(encryption);
     Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
 
@@ -87,7 +87,7 @@ void DecompressionLoop::processFile(
     if (progressCallback)
     {
         double overallProgress = totalFiles > 0 ? (100.0 * processedFiles / totalFiles) : 0;
-        progressCallback(filename.string(), 0.0, overallProgress, "Decompressing");
+        progressCallback(EncodingUtils::pathToUtf8(filename), 0.0, overallProgress, "Decompressing");
         lastCallbackTime = std::chrono::steady_clock::now();
     }
 
@@ -127,7 +127,7 @@ void DecompressionLoop::processFile(
     if (progressCallback)
     {
         double overallProgress = totalFiles > 0 ? (100.0 * processedFiles / totalFiles) : 100.0;
-        progressCallback(filename.string(), 100.0, overallProgress, "Decompressing");
+        progressCallback(EncodingUtils::pathToUtf8(filename), 100.0, overallProgress, "Decompressing");
         lastCallbackTime = std::chrono::steady_clock::now();
     }
 }
@@ -214,7 +214,7 @@ void DecompressionLoop::reportProgress(
 
     if (progressCallback && shouldReport)
     {
-        progressCallback(filename.string(), fileProgress, overallProgress, "Decompressing");
+        progressCallback(EncodingUtils::pathToUtf8(filename), fileProgress, overallProgress, "Decompressing");
         lastCallbackTime = now;
         lastReportedProgress = overallProgress;
     }
@@ -233,7 +233,7 @@ void DecompressionLoop::createDirectory(const std::filesystem::path &directoryPa
     }
     catch (const std::exception &e)
     {
-        throw std::runtime_error("createDirectory()-Error: " + directoryPath.string());
+        throw std::runtime_error("createDirectory()-Error: " + EncodingUtils::pathToUtf8(directoryPath));
     }
 }
 
@@ -257,7 +257,7 @@ bool DecompressionLoop::createFile(const std::filesystem::path &filePath)
     }
     catch (const std::filesystem::filesystem_error &e)
     {
-        throw std::runtime_error("createDirectory()-Error: " + filePath.string());
+        throw std::runtime_error("createDirectory()-Error: " + EncodingUtils::pathToUtf8(filePath));
     }
     return true;
 }

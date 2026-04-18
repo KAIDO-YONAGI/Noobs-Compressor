@@ -20,7 +20,6 @@
 class EntryProcessor
 {
 private:
-    PathTransfer transfer;
     std::ofstream &outFile;
     EntryQueue entryQueue;
     FilePath file; // 创建各个工具类的对象

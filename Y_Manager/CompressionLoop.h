@@ -24,7 +24,7 @@ private:
     Y_flib::FileSize processedFiles;
 
     // 计算总文件数
-    void countTotalFiles(const std::vector<std::string> &filePathToScan, PathTransfer &transfer);
+    void countTotalFiles(const std::vector<std::string> &filePathToScan);
 
     // 报告进度
     void reportProgress(const std::filesystem::path &filename,

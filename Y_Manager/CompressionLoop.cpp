@@ -15,8 +15,6 @@ void CompressionLoop::compressionLoop(
     std::filesystem::path blank;
     BinaryStandardLoader headerLoaderIterator(compressionFilePath, filePathToScan, blank);
 
-    PathTransfer transfer;
-
     Y_flib::DataBlock encryptedBlock;
 
     std::filesystem::path loadPath;
@@ -29,7 +27,7 @@ void CompressionLoop::compressionLoop(
     double lastReportedProgress = -1.0;
 
     // 计算总文件数用于进度报告
-    countTotalFiles(filePathToScan, transfer);
+    countTotalFiles(filePathToScan);
 
     headerLoaderIterator.headerLoaderIterator(encryption); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())           // 单个文件特殊处理
@@ -40,7 +38,7 @@ void CompressionLoop::compressionLoop(
         totalBlocks = (loadFile.getFileSizeInDetails() + Y_flib::Constants::BUFFER_SIZE - 1) / Y_flib::Constants::BUFFER_SIZE;
     }
 
-    DataExporter dataExporter(transfer.transPath(compressionFilePath));
+    DataExporter dataExporter(EncodingUtils::pathFromUtf8(compressionFilePath));
 
     // 预分配缓冲区，在循环中复用，避免频繁内存分配
     Y_flib::DataBlock metadata;
@@ -111,7 +109,7 @@ void CompressionLoop::compressionLoop(
     }
 }
 
-void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathToScan, PathTransfer &transfer)
+void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathToScan)
 {
     totalFiles = 0;
     processedFiles = 0;
@@ -119,7 +117,7 @@ void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathTo
     {
         try
         {
-            std::filesystem::path fsPath = transfer.transPath(path);
+            std::filesystem::path fsPath = EncodingUtils::pathFromUtf8(path);
             if (std::filesystem::is_directory(fsPath))
             {
                 for (auto it = std::filesystem::recursive_directory_iterator(fsPath);
@@ -167,7 +165,7 @@ void CompressionLoop::reportProgress(
 
     if (progressCallback && shouldReport)
     {
-        progressCallback(filename.string(), fileProgress, overallProgress, "Compressing");
+        progressCallback(EncodingUtils::pathToUtf8(filename), fileProgress, overallProgress, "Compressing");
         lastCallbackTime = now;
         lastReportedProgress = overallProgress;
     }

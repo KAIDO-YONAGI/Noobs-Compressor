@@ -7,7 +7,7 @@ void HeaderWriter_v0::writeHeader(std::ofstream &outFile, std::filesystem::path 
     Locator locator;
     if (!outFile)
     {
-        throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + fullOutPath.string());
+        throw std::runtime_error("HeaderWriter()-Error_File operation failed: " + EncodingUtils::pathToUtf8(fullOutPath));
     }
     // 文件头 - 使用传入的策略模式
     Y_flib::CompressStrategy strategySize = Y_flib::StrategyFactory::modeToId(mode);
@@ -38,7 +38,7 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
     outFile.flush();
     std::streampos endPos = outFile.tellp();
     Y_flib::DirectoryOffsetSize directoryOffset = static_cast<Y_flib::DirectoryOffsetSize>(endPos);
-    std::cout << "DEBUG writeDirectory: fullOutPath=" << fullOutPath.string() << ", directoryOffset=" << directoryOffset << std::endl;
+    std::cout << "DEBUG writeDirectory: fullOutPath=" << EncodingUtils::pathToUtf8(fullOutPath) << ", directoryOffset=" << directoryOffset << std::endl;
 
     // 回填偏移量并重定位指针至回填前的位置
     locator.locateFromBegin(outFile, Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
@@ -47,20 +47,18 @@ void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const  std::vector<
 }
 void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outputFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode)
 {
-    PathTransfer transfer;
-
     try
     {
-        std::filesystem::path fullOutPath = std::filesystem::path(transfer.transPath(outputFilePath));
+        std::filesystem::path fullOutPath = EncodingUtils::pathFromUtf8(outputFilePath);
         if (std::filesystem::exists(fullOutPath))
         {
-            throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + fullOutPath.string());
+            throw std::runtime_error("HeaderWriter.cpp-Error_fileIsExist\nTry to clear:" + EncodingUtils::pathToUtf8(fullOutPath));
         }
 
         std::ofstream outFile(fullOutPath, std::ios::binary | std::ios::out | std::ios::ate); // ate打开，避免覆写文件，使用偏移量定位
         if (!outFile)
         {
-            throw std::runtime_error("HeaderWriter()-Error_File open failed: " + fullOutPath.string());
+            throw std::runtime_error("HeaderWriter()-Error_File open failed: " + EncodingUtils::pathToUtf8(fullOutPath));
         }
 
         try

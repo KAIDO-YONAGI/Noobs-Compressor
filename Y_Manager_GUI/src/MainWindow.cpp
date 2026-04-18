@@ -1,6 +1,9 @@
 #include "MainWindow.h"
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
 #include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
+
+#include <filesystem>
 
 
 #ifdef _WIN32
@@ -1044,8 +1047,7 @@ QString MainWindow::getExeDirectory()
     wchar_t exePath[MAX_PATH];
     DWORD length = GetModuleFileNameW(NULL, exePath, MAX_PATH);
     if (length > 0 && length < MAX_PATH) {
-        QString path = QString::fromWCharArray(exePath, length);
-        QFileInfo fi(path);
+        QFileInfo fi(EncodingUtils::pathToQString(std::filesystem::path(exePath)));
         return fi.absolutePath();
     }
 #endif
@@ -1054,7 +1056,11 @@ QString MainWindow::getExeDirectory()
 
 bool MainWindow::pathExists(const QString &path)
 {
-    return QFileInfo::exists(path);
+    try {
+        return std::filesystem::exists(EncodingUtils::qStringToPath(path));
+    } catch (...) {
+        return false;
+    }
 }
 
 QString MainWindow::makeValidPath(const QString &input)

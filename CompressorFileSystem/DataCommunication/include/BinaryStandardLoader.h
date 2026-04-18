@@ -42,7 +42,6 @@ private:
     std::fstream fstreamForRefill;
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
 
-    PathTransfer transfer;
     Y_flib::Header header;                                // 私有化存储当前文件头信息
     std::unique_ptr<EntryParser> parserForLoader; // 私有化工具类实例，避免重复构造与析构
     Y_flib::DataBlock buffer =
@@ -68,7 +67,7 @@ public:
     BinaryStandardLoader() {};
     BinaryStandardLoader(const std::string inPath, std::vector<std::string> filePathToScan, std::filesystem::path parentPath)
     {
-        this->loadPath = transfer.transPath(inPath);
+        this->loadPath = EncodingUtils::pathFromUtf8(inPath);
 
         this->inFile = std::ifstream(loadPath, std::ios::binary);
 

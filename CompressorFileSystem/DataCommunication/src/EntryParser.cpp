@@ -21,7 +21,7 @@ std::filesystem::path EntryParser::pathConnector(std::string &fileName)
         // fileName 是 UTF-8 编码，需要正确转换为 path
         // 在 Windows 上，直接从 UTF-8 字符串构造 path 可能会出错
         // 使用 PathTransfer 进行转换
-        std::filesystem::path fileNamePath = transfer.transPath(fileName);
+        std::filesystem::path fileNamePath = EncodingUtils::pathFromUtf8(fileName);
         pathToProcess = lastPath / fileNamePath;
     }
     else
@@ -106,8 +106,8 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
 
     if (parserMode == 2) // 解压模式,把逻辑根写进队列
     {
-        std::filesystem::path root = transfer.transPath(rootForDecompression);
-        std::filesystem::path file = transfer.transPath(directoryName);
+        std::filesystem::path root = EncodingUtils::pathFromUtf8(rootForDecompression);
+        std::filesystem::path file = EncodingUtils::pathFromUtf8(directoryName);
         std::filesystem::path fullPath = root / file;
         EntryDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
         entryQueue.push({logicalRootDetails, count});
@@ -116,7 +116,7 @@ void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::
     {
         for (const std::string &path : filePathToScan)
         {
-            tempPathForRootParser = transfer.transPath(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
+            tempPathForRootParser = EncodingUtils::pathFromUtf8(path); // 用类成员变量暂存路径，供后续根目录下的文件和目录进行路径拼接
 
             const Y_flib::FlagType entryFlag = readDataFromReadBlock<Y_flib::FlagType>(bufferPtr);
 

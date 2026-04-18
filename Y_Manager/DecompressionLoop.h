@@ -70,8 +70,7 @@ public:
     DecompressionLoop(std::string deCompressionFilePath, std::string outputDirectory = "")
         : progressCallback(nullptr), totalFiles(0), processedFiles(0)
     {
-        PathTransfer transfer;
-        fullPath = transfer.transPath(deCompressionFilePath);
+        fullPath = EncodingUtils::pathFromUtf8(deCompressionFilePath);
 
         if (outputDirectory.empty() || outputDirectory == ".")
         {
@@ -79,7 +78,7 @@ public:
         }
         else
         {
-            parentPath = transfer.transPath(outputDirectory);
+            parentPath = EncodingUtils::pathFromUtf8(outputDirectory);
         }
     }
 

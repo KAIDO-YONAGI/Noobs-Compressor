@@ -23,7 +23,6 @@ private:
     EntryQueue &fileQueue;
     std::vector<std::string> &filePathToScan;
     Y_flib::DataBlock &buffer;
-    PathTransfer transfer;
     const Y_flib::Header &header;
     const Y_flib::DirectoryOffsetSize &offset;
     const Y_flib::DirectoryOffsetSize &tempOffset;
