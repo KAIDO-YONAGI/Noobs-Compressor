@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "PlaceholderLineEdit.h"
 
 #include <QTextDocument>
 
@@ -33,7 +34,6 @@ QWidget* MainWindow::createDecompressionTab()
         "   border-radius: 4px; "
         "   padding: 6px; "
         "   color: #4f5d6e; "
-        "   placeholder-text-color: rgba(142, 149, 161, 190); "
         "}";
 
     QString btnStyle =
@@ -75,8 +75,9 @@ QWidget* MainWindow::createDecompressionTab()
     QGridLayout *inputLayout = new QGridLayout(inputGroup);
 
     inputLayout->addWidget(new QLabel(tr("Archive File (.sy):")), 0, 0);
-    m_decompressFilePathEdit = new QLineEdit();
-    m_decompressFilePathEdit->setPlaceholderText(tr("Choose a .sy archive file"));
+    m_decompressFilePathEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_decompressFilePathEdit);
+    setPlaceholderHint(m_decompressFilePathEdit, tr("Choose a .sy archive file"));
     inputLayout->addWidget(m_decompressFilePathEdit, 0, 1);
     QPushButton *browseFileBtn = new QPushButton(tr("Browse"));
     browseFileBtn->setStyleSheet(btnStyle);
@@ -90,8 +91,9 @@ QWidget* MainWindow::createDecompressionTab()
     QGridLayout *outputLayout = new QGridLayout(outputGroup);
 
     outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
-    m_decompressOutputDirEdit = new QLineEdit();
-    m_decompressOutputDirEdit->setPlaceholderText(tr("Choose an output folder"));
+    m_decompressOutputDirEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_decompressOutputDirEdit);
+    setPlaceholderHint(m_decompressOutputDirEdit, tr("Choose an output folder"));
     outputLayout->addWidget(m_decompressOutputDirEdit, 0, 1);
     QPushButton *browseOutBtn = new QPushButton(tr("Browse"));
     browseOutBtn->setStyleSheet(btnStyle);
@@ -99,14 +101,16 @@ QWidget* MainWindow::createDecompressionTab()
     outputLayout->addWidget(browseOutBtn, 0, 2);
 
     outputLayout->addWidget(new QLabel(tr("Subfolder Name:")), 1, 0);
-    m_decompressSubfolderEdit = new QLineEdit();
-    m_decompressSubfolderEdit->setPlaceholderText(tr("Optional: create a subfolder"));
+    m_decompressSubfolderEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_decompressSubfolderEdit);
+    setPlaceholderHint(m_decompressSubfolderEdit, tr("Optional: create a subfolder"));
     outputLayout->addWidget(m_decompressSubfolderEdit, 1, 1, 1, 2);
 
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
-    m_decompressPasswordEdit = new QLineEdit();
+    m_decompressPasswordEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_decompressPasswordEdit);
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_decompressPasswordEdit->setPlaceholderText(tr("Enter a password if needed"));
+    setPlaceholderHint(m_decompressPasswordEdit, tr("Enter a password if needed"));
     outputLayout->addWidget(m_decompressPasswordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);

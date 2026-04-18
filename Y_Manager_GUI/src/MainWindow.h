@@ -86,6 +86,8 @@ private:
     QString makeValidPath(const QString &input);
     void addDroppedPaths(const QList<QUrl> &urls);
     void updateBackground();
+    void applyPlaceholderPalette(QLineEdit *lineEdit) const;
+    void setPlaceholderHint(QLineEdit *lineEdit, const QString &text) const;
     QString localizeWorkerDialogMessage(const QString &message) const;
     void updateOutputDirectory();
     void updateOutputFileName();

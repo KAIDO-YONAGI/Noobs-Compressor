@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "PlaceholderLineEdit.h"
 #include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 #include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 
@@ -56,7 +57,6 @@ QWidget* MainWindow::createCompressionTab()
         "   border-radius: 4px; "
         "   padding: 6px; "
         "   color: #4f5d6e; "
-        "   placeholder-text-color: rgba(142, 149, 161, 190); "
         "}";
 
     QWidget *contentBox = new QWidget();
@@ -123,8 +123,9 @@ QWidget* MainWindow::createCompressionTab()
     QGridLayout *outputLayout = new QGridLayout(outputGroup);
 
     outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
-    m_outputDirEdit = new QLineEdit();
-    m_outputDirEdit->setPlaceholderText(tr("Auto-filled from selected items"));
+    m_outputDirEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_outputDirEdit);
+    setPlaceholderHint(m_outputDirEdit, tr("Auto-filled from selected items"));
     outputLayout->addWidget(m_outputDirEdit, 0, 1);
     QPushButton *browseOutDirBtn = new QPushButton(tr("Browse"));
     browseOutDirBtn->setStyleSheet(btnStyle);
@@ -132,14 +133,16 @@ QWidget* MainWindow::createCompressionTab()
     outputLayout->addWidget(browseOutDirBtn, 0, 2);
 
     outputLayout->addWidget(new QLabel(tr("Output Filename:")), 1, 0);
-    m_outputFileNameEdit = new QLineEdit();
-    m_outputFileNameEdit->setPlaceholderText(tr("Example: SHINKU_YONAGI"));
+    m_outputFileNameEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_outputFileNameEdit);
+    setPlaceholderHint(m_outputFileNameEdit, tr("Example: SHINKU_YONAGI"));
     outputLayout->addWidget(m_outputFileNameEdit, 1, 1, 1, 2);
 
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
-    m_passwordEdit = new QLineEdit();
+    m_passwordEdit = new PlaceholderLineEdit();
+    applyPlaceholderPalette(m_passwordEdit);
     m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_passwordEdit->setPlaceholderText(tr("Enter a password"));
+    setPlaceholderHint(m_passwordEdit, tr("Enter a password"));
     outputLayout->addWidget(m_passwordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
@@ -229,9 +232,9 @@ QWidget* MainWindow::createCompressionTab()
         const bool needsEncryption = Y_flib::StrategyFactory::hasEncryption(mode);
         m_passwordEdit->setEnabled(needsEncryption);
         if (!needsEncryption) {
-            m_passwordEdit->setPlaceholderText(tr("No password needed for this mode"));
+            setPlaceholderHint(m_passwordEdit, tr("No password needed for this mode"));
         } else {
-            m_passwordEdit->setPlaceholderText(tr("Enter a password"));
+            setPlaceholderHint(m_passwordEdit, tr("Enter a password"));
         }
     });
     emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
