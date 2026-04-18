@@ -1,118 +1,10 @@
 #include "MainWindow.h"
-#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 #include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
-#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
 
 #include <filesystem>
 #include <QCoreApplication>
 
-
 using Y_flib::EncodingUtils;
-
-namespace
-{
-QString localizeWorkerDialogMessage(const QString &message)
-{
-    const auto translate = [](const char *sourceText) {
-        return QCoreApplication::translate("CompressionWorker", sourceText);
-    };
-
-    const QString fileNotFoundPrefix = QStringLiteral("File not found: ");
-    if (message.startsWith(fileNotFoundPrefix))
-    {
-        return translate("File not found: %1").arg(message.mid(fileNotFoundPrefix.size()));
-    }
-
-    const QString invalidPathPrefix = QStringLiteral("Invalid path: ");
-    if (message.startsWith(invalidPathPrefix))
-    {
-        return translate("Invalid path: %1").arg(message.mid(invalidPathPrefix.size()));
-    }
-
-    const QString outputDirNotFoundPrefix = QStringLiteral("Output directory not found: ");
-    if (message.startsWith(outputDirNotFoundPrefix))
-    {
-        return translate("Output directory not found: %1").arg(message.mid(outputDirNotFoundPrefix.size()));
-    }
-
-    const QString invalidOutputDirPrefix = QStringLiteral("Invalid output directory: ");
-    if (message.startsWith(invalidOutputDirPrefix))
-    {
-        return translate("Invalid output directory: %1").arg(message.mid(invalidOutputDirPrefix.size()));
-    }
-
-    const QString archiveNotFoundPrefix = QStringLiteral("Archive file not found: ");
-    if (message.startsWith(archiveNotFoundPrefix))
-    {
-        return translate("Archive file not found: %1").arg(message.mid(archiveNotFoundPrefix.size()));
-    }
-
-    const QString invalidArchivePrefix = QStringLiteral("Invalid archive path: ");
-    if (message.startsWith(invalidArchivePrefix))
-    {
-        return translate("Invalid archive path: %1").arg(message.mid(invalidArchivePrefix.size()));
-    }
-
-    if (message == QStringLiteral("Only .sy files can be decompressed"))
-    {
-        return translate("Only .sy files can be decompressed");
-    }
-
-    const QString compressionSuccessPrefix = QStringLiteral("Compression successful!\nOutput file: ");
-    if (message.startsWith(compressionSuccessPrefix))
-    {
-        return translate("Compression successful!\nOutput file: %1")
-            .arg(message.mid(compressionSuccessPrefix.size()));
-    }
-
-    const QString compressionFailedPrefix = QStringLiteral("Compression failed: ");
-    if (message.startsWith(compressionFailedPrefix))
-    {
-        return translate("Compression failed: %1").arg(message.mid(compressionFailedPrefix.size()));
-    }
-
-    if (message == QStringLiteral("Compression failed due to unknown error"))
-    {
-        return translate("Compression failed due to unknown error");
-    }
-
-    if (message == QStringLiteral("This archive requires a password. Please enter the decryption key."))
-    {
-        return translate("This archive requires a password. Please enter the decryption key.");
-    }
-
-    const QString decompressionSuccessPrefix = QStringLiteral("Decompression successful!\nOutput directory: ");
-    if (message.startsWith(decompressionSuccessPrefix))
-    {
-        return translate("Decompression successful!\nOutput directory: %1")
-            .arg(message.mid(decompressionSuccessPrefix.size()));
-    }
-
-    const QString decompressionFailedPrefix = QStringLiteral("Decompression failed: ");
-    const QString decompressionFailedSuffix = QStringLiteral("\n\nPossible reasons:\n"
-                                                             "1. Incorrect decryption key\n"
-                                                             "2. Corrupted or incompatible .sy file\n"
-                                                             "3. Insufficient disk space");
-    if (message.startsWith(decompressionFailedPrefix) && message.endsWith(decompressionFailedSuffix))
-    {
-        const QString reason = message.mid(
-            decompressionFailedPrefix.size(),
-            message.size() - decompressionFailedPrefix.size() - decompressionFailedSuffix.size());
-        return translate("Decompression failed: %1\n\nPossible reasons:\n"
-                         "1. Incorrect decryption key\n"
-                         "2. Corrupted or incompatible .sy file\n"
-                         "3. Insufficient disk space")
-            .arg(reason);
-    }
-
-    if (message == QStringLiteral("Decompression failed due to unknown error"))
-    {
-        return translate("Decompression failed due to unknown error");
-    }
-
-    return message;
-}
-} // namespace
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -120,24 +12,18 @@ MainWindow::MainWindow(QWidget *parent)
     , m_worker(nullptr)
     , m_isProcessing(false)
 {
-    // 加载背景图片（只加载一次）
     m_backgroundPixmap.load(":/images/background.jpg");
-
     setupUI();
 }
 
 MainWindow::~MainWindow()
 {
-    // 停止工作线程
     if (m_worker) {
-        // 请求停止工作
         m_worker->requestStop();
     }
 
     if (m_workerThread) {
-        // 等待线程完成（最多等待3秒）
         if (!m_workerThread->wait(3000)) {
-            // 如果线程没有在规定时间内结束，强制终止
             m_workerThread->terminate();
             m_workerThread->wait();
         }
@@ -154,28 +40,19 @@ MainWindow::~MainWindow()
 void MainWindow::setupUI()
 {
     setWindowTitle(tr("Compressor By Yonagi"));
-    setMinimumSize(600, 400);  // 最小尺寸
-    resize(720, 450);  // 默认尺寸
-
-    // 设置窗口图标
+    setMinimumSize(600, 400);
+    resize(720, 450);
     setWindowIcon(QIcon(":/YONAGII_512x512.ico"));
-
-    // 启用拖放
     setAcceptDrops(true);
 
-    // 设置背景图片 - 使用裁剪模式
     QWidget *centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
-
-    // 设置初始背景
     updateBackground();
 
-    // 主布局
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
     mainLayout->setContentsMargins(20, 20, 20, 20);
     mainLayout->setSpacing(15);
 
-    // 创建选项卡
     m_tabWidget = new QTabWidget(this);
     m_tabWidget->setStyleSheet(
         "QTabWidget::pane { "
@@ -210,991 +87,6 @@ void MainWindow::setupUI()
     mainLayout->addWidget(m_tabWidget);
 }
 
-QWidget* MainWindow::createCompressionTab()
-{
-    QWidget *tab = new QWidget();
-    tab->setStyleSheet("background: transparent;");
-
-    // 主垂直布局
-    QVBoxLayout *mainVLayout = new QVBoxLayout(tab);
-    mainVLayout->setSpacing(0);
-    mainVLayout->setContentsMargins(0, 0, 0, 0);
-
-    // 统一的按钮样式 - 白色/灰色风格
-    QString btnStyle =
-        "QPushButton { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(180, 180, 180, 180); "
-        "   border-radius: 5px; "
-        "   padding: 8px 18px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QPushButton:hover { "
-        "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(150, 150, 150, 200); "
-        "} "
-        "QPushButton:pressed { "
-        "   background: rgba(220, 220, 220, 180); "
-        "} "
-        "QPushButton:disabled { "
-        "   background: rgba(200, 200, 200, 140); "
-        "   color: #8d98a6; "
-        "}";
-
-    // 统一的GroupBox样式
-    QString groupBoxStyle =
-        "QGroupBox { "
-        "   background: rgba(255, 255, 255, 130); "
-        "   border: 1px solid rgba(200, 200, 200, 150); "
-        "   border-radius: 8px; "
-        "   margin-top: 12px; "
-        "   padding-top: 12px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QGroupBox::title { "
-        "   subcontrol-origin: margin; "
-        "   left: 12px; "
-        "   padding: 0 8px 8px 8px; "
-        "} "
-        "QLabel { background: transparent; color: #4f5d6e; } "
-        "QLineEdit { "
-        "   background: rgba(255, 255, 255, 180); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 4px; "
-        "   padding: 6px; "
-        "   color: #4f5d6e; "
-        "   placeholder-text-color: rgba(142, 149, 161, 190); "
-        "}";
-
-    // =============================================
-    // 内容区域容器 - 左右两列作为一个整体
-    // =============================================
-    QWidget *contentBox = new QWidget();
-    contentBox->setStyleSheet("background: transparent;");
-    QHBoxLayout *contentLayout = new QHBoxLayout(contentBox);
-    contentLayout->setSpacing(10);
-    contentLayout->setContentsMargins(0, 0, 0, 0);
-
-    // =============================================
-    // 左列 - 输入信息填写区域
-    // =============================================
-    QWidget *leftColumn = new QWidget();
-    leftColumn->setStyleSheet("background: transparent;");
-    QVBoxLayout *leftLayout = new QVBoxLayout(leftColumn);
-    leftLayout->setSpacing(10);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-
-    // === 文件列表区域 ===
-    QGroupBox *fileGroup = new QGroupBox(tr("Files to Compress"));
-    fileGroup->setStyleSheet(groupBoxStyle);
-    QVBoxLayout *fileLayout = new QVBoxLayout(fileGroup);
-
-    m_fileListWidget = new QListWidget();
-    m_fileListWidget->setSelectionMode(QAbstractItemView::ExtendedSelection);
-    m_fileListWidget->setStyleSheet(
-        "QListWidget { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 5px; "
-        "   color: #4f5d6e; "
-        "} "
-        "QListWidget::item { padding: 6px; } "
-        "QListWidget::item:selected { background: rgba(200, 200, 200, 150); }"
-    );
-    connect(m_fileListWidget, &QListWidget::itemSelectionChanged, this, [this]() {
-        updateOutputDirectory();
-        updateOutputFileName();
-    });
-    fileLayout->addWidget(m_fileListWidget);
-
-    // 文件操作按钮
-    QHBoxLayout *fileBtnLayout = new QHBoxLayout();
-    QPushButton *addFileBtn = new QPushButton(tr("Add Files"));
-    QPushButton *addFolderBtn = new QPushButton(tr("Add Folder"));
-    QPushButton *removeBtn = new QPushButton(tr("Remove"));
-    QPushButton *clearBtn = new QPushButton(tr("Clear"));
-
-    addFileBtn->setStyleSheet(btnStyle);
-    addFolderBtn->setStyleSheet(btnStyle);
-    removeBtn->setStyleSheet(btnStyle);
-    clearBtn->setStyleSheet(btnStyle);
-
-    connect(addFileBtn, &QPushButton::clicked, this, &MainWindow::onAddFilesClicked);
-    connect(addFolderBtn, &QPushButton::clicked, this, &MainWindow::onAddFolderClicked);
-    connect(removeBtn, &QPushButton::clicked, this, &MainWindow::onRemoveFileClicked);
-    connect(clearBtn, &QPushButton::clicked, this, &MainWindow::onClearFilesClicked);
-
-    fileBtnLayout->addWidget(addFileBtn);
-    fileBtnLayout->addWidget(addFolderBtn);
-    fileBtnLayout->addWidget(removeBtn);
-    fileBtnLayout->addWidget(clearBtn);
-    fileLayout->addLayout(fileBtnLayout);
-
-    leftLayout->addWidget(fileGroup);
-
-    // === 输出设置区域 ===
-    QGroupBox *outputGroup = new QGroupBox(tr("Output Settings"));
-    outputGroup->setStyleSheet(groupBoxStyle);
-    QGridLayout *outputLayout = new QGridLayout(outputGroup);
-
-    // 输出目录
-    outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
-    m_outputDirEdit = new QLineEdit();
-    m_outputDirEdit->setPlaceholderText(tr("Auto-filled from selected items"));
-    outputLayout->addWidget(m_outputDirEdit, 0, 1);
-    QPushButton *browseOutDirBtn = new QPushButton(tr("Browse"));
-    browseOutDirBtn->setStyleSheet(btnStyle);
-    connect(browseOutDirBtn, &QPushButton::clicked, this, &MainWindow::onBrowseOutputDirClicked);
-    outputLayout->addWidget(browseOutDirBtn, 0, 2);
-
-    // 输出文件名
-    outputLayout->addWidget(new QLabel(tr("Output Filename:")), 1, 0);
-    m_outputFileNameEdit = new QLineEdit();
-    m_outputFileNameEdit->setPlaceholderText(tr("Example: SHINKU_YONAGI"));
-    outputLayout->addWidget(m_outputFileNameEdit, 1, 1, 1, 2);
-
-    // 密码
-    outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
-    m_passwordEdit = new QLineEdit();
-    m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_passwordEdit->setPlaceholderText(tr("Enter a password"));
-    outputLayout->addWidget(m_passwordEdit, 2, 1, 1, 2);
-
-    leftLayout->addWidget(outputGroup);
-    leftLayout->addStretch();
-
-    // =============================================
-    // 右列 - 输出信息区域
-    // =============================================
-    QWidget *rightColumn = new QWidget();
-    rightColumn->setStyleSheet("background: transparent;");
-    QVBoxLayout *rightLayout = new QVBoxLayout(rightColumn);
-    rightLayout->setSpacing(10);
-    rightLayout->setContentsMargins(0, 0, 0, 0);
-
-    // === 压缩模式选择器 ===
-    QGroupBox *modeGroup = new QGroupBox(tr("Compression Mode"));
-    modeGroup->setStyleSheet(
-        "QGroupBox { "
-        "   background: rgba(255, 255, 255, 130); "
-        "   border: 1px solid rgba(200, 200, 200, 150); "
-        "   border-radius: 8px; "
-        "   margin-top: 12px; "
-        "   padding-top: 12px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QGroupBox::title { "
-        "   subcontrol-origin: margin; "
-        "   left: 12px; "
-        "   padding: 0 8px 8px 8px; "
-        "}"
-    );
-    QVBoxLayout *modeLayout = new QVBoxLayout(modeGroup);
-
-    m_compressModeCombo = new QComboBox();
-    m_compressModeCombo->addItem(tr("Huffman Only (Default)"),
-        static_cast<int>(Y_flib::CompressionMode::HuffmanOnly));
-    m_compressModeCombo->addItem(tr("Huffman + AES"),
-        static_cast<int>(Y_flib::CompressionMode::HuffmanAES));
-    m_compressModeCombo->addItem(tr("AES Only"),
-        static_cast<int>(Y_flib::CompressionMode::AESOnly));
-    m_compressModeCombo->addItem(tr("Pack Only"),
-        static_cast<int>(Y_flib::CompressionMode::PackOnly));
-    m_compressModeCombo->setCurrentIndex(0);
-    m_compressModeCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    m_compressModeCombo->setStyleSheet(
-        "QComboBox { "
-        "   background: rgba(255, 255, 255, 180); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 4px; "
-        "   padding: 6px 20px 6px 6px; "
-        "   color: #4f5d6e; "
-        "} "
-        "QComboBox:hover { "
-        "   background: rgba(255, 255, 255, 220); "
-        "   border: 1px solid rgba(150, 150, 150, 200); "
-        "} "
-        "QComboBox:disabled { "
-        "   background: rgba(200, 200, 200, 140); "
-        "   color: #8d98a6; "
-        "} "
-        "QComboBox::drop-down { "
-        "   subcontrol-origin: padding; "
-        "   subcontrol-position: center right; "
-        "   width: 20px; "
-        "   border-left: 1px solid rgba(200, 200, 200, 180); "
-        "   border-top-right-radius: 4px; "
-        "   border-bottom-right-radius: 4px; "
-        "} "
-        "QComboBox::down-arrow { "
-        "   width: 8px; "
-        "   height: 8px; "
-        "   background: #666; "
-        "} "
-        "QComboBox::down-arrow:disabled { "
-        "   background: #aaa; "
-        "} "
-        "QComboBox QAbstractItemView { "
-        "   background: rgba(255, 255, 255, 220); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   color: #4f5d6e; "
-        "   selection-background-color: rgba(200, 200, 200, 150); "
-        "}"
-    );
-    connect(m_compressModeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int) {
-        Y_flib::CompressionMode mode = static_cast<Y_flib::CompressionMode>(m_compressModeCombo->currentData().toInt());
-        bool needsEncryption = Y_flib::StrategyFactory::hasEncryption(mode);
-        m_passwordEdit->setEnabled(needsEncryption);
-        if (!needsEncryption) {
-            m_passwordEdit->setPlaceholderText(tr("No password needed for this mode"));
-        } else {
-            m_passwordEdit->setPlaceholderText(tr("Enter a password"));
-        }
-    });
-    emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
-
-    modeLayout->addWidget(m_compressModeCombo);
-    rightLayout->addWidget(modeGroup);
-
-    // === 进度和日志区域 ===
-    QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
-    progressGroup->setStyleSheet(
-        "QGroupBox { "
-        "   background: rgba(255, 255, 255, 130); "
-        "   border: 1px solid rgba(200, 200, 200, 150); "
-        "   border-radius: 8px; "
-        "   margin-top: 12px; "
-        "   padding-top: 12px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QGroupBox::title { "
-        "   subcontrol-origin: margin; "
-        "   left: 12px; "
-        "   padding: 0 8px 8px 8px; "
-        "}"
-    );
-    QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
-    progressLayout->setSpacing(8);
-
-    // 当前文件标签
-    m_compressCurrentFileLabel = new QLabel(tr("Ready"));
-    m_compressCurrentFileLabel->setStyleSheet(
-        "QLabel { "
-        "   background: transparent; "
-        "   color: #4f5d6e; "
-        "   padding: 6px; "
-        "}"
-    );
-    m_compressCurrentFileLabel->setWordWrap(false);
-    m_compressCurrentFileLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-    progressLayout->addWidget(m_compressCurrentFileLabel);
-
-    // 进度条
-    m_compressProgressBar = new QProgressBar();
-    m_compressProgressBar->setValue(0);
-    m_compressProgressBar->setTextVisible(true);
-    m_compressProgressBar->setMinimumHeight(28);
-    m_compressProgressBar->setStyleSheet(
-        "QProgressBar { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 5px; "
-        "   text-align: center; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QProgressBar::chunk { "
-        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #a0a0a0, stop:1 #d0d0d0); "
-        "   border-radius: 4px; "
-        "}"
-    );
-    progressLayout->addWidget(m_compressProgressBar);
-
-    // 进度百分比标签
-    m_compressProgressLabel = new QLabel(tr("Overall: 0% | Current: 0%"));
-    m_compressProgressLabel->setStyleSheet(
-        "QLabel { "
-        "   background: transparent; "
-        "   color: #667487; "
-        "}"
-    );
-    progressLayout->addWidget(m_compressProgressLabel);
-
-    // 日志框 - 禁用自动换行
-    m_compressLogEdit = new QTextEdit();
-    m_compressLogEdit->setReadOnly(true);
-    m_compressLogEdit->setTextInteractionFlags(Qt::NoTextInteraction);
-    m_compressLogEdit->setFocusPolicy(Qt::NoFocus);
-    m_compressLogEdit->setCursor(Qt::ArrowCursor);
-    m_compressLogEdit->viewport()->setCursor(Qt::ArrowCursor);
-    m_compressLogEdit->setLineWrapMode(QTextEdit::NoWrap);
-    m_compressLogEdit->setStyleSheet(
-        "QTextEdit { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 5px; "
-        "   padding: 4px; "
-        "   color: #4f5d6e; "
-        "}"
-    );
-    progressLayout->addWidget(m_compressLogEdit);
-
-    rightLayout->addWidget(progressGroup, 1);
-
-    // === 开始按钮（移到右列下方） ===
-    m_startCompressBtn = new QPushButton(tr("Start Compression"));
-    m_startCompressBtn->setMinimumHeight(45);
-    m_startCompressBtn->setStyleSheet(
-        "QPushButton { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   color: #4f5d6e; "
-        "   border: 2px solid rgba(150, 150, 150, 200); "
-        "   border-radius: 8px; "
-        "   font-weight: bold; "
-        "} "
-        "QPushButton:hover { "
-        "   background: rgba(255, 255, 255, 200); "
-        "   border: 2px solid rgba(120, 120, 120, 220); "
-        "} "
-        "QPushButton:pressed { "
-        "   background: rgba(220, 220, 220, 180); "
-        "} "
-        "QPushButton:disabled { "
-        "   background: rgba(200, 200, 200, 140); "
-        "   color: #8d98a6; "
-        "}"
-    );
-    connect(m_startCompressBtn, &QPushButton::clicked, this, &MainWindow::onStartCompressionClicked);
-    rightLayout->addWidget(m_startCompressBtn);
-
-    // 添加左右两列到内容区域，设置拉伸比例（左:右 = 3:2）
-    contentLayout->addWidget(leftColumn, 3);
-    contentLayout->addWidget(rightColumn, 2);
-
-    // 内容区域添加到主布局
-    mainVLayout->addWidget(contentBox);
-
-    return tab;
-}
-
-QWidget* MainWindow::createDecompressionTab()
-{
-    QWidget *tab = new QWidget();
-    tab->setStyleSheet("background: transparent;");
-
-    // 主垂直布局
-    QVBoxLayout *mainVLayout = new QVBoxLayout(tab);
-    mainVLayout->setSpacing(0);
-    mainVLayout->setContentsMargins(0, 0, 0, 0);
-
-    QString groupBoxStyle =
-        "QGroupBox { "
-        "   background: rgba(255, 255, 255, 130); "
-        "   border: 1px solid rgba(200, 200, 200, 150); "
-        "   border-radius: 8px; "
-        "   margin-top: 12px; "
-        "   padding-top: 12px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QGroupBox::title { "
-        "   subcontrol-origin: margin; "
-        "   left: 12px; "
-        "   padding: 0 8px 8px 8px; "
-        "} "
-        "QLabel { background: transparent; color: #4f5d6e; } "
-        "QLineEdit { "
-        "   background: rgba(255, 255, 255, 180); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 4px; "
-        "   padding: 6px; "
-        "   color: #4f5d6e; "
-        "   placeholder-text-color: rgba(142, 149, 161, 190); "
-        "}";
-
-    QString btnStyle =
-        "QPushButton { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(180, 180, 180, 180); "
-        "   border-radius: 5px; "
-        "   padding: 8px 18px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QPushButton:hover { "
-        "   background: rgba(255, 255, 255, 200); "
-        "   border: 1px solid rgba(150, 150, 150, 200); "
-        "} "
-        "QPushButton:pressed { "
-        "   background: rgba(220, 220, 220, 180); "
-        "} "
-        "QPushButton:disabled { "
-        "   background: rgba(200, 200, 200, 140); "
-        "   color: #8d98a6; "
-        "}";
-
-    // =============================================
-    // 内容区域容器 - 左右两列作为一个整体
-    // =============================================
-    QWidget *contentBox = new QWidget();
-    contentBox->setStyleSheet("background: transparent;");
-    QHBoxLayout *contentLayout = new QHBoxLayout(contentBox);
-    contentLayout->setSpacing(10);
-    contentLayout->setContentsMargins(0, 0, 0, 0);
-
-    // =============================================
-    // 左列 - 输入信息填写区域
-    // =============================================
-    QWidget *leftColumn = new QWidget();
-    leftColumn->setStyleSheet("background: transparent;");
-    QVBoxLayout *leftLayout = new QVBoxLayout(leftColumn);
-    leftLayout->setSpacing(10);
-    leftLayout->setContentsMargins(0, 0, 0, 0);
-
-    // === 输入文件区域 ===
-    QGroupBox *inputGroup = new QGroupBox(tr("Select Archive"));
-    inputGroup->setStyleSheet(groupBoxStyle);
-    QGridLayout *inputLayout = new QGridLayout(inputGroup);
-
-    inputLayout->addWidget(new QLabel(tr("Archive File (.sy):")), 0, 0);
-    m_decompressFilePathEdit = new QLineEdit();
-    m_decompressFilePathEdit->setPlaceholderText(tr("Choose a .sy archive file"));
-    inputLayout->addWidget(m_decompressFilePathEdit, 0, 1);
-    QPushButton *browseFileBtn = new QPushButton(tr("Browse"));
-    browseFileBtn->setStyleSheet(btnStyle);
-    connect(browseFileBtn, &QPushButton::clicked, this, &MainWindow::onBrowseDecompressFileClicked);
-    inputLayout->addWidget(browseFileBtn, 0, 2);
-
-    leftLayout->addWidget(inputGroup);
-
-    // === 输出设置区域 ===
-    QGroupBox *outputGroup = new QGroupBox(tr("Output Settings"));
-    outputGroup->setStyleSheet(groupBoxStyle);
-    QGridLayout *outputLayout = new QGridLayout(outputGroup);
-
-    outputLayout->addWidget(new QLabel(tr("Output Directory:")), 0, 0);
-    m_decompressOutputDirEdit = new QLineEdit();
-    m_decompressOutputDirEdit->setPlaceholderText(tr("Choose an output folder"));
-    outputLayout->addWidget(m_decompressOutputDirEdit, 0, 1);
-    QPushButton *browseOutBtn = new QPushButton(tr("Browse"));
-    browseOutBtn->setStyleSheet(btnStyle);
-    connect(browseOutBtn, &QPushButton::clicked, this, &MainWindow::onBrowseDecompressOutputClicked);
-    outputLayout->addWidget(browseOutBtn, 0, 2);
-
-    outputLayout->addWidget(new QLabel(tr("Subfolder Name:")), 1, 0);
-    m_decompressSubfolderEdit = new QLineEdit();
-    m_decompressSubfolderEdit->setPlaceholderText(tr("Optional: create a subfolder"));
-    outputLayout->addWidget(m_decompressSubfolderEdit, 1, 1, 1, 2);
-
-    outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
-    m_decompressPasswordEdit = new QLineEdit();
-    m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_decompressPasswordEdit->setPlaceholderText(tr("Enter a password if needed"));
-    outputLayout->addWidget(m_decompressPasswordEdit, 2, 1, 1, 2);
-
-    leftLayout->addWidget(outputGroup);
-
-    // === 重置按钮 ===
-    QPushButton *resetDecompressBtn = new QPushButton(tr("Reset"));
-    resetDecompressBtn->setStyleSheet(btnStyle);
-    connect(resetDecompressBtn, &QPushButton::clicked, this, [this]() {
-        m_decompressFilePathEdit->clear();
-        m_decompressOutputDirEdit->clear();
-        m_decompressSubfolderEdit->clear();
-        m_decompressPasswordEdit->clear();
-    });
-    leftLayout->addWidget(resetDecompressBtn);
-
-    leftLayout->addStretch();
-
-    // =============================================
-    // 右列 - 输出信息区域
-    // =============================================
-    QWidget *rightColumn = new QWidget();
-    rightColumn->setStyleSheet("background: transparent;");
-    QVBoxLayout *rightLayout = new QVBoxLayout(rightColumn);
-    rightLayout->setSpacing(10);
-    rightLayout->setContentsMargins(0, 0, 0, 0);
-
-    // === 进度和日志区域 ===
-    QGroupBox *progressGroup = new QGroupBox(tr("Progress"));
-    progressGroup->setStyleSheet(
-        "QGroupBox { "
-        "   background: rgba(255, 255, 255, 130); "
-        "   border: 1px solid rgba(200, 200, 200, 150); "
-        "   border-radius: 8px; "
-        "   margin-top: 12px; "
-        "   padding-top: 12px; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QGroupBox::title { "
-        "   subcontrol-origin: margin; "
-        "   left: 12px; "
-        "   padding: 0 8px 8px 8px; "
-        "}"
-    );
-    QVBoxLayout *progressLayout = new QVBoxLayout(progressGroup);
-    progressLayout->setSpacing(8);
-
-    // 当前文件标签
-    m_decompressCurrentFileLabel = new QLabel(tr("Ready"));
-    m_decompressCurrentFileLabel->setStyleSheet(
-        "QLabel { "
-        "   background: transparent; "
-        "   color: #4f5d6e; "
-        "   padding: 6px; "
-        "}"
-    );
-    m_decompressCurrentFileLabel->setWordWrap(false);
-    m_decompressCurrentFileLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
-    progressLayout->addWidget(m_decompressCurrentFileLabel);
-
-    m_decompressProgressBar = new QProgressBar();
-    m_decompressProgressBar->setValue(0);
-    m_decompressProgressBar->setTextVisible(true);
-    m_decompressProgressBar->setMinimumHeight(28);
-    m_decompressProgressBar->setStyleSheet(
-        "QProgressBar { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 5px; "
-        "   text-align: center; "
-        "   font-weight: bold; "
-        "   color: #4f5d6e; "
-        "} "
-        "QProgressBar::chunk { "
-        "   background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #b0b0b0, stop:1 #e0e0e0); "
-        "   border-radius: 4px; "
-        "}"
-    );
-    progressLayout->addWidget(m_decompressProgressBar);
-
-    // 进度百分比标签
-    m_decompressProgressLabel = new QLabel(tr("Overall: 0% | Current: 0%"));
-    m_decompressProgressLabel->setStyleSheet(
-        "QLabel { "
-        "   background: transparent; "
-        "   color: #667487; "
-        "}"
-    );
-    progressLayout->addWidget(m_decompressProgressLabel);
-
-    // 日志框 - 禁用自动换行
-    m_decompressLogEdit = new QTextEdit();
-    m_decompressLogEdit->setReadOnly(true);
-    m_decompressLogEdit->setTextInteractionFlags(Qt::NoTextInteraction);
-    m_decompressLogEdit->setFocusPolicy(Qt::NoFocus);
-    m_decompressLogEdit->setCursor(Qt::ArrowCursor);
-    m_decompressLogEdit->viewport()->setCursor(Qt::ArrowCursor);
-    m_decompressLogEdit->setLineWrapMode(QTextEdit::NoWrap);
-    m_decompressLogEdit->setStyleSheet(
-        "QTextEdit { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   border: 1px solid rgba(200, 200, 200, 180); "
-        "   border-radius: 5px; "
-        "   padding: 4px; "
-        "   color: #4f5d6e; "
-        "}"
-    );
-    progressLayout->addWidget(m_decompressLogEdit);
-
-    rightLayout->addWidget(progressGroup, 1);
-
-    // === 开始按钮（移到右列下方） ===
-    m_startDecompressBtn = new QPushButton(tr("Start Decompression"));
-    m_startDecompressBtn->setMinimumHeight(45);
-    m_startDecompressBtn->setStyleSheet(
-        "QPushButton { "
-        "   background: rgba(255, 255, 255, 160); "
-        "   color: #4f5d6e; "
-        "   border: 2px solid rgba(150, 150, 150, 200); "
-        "   border-radius: 8px; "
-        "   font-weight: bold; "
-        "} "
-        "QPushButton:hover { "
-        "   background: rgba(255, 255, 255, 200); "
-        "   border: 2px solid rgba(120, 120, 120, 220); "
-        "} "
-        "QPushButton:pressed { "
-        "   background: rgba(220, 220, 220, 180); "
-        "} "
-        "QPushButton:disabled { "
-        "   background: rgba(200, 200, 200, 140); "
-        "   color: #8d98a6; "
-        "}"
-    );
-    connect(m_startDecompressBtn, &QPushButton::clicked, this, &MainWindow::onStartDecompressionClicked);
-    rightLayout->addWidget(m_startDecompressBtn);
-
-    // 添加左右两列到内容区域，设置拉伸比例（左:右 = 3:2）
-    contentLayout->addWidget(leftColumn, 3);
-    contentLayout->addWidget(rightColumn, 2);
-
-    // 内容区域添加到主布局
-    mainVLayout->addWidget(contentBox);
-
-    return tab;
-}
-
-// === 压缩模式槽函数 ===
-
-void MainWindow::onAddFilesClicked()
-{
-    // 使用 Windows 原生对话框
-    QStringList files = QFileDialog::getOpenFileNames(this, tr("Select Files"),
-        QString(), tr("All Files (*)"));
-
-    for (const QString &file : files) {
-        QString cleanPath = makeValidPath(file);
-        if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
-            m_fileListWidget->addItem(cleanPath);
-        }
-    }
-
-    updateOutputDirectory();
-    updateOutputFileName();
-}
-
-void MainWindow::onAddFolderClicked()
-{
-    // 使用 Windows 原生对话框
-    QString folder = QFileDialog::getExistingDirectory(this, tr("Select Folder"),
-        QString(), QFileDialog::ShowDirsOnly);
-
-    if (!folder.isEmpty()) {
-        QString cleanPath = makeValidPath(folder);
-        if (!cleanPath.isEmpty() && m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
-            m_fileListWidget->addItem(cleanPath);
-        }
-    }
-
-    updateOutputDirectory();
-    updateOutputFileName();
-}
-
-void MainWindow::onRemoveFileClicked()
-{
-    QList<QListWidgetItem*> items = m_fileListWidget->selectedItems();
-    for (QListWidgetItem *item : items) {
-        delete m_fileListWidget->takeItem(m_fileListWidget->row(item));
-    }
-
-    updateOutputDirectory();
-    updateOutputFileName();
-}
-
-void MainWindow::onClearFilesClicked()
-{
-    m_fileListWidget->clear();
-    updateOutputDirectory();
-    updateOutputFileName();
-}
-
-void MainWindow::onBrowseOutputDirClicked()
-{
-    QString dir = QFileDialog::getExistingDirectory(this,
-        tr("Select Output Directory"), m_outputDirEdit->text(), QFileDialog::ShowDirsOnly);
-
-    if (!dir.isEmpty()) {
-        m_outputDirEdit->setText(makeValidPath(dir));
-    }
-}
-
-void MainWindow::onStartCompressionClicked()
-{
-    if (m_isProcessing) {
-        return;
-    }
-
-    // 验证输入
-    if (m_fileListWidget->count() == 0) {
-        QMessageBox::warning(this, tr("Error"), tr("Please add files to compress."));
-        return;
-    }
-
-    QString outputDir = m_outputDirEdit->text().trimmed();
-    if (outputDir.isEmpty() || !pathExists(outputDir)) {
-        QMessageBox::warning(this, tr("Error"), tr("Please select a valid output directory."));
-        return;
-    }
-
-    QString fileName = m_outputFileNameEdit->text().trimmed();
-    if (fileName.isEmpty()) {
-        QMessageBox::warning(this, tr("Error"), tr("Please enter an output filename."));
-        return;
-    }
-
-    // 获取选择的压缩模式
-    Y_flib::CompressionMode mode = static_cast<Y_flib::CompressionMode>(m_compressModeCombo->currentData().toInt());
-
-    QString password;
-    if (Y_flib::StrategyFactory::hasEncryption(mode)) {
-        password = m_passwordEdit->text();
-        if (password.isEmpty()) {
-            QMessageBox::warning(this, tr("Error"), tr("Please enter a password for encrypted mode."));
-            return;
-        }
-    }
-
-    // 收集文件列表
-    QStringList files;
-    for (int i = 0; i < m_fileListWidget->count(); ++i) {
-        files.append(m_fileListWidget->item(i)->text());
-    }
-
-    // 设置UI状态
-    m_isProcessing = true;
-    m_tabWidget->setCurrentIndex(0);
-    m_tabWidget->setTabEnabled(1, false);
-    m_startCompressBtn->setEnabled(false);
-    m_startDecompressBtn->setEnabled(false);
-    m_startCompressBtn->setText(tr("Processing..."));
-    m_compressModeCombo->setEnabled(false);
-    m_compressProgressBar->setValue(0);
-    m_compressProgressLabel->setText(tr("Overall: 0%"));
-    m_compressCurrentFileLabel->setText(tr("Initializing..."));
-    m_compressLogEdit->clear();
-    m_compressLogEdit->append(tr("Starting compression..."));
-
-    // 创建工作线程
-    m_workerThread = new QThread();
-    m_worker = new CompressionWorker();
-    m_worker->setCompressionParams(files, outputDir, fileName, password, mode);
-    m_worker->moveToThread(m_workerThread);
-
-    connect(m_workerThread, &QThread::started, m_worker, &CompressionWorker::doCompression);
-    connect(m_worker, &CompressionWorker::detailedProgress, this, &MainWindow::onCompressionDetailedProgress);
-    connect(m_worker, &CompressionWorker::finished, this, &MainWindow::onCompressionFinished);
-
-    m_workerThread->start();
-}
-
-// === 解压模式槽函数 ===
-
-void MainWindow::onBrowseDecompressFileClicked()
-{
-    QString file = QFileDialog::getOpenFileName(this,
-        tr("Select Archive"), QString(), tr("Simple Archives (*.sy);;All Files (*)"));
-
-    if (!file.isEmpty()) {
-        m_decompressFilePathEdit->setText(makeValidPath(file));
-
-        // 自动设置输出目录为文件所在目录
-        QFileInfo fileInfo(file);
-        m_decompressOutputDirEdit->setText(fileInfo.absolutePath());
-    }
-}
-
-void MainWindow::onBrowseDecompressOutputClicked()
-{
-    QString dir = QFileDialog::getExistingDirectory(this,
-        tr("Select Output Directory"), m_decompressOutputDirEdit->text(), QFileDialog::ShowDirsOnly);
-
-    if (!dir.isEmpty()) {
-        m_decompressOutputDirEdit->setText(makeValidPath(dir));
-    }
-}
-
-void MainWindow::onStartDecompressionClicked()
-{
-    if (m_isProcessing) {
-        return;
-    }
-
-    // 验证输入
-    QString inputPath = m_decompressFilePathEdit->text().trimmed();
-    if (inputPath.isEmpty() || !pathExists(inputPath)) {
-        QMessageBox::warning(this, tr("Error"), tr("Please select a valid archive file."));
-        return;
-    }
-
-    if (!inputPath.toLower().endsWith(".sy")) {
-        QMessageBox::warning(this, tr("Error"), tr("Only .sy files can be decompressed."));
-        return;
-    }
-
-    QString password = m_decompressPasswordEdit->text();
-
-    QString outputDir = m_decompressOutputDirEdit->text().trimmed();
-
-    // 如果填写了子文件夹名，拼接到输出路径
-    QString subfolder = m_decompressSubfolderEdit->text().trimmed();
-    if (!subfolder.isEmpty()) {
-        outputDir = outputDir + "/" + subfolder;
-    }
-
-    // 设置UI状态
-    m_isProcessing = true;
-    m_tabWidget->setCurrentIndex(1);
-    m_tabWidget->setTabEnabled(0, false);
-    m_startCompressBtn->setEnabled(false);
-    m_startDecompressBtn->setEnabled(false);
-    m_startDecompressBtn->setText(tr("Processing..."));
-    m_decompressProgressBar->setValue(0);
-    m_decompressProgressLabel->setText(tr("Overall: 0%"));
-    m_decompressCurrentFileLabel->setText(tr("Initializing..."));
-    m_decompressLogEdit->clear();
-    m_decompressLogEdit->append(tr("Starting decompression..."));
-
-    // 创建工作线程
-    m_workerThread = new QThread();
-    m_worker = new CompressionWorker();
-    m_worker->setDecompressionParams(inputPath, outputDir, password);
-    m_worker->moveToThread(m_workerThread);
-
-    connect(m_workerThread, &QThread::started, m_worker, &CompressionWorker::doDecompression);
-    connect(m_worker, &CompressionWorker::detailedProgress, this, &MainWindow::onDecompressionDetailedProgress);
-    connect(m_worker, &CompressionWorker::finished, this, &MainWindow::onDecompressionFinished);
-
-    m_workerThread->start();
-}
-
-// === 进度和状态槽函数 ===
-
-void MainWindow::onCompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status)
-{
-    int overallInt = static_cast<int>(overallProgress);
-    int fileInt = static_cast<int>(fileProgress);
-
-    m_compressProgressBar->setValue(overallInt);
-    m_compressProgressLabel->setText(tr("Overall: %1% | Current file: %2%").arg(overallInt).arg(fileInt));
-
-    if (!filename.isEmpty()) {
-        QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
-        m_compressCurrentFileLabel->setText(displayText);
-        // 限制日志行数，防止内存无限增长
-        QTextDocument *doc = m_compressLogEdit->document();
-        if (doc->lineCount() > 500) {
-            // 更高效的清理方式：保留最近的内容
-            QTextCursor cursor(doc);
-            cursor.movePosition(QTextCursor::End);
-            cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
-            cursor.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor, 500);
-            cursor.removeSelectedText();
-        }
-        m_compressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
-            .arg(overallInt, 3)
-            .arg(status)
-            .arg(filename)
-            .arg(fileInt, 3));
-    } else {
-        m_compressCurrentFileLabel->setText(status);
-        m_compressLogEdit->append(tr("[%1%] %2").arg(overallInt, 3).arg(status));
-    }
-}
-
-void MainWindow::onCompressionFinished(bool success, const QString &message)
-{
-    const QString dialogMessage = localizeWorkerDialogMessage(message);
-
-    m_isProcessing = false;
-    m_tabWidget->setTabEnabled(0, true);
-    m_tabWidget->setTabEnabled(1, true);
-    m_startCompressBtn->setEnabled(true);
-    m_startDecompressBtn->setEnabled(true);
-    m_startCompressBtn->setText(tr("Start Compression"));
-    m_compressModeCombo->setEnabled(true);
-
-    if (success) {
-        m_compressProgressBar->setValue(100);
-        m_compressProgressLabel->setText(tr("Overall: 100% | Completed"));
-        m_compressCurrentFileLabel->setText(tr("Completed successfully"));
-        m_compressLogEdit->append(tr("Compression completed successfully!"));
-        QMessageBox::information(this, tr("Success"), dialogMessage);
-    } else {
-        m_compressCurrentFileLabel->setText(tr("Failed"));
-        m_compressLogEdit->append(tr("Compression failed: %1").arg(message));
-        QMessageBox::critical(this, tr("Error"), dialogMessage);
-    }
-
-    // 清理工作线程
-    if (m_workerThread) {
-        m_workerThread->quit();
-        m_workerThread->wait();
-        delete m_workerThread;
-        m_workerThread = nullptr;
-    }
-    if (m_worker) {
-        delete m_worker;
-        m_worker = nullptr;
-    }
-}
-
-void MainWindow::onDecompressionDetailedProgress(const QString &filename, double fileProgress, double overallProgress, const QString &status)
-{
-    int overallInt = static_cast<int>(overallProgress);
-    int fileInt = static_cast<int>(fileProgress);
-
-    m_decompressProgressBar->setValue(overallInt);
-    m_decompressProgressLabel->setText(tr("Overall: %1% | Current file: %2%").arg(overallInt).arg(fileInt));
-
-    if (!filename.isEmpty()) {
-        QString displayText = tr("Processing: %1").arg(elideText(filename, 250));
-        m_decompressCurrentFileLabel->setText(displayText);
-        // 限制日志行数，防止内存无限增长
-        QTextDocument *doc = m_decompressLogEdit->document();
-        if (doc->lineCount() > 500) {
-            // 更高效的清理方式：保留最近的内容
-            QTextCursor cursor(doc);
-            cursor.movePosition(QTextCursor::End);
-            cursor.movePosition(QTextCursor::Start, QTextCursor::KeepAnchor);
-            cursor.movePosition(QTextCursor::Up, QTextCursor::KeepAnchor, 500);
-            cursor.removeSelectedText();
-        }
-        m_decompressLogEdit->append(tr("[%1%] %2 - %3 (%4%)")
-            .arg(overallInt, 3)
-            .arg(status)
-            .arg(filename)
-            .arg(fileInt, 3));
-    } else {
-        m_decompressCurrentFileLabel->setText(status);
-        m_decompressLogEdit->append(tr("[%1%] %2").arg(overallInt, 3).arg(status));
-    }
-}
-
-void MainWindow::onDecompressionFinished(bool success, const QString &message)
-{
-    const QString dialogMessage = localizeWorkerDialogMessage(message);
-
-    m_isProcessing = false;
-    m_tabWidget->setTabEnabled(0, true);
-    m_tabWidget->setTabEnabled(1, true);
-    m_startCompressBtn->setEnabled(true);
-    m_startDecompressBtn->setEnabled(true);
-    m_startDecompressBtn->setText(tr("Start Decompression"));
-
-    if (success) {
-        m_decompressProgressBar->setValue(100);
-        m_decompressProgressLabel->setText(tr("Overall: 100% | Completed"));
-        m_decompressCurrentFileLabel->setText(tr("Completed successfully"));
-        m_decompressLogEdit->append(tr("Decompression completed successfully!"));
-        QMessageBox::information(this, tr("Success"), dialogMessage);
-    } else {
-        m_decompressCurrentFileLabel->setText(tr("Failed"));
-        m_decompressLogEdit->append(tr("Decompression failed: %1").arg(message));
-        QMessageBox::critical(this, tr("Error"), dialogMessage);
-    }
-
-    // 清理工作线程
-    if (m_workerThread) {
-        m_workerThread->quit();
-        m_workerThread->wait();
-        delete m_workerThread;
-        m_workerThread = nullptr;
-    }
-    if (m_worker) {
-        delete m_worker;
-        m_worker = nullptr;
-    }
-}
-
-// === 辅助函数 ===
-
 bool MainWindow::pathExists(const QString &path)
 {
     try {
@@ -1207,7 +99,6 @@ bool MainWindow::pathExists(const QString &path)
 QString MainWindow::makeValidPath(const QString &input)
 {
     QString result = input.trimmed();
-    // 移除可能的引号
     if (result.startsWith('"') && result.endsWith('"')) {
         result = result.mid(1, result.length() - 2);
     }
@@ -1227,27 +118,24 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 void MainWindow::dropEvent(QDropEvent *event)
 {
     const QList<QUrl> &urls = event->mimeData()->urls();
-
-    // 根据当前标签页判断处理方式
-    int currentTab = m_tabWidget->currentIndex();
+    const int currentTab = m_tabWidget->currentIndex();
 
     if (currentTab == 0) {
-        // 压缩模式 - 添加到文件列表
         addDroppedPaths(urls);
-    } else if (currentTab == 1) {
-        // 解压模式 - 设置压缩文件
-        if (!urls.isEmpty()) {
-            QString path = urls.first().toLocalFile();
-            if (path.isEmpty()) {
-                path = urls.first().toString();
-            }
-            QString cleanPath = makeValidPath(path);
-            if (!cleanPath.isEmpty() && cleanPath.toLower().endsWith(".sy")) {
-                m_decompressFilePathEdit->setText(cleanPath);
-                // 自动设置输出目录为文件所在目录
-                QFileInfo fileInfo(cleanPath);
-                m_decompressOutputDirEdit->setText(fileInfo.absolutePath());
-            }
+        return;
+    }
+
+    if (currentTab == 1 && !urls.isEmpty()) {
+        QString path = urls.first().toLocalFile();
+        if (path.isEmpty()) {
+            path = urls.first().toString();
+        }
+
+        const QString cleanPath = makeValidPath(path);
+        if (!cleanPath.isEmpty() && cleanPath.toLower().endsWith(".sy")) {
+            m_decompressFilePathEdit->setText(cleanPath);
+            QFileInfo fileInfo(cleanPath);
+            m_decompressOutputDirEdit->setText(fileInfo.absolutePath());
         }
     }
 }
@@ -1260,12 +148,11 @@ void MainWindow::addDroppedPaths(const QList<QUrl> &urls)
             path = url.toString();
         }
 
-        QString cleanPath = makeValidPath(path);
+        const QString cleanPath = makeValidPath(path);
         if (cleanPath.isEmpty()) {
             continue;
         }
 
-        // 检查是否已存在
         if (m_fileListWidget->findItems(cleanPath, Qt::MatchExactly).isEmpty()) {
             m_fileListWidget->addItem(cleanPath);
         }
@@ -1287,108 +174,130 @@ void MainWindow::updateBackground()
         return;
     }
 
-    // 获取窗口大小
-    QSize windowSize = this->size();
-
-    // 计算保持宽高比的缩放尺寸（裁剪模式：缩放到完全覆盖窗口）
-    QSize imageSize = m_backgroundPixmap.size();
-    double imageRatio = static_cast<double>(imageSize.width()) / imageSize.height();
-    double windowRatio = static_cast<double>(windowSize.width()) / windowSize.height();
+    const QSize windowSize = size();
+    const QSize imageSize = m_backgroundPixmap.size();
+    const double imageRatio = static_cast<double>(imageSize.width()) / imageSize.height();
+    const double windowRatio = static_cast<double>(windowSize.width()) / windowSize.height();
 
     QSize scaledSize;
     if (windowRatio > imageRatio) {
-        // 窗口更宽 - 按宽度缩放，高度会超出
         scaledSize.setWidth(windowSize.width());
         scaledSize.setHeight(static_cast<int>(windowSize.width() / imageRatio));
     } else {
-        // 窗口更高 - 按高度缩放，宽度会超出
         scaledSize.setHeight(windowSize.height());
         scaledSize.setWidth(static_cast<int>(windowSize.height() * imageRatio));
     }
 
-    // 缩放图片
-    QPixmap scaledPixmap = m_backgroundPixmap.scaled(
+    const QPixmap scaledPixmap = m_backgroundPixmap.scaled(
         scaledSize,
         Qt::KeepAspectRatioByExpanding,
         Qt::SmoothTransformation
     );
 
-    // 居中裁剪
-    int x = (scaledPixmap.width() - windowSize.width()) / 2;
-    int y = (scaledPixmap.height() - windowSize.height()) / 2;
-
-    QPixmap croppedPixmap = scaledPixmap.copy(
+    const int x = (scaledPixmap.width() - windowSize.width()) / 2;
+    const int y = (scaledPixmap.height() - windowSize.height()) / 2;
+    const QPixmap croppedPixmap = scaledPixmap.copy(
         qMax(0, x),
         qMax(0, y),
         windowSize.width(),
         windowSize.height()
     );
 
-    // 设置背景
     QPalette palette;
     palette.setBrush(QPalette::Window, QBrush(croppedPixmap));
     setPalette(palette);
-}
-
-void MainWindow::updateOutputDirectory()
-{
-    const QString inputPath = primaryCompressionInputPath();
-    if (!inputPath.isEmpty()) {
-        QFileInfo fileInfo(inputPath);
-
-        // 无论文件还是目录，都取其父目录（所在根目录）
-        QString parentDir = fileInfo.absolutePath();
-
-        m_outputDirEdit->setText(parentDir);
-    } else {
-        m_outputDirEdit->clear();
-    }
-}
-
-void MainWindow::updateOutputFileName()
-{
-    const QString inputPath = primaryCompressionInputPath();
-    if (inputPath.isEmpty()) {
-        m_outputFileNameEdit->clear();
-        return;
-    }
-
-    m_outputFileNameEdit->setText(suggestedOutputFileName(inputPath));
-}
-
-QString MainWindow::primaryCompressionInputPath() const
-{
-    const QList<QListWidgetItem *> selectedItems = m_fileListWidget->selectedItems();
-    if (!selectedItems.isEmpty()) {
-        return selectedItems.first()->text();
-    }
-
-    if (m_fileListWidget->count() > 0) {
-        return m_fileListWidget->item(0)->text();
-    }
-
-    return {};
-}
-
-QString MainWindow::suggestedOutputFileName(const QString &inputPath) const
-{
-    const QFileInfo fileInfo(inputPath);
-    QString suggestedName;
-
-    if (fileInfo.isDir()) {
-        suggestedName = fileInfo.fileName();
-    } else {
-        suggestedName = fileInfo.completeBaseName();
-        if (suggestedName.isEmpty()) {
-            suggestedName = fileInfo.fileName();
-        }
-    }
-
-    return suggestedName.trimmed();
 }
 
 QString MainWindow::elideText(const QString &text, int maxWidth)
 {
     QFontMetrics fm(m_compressCurrentFileLabel->font());
     return fm.elidedText(text, Qt::ElideMiddle, maxWidth);
+}
+
+QString MainWindow::localizeWorkerDialogMessage(const QString &message) const
+{
+    const auto translate = [](const char *sourceText) {
+        return QCoreApplication::translate("CompressionWorker", sourceText);
+    };
+
+    const QString fileNotFoundPrefix = QStringLiteral("File not found: ");
+    if (message.startsWith(fileNotFoundPrefix)) {
+        return translate("File not found: %1").arg(message.mid(fileNotFoundPrefix.size()));
+    }
+
+    const QString invalidPathPrefix = QStringLiteral("Invalid path: ");
+    if (message.startsWith(invalidPathPrefix)) {
+        return translate("Invalid path: %1").arg(message.mid(invalidPathPrefix.size()));
+    }
+
+    const QString outputDirNotFoundPrefix = QStringLiteral("Output directory not found: ");
+    if (message.startsWith(outputDirNotFoundPrefix)) {
+        return translate("Output directory not found: %1").arg(message.mid(outputDirNotFoundPrefix.size()));
+    }
+
+    const QString invalidOutputDirPrefix = QStringLiteral("Invalid output directory: ");
+    if (message.startsWith(invalidOutputDirPrefix)) {
+        return translate("Invalid output directory: %1").arg(message.mid(invalidOutputDirPrefix.size()));
+    }
+
+    const QString archiveNotFoundPrefix = QStringLiteral("Archive file not found: ");
+    if (message.startsWith(archiveNotFoundPrefix)) {
+        return translate("Archive file not found: %1").arg(message.mid(archiveNotFoundPrefix.size()));
+    }
+
+    const QString invalidArchivePrefix = QStringLiteral("Invalid archive path: ");
+    if (message.startsWith(invalidArchivePrefix)) {
+        return translate("Invalid archive path: %1").arg(message.mid(invalidArchivePrefix.size()));
+    }
+
+    if (message == QStringLiteral("Only .sy files can be decompressed")) {
+        return translate("Only .sy files can be decompressed");
+    }
+
+    const QString compressionSuccessPrefix = QStringLiteral("Compression successful!\nOutput file: ");
+    if (message.startsWith(compressionSuccessPrefix)) {
+        return translate("Compression successful!\nOutput file: %1")
+            .arg(message.mid(compressionSuccessPrefix.size()));
+    }
+
+    const QString compressionFailedPrefix = QStringLiteral("Compression failed: ");
+    if (message.startsWith(compressionFailedPrefix)) {
+        return translate("Compression failed: %1").arg(message.mid(compressionFailedPrefix.size()));
+    }
+
+    if (message == QStringLiteral("Compression failed due to unknown error")) {
+        return translate("Compression failed due to unknown error");
+    }
+
+    if (message == QStringLiteral("This archive requires a password. Please enter the decryption key.")) {
+        return translate("This archive requires a password. Please enter the decryption key.");
+    }
+
+    const QString decompressionSuccessPrefix = QStringLiteral("Decompression successful!\nOutput directory: ");
+    if (message.startsWith(decompressionSuccessPrefix)) {
+        return translate("Decompression successful!\nOutput directory: %1")
+            .arg(message.mid(decompressionSuccessPrefix.size()));
+    }
+
+    const QString decompressionFailedPrefix = QStringLiteral("Decompression failed: ");
+    const QString decompressionFailedSuffix = QStringLiteral("\n\nPossible reasons:\n"
+                                                             "1. Incorrect decryption key\n"
+                                                             "2. Corrupted or incompatible .sy file\n"
+                                                             "3. Insufficient disk space");
+    if (message.startsWith(decompressionFailedPrefix) && message.endsWith(decompressionFailedSuffix)) {
+        const QString reason = message.mid(
+            decompressionFailedPrefix.size(),
+            message.size() - decompressionFailedPrefix.size() - decompressionFailedSuffix.size());
+        return translate("Decompression failed: %1\n\nPossible reasons:\n"
+                         "1. Incorrect decryption key\n"
+                         "2. Corrupted or incompatible .sy file\n"
+                         "3. Insufficient disk space")
+            .arg(reason);
+    }
+
+    if (message == QStringLiteral("Decompression failed due to unknown error")) {
+        return translate("Decompression failed due to unknown error");
+    }
+
+    return message;
 }

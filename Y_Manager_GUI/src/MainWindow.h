@@ -86,6 +86,7 @@ private:
     QString makeValidPath(const QString &input);
     void addDroppedPaths(const QList<QUrl> &urls);
     void updateBackground();
+    QString localizeWorkerDialogMessage(const QString &message) const;
     void updateOutputDirectory();
     void updateOutputFileName();
     QString primaryCompressionInputPath() const;

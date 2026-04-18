@@ -106,6 +106,8 @@ set(CORE_SOURCES
 set(GUI_SOURCES
     "${CMAKE_SOURCE_DIR}/src/main.cpp"
     "${CMAKE_SOURCE_DIR}/src/MainWindow.cpp"
+    "${CMAKE_SOURCE_DIR}/src/MainWindow_Compression.cpp"
+    "${CMAKE_SOURCE_DIR}/src/MainWindow_Decompression.cpp"
     "${CMAKE_SOURCE_DIR}/src/CompressionWorker.cpp"
     "${CMAKE_SOURCE_DIR}/IconHandler.cpp"
 )
