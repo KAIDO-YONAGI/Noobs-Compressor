@@ -245,7 +245,7 @@ QWidget* MainWindow::createCompressionTab()
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_passwordEdit = new QLineEdit();
     m_passwordEdit->setEchoMode(QLineEdit::Password);
-    m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
+    m_passwordEdit->setPlaceholderText(tr(""));
     outputLayout->addWidget(m_passwordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
@@ -335,7 +335,7 @@ QWidget* MainWindow::createCompressionTab()
         if (!needsEncryption) {
             m_passwordEdit->setPlaceholderText(tr("Not needed for this mode"));
         } else {
-            m_passwordEdit->setPlaceholderText(tr("Leave empty for default"));
+            m_passwordEdit->setPlaceholderText(tr(""));
         }
     });
     emit m_compressModeCombo->currentIndexChanged(m_compressModeCombo->currentIndex());
@@ -567,7 +567,7 @@ QWidget* MainWindow::createDecompressionTab()
     outputLayout->addWidget(new QLabel(tr("Password:")), 2, 0);
     m_decompressPasswordEdit = new QLineEdit();
     m_decompressPasswordEdit->setEchoMode(QLineEdit::Password);
-    m_decompressPasswordEdit->setPlaceholderText(tr("Leave empty for default"));
+    m_decompressPasswordEdit->setPlaceholderText(tr(""));
     outputLayout->addWidget(m_decompressPasswordEdit, 2, 1, 1, 2);
 
     leftLayout->addWidget(outputGroup);
