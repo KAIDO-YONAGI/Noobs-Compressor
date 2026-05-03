@@ -1,0 +1,123 @@
+@startuml GUI_Layer
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 50
+skinparam padding 4
+skinparam packagePadding 4
+
+title GUI Layer - Qt 6
+
+class MainWindow {
+    ** Widgets **
+    - m_compressModeCombo : QComboBox*
+    - m_fileListWidget : QListWidget*
+    - m_outputDirEdit : QLineEdit*
+    - m_outputFileNameEdit : QLineEdit*
+    - m_passwordEdit : QLineEdit*
+    - m_startCompressBtn : QPushButton*
+    - m_compressProgressBar : QProgressBar*
+    - m_compressCurrentFileLabel : QLabel*
+    - m_compressLogEdit : QTextEdit*
+    - m_decompressFilePathEdit : QLineEdit*
+    - m_decompressOutputDirEdit : QLineEdit*
+    - m_decompressPasswordEdit : QLineEdit*
+    - m_startDecompressBtn : QPushButton*
+    - m_decompressProgressBar : QProgressBar*
+    - m_decompressLogEdit : QTextEdit*
+    - m_tabWidget : QTabWidget*
+    - m_backgroundPixmap : QPixmap
+    --
+    ** Workers **
+    - m_workerThread : QThread*
+    - m_worker : CompressionWorker*
+    - m_isProcessing : bool
+    --
+    ** Slots **
+    - onAddFilesClicked() : void
+    - onAddFolderClicked() : void
+    - onStartCompressionClicked() : void
+    - onStartDecompressionClicked() : void
+    - onCompressionDetailedProgress(...) : void
+    - onCompressionFinished(success, msg) : void
+    - onDecompressionDetailedProgress(...) : void
+    - onDecompressionFinished(success, msg) : void
+    --
+    ** Overrides **
+    # dragEnterEvent(event) : void
+    # dropEvent(event) : void
+    # resizeEvent(event) : void
+    --
+    ** Helpers **
+    - setupUI() : void
+    - createCompressionTab() : QWidget*
+    - createDecompressionTab() : QWidget*
+    - addDroppedPaths(urls) : void
+    - updateOutputDirectory() : void
+    - updateOutputFileName() : void
+}
+
+class CompressionWorker {
+    - m_filesToCompress : QStringList
+    - m_outputDir : QString
+    - m_outputFileName : QString
+    - m_password : QString
+    - m_mode : CompressionMode
+    - m_decompressInputFile : QString
+    - m_decompressOutputDir : QString
+    - m_stopRequested : atomic~bool~
+    - m_lastProgressTime : time_point
+    - m_lastEmittedProgress : double
+    --
+    + setCompressionParams(files, outputDir, ...) : void
+    + setDecompressionParams(inputFile, outputDir, ...) : void
+    + requestStop() : void
+    + doCompression() : void
+    + doDecompression() : void
+    .. signals ..
+    + detailedProgress(filename, fileProgress, overallProgress, status) : void
+    + finished(success, message) : void
+    --
+    - validateCompressionParams() : bool
+    - shouldEmitProgress(currentProgress) : bool
+}
+
+together {
+    class PlaceholderLineEdit {
+        - m_ghostText : QString
+        - m_ghostTextColor : QColor
+        + setGhostText(text) : void
+        + setGhostTextColor(color) : void
+        # paintEvent(event) : void
+    }
+    class IconHandler {
+        + {static} AssociateIconToSyFile(syFilePath, iconPath) : bool
+        - {static} RegisterSyFileIcon(iconPath) : bool
+        - {static} ExtractIconFromExe(iconPath) : bool
+    }
+}
+
+QMainWindow <|-- MainWindow
+QLineEdit <|-- PlaceholderLineEdit
+QObject <|-- CompressionWorker
+
+MainWindow *--> CompressionWorker
+MainWindow *--> "QThread"
+MainWindow ..> IconHandler : uses
+CompressionWorker --> "QThread" : runs on
+
+note right of MainWindow
+  GUI thread + worker thread
+  Signals/slots for progress
+  Drag & drop file support
+end note
+
+note right of CompressionWorker
+  Progress throttled:
+  200ms min interval, 2% delta
+  Stop via atomic bool
+end note
+
+@enduml

@@ -1,0 +1,99 @@
+@startuml Strategy_Pattern
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 40
+skinparam padding 4
+skinparam packagePadding 4
+
+title Strategy Pattern - Compression & Encryption
+
+together {
+    abstract class ICompression {
+        + compress(input, metadataOut, output) : void
+        + decompress(metadata, input, output, originalSize) : void
+    }
+    abstract class IEncryption {
+        + encrypt(input, output) : void
+        + decrypt(input, output) : void
+    }
+}
+
+together {
+    class NullCompression {
+        - NULL_COMPRESSION_MARKER = 0x00
+        + compress(...) : void
+        + decompress(...) : void
+    }
+    class NullEncryption {
+        + encrypt(...) : void
+        + decrypt(...) : void
+    }
+}
+
+together {
+    class HuffmanCompression {
+        - huffman : unique_ptr~Huffman~
+        + HuffmanCompression(threadNums = 1)
+        + compress(...) : void
+        + decompress(...) : void
+        + getHuffman() : Huffman*
+    }
+    class AesEncryption {
+        - aes : Aes*
+        + AesEncryption(aes)
+        + encrypt(...) : void
+        + decrypt(...) : void
+        + getAes() : Aes*
+    }
+}
+
+class Aes {
+    - w : int[44]
+    - iv : uint8_t[16]
+    - aesKey16Bytes : uint8_t[16]
+    + Aes(aesKey)
+    + doAes(mode, input, output) : void
+    - extendKey() : void
+    - subBytes/shiftRows/mixColumns() : void
+    - addRoundKey(round) : void
+    - deSubBytes/deShiftRows/deMixColumns() : void
+    - processDataAes(input, mode) : DataBlock
+    - hashTo16Bytes(input, output) : void
+}
+
+class StrategyFactory {
+    + {static} createModules(mode, password) : StrategyModules
+    + {static} idToMode(id) : CompressionMode
+    + {static} modeToId(mode) : CompressStrategy
+    + {static} hasEncryption(mode) : bool
+}
+
+class StrategyModules {
+    + compression : unique_ptr~ICompression~
+    + encryption : unique_ptr~IEncryption~
+}
+
+ICompression <|-- NullCompression
+ICompression <|-- HuffmanCompression
+IEncryption <|-- NullEncryption
+IEncryption <|-- AesEncryption
+
+HuffmanCompression *--> Huffman : unique_ptr
+AesEncryption *--> Aes
+
+StrategyFactory ..> StrategyModules : <<creates>>
+StrategyFactory ..> ICompression : creates impl
+StrategyFactory ..> IEncryption : creates impl
+StrategyModules *--> ICompression
+StrategyModules *--> IEncryption
+
+note right of StrategyFactory
+  CompressionMode:
+  HuffmanAES=0, HuffmanOnly=1,
+  AESOnly=2, PackOnly=3
+end note
+
+@enduml

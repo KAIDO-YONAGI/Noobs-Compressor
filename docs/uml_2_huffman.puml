@@ -1,0 +1,179 @@
+@startuml Huffman_Pipeline
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 40
+skinparam padding 4
+skinparam packagePadding 4
+
+title Huffman Compression Pipeline
+
+together {
+    abstract class Worker {
+        + work(connector: DataConnector*) : void
+    }
+    abstract class DataConnector {
+        + getInputBlocks() : blocks_t*
+        + getOutputBlocks() : blocks_t*
+        + done() : void
+    }
+}
+
+together {
+    class GetFreq {
+        - heffman : shared_ptr~Huffman~
+        - tpool : unique_ptr~ThreadPool~
+        + GetFreq(huffman)
+        + work(connector) : void
+    }
+    class DoEncode {
+        - heffman : shared_ptr~Huffman~
+        - tpool : unique_ptr~ThreadPool~
+        + DoEncode(huffman)
+        + work(connector) : void
+    }
+    class DoDecode {
+        - heffman : shared_ptr~Huffman~
+        + DoDecode(huffman)
+        + work(connector) : void
+    }
+    class GenHeffcodeTab {
+        - heffman : shared_ptr~Huffman~
+        - root : HeffTreeNode*
+        + GenHeffcodeTab(huffman)
+        + work(connector) : void
+    }
+    class LoadHeffcodeTab {
+        - heffman : shared_ptr~Huffman~
+        - root : HeffTreeNode*
+        + LoadHeffcodeTab(huffman)
+        + work(connector) : void
+    }
+}
+
+class Huffman {
+    - byteCount : uint64_t
+    - threadTabs : Heffmaps
+    - hashTab : Heffmap
+    - treeRoot : HeffTreeNode*
+    - pathStack : PathStack
+    + Huffman(threadNums)
+    + statisticFreq(threadId, block) : void
+    + encode(input, output, bitOutput) : void
+    + decode(input, output, bitInput, maxOutputSize) : void
+    + mergeTtabs() : void
+    + genHefftree() : void
+    + saveCodeInTab() : void
+    + treeToPlatUchar(outBlock) : void
+    + spawnTree(inBlock) : void
+    + getTreeRoot() : HeffTreeNode*
+    + receiveTreeRoot(root) : void
+}
+
+together {
+    class HeffTreeNode {
+        + data : uchar
+        + freq : FreqT
+        + left : HeffTreeNode*
+        + right : HeffTreeNode*
+        + isLeaf : bool
+    }
+    class CharData {
+        + freq : FreqT
+        + codeLen : CodeLenT
+        + code : CodeT
+        + add() : void
+    }
+    class PathStack {
+        + codeBlocks : CodeT
+        + codeLen : CodeLenT
+        + push(bit) : void
+        + pop() : void
+        + writeCode(cdata) : void
+    }
+    class BitHandler {
+        + byte : uchar
+        + bitLen : uint8_t
+        + byteCount : uint64_t
+        + handle(codeBlocks, codeLen, block) : void
+        + handleLast() : void
+    }
+}
+
+class "sfc::DataBlocks" as sfc_DataBlocks {
+    - blocks : vector~block_t~
+    + size() : int
+    + at(i) : block_t&
+    + clear() : void
+    + checkAndFix() : void
+}
+class DataBlocksManage {
+    - dataBlocksArray : DataBlocks[2]
+    - whichOut : uint8_t
+    + DataBlocksManage(count)
+    + getInputBlocks() : blocks_t*
+    + getOutputBlocks() : blocks_t*
+    + done() : void
+}
+
+together {
+    class ThreadPool {
+        - threads : map~string, Thread~
+        + newThread(name) : void
+        + delThread(name) : void
+        + addTask(name, task) : void
+    }
+    class Thread {
+        - taskQueue : MonitorTaskQueue
+        + addTask(task) : void
+    }
+    class MonitorTaskQueue {
+        - mtx : mutex
+        - condition : condition_variable
+        + addTask(task) : void
+        + getTask() : function
+    }
+}
+
+Worker <|-- GetFreq
+Worker <|-- DoEncode
+Worker <|-- DoDecode
+Worker <|-- GenHeffcodeTab
+Worker <|-- LoadHeffcodeTab
+
+GetFreq --> Huffman : shared_ptr
+DoEncode --> Huffman : shared_ptr
+DoDecode --> Huffman : shared_ptr
+GenHeffcodeTab --> Huffman : shared_ptr
+LoadHeffcodeTab --> Huffman : shared_ptr
+GenHeffcodeTab --> HeffTreeNode : root
+LoadHeffcodeTab --> HeffTreeNode : root
+GetFreq --> ThreadPool : unique_ptr
+DoEncode --> ThreadPool : unique_ptr
+
+Worker ..> DataConnector : uses
+
+Huffman *--> HeffTreeNode : treeRoot
+Huffman *--> PathStack : pathStack
+Huffman o--> CharData : hashTab/Heffmap
+Huffman ..> BitHandler : encode/decode
+PathStack ..> CharData : writeCode
+HeffTreeNode --> HeffTreeNode : left/right
+BitHandler --> CharData : handles code
+
+DataConnector <|-- DataBlocksManage
+DataBlocksManage *--> sfc_DataBlocks : double-buffer
+
+ThreadPool *--> Thread : map
+Thread *--> MonitorTaskQueue : taskQueue
+
+note right of GetFreq
+  Encode pipeline:
+  GetFreq -> GenHeffcodeTab -> DoEncode
+  Decode pipeline:
+  LoadHeffcodeTab -> DoDecode
+end note
+
+@enduml

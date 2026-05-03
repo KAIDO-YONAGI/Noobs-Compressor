@@ -109,4 +109,54 @@ public:
 
     void encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode); // 在压缩流程中读取完目录信息就直接加密并回填目录块到文件
 };
+/*
+ TODO(BinaryStandardLoader，小改动重构建议)
+
+ 这些建议刻意保持为“小步、低风险”修改，适合作为后续学习和整理时的
+ 参考清单。目标是改善封装，而不是一次性重写整个压缩/解压流程，也不改
+ 当前文件格式。
+
+ 1. 把内部队列收口到成员函数后面
+    - 将 fileQueue / entryQueue / directoryQueueReady 改为 private。
+    - 对外提供一个小接口，例如 loadNextBatch() 或 next()。
+    - 目标：调用方不需要理解 loader 内部的队列协作规则。
+
+ 2. 用一个显式状态枚举替代零散的 bool 标记
+    - 现在的 isReadHeader / blockIsDone / allDone 能工作，但状态组合是隐式的。
+    - 之后可以考虑引入：
+      enum class LoaderState { Created, HeaderLoaded, ReadingBlock,
+      EmittingItems, Finished, Error };
+    - 目标：让状态流转更容易理解、调试和排错。
+
+ 3. 让 restartLoader() 变成内部细节
+    - 现在调用方必须知道什么时候该调 restartLoader()，
+      什么时候该再次调用 headerLoaderIterator()。
+    - 之后可以把这部分控制逻辑收回到 loader 内部。
+    - 目标：减少外层循环对内部协议的感知。
+
+ 4. 不要让 fileQueue 的 pair.second 同时承担两种语义
+    - 在压缩流程里，它更像是与 offset 相关的值。
+    - 在解压流程里，它表示 compressedSize。
+    - 之后可以改成显式任务结构体，让字段含义一眼就清楚。
+
+ 5. 尽量不要直接暴露原始 ifstream
+    - getInFile() 会让外部代码直接改变 loader 的文件位置状态。
+    - 之后更适合只暴露调用方真正需要的东西，例如 offset
+      或一个专门的读取辅助接口。
+    - 目标：把文件位置相关不变量尽量留在 loader 内部维护。
+
+ 6. 把“读取”和“回写”职责拆开
+    - encryptHeaderBlock() 很有用，但它把“读取目录清单”和
+      “回写目录块”两件事放在了同一个类里。
+    - 之后可以考虑拆出一个辅助类，例如
+      DirectoryBlockSealer / DirectoryBlockRewriter。
+    - 目标：让 BinaryStandardLoader 更专注于读取和解析。
+
+ 如果以后要按顺序慢慢改，可以考虑：
+   第一步：先隐藏公开队列
+   第二步：加入 LoaderState
+   第三步：引入显式任务结构体
+   第四步：把 restart 逻辑内聚进去
+   第五步：再拆出回写职责
+*/
 } // namespace Y_flib
