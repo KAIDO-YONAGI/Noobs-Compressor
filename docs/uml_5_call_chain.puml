@@ -1,0 +1,151 @@
+@startuml Y_Manager_Call_Chain
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 40
+skinparam ranksep 40
+skinparam padding 4
+skinparam packagePadding 4
+
+title Y_Manager - Module Call Chain & Dependencies
+
+class CompressionWorker {
+    + doCompression() : void
+    + doDecompression() : void
+    + requestStop() : void
+}
+
+together {
+    abstract class ICompression
+    abstract class IEncryption
+}
+
+together {
+    class StrategyFactory {
+        + {static} createModules(mode, password) : StrategyModules
+        + {static} idToMode(id) : CompressionMode
+        + {static} modeToId(mode) : CompressStrategy
+    }
+    class StrategyModules {
+        + compression : unique_ptr~ICompression~
+        + encryption : unique_ptr~IEncryption~
+    }
+}
+
+together {
+    class CompressionLoop {
+        - compressionFilePath : string
+        - progressCallback : ProgressCallback
+        + compressionLoop(filePathToScan, encryption, compression, mode) : void
+        - countTotalFiles(filePathToScan) : void
+        - prepareNextFile(dataLoader, fileEntry, ...) : void
+    }
+    class DecompressionLoop {
+        - parentPath/fullPath : path
+        - progressCallback : ProgressCallback
+        - m_encryption : IEncryption*
+        - m_compression : ICompression*
+        + decompressionLoop(encryption, compression) : void
+        - processDirectories(headerLoader) : void
+        - processFile(headerLoader, locator, ...) : void
+        - processDataBlock(inFile, filePath, ...) : void
+        - createDirectory(path) : void
+        - createFile(filePath) : bool
+    }
+}
+
+class HeaderWriter {
+    - writer : unique_ptr~HeaderWriter_Interface~
+    + headerWriter(filePathToScan, outputFilePath, ...) : void
+}
+
+together {
+    class BinaryStandardLoader {
+        + headerLoaderIterator(encryption) : void
+        + getStrategy() : CompressStrategy
+        + allLoopIsDone() : bool
+        + encryptHeaderBlock(encryption, mode) : void
+        + fileQueue : EntryQueue
+        + blockPosition : vector~array~
+        + getInFile() : ifstream&
+    }
+    class DataLoader {
+        + reset(inPath) : void
+        + dataLoader() : void
+        + getBlock() : const DataBlock&
+        + isDone() : bool
+    }
+    class DataExporter {
+        + exportCompressedData(data) : void
+        + exportDecompressedData(data) : void
+        + thisFileIsDone(offset) : void
+    }
+}
+
+together {
+    class EntryDetails {
+        + getName() : string
+        + getFileSizeInDetails() : FileSize
+        + getIsFile() : bool
+    }
+    class Locator {
+        + locateFromBegin(file, offset) : void
+        + getFileSize(path, outFile) : FileSize
+    }
+}
+
+CompressionWorker ..> StrategyFactory : creates
+CompressionWorker ..> HeaderWriter : creates
+CompressionWorker ..> CompressionLoop : creates
+CompressionWorker ..> DecompressionLoop : creates
+CompressionWorker --> DataLoader : uses
+CompressionWorker --> DataExporter : uses
+
+StrategyFactory ..> StrategyModules : returns
+StrategyModules *--> ICompression
+StrategyModules *--> IEncryption
+
+CompressionLoop ..> ICompression : compress()
+CompressionLoop ..> IEncryption : encrypt()
+CompressionLoop ..> BinaryStandardLoader : uses
+CompressionLoop ..> DataLoader : reads files
+CompressionLoop ..> DataExporter : writes
+
+DecompressionLoop ..> ICompression : decompress()
+DecompressionLoop ..> IEncryption : decrypt()
+DecompressionLoop ..> BinaryStandardLoader : reads archive
+DecompressionLoop ..> DataExporter : writes
+DecompressionLoop ..> Locator : seeks
+DecompressionLoop ..> EntryDetails : uses
+
+BinaryStandardLoader ..> EntryDetails : produces
+DataLoader --> EntryDetails : loads for
+DataExporter --> Locator : seeks
+
+note as N1
+  **Compression Flow:**
+  1. CompressionWorker.doCompression()
+  2. StrategyFactory.createModules() -> ICompression + IEncryption
+  3. HeaderWriter -> write Header + directory to .sy
+  4. CompressionLoop per file:
+     DataLoader.getBlock() -> raw
+     ICompression.compress() -> IEncryption.encrypt()
+     DataExporter.exportCompressedData()
+  5. BinaryStandardLoader.encryptHeaderBlock()
+end note
+
+note as N2
+  **Decompression Flow:**
+  1. CompressionWorker.doDecompression()
+  2. BinaryStandardLoader reads Header -> getStrategy()
+  3. StrategyFactory.createModules()
+  4. DecompressionLoop:
+     headerLoaderIterator() -> decrypt directory
+     processDirectories() -> create dirs
+     per file: IEncryption.decrypt()
+       -> ICompression.decompress()
+       -> DataExporter.exportDecompressedData()
+end note
+
+@enduml

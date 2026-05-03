@@ -45,6 +45,14 @@ namespace Y_flib
 
     // 文件标准相关
 
+    enum class FlagType : char // 枚举类，强类型检查
+    {
+        Directory = '0',
+        File = '1',
+        Separated = '2',
+        LogicalRoot = '3',
+        SymbolLink = '4'
+    }; 
 #pragma pack(push, 1)
     struct Header
     {
@@ -57,14 +65,6 @@ namespace Y_flib
     };
 #pragma pack(pop)
 
-    enum class FlagType : char // 枚举类，强类型检查
-    {
-        Directory = '0',
-        File = '1',
-        Separated = '2',
-        LogicalRoot = '3',
-        SymbolLink = '4'
-    }; 
     namespace Constants
     {
         constexpr Y_flib::SizeOfFlag FLAG_SIZE = sizeof(Y_flib::FlagType);

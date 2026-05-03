@@ -1,0 +1,167 @@
+@startuml File_System_and_Serialization
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 30
+skinparam ranksep 30
+skinparam padding 3
+skinparam packagePadding 3
+
+title File System & Binary Serialization
+
+package "Entry & Path" as P1 {
+    class EntryDetails {
+        - name : string
+        - sizeOfName : FileNameSize
+        - fileSize : FileSize
+        - isFile : bool
+        - fullPath : path
+        + getName() : string
+        + getFullPath() : path
+        + getFileSizeInDetails() : FileSize
+        + getIsFile() : bool
+    }
+    class FilePath {
+        - outputFilePath : path
+        - filePathToScan : path
+    }
+    class EntryQueue {
+        Extends: queue~pair~EntryDetails, FileCount~~
+    }
+    class EncodingUtils {
+        + {static} pathFromUtf8/utf8ToWide/wideToUtf8
+        + {static} qStringToUtf8/utf8ToQString
+    }
+}
+
+package "Binary Format" as P2 {
+    class "<<packed 22B>>\nHeader" as Header {
+        + magicNum_1/2 : uint32_t
+        + strategy : uint8_t
+        + version : uint8_t
+        + headerOffset : uint8_t
+        + directoryOffset : uint64_t
+    }
+    class StandardsWriter {
+        + writeBinaryStandards(value, file) : void
+        + {static} writeDataBlock(size, file, buffer) : void
+    }
+    class StandardsReader {
+        - file : istream&
+        + readBinaryStandards() : T
+        + {static} readDataBlock(size, file, buffer) : void
+    }
+    class Locator {
+        + locateFromBegin(file, offset) : void
+        + locateFromEnd(file, offset) : void
+        + getFileSize(path, outFile) : FileSize
+    }
+}
+
+package "Writer / Exporter" as P3 {
+    class BinaryStandardWriter {
+        - outFile : ofstream&
+        + writeLogicalRoot(...) : void
+        + writeRoot(...) : void
+        + writeBlankSeparatedStandard() : void
+        + binaryStandardWriter(...) : void
+    }
+    class DataExporter {
+        - outFile : fstream
+        - processedFileSize : FileSize
+        + exportCompressedData(data) : void
+        + exportDecompressedData(data) : void
+        + thisFileIsDone(offset) : void
+    }
+    class EntryProcessor {
+        - outFile : ofstream&
+        - entryQueue : EntryQueue
+        - binaryStandardWriter : BinaryStandardWriter*
+        + entryProcessor(filePathToScan, fullOutPath, logicalRoot) : void
+    }
+}
+
+package "Loader / Parser" as P4 {
+    class BinaryStandardLoader {
+        - header : Header
+        - parserForLoader : unique_ptr~EntryParser~
+        - buffer : DataBlock
+        + fileQueue/entryQueue : EntryQueue
+        + blockPosition : vector~array~
+        + headerLoaderIterator(encryption) : void
+        + getStrategy() : CompressStrategy
+        + allLoopIsDone() : bool
+        + encryptHeaderBlock(encryption, mode) : void
+    }
+    class EntryParser {
+        - entryQueue/fileQueue : EntryQueue&
+        - buffer : DataBlock&
+        - header : const Header&
+        + rootForDecompression : string
+        + parser(bufferPtr, count) : void
+        - fileParser/directoryParser/rootParser() : void
+    }
+    class DataLoader {
+        - data : DataBlock
+        - fileSize : FileSize
+        - inFile : ifstream
+        - loadIsDone : bool
+        + reset(inPath) : void
+        + dataLoader() : void
+        + getBlock() : DataBlock&
+        + isDone() : bool
+    }
+}
+
+package "Header Writer (Strategy)" as P5 {
+    abstract class HeaderWriter_Interface {
+        + writeHeader(...) : void
+        + writeDirectory(...) : void
+    }
+    class HeaderWriter_v0 {
+        + writeHeader(...) : void
+        + writeDirectory(...) : void
+    }
+    class HeaderWriter {
+        - writer : unique_ptr~HeaderWriter_Interface~
+        + headerWriter(...) : void
+    }
+}
+
+' ── composition / inheritance ──
+DataExporter *-- Locator
+DataExporter *-- StandardsWriter
+
+BinaryStandardWriter *-- Locator
+BinaryStandardWriter *-- StandardsWriter
+
+BinaryStandardLoader *-- EntryParser : unique_ptr
+
+EntryProcessor *-- BinaryStandardWriter
+
+HeaderWriter_Interface <|-- HeaderWriter_v0
+HeaderWriter *-- HeaderWriter_Interface
+
+' ── cross-package dependencies ──
+BinaryStandardWriter ..> EntryDetails : serializes
+EntryProcessor ..> EntryDetails : BFS traversal
+EntryProcessor ..> FilePath : uses
+EntryProcessor ..> EntryQueue : uses
+
+BinaryStandardLoader ..> Header : reads
+BinaryStandardLoader ..> StandardsReader : uses
+BinaryStandardLoader ..> EntryQueue : fills
+
+EntryParser ..> Header : reads
+EntryParser ..> EntryQueue : uses
+
+DataLoader ..> FilePath : reads from
+
+HeaderWriter ..> EntryProcessor : creates
+HeaderWriter ..> BinaryStandardWriter : uses
+
+EncodingUtils ..> EntryDetails : converts paths
+EncodingUtils ..> FilePath : converts paths
+
+@enduml
