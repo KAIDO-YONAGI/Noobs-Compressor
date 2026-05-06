@@ -27,36 +27,36 @@
  */
 namespace Y_flib
 {
-class EncodingUtils
-{
-public:
-    // 调用须知: 输入必须是 UTF-8 编码文本；返回值可直接用于文件系统访问。
-    static std::filesystem::path pathFromUtf8(std::string_view utf8);
+    class EncodingUtils
+    {
+    public:
+        // 调用须知: 输入必须是 UTF-8 编码文本；返回值可直接用于文件系统访问。
+        static std::filesystem::path pathFromUtf8(std::string_view utf8);
 
-    // 调用须知: 返回 UTF-8 编码字符串，适合继续传给核心层、日志或 Qt 转换层。
-    static std::string pathToUtf8(const std::filesystem::path &path);
+        // 调用须知: 返回 UTF-8 编码字符串，适合继续传给核心层、日志或 Qt 转换层。
+        static std::string pathToUtf8(const std::filesystem::path &path);
 
-    // 调用须知: 仅在需要调用 Windows 宽字符 API 时使用。
-    static std::wstring utf8ToWide(std::string_view utf8);
+        // 调用须知: 仅在需要调用 Windows 宽字符 API 时使用。
+        static std::wstring utf8ToWide(std::string_view utf8);
 
-    // 调用须知: 仅在宽字符 API 返回后需要回到 UTF-8 文本时使用。
-    static std::string wideToUtf8(std::wstring_view wide);
+        // 调用须知: 仅在宽字符 API 返回后需要回到 UTF-8 文本时使用。
+        static std::string wideToUtf8(std::wstring_view wide);
 
-    // 调用须知: 仅做 char8_t -> char 的字节搬运，前提是源数据本身就是 UTF-8。
-    static std::string u8ToString(std::u8string_view u8str);
+        // 调用须知: 仅做 char8_t -> char 的字节搬运，前提是源数据本身就是 UTF-8。
+        static std::string u8ToString(std::u8string_view u8str);
 
 #if SFC_HAS_QSTRING
-    // 调用须知: Qt 层把 QString 交给核心层前，统一走这里得到 UTF-8。
-    static std::string qStringToUtf8(const QString &value);
+        // 调用须知: Qt 层把 QString 交给核心层前，统一走这里得到 UTF-8。
+        static std::string qStringToUtf8(const QString &value);
 
-    // 调用须知: 核心层返回 UTF-8 文本给 Qt 展示时，统一走这里。
-    static QString utf8ToQString(std::string_view utf8);
+        // 调用须知: 核心层返回 UTF-8 文本给 Qt 展示时，统一走这里。
+        static QString utf8ToQString(std::string_view utf8);
 
-    // 调用须知: Qt 路径进入 std::filesystem 前统一走这里，避免重复手写转换。
-    static std::filesystem::path qStringToPath(const QString &value);
+        // 调用须知: Qt 路径进入 std::filesystem 前统一走这里，避免重复手写转换。
+        static std::filesystem::path qStringToPath(const QString &value);
 
-    // 调用须知: std::filesystem 路径回到 Qt 控件显示时统一走这里。
-    static QString pathToQString(const std::filesystem::path &path);
+        // 调用须知: std::filesystem 路径回到 Qt 控件显示时统一走这里。
+        static QString pathToQString(const std::filesystem::path &path);
 #endif
-};
+    };
 } // namespace Y_flib

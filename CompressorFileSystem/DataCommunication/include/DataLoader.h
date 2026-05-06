@@ -20,56 +20,56 @@
  */
 namespace Y_flib
 {
-class DataLoader
-{
-private:
-    Y_flib::DataBlock data;
-
-    Y_flib::FileSize fileSize = 0;
-    std::ifstream inFile;
-    bool loadIsDone = false;
-    Y_flib::FileSize readCount = 0;
-
-    /* 标记读取完成状态 */
-    void done();
-
-public:
-    /* 获取当前缓冲区中的数据块 */
-    const Y_flib::DataBlock &getBlock() { return data; }
-
-    /* 检查是否读取完成 */
-    bool isDone() { return loadIsDone; }
-
-    /* 打开指定文件并初始化读取状态 */
-    void reset(const std::filesystem::path inPath);
-
-    /* 按缓冲区大小读取数据块 */
-    void dataLoader();
-
-    /* 在解压流程中按指定大小读取数据块 */
-    void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
-
-    /* 重置指针到上次读取的位置 */
-    void resetByLastRead();
-
-    /* 默认构造函数 */
-    DataLoader() {}
-
-    /* 构造函数，打开指定文件 */
-    DataLoader(const std::filesystem::path &inPath)
-        : inFile(inPath, std::ios::binary) // 使用初始化列表
+    class DataLoader
     {
-        if (!inFile.is_open())
-            throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + EncodingUtils::pathToUtf8(inPath));
-    }
+    private:
+        Y_flib::DataBlock data;
 
-    /* 析构函数，自动关闭文件流 */
-    ~DataLoader()
-    {
-        if (inFile.is_open())
+        Y_flib::FileSize fileSize = 0;
+        std::ifstream inFile;
+        bool loadIsDone = false;
+        Y_flib::FileSize readCount = 0;
+
+        /* 标记读取完成状态 */
+        void done();
+
+    public:
+        /* 获取当前缓冲区中的数据块 */
+        const Y_flib::DataBlock &getBlock() { return data; }
+
+        /* 检查是否读取完成 */
+        bool isDone() { return loadIsDone; }
+
+        /* 打开指定文件并初始化读取状态 */
+        void reset(const std::filesystem::path inPath);
+
+        /* 按缓冲区大小读取数据块 */
+        void dataLoader();
+
+        /* 在解压流程中按指定大小读取数据块 */
+        void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
+
+        /* 重置指针到上次读取的位置 */
+        void resetByLastRead();
+
+        /* 默认构造函数 */
+        DataLoader() {}
+
+        /* 构造函数，打开指定文件 */
+        DataLoader(const std::filesystem::path &inPath)
+            : inFile(inPath, std::ios::binary) // 使用初始化列表
         {
-            inFile.close();
+            if (!inFile.is_open())
+                throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + EncodingUtils::pathToUtf8(inPath));
         }
-    }
-};
+
+        /* 析构函数，自动关闭文件流 */
+        ~DataLoader()
+        {
+            if (inFile.is_open())
+            {
+                inFile.close();
+            }
+        }
+    };
 } // namespace Y_flib

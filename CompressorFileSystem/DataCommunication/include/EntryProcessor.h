@@ -19,32 +19,32 @@
  */
 namespace Y_flib
 {
-class EntryProcessor
-{
-private:
-    std::ofstream &outFile;
-    EntryQueue entryQueue;
-    FilePath file; // 创建各个工具类的对象
-    BinaryStandardWriter *binaryStandardWriter;
-    StandardsWriter standardWriter;
-
-    /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
-    void flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
-
-public:
-    /* 构造函数，初始化处理器并创建二进制写入器 */
-    EntryProcessor(std::ofstream &outFile) : outFile(outFile)
+    class EntryProcessor
     {
-        binaryStandardWriter = new BinaryStandardWriter(outFile);
-    };
+    private:
+        std::ofstream &outFile;
+        EntryQueue entryQueue;
+        FilePath file; // 创建各个工具类的对象
+        BinaryStandardWriter *binaryStandardWriter;
+        StandardsWriter standardWriter;
 
-    /* 析构函数，释放二进制写入器资源 */
-    ~EntryProcessor()
-    {
-        delete binaryStandardWriter;
-    };
+        /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
+        void flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
 
-    /* 主处理函数，执行指定路径的文件系统扫描和二进制序列化 */
-    void entryProcessor(const  std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot);
-};
+    public:
+        /* 构造函数，初始化处理器并创建二进制写入器 */
+        EntryProcessor(std::ofstream &outFile) : outFile(outFile)
+        {
+            binaryStandardWriter = new BinaryStandardWriter(outFile);
+        };
+
+        /* 析构函数，释放二进制写入器资源 */
+        ~EntryProcessor()
+        {
+            delete binaryStandardWriter;
+        };
+
+        /* 主处理函数，执行指定路径的文件系统扫描和二进制序列化 */
+        void entryProcessor(const std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot);
+    };
 } // namespace Y_flib
