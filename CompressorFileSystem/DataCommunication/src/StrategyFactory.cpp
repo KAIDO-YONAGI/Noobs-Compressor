@@ -30,34 +30,34 @@ namespace
 namespace Y_flib
 {
 
-StrategyModules StrategyFactory::createModules(CompressionMode mode, const std::string &password)
-{
-    StrategyModules modules;
-
-    switch (mode)
+    StrategyModules StrategyFactory::createModules(CompressionMode mode, const std::string &password)
     {
-    case CompressionMode::HuffmanAES:
-        modules.compression = std::make_unique<HuffmanCompression>(1);
-        modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
-        break;
+        StrategyModules modules;
 
-    case CompressionMode::HuffmanOnly:
-        modules.compression = std::make_unique<HuffmanCompression>(1);
-        modules.encryption = std::make_unique<NullEncryption>();
-        break;
+        switch (mode)
+        {
+        case CompressionMode::HuffmanAES:
+            modules.compression = std::make_unique<HuffmanCompression>(1);
+            modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
+            break;
 
-    case CompressionMode::AESOnly:
-        modules.compression = std::make_unique<NullCompression>();
-        modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
-        break;
+        case CompressionMode::HuffmanOnly:
+            modules.compression = std::make_unique<HuffmanCompression>(1);
+            modules.encryption = std::make_unique<NullEncryption>();
+            break;
 
-    case CompressionMode::PackOnly:
-        modules.compression = std::make_unique<NullCompression>();
-        modules.encryption = std::make_unique<NullEncryption>();
-        break;
+        case CompressionMode::AESOnly:
+            modules.compression = std::make_unique<NullCompression>();
+            modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
+            break;
+
+        case CompressionMode::PackOnly:
+            modules.compression = std::make_unique<NullCompression>();
+            modules.encryption = std::make_unique<NullEncryption>();
+            break;
+        }
+
+        return modules;
     }
-
-    return modules;
-}
 
 }
