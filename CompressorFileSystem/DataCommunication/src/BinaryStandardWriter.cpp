@@ -28,7 +28,7 @@ namespace Y_flib
                 else if (entry.is_symlink())
                 {
                     isFile = false;
-                    fileSize = 1; // 大小为一，仅表示是符号链接
+                    fileSize = 1; // 大小为一的文件夹，仅表示是符号链接
                 }
                 else
                     continue; // 禁用三个基本文件类型之外的文件类型

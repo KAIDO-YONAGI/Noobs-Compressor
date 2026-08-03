@@ -40,7 +40,7 @@ namespace Y_flib
         outFile.flush();
         std::streampos endPos = outFile.tellp();
         Y_flib::DirectoryOffsetSize directoryOffset = static_cast<Y_flib::DirectoryOffsetSize>(endPos);
-        std::cout << "DEBUG writeDirectory: fullOutPath=" << EncodingUtils::pathToUtf8(fullOutPath) << ", directoryOffset=" << directoryOffset << std::endl;
+        // std::cout << "DEBUG writeDirectory: fullOutPath=" << EncodingUtils::pathToUtf8(fullOutPath) << ", directoryOffset=" << directoryOffset << std::endl;
 
         // 回填偏移量并重定位指针至回填前的位置
         locator.locateFromBegin(outFile, Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));

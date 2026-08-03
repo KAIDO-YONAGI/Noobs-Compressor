@@ -74,6 +74,7 @@ void CompressionLoop::compressionLoop(
             encryptedBlock.clear();
             encryption.encrypt(compressedData, encryptedBlock);
             dataExporter.exportCompressedData(encryptedBlock);
+            //TODO:这可以把两次io优化为一次 方法是合并两个数据块后再写（因为逻辑上也是连续的）
 
             // 计算进度并回调
             reportProgress(filename, blockCount, totalBlocks, lastCallbackTime, lastReportedProgress);
