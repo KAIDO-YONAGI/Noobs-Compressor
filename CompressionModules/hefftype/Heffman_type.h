@@ -51,12 +51,6 @@ std::unordered_map<
 Heffmap;
 
 /**
- * Heffmaps: 存储哈希表的列表
- */
-
-typedef std::vector<Heffmap> Heffmaps;
-
-/**
  * HeffTreeNode：编码树节点
  */
 

@@ -37,12 +37,12 @@ namespace Y_flib
         switch (mode)
         {
         case CompressionMode::HuffmanAES:
-            modules.compression = std::make_unique<HuffmanCompression>(1);
+            modules.compression = std::make_unique<HuffmanCompression>();
             modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
             break;
 
         case CompressionMode::HuffmanOnly:
-            modules.compression = std::make_unique<HuffmanCompression>(1);
+            modules.compression = std::make_unique<HuffmanCompression>();
             modules.encryption = std::make_unique<NullEncryption>();
             break;
 
