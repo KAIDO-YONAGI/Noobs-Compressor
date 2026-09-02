@@ -59,10 +59,13 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 # ========================
 include_directories(
     "${REPO_ROOT}/EncryptionModules/Aes/include"
-    "${REPO_ROOT}/CompressionModules/hefftype"
-    "${REPO_ROOT}/CompressionModules/heffman/include"
+    "${REPO_ROOT}/CompressionModules/Huffman/Hufftype"
+    "${REPO_ROOT}/CompressionModules/Huffman/Core/include"
     "${REPO_ROOT}/BufferPool"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/include"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/include"
+    "${REPO_ROOT}/CompressorFileSystem/DataIO/include"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/include"
+    "${REPO_ROOT}/CompressorFileSystem/Strategy/include"
     "${REPO_ROOT}/Y_Manager"
 )
 
@@ -70,25 +73,25 @@ include_directories(
 # 源文件（核心库）
 # ========================
 set(CORE_SOURCES
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/EncodingUtils.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/EntryParser.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/ToolClasses.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/DataExporter.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/DataLoader.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/EntryProcessor.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/BinaryStandardWriter.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/BinaryStandardLoader.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/NullCompression.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/StrategyFactory.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryParser.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/ToolClasses.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataExporter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryProcessor.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardWriter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Strategy/src/NullCompression.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Strategy/src/StrategyFactory.cpp"
     "${REPO_ROOT}/Y_Manager/MainLoop.cpp"
     "${REPO_ROOT}/Y_Manager/CompressionLoop.cpp"
     "${REPO_ROOT}/Y_Manager/DecompressionLoop.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/HeaderWriter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/HeaderWriter.cpp"
     "${REPO_ROOT}/EncryptionModules/Aes/src/AesFunctions.cpp"
     "${REPO_ROOT}/EncryptionModules/Aes/src/mainCircle.cpp"
     "${REPO_ROOT}/BufferPool/BufferPool.cpp"
-    "${REPO_ROOT}/CompressionModules/hefftype/Heffman_type.cpp"
-    "${REPO_ROOT}/CompressionModules/heffman/src/Heffman.cpp"
+    "${REPO_ROOT}/CompressionModules/Huffman/Hufftype/HuffmanType.cpp"
+    "${REPO_ROOT}/CompressionModules/Huffman/Core/src/Huffman.cpp"
 )
 
 # ========================

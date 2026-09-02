@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../../CompressorFileSystem/DataCommunication/include/ICompression.h"
-#include "../../hefftype/Heffman_type.h"
-#include "Heffman.h"
+#include "../../../../CompressorFileSystem/Strategy/include/ICompression.h"
+#include "../../Hufftype/HuffmanType.h"
+#include "Huffman.h"
 #include <memory>
 
 namespace Y_flib
@@ -22,7 +22,7 @@ namespace Y_flib
         {
             huffman->statisticFreq(input);
             huffman->finishFreqStat();
-            huffman->genHefftree();
+            huffman->genHufftree();
             huffman->saveCodeInTab();
             huffman->treeToPlatUchar(metadataOut);
             huffman->encode(input, output);

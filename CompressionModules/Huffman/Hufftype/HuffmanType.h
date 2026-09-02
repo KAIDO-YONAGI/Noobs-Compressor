@@ -40,7 +40,7 @@ struct CharData{
 };
 
 /**
- * Heffmap类：字符到字符信息的映射
+ * Huffmap类：字符到字符信息的映射
  */
 
 typedef
@@ -48,36 +48,36 @@ std::unordered_map<
     unsigned char,
     CharData
 >
-Heffmap;
+Huffmap;
 
 /**
- * HeffTreeNode：编码树节点
+ * HuffTreeNode：编码树节点
  */
 
 
-struct HeffTreeNode{
+struct HuffTreeNode{
     unsigned char data;
     FreqT freq;
-    struct HeffTreeNode* left;
-    struct HeffTreeNode* right;
+    struct HuffTreeNode* left;
+    struct HuffTreeNode* right;
     bool isLeaf;
 
-    HeffTreeNode(
+    HuffTreeNode(
         const unsigned char data,
         FreqT freq,
-        struct HeffTreeNode* left,
-        struct HeffTreeNode* right,
+        struct HuffTreeNode* left,
+        struct HuffTreeNode* right,
         bool isLeaf=false
     );
 
-    HeffTreeNode(const unsigned char data, FreqT freq, bool isLeaf):
-        HeffTreeNode(data, freq, NULL, NULL, isLeaf) { }
+    HuffTreeNode(const unsigned char data, FreqT freq, bool isLeaf):
+        HuffTreeNode(data, freq, NULL, NULL, isLeaf) { }
 /*
-    HeffTreeNode(
+    HuffTreeNode(
         const char c,
         FreqT freq,
-        struct HeffTreeNode* left,
-        struct HeffTreeNode* right,
+        struct HuffTreeNode* left,
+        struct HuffTreeNode* right,
         bool isLeaf=false
     );*/
 };
@@ -89,7 +89,7 @@ struct HeffTreeNode{
 
 struct CompareHeap
 {
-    bool operator()(const HeffTreeNode* n1, const HeffTreeNode* n2){
+    bool operator()(const HuffTreeNode* n1, const HuffTreeNode* n2){
         // priority_queue是最大堆，要实现最小堆需要反转比较
         // 返回true表示n1优先级低于n2，会被排在后面
         // 我们希望频率小的在堆顶，所以频率大的应该优先级低
@@ -98,7 +98,7 @@ struct CompareHeap
 };
 
 using Minheap =
-std::priority_queue<HeffTreeNode*, std::vector<HeffTreeNode*>, CompareHeap>;
+std::priority_queue<HuffTreeNode*, std::vector<HuffTreeNode*>, CompareHeap>;
 
 /**
  * PathStack：节点路径栈
@@ -119,7 +119,7 @@ struct PathStack
 /**
  * BitHandler：比特处理器
  *     压缩时，将比特组装成字节，解压时，将字节分解为比特。
- *     记录总字节数、最后一个字节的有效位数。结束处理时写回Heffman，
+ *     记录总字节数、最后一个字节的有效位数。结束处理时写回Huffman，
  *     
  * 参数列表：
  * 

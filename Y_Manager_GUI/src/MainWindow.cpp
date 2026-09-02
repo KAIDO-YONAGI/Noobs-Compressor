@@ -1,6 +1,6 @@
 #include "MainWindow.h"
 #include "PlaceholderLineEdit.h"
-#include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
+#include "../CompressorFileSystem/Commons/include/EncodingUtils.h"
 
 #include <filesystem>
 #include <QColor>

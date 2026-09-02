@@ -5,7 +5,7 @@
 #include <mutex>
 #include <vector>
 
-#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../CompressorFileSystem/Commons/include/FileLibrary.h"
 
 namespace Y_flib
 {

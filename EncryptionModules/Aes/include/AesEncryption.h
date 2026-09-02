@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../CompressorFileSystem/DataCommunication/include/IEncryption.h"
+#include "../../../CompressorFileSystem/Strategy/include/IEncryption.h"
 #include "My_Aes.h"
 #include <memory>
 

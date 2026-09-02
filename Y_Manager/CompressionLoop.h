@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
-#include "../CompressorFileSystem/DataCommunication/include/DataLoader.h"
-#include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
-#include "../CompressorFileSystem/DataCommunication/include/BinaryStandardLoader.h"
-#include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
-#include "../CompressorFileSystem/DataCommunication/include/ICompression.h"
-#include "../CompressorFileSystem/DataCommunication/include/IEncryption.h"
+#include "../CompressorFileSystem/Commons/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataIO/include/DataLoader.h"
+#include "../CompressorFileSystem/DataIO/include/DataExporter.h"
+#include "../CompressorFileSystem/ArchiveFormat/include/BinaryStandardLoader.h"
+#include "../CompressorFileSystem/Commons/include/ToolClasses.h"
+#include "../CompressorFileSystem/Strategy/include/ICompression.h"
+#include "../CompressorFileSystem/Strategy/include/IEncryption.h"
 #include <filesystem>
 #include <functional>
 #include <string>

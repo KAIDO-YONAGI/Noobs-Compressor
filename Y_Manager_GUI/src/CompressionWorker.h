@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../CompressorFileSystem/DataCommunication/include/HeaderWriter.h"
-#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
-#include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
+#include "../CompressorFileSystem/ArchiveFormat/include/HeaderWriter.h"
+#include "../CompressorFileSystem/Strategy/include/StrategyFactory.h"
+#include "../CompressorFileSystem/Commons/include/ToolClasses.h"
 #include "../IconHandler.h"
 #include "../Y_Manager/MainLoop.h"
 
