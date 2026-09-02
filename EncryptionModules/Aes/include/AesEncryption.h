@@ -15,17 +15,15 @@ namespace Y_flib
     public:
         explicit AesEncryption(Aes *aes) : aes(aes) {}
 
+        // 输出由 doAes 内部整体赋值，无需预分配：
+        // 加密输出 = 16 字节 IV + 密文（比输入多 16）；解密输出 = 去掉 IV 头的明文
         void encrypt(const DataBlock &input, DataBlock &output) override
         {
-            output.clear();
-            output.resize(input.size());  // AES-CFB 无填充
             aes->doAes(1, input, output);
         }
 
         void decrypt(const DataBlock &input, DataBlock &output) override
         {
-            output.clear();
-            output.resize(input.size());  // AES-CFB 无填充
             aes->doAes(2, input, output);
         }
 

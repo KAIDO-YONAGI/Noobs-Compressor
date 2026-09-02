@@ -23,7 +23,9 @@ src/main.cpp
 *.bin
 *.ps1
 *.bat
-*.claude
 
 # codegraph index data
 .codegraph/
+
+
+.zcode/
