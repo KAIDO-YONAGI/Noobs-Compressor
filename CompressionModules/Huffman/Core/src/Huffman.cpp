@@ -1,4 +1,4 @@
-#include "../include/Heffman.h"
+#include "../include/Huffman.h"
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
@@ -56,13 +56,13 @@ std::unique_ptr<Minheap> Huffman::genMinheap()
     auto heap = std::make_unique<Minheap>();
     for (const auto &entry : entries)
     {
-        HeffTreeNode *node = new HeffTreeNode(entry.first, entry.second, true);
+        HuffTreeNode *node = new HuffTreeNode(entry.first, entry.second, true);
         heap->push(node);
     }
     return heap;
 }
 
-void Huffman::genHefftree()
+void Huffman::genHufftree()
 {
     // 清空旧的树
     if (treeRoot != nullptr)
@@ -74,11 +74,11 @@ void Huffman::genHefftree()
     auto heap = genMinheap();
     while (heap->size() != 1)
     {
-        HeffTreeNode *left = heap->top();
+        HuffTreeNode *left = heap->top();
         heap->pop();
-        HeffTreeNode *right = heap->top();
+        HuffTreeNode *right = heap->top();
         heap->pop();
-        HeffTreeNode *parnt = new HeffTreeNode('\0', left->freq + right->freq, left, right);
+        HuffTreeNode *parnt = new HuffTreeNode('\0', left->freq + right->freq, left, right);
         heap->push(parnt);
     }
     treeRoot = heap->top();
@@ -107,7 +107,7 @@ void Huffman::saveCodeInTab()
     }
 }
 
-void Huffman::runSaveCodeInTab(HeffTreeNode *root)
+void Huffman::runSaveCodeInTab(HuffTreeNode *root)
 {
     if (root == NULL)
         return;
@@ -157,7 +157,7 @@ void Huffman::encode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHan
     outBlock[paddingBitsPos] = paddingBits;
 }
 
-bool Huffman::findchar(HeffTreeNode *&now, unsigned char &result, uint8_t toward)
+bool Huffman::findchar(HuffTreeNode *&now, unsigned char &result, uint8_t toward)
 {
     if (toward == 0)
     {
@@ -190,7 +190,7 @@ void Huffman::decode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHan
         throw std::runtime_error("decode: invalid padding bits value: " + std::to_string(paddingBits));
     }
 
-    HeffTreeNode *now = treeRoot;
+    HuffTreeNode *now = treeRoot;
     std::vector<uint8_t> treePath; // 不预分配元素,只在需要时push_back
     treePath.reserve(8);           // 预留容量避免重新分配
     unsigned char result = 0;
@@ -264,7 +264,7 @@ void Huffman::decode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHan
     }
 }
 
-void Huffman::destroyTree(HeffTreeNode *node)
+void Huffman::destroyTree(HuffTreeNode *node)
 {
     if (node == NULL)
         return;
@@ -276,7 +276,7 @@ void Huffman::destroyTree(HeffTreeNode *node)
 // 序列化编码树并输出
 void Huffman::treeToPlatUchar(sfc::block_t &outBlock)
 {
-    std::stack<HeffTreeNode *> stack;
+    std::stack<HuffTreeNode *> stack;
     auto root = treeRoot;
     stack.push(root);
     outBlock.push_back('F');
@@ -309,7 +309,7 @@ void Huffman::spawnTree(sfc::block_t &inBlock)
         destroyTree(treeRoot);
         treeRoot = nullptr;
     }
-    std::stack<HeffTreeNode *> stack;
+    std::stack<HuffTreeNode *> stack;
 
     auto iter_ib = inBlock.cbegin();
     if (*iter_ib != 'F')
@@ -318,27 +318,27 @@ void Huffman::spawnTree(sfc::block_t &inBlock)
     }
     ++iter_ib;
 
-    HeffTreeNode *lastNode = nullptr; // 记录最后处理的节点
+    HuffTreeNode *lastNode = nullptr; // 记录最后处理的节点
 
     while (iter_ib != inBlock.cend())
     {
-        HeffTreeNode *node = NULL;
+        HuffTreeNode *node = NULL;
         if (iter_ib + 1 == inBlock.cend())
         {
             throw std::runtime_error("spawnTree: Incomplete data - missing node data");
         }
         if (*iter_ib == 'r')
         {
-            node = new HeffTreeNode(*++iter_ib, 0, false);
+            node = new HuffTreeNode(*++iter_ib, 0, false);
             stack.push(node);
         }
         else if (*iter_ib == 'l')
         {
-            node = new HeffTreeNode(*++iter_ib, 0, true);
+            node = new HuffTreeNode(*++iter_ib, 0, true);
             // 叶子节点需要连接到栈顶的父节点
             while (!stack.empty())
             {
-                HeffTreeNode *parent = stack.top();
+                HuffTreeNode *parent = stack.top();
                 bool parentComplete = connectNode(parent, node);
 
                 if (parentComplete)
@@ -378,7 +378,7 @@ void Huffman::spawnTree(sfc::block_t &inBlock)
     }
 }
 
-bool Huffman::connectNode(HeffTreeNode *p, HeffTreeNode *c)
+bool Huffman::connectNode(HuffTreeNode *p, HuffTreeNode *c)
 {
     if (p == NULL || c == NULL)
     {

@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "PlaceholderLineEdit.h"
-#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
-#include "../CompressorFileSystem/DataCommunication/include/StrategyFactory.h"
+#include "../CompressorFileSystem/Commons/include/FileLibrary.h"
+#include "../CompressorFileSystem/Strategy/include/StrategyFactory.h"
 
 #include <QTextDocument>
 

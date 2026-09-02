@@ -1,5 +1,5 @@
 #include "IconHandler.h"
-#include "../CompressorFileSystem/DataCommunication/include/EncodingUtils.h"
+#include "../CompressorFileSystem/Commons/include/EncodingUtils.h"
 #include <shlobj.h>
 #include <shellapi.h>
 #include <winuser.h>

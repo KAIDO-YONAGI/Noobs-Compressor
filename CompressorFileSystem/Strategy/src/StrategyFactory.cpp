@@ -1,5 +1,5 @@
 #include "../include/StrategyFactory.h"
-#include "../../../CompressionModules/heffman/include/HuffmanCompression.h"
+#include "../../../CompressionModules/Huffman/Core/include/HuffmanCompression.h"
 #include "../../../EncryptionModules/Aes/include/AesEncryption.h"
 #include "../../../EncryptionModules/Aes/include/My_Aes.h"
 

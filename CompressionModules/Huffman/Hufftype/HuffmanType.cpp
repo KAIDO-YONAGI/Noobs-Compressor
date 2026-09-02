@@ -1,4 +1,4 @@
-#include "Heffman_type.h"
+#include "HuffmanType.h"
 
 //method of CharData
 
@@ -15,26 +15,26 @@ void CharData::add(const CharData& othercd){
    freq += othercd.freq;
 }
 
-//method of HeffTreeNode
+//method of HuffTreeNode
 
-HeffTreeNode::HeffTreeNode(
+HuffTreeNode::HuffTreeNode(
    const unsigned char data,
    FreqT freq,
-   struct HeffTreeNode* left,
-   struct HeffTreeNode* right,
+   struct HuffTreeNode* left,
+   struct HuffTreeNode* right,
    bool isLeaf
 ):
    data(data), freq(freq), left(left), right(right), isLeaf(isLeaf) { }
 
 /*
-inline HeffTreeNode::HeffTreeNode(
+inline HuffTreeNode::HuffTreeNode(
    const char c,
    FreqT freq,
-   struct HeffTreeNode* left,
-   struct HeffTreeNode* right,
+   struct HuffTreeNode* left,
+   struct HuffTreeNode* right,
    bool isLeaf=false
 ):
-   HeffTreeNode((unsigned char)c, freq, left, right, isLeaf) { }
+   HuffTreeNode((unsigned char)c, freq, left, right, isLeaf) { }
 */
 
 //method of PathStack
