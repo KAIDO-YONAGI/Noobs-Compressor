@@ -1,6 +1,8 @@
 # ignore IDE setting files
 .vscode/
 .vs/
+.zcode/
+
 *.code-workspace
 # ignore build directories
 build-debug/
@@ -28,4 +30,3 @@ src/main.cpp
 .codegraph/
 
 
-.zcode/
