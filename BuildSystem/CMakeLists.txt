@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(SimpleFilesCompressorGUI VERSION 2.1.0 LANGUAGES CXX)
+# 构建系统位于根目录 BuildSystem/：GUI 代码在 ../Y_Manager_GUI，其余模块在仓库根各目录
+set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
+set(GUI_DIR "${CMAKE_SOURCE_DIR}/../Y_Manager_GUI")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,11 +27,11 @@ set(CMAKE_CXX_COMPILER "D:/qt/Tools/mingw1120_64/bin/g++.exe")
 # 资源文件
 # ========================
 set(RESOURCES
-    "${CMAKE_SOURCE_DIR}/resources.qrc"
+    "${GUI_DIR}/resources.qrc"
 )
 
 set(APP_TRANSLATION_FILES
-    "${CMAKE_SOURCE_DIR}/translations/SimpleFilesCompressorGUI_zh_CN.qm"
+    "${GUI_DIR}/translations/SimpleFilesCompressorGUI_zh_CN.qm"
 )
 
 option(SFC_COPY_EXTERNAL_TRANSLATIONS "Copy replaceable translation files next to the executable" OFF)
@@ -41,8 +44,8 @@ if (WIN32)
     set(WINRES_OBJ "${CMAKE_BINARY_DIR}/app_res.o")
     add_custom_command(
         OUTPUT ${WINRES_OBJ}
-        COMMAND windres -i "${CMAKE_SOURCE_DIR}/app.rc" -o ${WINRES_OBJ}
-        DEPENDS "${CMAKE_SOURCE_DIR}/app.rc" "${CMAKE_SOURCE_DIR}/YONAGII_512x512.ico"
+        COMMAND windres -i "${GUI_DIR}/app.rc" -o ${WINRES_OBJ}
+        DEPENDS "${GUI_DIR}/app.rc" "${GUI_DIR}/YONAGII_512x512.ico"
     )
 endif()
 
@@ -55,49 +58,49 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 # include 目录
 # ========================
 include_directories(
-    "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/include"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/hefftype"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/include"
-    "${CMAKE_SOURCE_DIR}/../BufferPool"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/include"
-    "${CMAKE_SOURCE_DIR}/../Y_Manager"
+    "${REPO_ROOT}/EncryptionModules/Aes/include"
+    "${REPO_ROOT}/CompressionModules/hefftype"
+    "${REPO_ROOT}/CompressionModules/heffman/include"
+    "${REPO_ROOT}/BufferPool"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/include"
+    "${REPO_ROOT}/Y_Manager"
 )
 
 # ========================
 # 源文件（核心库）
 # ========================
 set(CORE_SOURCES
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EncodingUtils.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EntryParser.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/ToolClasses.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/DataExporter.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/DataLoader.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/EntryProcessor.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/BinaryStandardWriter.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/BinaryStandardLoader.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/NullCompression.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/StrategyFactory.cpp"
-    "${CMAKE_SOURCE_DIR}/../Y_Manager/MainLoop.cpp"
-    "${CMAKE_SOURCE_DIR}/../Y_Manager/CompressionLoop.cpp"
-    "${CMAKE_SOURCE_DIR}/../Y_Manager/DecompressionLoop.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/HeaderWriter.cpp"
-    "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/src/AesFunctions.cpp"
-    "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/src/mainCircle.cpp"
-    "${CMAKE_SOURCE_DIR}/../BufferPool/BufferPool.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/hefftype/Heffman_type.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/Heffman.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/EncodingUtils.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/EntryParser.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/ToolClasses.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/DataExporter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/DataLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/EntryProcessor.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/BinaryStandardWriter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/BinaryStandardLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/NullCompression.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/StrategyFactory.cpp"
+    "${REPO_ROOT}/Y_Manager/MainLoop.cpp"
+    "${REPO_ROOT}/Y_Manager/CompressionLoop.cpp"
+    "${REPO_ROOT}/Y_Manager/DecompressionLoop.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataCommunication/src/HeaderWriter.cpp"
+    "${REPO_ROOT}/EncryptionModules/Aes/src/AesFunctions.cpp"
+    "${REPO_ROOT}/EncryptionModules/Aes/src/mainCircle.cpp"
+    "${REPO_ROOT}/BufferPool/BufferPool.cpp"
+    "${REPO_ROOT}/CompressionModules/hefftype/Heffman_type.cpp"
+    "${REPO_ROOT}/CompressionModules/heffman/src/Heffman.cpp"
 )
 
 # ========================
 # GUI 源文件
 # ========================
 set(GUI_SOURCES
-    "${CMAKE_SOURCE_DIR}/src/main.cpp"
-    "${CMAKE_SOURCE_DIR}/src/MainWindow.cpp"
-    "${CMAKE_SOURCE_DIR}/src/MainWindow_Compression.cpp"
-    "${CMAKE_SOURCE_DIR}/src/MainWindow_Decompression.cpp"
-    "${CMAKE_SOURCE_DIR}/src/CompressionWorker.cpp"
-    "${CMAKE_SOURCE_DIR}/IconHandler.cpp"
+    "${GUI_DIR}/src/main.cpp"
+    "${GUI_DIR}/src/MainWindow.cpp"
+    "${GUI_DIR}/src/MainWindow_Compression.cpp"
+    "${GUI_DIR}/src/MainWindow_Decompression.cpp"
+    "${GUI_DIR}/src/CompressionWorker.cpp"
+    "${GUI_DIR}/IconHandler.cpp"
 )
 
 # ========================
