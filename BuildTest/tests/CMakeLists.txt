@@ -16,6 +16,8 @@ set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 include_directories(
     "${REPO_ROOT}/EncryptionModules/Aes/include"
     "${REPO_ROOT}/CompressorFileSystem/DataCommunication/include"
+    "${REPO_ROOT}/CompressionModules/heffman/include"
+    "${REPO_ROOT}/CompressionModules/hefftype"
     "${REPO_ROOT}/BufferPool"
     "${REPO_ROOT}/Y_Manager"
 )
@@ -36,5 +38,14 @@ target_link_libraries(test_aes PRIVATE advapi32)
 add_executable(test_bufferpool
     test_bufferpool.cpp
     "${REPO_ROOT}/BufferPool/BufferPool.cpp"
+)
+
+# ========================
+# Huffman 单元测试（纯手写断言，零外部依赖）
+# ========================
+add_executable(test_huffman
+    test_huffman.cpp
+    "${REPO_ROOT}/CompressionModules/heffman/src/Heffman.cpp"
+    "${REPO_ROOT}/CompressionModules/hefftype/Heffman_type.cpp"
 )
 
