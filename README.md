@@ -13,11 +13,11 @@ The project is mainly intended for studying **file archiving structures, data co
 
 **当前提供两个版本**：
 - **命令行版本（CLI）**：`Y_Manager/` 目录，v1.x.x
-- **图形界面版本（GUI）**：`Y_Manager_GUI/` 目录，v2.x.x
+- **图形界面版本（GUI）**：`SFC_GUI/` 目录，v2.x.x
 
 **Two versions are available**:
 - **Command-line version (CLI)**: `Y_Manager/` directory, v1.x.x
-- **GUI version**: `Y_Manager_GUI/` directory, v2.x.x
+- **GUI version**: `SFC_GUI/` directory, v2.x.x
 
 ---
 
@@ -250,9 +250,9 @@ Compile `main.cpp` to generate the executable.
 
 ## GUI 版本构建 | GUI Build
 
-GUI 版本位于 `Y_Manager_GUI/` 目录，需要 Qt 6.2.4 LTS 环境。
+GUI 版本位于 `SFC_GUI/` 目录，需要 Qt 6.2.4 LTS 环境。
 
-The GUI version is in `Y_Manager_GUI/` directory, requires Qt 6.2.4 LTS.
+The GUI version is in `SFC_GUI/` directory, requires Qt 6.2.4 LTS.
 
 ### 编译要求 | Requirements
 
@@ -270,7 +270,7 @@ Use `build_static.bat` to build (recommended):
 
 ```bash
 # 在 cmd.exe 中运行
-cd Y_Manager_GUI
+cd SFC_GUI
 build_static.bat
 ```
 
@@ -279,7 +279,7 @@ build_static.bat
 Or build manually:
 
 ```bash
-cd Y_Manager_GUI
+cd SFC_GUI
 cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=ON
 cmake --build build --parallel
 ```
@@ -291,7 +291,7 @@ After building, a single exe is in `bin/SFC/` directory with no DLL dependencies
 ### 构建步骤（动态链接） | Build Steps (Dynamic)
 
 ```bash
-cd Y_Manager_GUI
+cd SFC_GUI
 cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=OFF
 cmake --build build --config Release -j 8
 ```
