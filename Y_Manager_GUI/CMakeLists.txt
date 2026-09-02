@@ -56,13 +56,10 @@ find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 # ========================
 include_directories(
     "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/include"
-    "${CMAKE_SOURCE_DIR}/../DataBlocks"
     "${CMAKE_SOURCE_DIR}/../CompressionModules/hefftype"
     "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/include"
-    "${CMAKE_SOURCE_DIR}/../Schedule"
-    "${CMAKE_SOURCE_DIR}/../Schedule/include"
-    "${CMAKE_SOURCE_DIR}/../ThreadPool"
-    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/include"
+    "${CMAKE_SOURCE_DIR}/../BufferPool"
+    "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/include"
     "${CMAKE_SOURCE_DIR}/../Y_Manager"
 )
 
@@ -86,18 +83,9 @@ set(CORE_SOURCES
     "${CMAKE_SOURCE_DIR}/../CompressorFileSystem/DataCommunication/src/HeaderWriter.cpp"
     "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/src/AesFunctions.cpp"
     "${CMAKE_SOURCE_DIR}/../EncryptionModules/Aes/src/mainCircle.cpp"
-    "${CMAKE_SOURCE_DIR}/../DataBlocks/DataBlocksManage.cpp"
+    "${CMAKE_SOURCE_DIR}/../BufferPool/BufferPool.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressionModules/hefftype/Heffman_type.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/DoDecode.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/DoEncode.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/GenHeffcodeTab.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/GetFreq.cpp"
     "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/Heffman.cpp"
-    "${CMAKE_SOURCE_DIR}/../CompressionModules/heffman/src/LoadHeffcodeTab.cpp"
-    "${CMAKE_SOURCE_DIR}/../Schedule/Scheduler.cpp"
-    "${CMAKE_SOURCE_DIR}/../ThreadPool/src/_Thread.cpp"
-    "${CMAKE_SOURCE_DIR}/../ThreadPool/src/MonitorTaskQueue.cpp"
-    "${CMAKE_SOURCE_DIR}/../ThreadPool/src/ThreadPool.cpp"
 )
 
 # ========================

@@ -117,8 +117,7 @@ private:
     void deAes(char *c, int clen);
 
     int w[44];                   // 44个32位轮密钥字(w[0]-w[43])
-    uint8_t iv[16];              // 初始化向量(当前实现为全0)
-    const char *aesKey;         // 用户密钥指针(保存参考)
+    uint8_t iv[16];              // 当前块的初始化向量(加密时随机生成，解密时取自密文头)
     uint8_t aesKey16Bytes[16]; // 128位主密钥(哈希后)
     Y_flib::DataBlock buffer;    // 数据处理缓冲区
 

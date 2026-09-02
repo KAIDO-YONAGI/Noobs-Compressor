@@ -6,7 +6,12 @@
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
-#include "../../DataBlocks/DataBlocksManage.h"
+
+// 原定义于已退役的 DataBlocks/DataBlocksManage.h；块缓冲类型别名收敛至此
+namespace sfc
+{
+    using block_t = std::vector<unsigned char>;
+}
 
 using FreqT = uint64_t;
 using CodeLenT = uint8_t;

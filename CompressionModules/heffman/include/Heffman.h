@@ -2,7 +2,6 @@
 #define HUFFMAN_H
 
 #include "../../hefftype/Heffman_type.h"
-#include "../../../DataBlocks/DataBlocksManage.h"
 #include <memory>
 #include <stack>
 

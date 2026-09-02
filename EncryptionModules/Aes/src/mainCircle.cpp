@@ -19,14 +19,16 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int 
             PROV_RSA_FULL    // 旧版Windows
         };
 
-        for (int i = 0; i < 3 && !success; ++i)
+        for (DWORD provType : providers)
         {
-            if (CryptAcquireContext(&hProv, NULL, NULL, providers[i],
+            if (CryptAcquireContext(&hProv, NULL, NULL, provType,
                 CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
             {
                 success = CryptGenRandom(hProv, sizeof(iv), iv);
                 CryptReleaseContext(hProv, 0);
             }
+            if (success)
+                break;
         }
 
         if (!success) {
