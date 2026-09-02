@@ -1,6 +1,6 @@
 # Qt 技术要点与策略工厂详解
 
-> 基于 `Y_Manager_GUI/src/` 的实际代码，面向未系统学习 Qt 的读者。
+> 基于 `SFC_GUI/src/` 的实际代码，面向未系统学习 Qt 的读者。
 > 涉及文件：`main.cpp`、`MainWindow.h/.cpp`、`MainWindow_Compression.cpp`、`MainWindow_Decompression.cpp`、`CompressionWorker.h/.cpp`、`PlaceholderLineEdit.h`、`StrategyFactory.h/.cpp`
 
 ---

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(SimpleFilesCompressorGUI VERSION 2.1.0 LANGUAGES CXX)
-# 构建与测试位于根目录 BuildTest/（本文件为 GUI 构建，tests/ 为单元测试）：GUI 代码在 ../Y_Manager_GUI，其余模块在仓库根各目录
+# 构建与测试位于根目录 BuildTest/（本文件为 GUI 构建，tests/ 为单元测试）：GUI 代码在 ../SFC_GUI，其余模块在仓库根各目录
 set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
-set(GUI_DIR "${CMAKE_SOURCE_DIR}/../Y_Manager_GUI")
+set(GUI_DIR "${CMAKE_SOURCE_DIR}/../SFC_GUI")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
