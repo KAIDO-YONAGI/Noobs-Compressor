@@ -4,10 +4,10 @@ project(SimpleFilesCompressorTests LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 本 CMakeLists 位于仓库根的 tests/ 下；编译器在配置时通过
+# 本 CMakeLists 位于 BuildTest/tests/ 下（仓库根往下两级）；编译器在配置时通过
 #   -DCMAKE_C_COMPILER=... -DCMAKE_CXX_COMPILER=...
 # 指定（GUI 用同一套 MinGW：D:/qt/Tools/mingw1120_64/bin/{gcc,g++}.exe）
-set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(REPO_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../..")
 
 # 说明：My_Aes.h 内部使用了 "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
 # 这种相对包含，需要某个"仓库根的直接子目录"出现在 -I 中才能解析
