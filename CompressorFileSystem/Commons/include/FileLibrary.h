@@ -45,14 +45,14 @@ namespace Y_flib
 
     // 文件标准相关
 
-    enum class FlagType : char // 枚举类，强类型检查
+    enum class FlagType : uint8_t // 枚举类，强类型检查；底层宽度固定 1 字节，是磁盘格式的一部分
     {
-        Directory = '0',
-        File = '1',
-        Separated = '2',
-        LogicalRoot = '3',
-        SymbolLink = '4'
-    }; 
+        Directory = 0,
+        File = 1,
+        Separated = 2,
+        LogicalRoot = 3,
+        SymbolLink = 4
+    };
 #pragma pack(push, 1)
     struct Header
     {
@@ -68,10 +68,11 @@ namespace Y_flib
     namespace Constants
     {
         constexpr Y_flib::SizeOfFlag FLAG_SIZE = sizeof(Y_flib::FlagType);
+        static_assert(Y_flib::Constants::FLAG_SIZE == 1, "On-disk flag width must stay 1 byte");
 
         constexpr Y_flib::CompressStrategy STRATEGY = 0; // 策略号
 
-        constexpr Y_flib::CompressorVersion VERSION = 0; // 版本号
+        constexpr Y_flib::CompressorVersion VERSION = 1; // 版本号（1：flag 字节由 ASCII '0'~'4' 改为数值 0~4，旧包不可读）
 
         constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
         // 实现分割方案，为分块加密和解压时的分块读取密文做准备

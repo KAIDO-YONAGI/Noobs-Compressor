@@ -141,6 +141,13 @@ namespace Y_flib
             {
                 throw std::runtime_error("Invalid file format");
             }
+            // 验证版本号：格式不兼容的旧包在此拦截，避免解析深处抛出含义模糊的 flag 错误
+            if (header.version != Y_flib::Constants::VERSION)
+            {
+                throw std::runtime_error("Unsupported archive version: expected " +
+                                         std::to_string(Y_flib::Constants::VERSION) +
+                                         ", got " + std::to_string(header.version));
+            }
             if (header.directoryOffset == 0)
                 throw std::runtime_error("Invalid directory offset in header");
             offset = header.directoryOffset - Y_flib::Constants::HEADER_SIZE;

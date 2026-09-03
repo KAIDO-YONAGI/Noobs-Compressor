@@ -52,3 +52,13 @@ add_executable(test_huffman
     "${REPO_ROOT}/CompressionModules/Huffman/Hufftype/HuffmanType.cpp"
 )
 
+# ========================
+# FlagType 读写往返单元测试（纯手写断言，零外部依赖）
+# 只用 ToolClasses.h 的头文件内模板，链接 ToolClasses.cpp/EncodingUtils.cpp 以保持与其他测试一致
+# ========================
+add_executable(test_flagtype
+    test_flagtype.cpp
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/ToolClasses.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
+)
+
