@@ -48,7 +48,7 @@ namespace Y_flib
 
         if (parserMode == 1) // for compression
         {
-            lastOffset = header.directoryOffset - (offset + tempOffset) + bufferPtr;
+            lastOffset = cursor.entryFieldPos(header.directoryOffset, bufferPtr); // "处理后大小"预留槽的绝对偏移
             bufferPtr += sizeof(Y_flib::FileSize); // skip compressedSize
         }
         else if (parserMode == 2) // for decompression
@@ -145,7 +145,7 @@ namespace Y_flib
 
     void EntryParser::parser(Y_flib::DirectoryOffsetSize &bufferPtr, Y_flib::FileCount &countOfChildDirectory)
     {
-        if (tempOffset <= bufferPtr && tempOffset != 0)
+        if (cursor.blockEndReached(bufferPtr))
             return;
 
         const Y_flib::FlagType entryFlag = readDataFromReadBlock<Y_flib::FlagType>(bufferPtr);
