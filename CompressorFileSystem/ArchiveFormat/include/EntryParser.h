@@ -2,6 +2,7 @@
 
 #include "FileLibrary.h"
 #include "EntryDetails.h"
+#include "DirectoryCursor.h"
 #include "ToolClasses.h"
 
 /* EntryParser - 二进制目录结构解析器
@@ -26,8 +27,7 @@ namespace Y_flib
         std::vector<std::string> &filePathToScan;
         Y_flib::DataBlock &buffer;
         const Y_flib::Header &header;
-        const Y_flib::DirectoryOffsetSize &offset;
-        const Y_flib::DirectoryOffsetSize &tempOffset;
+        const Y_flib::DirectoryReadCursor &cursor; // 绑定 Loader 的目录区读取游标（剩余量+当前块长）
         size_t parserMode = 0; // 0：占位、1：压缩模式、2：解压模式
 
         std::filesystem::path tempPathForRootParser;
@@ -117,16 +117,14 @@ namespace Y_flib
         /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
         EntryParser(Y_flib::DataBlock &buffer, EntryQueue &entryQueue,
                     FileTaskQueue &fileQueue, const Y_flib::Header &header,
-                    const Y_flib::DirectoryOffsetSize &offset,
-                    const Y_flib::DirectoryOffsetSize &tempOffset,
+                    const Y_flib::DirectoryReadCursor &cursor,
                     std::vector<std::string> &filePathToScan)
             : entryQueue(entryQueue),
               fileQueue(fileQueue),
               filePathToScan(filePathToScan),
               buffer(buffer),
               header(header),
-              offset(offset),
-              tempOffset(tempOffset)
+              cursor(cursor)
         {
             parserMode = ((!filePathToScan.empty()) ? 1 : 2); // 非空表示压缩
         }

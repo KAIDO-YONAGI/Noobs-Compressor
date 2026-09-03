@@ -9,7 +9,7 @@ namespace Y_flib
         Locator locator;
         if (loaderRequestIsDone() || allLoopIsDone())
             return;
-        locator.locateFromBegin(inFile, header.directoryOffset - offset); // 定位到指定位置
+        locator.locateFromBegin(inFile, cursor.nextReadPos(header.directoryOffset)); // 定位到未读目录块
 
         try
         {
@@ -20,7 +20,7 @@ namespace Y_flib
                 isReadHeader = true;
             }
 
-            if (offset == sizeof(Y_flib::SizeOfMagicNum))
+            if (cursor.onlyMagicRemains())
             {
                 Y_flib::SizeOfMagicNum magicNum = standardsReader.readBinaryStandards<Y_flib::SizeOfMagicNum>();
                 if (magicNum != Y_flib::Constants::MAGIC_NUM)
@@ -29,9 +29,9 @@ namespace Y_flib
                 setAllLoopDone(); // 完成所有循环后设置完成标志并return退出
                 return;
             }
-            while (offset > 0)
+            while (cursor.hasData())
             {
-                if (offset == 0)
+                if (!cursor.hasData())
                     break;
                 if (loaderRequestIsDone() || allLoopIsDone())
                     return;
@@ -48,25 +48,20 @@ namespace Y_flib
 
     void BinaryStandardLoader::loadEntryBlock(StandardsReader &standardsReader, Y_flib::FileCount &countOfChildDirectory, Y_flib::IEncryption &encryption)
     {
-        if (offset == 0)
+        if (!cursor.hasData())
             return;
-
-        // std::cout << "DEBUG loadEntryBlock: offset=" << offset << std::endl;
 
         Y_flib::FlagType flag;
         Y_flib::IvSize ivNum{};
         loadSeparatedStandard(const_cast<Y_flib::FlagType &>(flag), standardsReader, ivNum);
 
         // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
-        Y_flib::BlockLength readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
+        Y_flib::BlockLength readSize = cursor.bytesInThisBlock();
 
-        // std::cout << "DEBUG loadEntryBlock: tempOffset=" << tempOffset << ", readSize=" << readSize << std::endl;
-
-        std::array<Y_flib::DirectoryOffsetSize, 2> blockPos = {
-            static_cast<Y_flib::DirectoryOffsetSize>(inFile.tellg()), // 转换为当前位置
-            static_cast<Y_flib::DirectoryOffsetSize>(readSize)        // 转换为读取大小(块大小)
-        };
-        blockPosition.push_back(blockPos); // 记录数据块位置信息，供后续加密操作使用
+        blockPosition.push_back(BlockSpan{
+            static_cast<Y_flib::SlotOffset>(inFile.tellg()), // 块数据起始绝对偏移
+            readSize                                          // 块字节数
+        }); // 记录数据块位置信息，供后续加密操作使用
 
         // 根据偏移量读取数据块
         StandardsReader::readDataBlock(readSize, inFile, buffer);
@@ -120,10 +115,10 @@ namespace Y_flib
                 }
             }
         }
-        setRequestDone();    // 设置块完成标志
-        if (tempOffset == 0) // tempOffset为0，说明到达末尾，减去相应偏移量
+        setRequestDone();            // 设置块完成标志
+        if (cursor.isLastBlock())    // blockLen 为 0 说明是末块，读完后扣减剩余量
         {
-            offset -= readSize;
+            cursor.consumeFinalBlock(readSize);
             return;
         }
     }
@@ -150,7 +145,7 @@ namespace Y_flib
             }
             if (header.directoryOffset == 0)
                 throw std::runtime_error("Invalid directory offset in header");
-            offset = header.directoryOffset - Y_flib::Constants::HEADER_SIZE;
+            cursor.initFromHeader(header.directoryOffset); // remaining = 数据区起点 - 文件头
             std::cout << "Header loaded successfully.\n";
         }
         else
@@ -163,12 +158,12 @@ namespace Y_flib
     {
         flag = standardsReader.readBinaryStandards<Y_flib::FlagType>();
 
-        // 读取子块偏移量
-        tempOffset = standardsReader.readBinaryStandards<Y_flib::BlockLength>();
+        // 读取本块长度，并跳过分割标准槽位与块体（0 表示最后一块，长度由剩余量推出）
+        Y_flib::BlockLength blockLen = standardsReader.readBinaryStandards<Y_flib::BlockLength>();
         // 读取iv头
         ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
 
-        offset -= Y_flib::Constants::SEPARATED_STANDARD_SIZE + tempOffset; // 偏移量减少，同时步过固定头部长度
+        cursor.consumeSeparated(blockLen);
         if (flag != Y_flib::FlagType::Separated)
         {
             throw std::runtime_error("Invalid flag type for separated standard");
@@ -195,24 +190,23 @@ namespace Y_flib
         Locator locator;
         Y_flib::DataBlock inBlock;
         Y_flib::DataBlock encryptedBlock;
-        Y_flib::DirectoryOffsetSize startPos = 0, blockSize = 0;
 
-        for (auto blockPos : blockPosition)
+        for (const BlockSpan &span : blockPosition)
         {
-            startPos = blockPos[0];
-            blockSize = blockPos[1];
+            const Y_flib::SlotOffset startPos = span.startPos;
+            const Y_flib::BlockLength blockSize = span.size;
 
             inBlock.resize(blockSize);
-            encryptedBlock.resize(blockSize + sizeof(Y_flib::IvSize));
+            encryptedBlock.resize(blockSize + Y_flib::Constants::IV_BYTES);
 
             locator.locateFromBegin(fstreamForRefill, startPos); // 定位到数据块起始位置
 
             StandardsReader::readDataBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
 
             encryption.encrypt(inBlock, encryptedBlock);
-            locator.locateFromBegin(fstreamForRefill, startPos - Y_flib::Constants::IV_BYTES); // 定位到数据块前的 IV 预留空间，准备回写加密数据
+            locator.locateFromBegin(fstreamForRefill, span.ivSlotPos()); // 定位到数据块前的 IV 预留空间，准备回写加密数据
 
-            StandardsWriter::writeDataBlock(blockSize + sizeof(Y_flib::IvSize), fstreamForRefill, encryptedBlock); // 回写加密数据
+            StandardsWriter::writeDataBlock(blockSize + Y_flib::Constants::IV_BYTES, fstreamForRefill, encryptedBlock); // 回写加密数据
 
             inBlock.clear();
             encryptedBlock.clear();
@@ -238,7 +232,7 @@ namespace Y_flib
             if (!newInFile)
                 throw std::runtime_error("restartLoader()-Error:Failed to open inFile");
 
-            size_t offsetToRestart = header.directoryOffset - offset;
+            Y_flib::SlotOffset offsetToRestart = cursor.nextReadPos(header.directoryOffset);
 
             locator.locateFromBegin(newInFile, offsetToRestart);
             this->inFile = std::move(newInFile);

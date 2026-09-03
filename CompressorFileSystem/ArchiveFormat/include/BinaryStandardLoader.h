@@ -3,6 +3,7 @@
 #include "FileLibrary.h"
 #include "ToolClasses.h"
 #include "EntryDetails.h"
+#include "DirectoryCursor.h"
 #include "EntryParser.h"
 #include "IEncryption.h"
 #include <queue>
@@ -28,6 +29,21 @@ namespace Y_flib
 {
   class BinaryStandardLoader
   {
+  public:
+    /* 读取侧目录区游标（物理定义在 DirectoryCursor.h，独立头避免与 EntryParser 循环包含） */
+    using ReadCursor = DirectoryReadCursor;
+
+    /* BlockSpan - 目录数据块在归档中的位置记录
+     * 供收尾阶段 encryptHeaderBlock 原地加密回写使用（原裸 array<u64,2> 的具名化） */
+    struct BlockSpan
+    {
+      Y_flib::SlotOffset startPos = 0; // 块数据起始绝对偏移
+      Y_flib::BlockLength size = 0;    // 块字节数
+
+      /* 块数据之前的 IV 预留槽绝对偏移（紧邻块起点之前 16 字节处） */
+      Y_flib::SlotOffset ivSlotPos() const { return startPos - Y_flib::Constants::IV_BYTES; }
+    };
+
   private:
     bool isReadHeader = false;
     bool blockIsDone = false;
@@ -35,8 +51,7 @@ namespace Y_flib
     bool firstReady = true; // 标记当前是否是目录就绪队列第一个元素
 
     Y_flib::FileCount countOfChildDirectory = 0; // 当前处理中或退出时目录下子目录或文件数量
-    Y_flib::FileSize offset = 0;                 // 当前剩余字节数
-    Y_flib::DirectoryOffsetSize tempOffset = 0;  // 当前处理块的大小（偏移）
+    ReadCursor cursor;                           // 目录区读取游标（剩余量 + 当前块长）
 
     std::filesystem::path loadPath;
     std::filesystem::path parentPath;
@@ -59,9 +74,9 @@ namespace Y_flib
     void headerLoaderIterator(Y_flib::IEncryption &encryption); // 主读取循环：逐块读取、解密、解析目录结构
 
     // 压缩时队列
-    FileTaskQueue fileQueue;                                                 // 文件任务队列（载荷语义见 FileTask）
-    EntryQueue entryQueue;                                                   // 目录队列
-    std::vector<std::array<Y_flib::DirectoryOffsetSize, 2>> blockPosition; // 目录数据块位置数组 1 为起点，2为大小
+    FileTaskQueue fileQueue;               // 文件任务队列（载荷语义见 FileTask）
+    EntryQueue entryQueue;                 // 目录队列
+    std::vector<BlockSpan> blockPosition;  // 目录数据块位置记录，供收尾加密回写
 
     // 解压时队列
     std::queue<std::filesystem::path> directoryQueueReady; // 目录恢复就绪队列，文件复原需要在目录恢复后操作
@@ -80,7 +95,7 @@ namespace Y_flib
       // fstreamForRefill 用于压缩时回填加密目录块，解压时不需要写权限，允许打开失败
 
       this->filePathToScan = filePathToScan;
-      this->parserForLoader = std::make_unique<EntryParser>(buffer, entryQueue, fileQueue, header, offset, tempOffset, this->filePathToScan);
+      this->parserForLoader = std::make_unique<EntryParser>(buffer, entryQueue, fileQueue, header, cursor, this->filePathToScan);
       this->parentPath = parentPath;
     }
 
