@@ -1,5 +1,6 @@
 // EntryProcessor.cpp
 #include "../include/EntryProcessor.h"
+#include "../../Commons/include/FileSystemUtils.h"
 
 namespace Y_flib
 {
@@ -28,7 +29,7 @@ namespace Y_flib
             {
 
                 sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
-                if (!std::filesystem::is_regular_file(sPath))
+                if (!FileSystemUtils::queryEntry(sPath).isRegularFile)
                 {
                     file.setFilePathToScan(sPath);
                     binaryStandardWriter->binaryStandardWriter(file, entryQueue, cursor); // 添加当前目录到队列以启动整个BFS递推

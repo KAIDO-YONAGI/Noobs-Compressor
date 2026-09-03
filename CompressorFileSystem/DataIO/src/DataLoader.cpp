@@ -20,7 +20,7 @@ namespace Y_flib
             {
                 inFile.close();
             }
-            inFile = std::ifstream(inPath, std::ios::binary);
+            inFile = std::ifstream(FileSystemUtils::pathForIo(inPath), std::ios::binary);
             if (!inFile)
                 throw std::runtime_error("reset()-Error:Failed to open inFile Path:" + EncodingUtils::pathToUtf8(inPath));
             loadIsDone = false;

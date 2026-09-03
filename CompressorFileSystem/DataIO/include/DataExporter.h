@@ -5,6 +5,7 @@
 #include "EntryProcessor.h"
 #include "ToolClasses.h"
 #include "BinaryStandardWriter.h"
+#include "FileSystemUtils.h"
 
 /* DataExporter - 二进制数据块导出器
 //为非文件标准数据写入封装的写入器类，提供按块写入和按指定大小写入的功能
@@ -45,14 +46,17 @@ namespace Y_flib
         DataExporter(const std::filesystem::path &outPath)
         {
             // 先检查文件是否存在
-            if (!std::filesystem::exists(outPath))
+            if (!FileSystemUtils::exists(outPath))
             {
                 const std::string utf8Path = EncodingUtils::pathToUtf8(outPath);
                 throw std::runtime_error("DataExporter()-Error:File does not exist: " + utf8Path +
                                          "\nPath length: " + std::to_string(utf8Path.size()));
             }
 
-            std::fstream outFile(outPath, std::ios::binary | std::ios::out | std::ios::in);
+            // 归档文件自身也可能位于深层目录，打开流前统一转换实际 I/O 路径。
+            std::fstream outFile(
+                FileSystemUtils::pathForIo(outPath),
+                std::ios::binary | std::ios::out | std::ios::in);
             if (!outFile)
             {
                 const std::string utf8Path = EncodingUtils::pathToUtf8(outPath);

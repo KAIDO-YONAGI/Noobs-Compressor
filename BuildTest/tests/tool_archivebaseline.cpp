@@ -16,6 +16,7 @@
 
 #include "FileLibrary.h"
 #include "EncodingUtils.h"
+#include "FileSystemUtils.h"
 #include "StrategyFactory.h"
 #include "HeaderWriter.h"
 #include "MainLoop.h"
@@ -44,7 +45,9 @@ static unsigned char nextByte()
 
 static void writeLcgFile(const fs::path &path, uint64_t size, uint32_t seed)
 {
-    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    std::ofstream out(
+        Y_flib::FileSystemUtils::pathForIo(path),
+        std::ios::binary | std::ios::trunc);
     if (!out)
         throw std::runtime_error("sample: cannot create " + Y_flib::EncodingUtils::pathToUtf8(path));
     lcgState = seed;
@@ -63,7 +66,9 @@ static void writeLcgFile(const fs::path &path, uint64_t size, uint32_t seed)
 
 static void writeTextFile(const fs::path &path, const std::string &text)
 {
-    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    std::ofstream out(
+        Y_flib::FileSystemUtils::pathForIo(path),
+        std::ios::binary | std::ios::trunc);
     if (!out)
         throw std::runtime_error("sample: cannot create " + Y_flib::EncodingUtils::pathToUtf8(path));
     out.write(text.data(), static_cast<std::streamsize>(text.size()));
@@ -74,7 +79,8 @@ static int makeSample(const std::string &rootUtf8)
     const fs::path root = Y_flib::EncodingUtils::pathFromUtf8(rootUtf8);
     const fs::path tree = root / "sample";
     std::error_code ec;
-    fs::remove_all(root, ec);
+    // 回归目录本身包含超长路径，需使用兼容层清理才能稳定重复执行。
+    Y_flib::FileSystemUtils::removeAll(root);
     fs::create_directories(tree / u8p(u8"测试目录") / u8p(u8"嵌套一") / u8p(u8"深"), ec);
     fs::create_directories(tree / "emptyDir", ec); // 空目录：覆盖目录恢复路径
     if (ec)
@@ -109,6 +115,52 @@ static int makeSample(const std::string &rootUtf8)
             std::string name = "f" + std::to_string(i) + ".bin";
             writeLcgFile(many / name, 80 + (i % 64), 100 + static_cast<uint32_t>(i));
         }
+    }
+
+    // 深层包目录树（pnpm 形态）：0pkg 前缀使其按字母序排在所有文件条目之前，
+    // 于是首个 16KB 目录块内只有目录条目、没有任何文件条目——覆盖
+    // "CompressionLoop 启动时 fileQueue 为空" 的回归场景（曾静默产出无数据区的残缺归档）
+    {
+        uint32_t deepSeed = 500;
+        for (int i = 0; i < 100; ++i)
+        {
+            lcgState = deepSeed + static_cast<uint32_t>(i);
+            std::string suffix;
+            for (int k = 0; k < 32; ++k)
+                suffix.push_back(static_cast<char>('a' + (nextByte() % 26)));
+            const std::string pkg = "0pkg-" + std::to_string(i) + "@1.0_dep@2.0-" + suffix;
+            const fs::path base = tree / fs::path(pkg) / "node_modules" / "@scope" / ("pkg-" + std::to_string(i));
+            fs::create_directories(base / "lib", ec);
+            fs::create_directories(base / "data", ec);
+            writeLcgFile(base / "lib" / "a.js", 40 + (i % 7), deepSeed + 1000 + static_cast<uint32_t>(i));
+            writeLcgFile(base / "data" / "b.json", 40 + (i % 5), deepSeed + 2000 + static_cast<uint32_t>(i));
+        }
+    }
+
+    // 让短文件仍低于 MAX_PATH，而 package.json 的完整路径越过 260。
+    // 旧实现会把目录子项数写成 2，却因 MinGW status 失败只序列化短文件，
+    // 从而让后续 BFS 父子关系整体错位。
+    {
+        fs::path longParent = tree / "long-path";
+        constexpr size_t targetParentLength = 250;
+        while (longParent.native().size() < targetParentLength)
+        {
+            const size_t remaining =
+                targetParentLength - longParent.native().size() - 1;
+            if (remaining == 0)
+                break;
+            longParent /= std::string(std::min<size_t>(remaining, 120), 'x');
+        }
+
+        Y_flib::FileSystemUtils::createDirectories(longParent);
+        writeTextFile(longParent / "a", "short path sibling\n");
+        writeTextFile(longParent / "package.json",
+                      "{\"name\":\"long-path-regression\"}\n");
+
+        const fs::path deeperParent = longParent / "nested-child";
+        Y_flib::FileSystemUtils::createDirectories(deeperParent);
+        writeTextFile(deeperParent / "inside.txt",
+                      "directory enumeration beyond MAX_PATH\n");
     }
 
     std::cout << "sample: tree written to " << rootUtf8 << "\n";
@@ -201,13 +253,26 @@ static int doDecompress(const std::string &inUtf8, const std::string &outDirUtf8
 static std::map<std::string, fs::path> collectFiles(const fs::path &root)
 {
     std::map<std::string, fs::path> files;
-    for (auto it = fs::recursive_directory_iterator(root);
-         it != fs::recursive_directory_iterator(); ++it)
+    std::vector<fs::path> directories{root};
+    while (!directories.empty())
     {
-        if (it->is_regular_file())
+        const fs::path directory = directories.back();
+        directories.pop_back();
+
+        for (const fs::path &fullPath :
+             Y_flib::FileSystemUtils::listDirectory(directory))
         {
-            const fs::path rel = fs::relative(it->path(), root);
-            files[Y_flib::EncodingUtils::pathToUtf8(rel)] = it->path();
+            const Y_flib::FileSystemEntryInfo info =
+                Y_flib::FileSystemUtils::queryEntry(fullPath);
+            if (info.isRegularFile)
+            {
+                const fs::path rel = fullPath.lexically_relative(root);
+                files[Y_flib::EncodingUtils::pathToUtf8(rel)] = fullPath;
+            }
+            else if (info.isDirectory)
+            {
+                directories.push_back(fullPath);
+            }
         }
     }
     return files;
@@ -215,9 +280,14 @@ static std::map<std::string, fs::path> collectFiles(const fs::path &root)
 
 static bool filesByteEqual(const fs::path &a, const fs::path &b)
 {
-    if (fs::file_size(a) != fs::file_size(b))
+    const Y_flib::FileSystemEntryInfo infoA =
+        Y_flib::FileSystemUtils::queryEntry(a);
+    const Y_flib::FileSystemEntryInfo infoB =
+        Y_flib::FileSystemUtils::queryEntry(b);
+    if (!infoA.isRegularFile || !infoB.isRegularFile || infoA.size != infoB.size)
         return false;
-    std::ifstream fa(a, std::ios::binary), fb(b, std::ios::binary);
+    std::ifstream fa(Y_flib::FileSystemUtils::pathForIo(a), std::ios::binary);
+    std::ifstream fb(Y_flib::FileSystemUtils::pathForIo(b), std::ios::binary);
     if (!fa || !fb)
         return false;
     std::vector<unsigned char> ba(64 * 1024), bb(64 * 1024);
@@ -271,13 +341,46 @@ static int doVerify(const std::string &aUtf8, const std::string &bUtf8)
     return ok ? 0 : 1;
 }
 
+static int doCompressDir(const std::string &dirUtf8, const std::string &outUtf8, const std::string &mode)
+{
+    Y_flib::CompressionMode m;
+    if (mode == "pack")
+        m = Y_flib::CompressionMode::PackOnly;
+    else if (mode == "huffman")
+        m = Y_flib::CompressionMode::HuffmanOnly;
+    else
+    {
+        std::cerr << "compressdir: unknown mode '" << mode << "' (expected pack|huffman)\n";
+        return 1;
+    }
+
+    const fs::path outPath = Y_flib::EncodingUtils::pathFromUtf8(outUtf8);
+    std::error_code ec;
+    fs::remove(outPath, ec);
+
+    std::vector<std::string> filePathToScan = {dirUtf8};
+
+    auto modules = Y_flib::StrategyFactory::createModules(m, "");
+
+    std::string outPathUtf8 = outUtf8;
+    Y_flib::HeaderWriter headerWriter;
+    headerWriter.headerWriter(filePathToScan, outPathUtf8, "baseline_root", m);
+
+    CompressionLoop compressor(outUtf8);
+    compressor.compressionLoop(filePathToScan, *modules.encryption, *modules.compression, m);
+
+    std::cout << "compressdir: " << outUtf8 << " (" << mode << ", "
+              << fs::file_size(outPath) << " bytes)\n";
+    return 0;
+}
+
 // 一条命令完成往返验收：压缩→解压→按 compress 的路径对应关系逐文件校验
 static int doRoundtrip(const std::string &rootUtf8, const std::string &mode)
 {
     const fs::path root = Y_flib::EncodingUtils::pathFromUtf8(rootUtf8);
     const fs::path work = root / ("roundtrip-" + mode);
     std::error_code ec;
-    fs::remove_all(work, ec);
+    Y_flib::FileSystemUtils::removeAll(work);
     fs::create_directories(work, ec);
 
     const std::string archive = Y_flib::EncodingUtils::pathToUtf8(work / "baseline.sy");
@@ -315,6 +418,8 @@ int main(int argc, char **argv)
             return makeSample(argv[2]);
         if (argc == 5 && std::string(argv[1]) == "compress")
             return doCompress(argv[2], argv[3], argv[4]);
+        if (argc == 5 && std::string(argv[1]) == "compressdir")
+            return doCompressDir(argv[2], argv[3], argv[4]);
         if (argc == 4 && std::string(argv[1]) == "decompress")
             return doDecompress(argv[2], argv[3]);
         if (argc == 4 && std::string(argv[1]) == "roundtrip")
@@ -331,6 +436,7 @@ int main(int argc, char **argv)
     std::cerr << "usage:\n"
               << "  tool_archivebaseline sample <root>\n"
               << "  tool_archivebaseline compress <root> <out.sy> <pack|huffman>\n"
+              << "  tool_archivebaseline compressdir <dir> <out.sy> <pack|huffman>  (arbitrary directory)\n"
               << "  tool_archivebaseline decompress <in.sy> <outdir>\n"
               << "  tool_archivebaseline roundtrip <root> <pack|huffman>\n"
               << "  tool_archivebaseline verify <dirA> <dirB>\n";
