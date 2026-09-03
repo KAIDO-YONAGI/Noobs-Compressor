@@ -43,7 +43,9 @@ static void testDiskByteValues()
         {Y_flib::FlagType::File, 1},
         {Y_flib::FlagType::Separated, 2},
         {Y_flib::FlagType::LogicalRoot, 3},
-        {Y_flib::FlagType::SymbolLink, 4},
+        {Y_flib::FlagType::SymbolicLinkFile, 4},
+        {Y_flib::FlagType::SymbolicLinkDirectory, 5},
+        {Y_flib::FlagType::Junction, 6},
     };
 
     for (const auto &c : cases)
@@ -55,7 +57,7 @@ static void testDiskByteValues()
         }
         std::ifstream in(kTmpFile, std::ios::binary);
         const int raw = in.get();
-        CHECK(raw == c.expectedByte, "flag 落盘字节应为数值 0~4 而非 ASCII '0'~'4'");
+        CHECK(raw == c.expectedByte, "flag 落盘字节应为数值 0~6，而非对应的 ASCII 字符");
         CHECK(in.get() == EOF, "flag 只占 1 字节");
     }
     std::remove(kTmpFile);
@@ -63,13 +65,15 @@ static void testDiskByteValues()
 
 static void testRoundTripThroughFile()
 {
-    std::printf("[test] ofstream 通道 5 枚举值顺序往返\n");
+    std::printf("[test] ofstream 通道 7 枚举值顺序往返\n");
     const Y_flib::FlagType flags[] = {
         Y_flib::FlagType::Directory,
         Y_flib::FlagType::File,
         Y_flib::FlagType::Separated,
         Y_flib::FlagType::LogicalRoot,
-        Y_flib::FlagType::SymbolLink,
+        Y_flib::FlagType::SymbolicLinkFile,
+        Y_flib::FlagType::SymbolicLinkDirectory,
+        Y_flib::FlagType::Junction,
     };
 
     {
@@ -151,19 +155,21 @@ static void testBufferChannelBytes()
         writer.writeBinaryStandards(Y_flib::FlagType::File, out);
         writer.writeBinaryStandards(Y_flib::FlagType::Separated, out);
         writer.writeBinaryStandards(Y_flib::FlagType::LogicalRoot, out);
-        writer.writeBinaryStandards(Y_flib::FlagType::SymbolLink, out);
+        writer.writeBinaryStandards(Y_flib::FlagType::SymbolicLinkFile, out);
+        writer.writeBinaryStandards(Y_flib::FlagType::SymbolicLinkDirectory, out);
+        writer.writeBinaryStandards(Y_flib::FlagType::Junction, out);
     }
 
     // readDataFromReadBlock（EntryParser 私有模板）对 flag 做的是同一件事：
     // 从 unsigned char 缓冲区裸拷 sizeof(FlagType) 字节，这里按相同语义验证
     std::ifstream in(kTmpFile, std::ios::binary);
     Y_flib::DataBlock buffer;
-    Y_flib::StandardsReader::readDataBlock(5, in, buffer);
-    CHECK(buffer.size() == 5, "缓冲区应读到 5 字节");
-    const unsigned char expected[] = {0, 1, 2, 3, 4};
-    CHECK(std::memcmp(buffer.data(), expected, 5) == 0, "缓冲区字节应为 0,1,2,3,4");
+    Y_flib::StandardsReader::readDataBlock(7, in, buffer);
+    CHECK(buffer.size() == 7, "缓冲区应读到 7 字节");
+    const unsigned char expected[] = {0, 1, 2, 3, 4, 5, 6};
+    CHECK(std::memcmp(buffer.data(), expected, 7) == 0, "缓冲区字节应为 0,1,2,3,4,5,6");
 
-    for (unsigned i = 0; i < 5; ++i)
+    for (unsigned i = 0; i < 7; ++i)
     {
         Y_flib::FlagType flag;
         std::memcpy(&flag, buffer.data() + i, sizeof(Y_flib::FlagType));

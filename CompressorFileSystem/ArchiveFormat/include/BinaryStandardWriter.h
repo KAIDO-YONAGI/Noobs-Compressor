@@ -22,6 +22,9 @@
  */
 namespace Y_flib
 {
+    // Writer 的接口只使用引用，前置声明即可，具体定义由实现文件引入。
+    struct WindowsLinkInfo;
+
     class BinaryStandardWriter
     {
     public:
@@ -73,8 +76,14 @@ namespace Y_flib
         /* 分发当前路径上的目录/文件到相应的写入处理函数，维护游标的分割/回填时序 */
         void writeStorageStandard(EntryDetails &details, EntryQueue &entryQueue, DirectoryScanCursor &cursor);
 
-        /* 处理符号链接的序列化写入 */
-        void writeSymbolLinkStandard(EntryDetails &details, DirectoryScanCursor &cursor);
+        /* 处理 Windows 符号链接/Junction 的序列化写入 */
+        void writeLinkStandard(
+            EntryDetails &details,
+            const WindowsLinkInfo &linkInfo,
+            DirectoryScanCursor &cursor);
+
+        /* 条目写完后按 16KB 阈值闭合当前目录块 */
+        void separateBlockIfNeeded(DirectoryScanCursor &cursor);
 
         /* 统计指定目录下的文件总数（不递归） */
         Y_flib::FileCount countFilesInDirectory(const std::filesystem::path &filePathToScan);

@@ -40,6 +40,22 @@ namespace Y_flib
     {
     };
 
+    /* LinkTask - 解压末尾统一重建的 Windows 链接任务
+     *
+     * 归档只保存链接类型、名称和链接自身记录的目标路径。
+     * 目标可以是相对路径、绝对路径或不存在的路径，解压端不负责解析。
+     */
+    struct LinkTask
+    {
+        Y_flib::FlagType linkType = Y_flib::FlagType::SymbolicLinkFile;
+        std::filesystem::path linkPath;
+        std::filesystem::path targetPath;
+    };
+
+    class LinkTaskQueue : public std::queue<LinkTask>
+    {
+    };
+
     /* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
      *
      * 功能:

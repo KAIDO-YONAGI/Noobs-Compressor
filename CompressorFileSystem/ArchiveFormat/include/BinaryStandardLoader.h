@@ -83,6 +83,7 @@ namespace Y_flib
     // 压缩时队列
     FileTaskQueue fileQueue;               // 文件任务队列（载荷语义见 FileTask）
     EntryQueue entryQueue;                 // 目录队列
+    LinkTaskQueue linkQueueReady;           // 链接任务跨目录块累积，解压结束后统一创建
     std::vector<BlockSpan> blockPosition;  // 目录数据块位置记录，供收尾加密回写
 
     // 解压时队列
@@ -102,7 +103,9 @@ namespace Y_flib
       // fstreamForRefill 用于压缩时回填加密目录块，解压时不需要写权限，允许打开失败
 
       this->filePathToScan = filePathToScan;
-      this->parserForLoader = std::make_unique<EntryParser>(buffer, entryQueue, fileQueue, header, cursor, this->filePathToScan);
+      this->parserForLoader = std::make_unique<EntryParser>(
+          buffer, entryQueue, fileQueue, linkQueueReady,
+          header, cursor, this->filePathToScan);
       this->parentPath = parentPath;
     }
 

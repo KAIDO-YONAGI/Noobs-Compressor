@@ -31,6 +31,9 @@ private:
     // 处理目录队列
     void processDirectories(Y_flib::BinaryStandardLoader &headerLoaderIterator);
 
+    // 普通文件和目录恢复完成后，按归档记录重建 Windows 链接
+    void processLinks(Y_flib::BinaryStandardLoader &headerLoaderIterator);
+
     // 处理单个文件
     void processFile(Y_flib::BinaryStandardLoader &headerLoaderIterator,
                      Y_flib::Locator &locator,

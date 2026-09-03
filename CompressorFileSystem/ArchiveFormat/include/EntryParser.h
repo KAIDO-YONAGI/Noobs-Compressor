@@ -24,6 +24,7 @@ namespace Y_flib
     private:
         EntryQueue &entryQueue;
         FileTaskQueue &fileQueue;
+        LinkTaskQueue &linkQueue;
         std::vector<std::string> &filePathToScan;
         Y_flib::DataBlock &buffer;
         const Y_flib::Header &header;
@@ -102,6 +103,12 @@ namespace Y_flib
         /* 解析单个目录的元数据和子元素，将目录入队 */
         void directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot);
 
+        /* 解析 Windows 链接名称和原始目标，解压结束时再统一重建 */
+        void linkParser(
+            Y_flib::DirectoryOffsetSize &bufferPtr,
+            bool isRoot,
+            Y_flib::FlagType linkType);
+
         /* 解析根目录节点，处理多路径扫描 */
         void rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, Y_flib::FileCount &countOfChildDirectory, bool &noDirec);
 
@@ -116,11 +123,13 @@ namespace Y_flib
 
         /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
         EntryParser(Y_flib::DataBlock &buffer, EntryQueue &entryQueue,
-                    FileTaskQueue &fileQueue, const Y_flib::Header &header,
+                    FileTaskQueue &fileQueue, LinkTaskQueue &linkQueue,
+                    const Y_flib::Header &header,
                     const Y_flib::DirectoryReadCursor &cursor,
                     std::vector<std::string> &filePathToScan)
             : entryQueue(entryQueue),
               fileQueue(fileQueue),
+              linkQueue(linkQueue),
               filePathToScan(filePathToScan),
               buffer(buffer),
               header(header),

@@ -12,10 +12,7 @@ namespace Y_flib
             for (const std::filesystem::path &fullPath :
                  FileSystemUtils::listDirectory(directoryPath))
             {
-                bool isFile = true;
                 std::string name;
-                Y_flib::FileNameSize sizeOfName;
-                Y_flib::FileSize fileSize;
 
                 name = EncodingUtils::u8ToString(fullPath.filename().u8string());
                 const FileSystemEntryInfo info = FileSystemUtils::queryEntry(fullPath);
@@ -26,33 +23,28 @@ namespace Y_flib
                         EncodingUtils::pathToUtf8(fullPath));
                 }
 
-                if (info.isRegularFile)
+                const Y_flib::FileNameSize sizeOfName = name.size();
+                if (info.isReparsePoint)
                 {
-                    isFile = true;
-                    fileSize = info.size;
+                    const WindowsLinkInfo linkInfo =
+                        FileSystemUtils::readLinkForArchive(fullPath);
+                    EntryDetails details(name, sizeOfName, 0, false, fullPath);
+                    writeLinkStandard(details, linkInfo, cursor);
+                    separateBlockIfNeeded(cursor);
+                    continue;
                 }
 
-                else if (info.isDirectory)
+                if (!info.isRegularFile && !info.isDirectory)
                 {
-                    isFile = false;
-                    fileSize = 0;
+                    continue;
                 }
 
-                else if (info.isSymbolicLink)
-                {
-                    isFile = false;
-                    fileSize = 1; // 大小为一的文件夹，仅表示是符号链接
-                }
-                else
-                    continue; // 禁用三个基本文件类型之外的文件类型
-
-                sizeOfName = name.size();
                 EntryDetails details(
                     name,
                     sizeOfName,
-                    fileSize,
-                    isFile,
-                    fullPath); // 创建details
+                    info.isRegularFile ? info.size : 0,
+                    info.isRegularFile,
+                    fullPath);
 
                 writeStorageStandard(details, entryQueue, cursor);
             }
@@ -77,17 +69,7 @@ namespace Y_flib
             entryQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
             writeDirectoryStandard(details, countOfThisDirectory, cursor);
         }
-        else if ((!details.getIsFile()) && (details.getFileSizeInDetails() == 1))
-        {
-            writeSymbolLinkStandard(details, cursor);
-        }
-        if (cursor.needsSeparation()) // 达到缓冲大小后：回填块长度并预留下一块
-        {
-            writeSeparatedStandard(cursor); // 把累计的块字节数回填到当前分割标准的长度槽位
-            cursor.onBlockSealed();         // 游标跳过块体，块内累计清零
-            writeBlankSeparatedStandard();  // 预留下一次回填的位置
-            cursor.onSlotReserved();        // 游标跳过槽位本身（槽位大小不计入 blockBytes，保证槽位可直接定位）
-        }
+        separateBlockIfNeeded(cursor);
     }
     // 目录标准写入函数
     void BinaryStandardWriter::writeDirectoryStandard(EntryDetails &details, Y_flib::FileCount count, DirectoryScanCursor &cursor)
@@ -138,23 +120,52 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, File);
         standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), File);
     }
-    // 符号链接标准写入函数
-    void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, DirectoryScanCursor &cursor)
+    // Windows 链接标准写入函数：类型在 flag 中，正文只保存名称和原始目标路径。
+    void BinaryStandardWriter::writeLinkStandard(
+        EntryDetails &details,
+        const WindowsLinkInfo &linkInfo,
+        DirectoryScanCursor &cursor)
     {
-        // 使用 u8string() 获取 UTF-8 编码，确保中文路径正确
         Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
-        std::string pathStr = EncodingUtils::pathToUtf8(details.getFullPath());
+        std::string pathStr = EncodingUtils::pathToUtf8(linkInfo.targetPath);
         Y_flib::FileNameSize sizeOfPath = pathStr.size();
 
-        cursor.accountEntry(Y_flib::Constants::SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath);
+        cursor.accountEntry(
+            Y_flib::Constants::LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath);
 
-        standardWriter.writeBinaryStandards(Y_flib::FlagType::SymbolLink, outFile);
+        Y_flib::FlagType flag = Y_flib::FlagType::Junction;
+        if (linkInfo.type == WindowsLinkType::SymbolicLink)
+        {
+            flag = linkInfo.targetIsDirectory
+                       ? Y_flib::FlagType::SymbolicLinkDirectory
+                       : Y_flib::FlagType::SymbolicLinkFile;
+        }
+        else if (linkInfo.type != WindowsLinkType::Junction)
+        {
+            throw std::runtime_error("Unsupported Windows link type");
+        }
+
+        standardWriter.writeBinaryStandards(flag, outFile);
 
         standardWriter.writeBinaryStandards(sizeOfName, outFile);
         standardWriter.writeBinaryStandards(sizeOfPath, outFile);
 
         standardWriter.writeBinaryStandards(details.getName(), outFile);
         standardWriter.writeBinaryStandards(pathStr, outFile);
+    }
+
+    void BinaryStandardWriter::separateBlockIfNeeded(
+        DirectoryScanCursor &cursor)
+    {
+        if (!cursor.needsSeparation())
+        {
+            return;
+        }
+
+        writeSeparatedStandard(cursor);
+        cursor.onBlockSealed();
+        writeBlankSeparatedStandard();
+        cursor.onSlotReserved();
     }
     void BinaryStandardWriter::writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, DirectoryScanCursor &cursor)
     {
@@ -194,6 +205,17 @@ namespace Y_flib
             // 使用 u8string() 获取 UTF-8 编码的文件名
             std::string rootName = EncodingUtils::u8ToString(parentPath.filename().u8string());
             Y_flib::FileNameSize rootNameSize = rootName.size();
+            if (info.isReparsePoint)
+            {
+                // 链接可作为独立根条目归档，只保存链接自身，不扫描或读取目标。
+                const WindowsLinkInfo linkInfo =
+                    FileSystemUtils::readLinkForArchive(parentPath);
+                EntryDetails rootDetails(
+                    rootName, rootNameSize, 0, false, parentPath);
+                writeLinkStandard(rootDetails, linkInfo, cursor);
+                continue;
+            }
+
             bool isFile = info.isRegularFile;
             Y_flib::FileSize fileSize = isFile ? info.size : 0;
 
@@ -212,11 +234,6 @@ namespace Y_flib
             {
                 Y_flib::FileCount count = countFilesInDirectory(parentPath);
                 writeDirectoryStandard(rootDetails, count, cursor);
-            }
-            else if (info.isSymbolicLink)
-            {
-                rootDetails.setFileSize(1); // 利用大小区分符号链接
-                writeSymbolLinkStandard(rootDetails, cursor);
             }
             else
             {
@@ -243,7 +260,7 @@ namespace Y_flib
                         EncodingUtils::pathToUtf8(fullPath));
                 }
 
-                if (info.isRegularFile || info.isDirectory || info.isSymbolicLink)
+                if (info.isRegularFile || info.isDirectory || info.isReparsePoint)
                 {
                     ++count;
                 }

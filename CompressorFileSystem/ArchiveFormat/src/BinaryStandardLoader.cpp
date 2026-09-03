@@ -136,11 +136,13 @@ namespace Y_flib
             {
                 throw std::runtime_error("Invalid file format");
             }
-            // 验证版本号：格式不兼容的旧包在此拦截，避免解析深处抛出含义模糊的 flag 错误
-            if (header.version != Y_flib::Constants::VERSION)
+            // v2 增加 Windows 链接类型；不含链接的 v1 普通归档继续兼容读取。
+            if (header.version < Y_flib::Constants::MIN_SUPPORTED_VERSION ||
+                header.version > Y_flib::Constants::VERSION)
             {
-                throw std::runtime_error("Unsupported archive version: expected " +
-                                         std::to_string(Y_flib::Constants::VERSION) +
+                throw std::runtime_error("Unsupported archive version: supported " +
+                                         std::to_string(Y_flib::Constants::MIN_SUPPORTED_VERSION) +
+                                         "-" + std::to_string(Y_flib::Constants::VERSION) +
                                          ", got " + std::to_string(header.version));
             }
             if (header.directoryOffset == 0)

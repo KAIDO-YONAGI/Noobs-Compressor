@@ -55,7 +55,9 @@ namespace Y_flib
         File = 1,
         Separated = 2,
         LogicalRoot = 3,
-        SymbolLink = 4
+        SymbolicLinkFile = 4,
+        SymbolicLinkDirectory = 5,
+        Junction = 6
     };
 #pragma pack(push, 1)
     struct Header
@@ -86,7 +88,8 @@ namespace Y_flib
 
         constexpr Y_flib::CompressStrategy STRATEGY = 0; // 策略号
 
-        constexpr Y_flib::CompressorVersion VERSION = 1; // 版本号（1：flag 字节由 ASCII '0'~'4' 改为数值 0~4，旧包不可读）
+        constexpr Y_flib::CompressorVersion VERSION = 2;               // v2：Windows 链接/Junction 使用独立类型标志
+        constexpr Y_flib::CompressorVersion MIN_SUPPORTED_VERSION = 1; // v1 普通文件归档仍可读取
 
         constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
         // 实现分割方案，为分块加密和解压时的分块读取密文做准备
@@ -119,8 +122,8 @@ namespace Y_flib
             sizeof(Y_flib::DirectoryOffsetSize) +
             sizeof(Y_flib::IvSize);
 
-        // 符号链接标准的基础大小
-        constexpr ConstSize SYMBOL_LINK_STANDARD_SIZE_BASIC =
+        // Windows 链接标准的基础大小；链接类型由 FlagType 保存。
+        constexpr ConstSize LINK_STANDARD_SIZE_BASIC =
             FLAG_SIZE +
             sizeof(Y_flib::FileNameSize) +
             sizeof(Y_flib::FileNameSize)
