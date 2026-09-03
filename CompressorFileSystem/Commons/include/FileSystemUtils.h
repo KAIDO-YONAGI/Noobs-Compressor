@@ -24,6 +24,11 @@ namespace Y_flib
         bool isRegularFile = false;
         bool isDirectory = false;
         bool isReparsePoint = false;
+        // 保留原始目录属性；目录型链接会设置该属性，但不会被当作可递归目录。
+        bool hasDirectoryAttribute = false;
+        bool isReadOnly = false;
+        // 删除只读条目时需要保留其他 Windows 属性位。
+        std::uint32_t nativeAttributes = 0;
         Y_flib::FileSize size = 0;
     };
 

@@ -4,12 +4,10 @@
 #include "FileLibrary.h"
 #include "ToolClasses.h"
 #include "FileSystemUtils.h"
-/* DataLoader - 二进制数据块加载器
-//为非文件标准数据读取封装的读取器类，提供按块读取和按指定大小读取的功能
+/* DataLoader - 文件数据块加载器
  *
  * 功能:
  *   逐块读取文件数据到缓冲区
- *   支持普通文件读取和解压流程中的指定大小读取
  *   管理读取进度和完成状态
  *   自动处理文件流生命周期
  *
@@ -47,9 +45,6 @@ namespace Y_flib
         /* 按缓冲区大小读取数据块 */
         void dataLoader();
 
-        /* 在解压流程中按指定大小读取数据块 */
-        void dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data);
-
         /* 重置指针到上次读取的位置 */
         void resetByLastRead();
 
@@ -64,13 +59,7 @@ namespace Y_flib
                 throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + EncodingUtils::pathToUtf8(inPath));
         }
 
-        /* 析构函数，自动关闭文件流 */
-        ~DataLoader()
-        {
-            if (inFile.is_open())
-            {
-                inFile.close();
-            }
-        }
+        /* ifstream 自身负责关闭文件。 */
+        ~DataLoader() = default;
     };
 } // namespace Y_flib

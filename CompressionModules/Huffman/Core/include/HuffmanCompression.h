@@ -34,8 +34,6 @@ namespace Y_flib
             huffman->decode(input, output, BitHandler(), originalSize);
         }
 
-        Huffman *getHuffman() { return huffman.get(); }
-
     private:
         std::unique_ptr<Huffman> huffman;
     };

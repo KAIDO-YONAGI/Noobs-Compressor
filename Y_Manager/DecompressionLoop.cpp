@@ -193,7 +193,7 @@ void DecompressionLoop::processDataBlock(
     Y_flib::BlockLength metadataBlockSize = numReader.readBinaryStandards<Y_flib::BlockLength>();
     rawMetadata.clear();
     rawMetadata.resize(metadataBlockSize);
-    loader.dataLoader(metadataBlockSize, inFile, rawMetadata);
+    StandardsReader::readDataBlock(metadataBlockSize, inFile, rawMetadata);
 
     encryption.decrypt(rawMetadata, decryptedMetadata);
 
@@ -206,7 +206,7 @@ void DecompressionLoop::processDataBlock(
     Y_flib::BlockLength blockSize = numReader.readBinaryStandards<Y_flib::BlockLength>();
     rawData.clear();
     rawData.resize(blockSize);
-    loader.dataLoader(blockSize, inFile, rawData);
+    StandardsReader::readDataBlock(blockSize, inFile, rawData);
 
     Y_flib::FileSize readedSize = inFile.gcount();
     if (readedSize != blockSize)

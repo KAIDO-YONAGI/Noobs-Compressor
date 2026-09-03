@@ -27,9 +27,6 @@ namespace Y_flib
             aes->doAes(2, input, output);
         }
 
-        // 获取底层 Aes 对象
-        Aes *getAes() { return aes; }
-
     private:
         Aes *aes;
     };

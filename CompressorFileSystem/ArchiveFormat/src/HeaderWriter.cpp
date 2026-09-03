@@ -3,7 +3,10 @@
 
 namespace Y_flib
 {
-    void HeaderWriter_v0::writeHeader(std::ofstream &outFile, std::filesystem::path &fullOutPath, Y_flib::CompressionMode mode)
+    void HeaderWriter::writeHeader(
+        std::ofstream &outFile,
+        const std::filesystem::path &fullOutPath,
+        Y_flib::CompressionMode mode)
     {
         StandardsWriter standardWriter;
         Locator locator;
@@ -27,14 +30,17 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(Y_flib::Constants::HEADER_SIZE, outFile);
         locator.locateFromEnd(outFile, 0);
     }
-    void HeaderWriter_v0::writeDirectory(std::ofstream &outFile, const std::vector<std::string> &filePathToScan, const std::filesystem::path &fullOutPath, const std::string &logicalRoot)
+    void HeaderWriter::writeDirectory(
+        std::ofstream &outFile,
+        const std::vector<std::string> &filePathToScan,
+        const std::string &logicalRoot)
     {
 
         StandardsWriter standardWriter;
         Locator locator;
 
         EntryProcessor begin(outFile);
-        begin.entryProcessor(filePathToScan, fullOutPath, logicalRoot);
+        begin.entryProcessor(filePathToScan, logicalRoot);
 
         // 先获取文件大小（在移动指针之前）
         outFile.flush();
@@ -47,7 +53,11 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(Y_flib::Constants::MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
         locator.locateFromEnd(outFile, 0);
     }
-    void HeaderWriter::headerWriter(const std::vector<std::string> &filePathToScan, std::string &outputFilePath, const std::string &logicalRoot, Y_flib::CompressionMode mode)
+    void HeaderWriter::headerWriter(
+        const std::vector<std::string> &filePathToScan,
+        const std::string &outputFilePath,
+        const std::string &logicalRoot,
+        Y_flib::CompressionMode mode)
     {
         try
         {
@@ -73,7 +83,7 @@ namespace Y_flib
                 standardWriter.appendMagicStatic(outFile);
 
                 // 目录信息
-                writeDirectory(outFile, filePathToScan, fullOutPath, logicalRoot); // 目录区结束（已回填）
+                writeDirectory(outFile, filePathToScan, logicalRoot); // 目录区结束（已回填）
 
                 standardWriter.appendMagicStatic(outFile); // 文件末尾魔数
             }
