@@ -2,7 +2,7 @@
 
 namespace Y_flib
 {
-    void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+    void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, DirectoryScanCursor &cursor)
     {
         try
         {
@@ -43,7 +43,7 @@ namespace Y_flib
                     isFile,
                     fullPath); // 创建details
 
-                writeStorageStandard(details, entryQueue, tempOffset, offset);
+                writeStorageStandard(details, entryQueue, cursor);
             }
         }
         catch (std::filesystem::filesystem_error &e)
@@ -52,43 +52,38 @@ namespace Y_flib
         }
     }
     // 识别存储标准并且分发到各个写入函数
-    void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueue &entryQueue, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset)
+    void BinaryStandardWriter::writeStorageStandard(EntryDetails &details, EntryQueue &entryQueue, DirectoryScanCursor &cursor)
     {
 
         if (details.getIsFile()) // 文件对应的处理
         {
-            writeFileStandard(details, tempOffset);
+            writeFileStandard(details, cursor);
         }
         else if ((!details.getIsFile()) && (details.getFileSizeInDetails() == 0)) // 目录对应的处理
         {
             Y_flib::FileCount countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
             entryQueue.push({details, countOfThisDirectory}); // 如果是目录则存入其details与其子文件数目的std::pair 到队列中备用
-            writeDirectoryStandard(details, countOfThisDirectory, tempOffset);
+            writeDirectoryStandard(details, countOfThisDirectory, cursor);
         }
         else if ((!details.getIsFile()) && (details.getFileSizeInDetails() == 1))
         {
-            writeSymbolLinkStandard(details, tempOffset);
+            writeSymbolLinkStandard(details, cursor);
         }
-        if (tempOffset >= Y_flib::Constants::HEADER_BUFFER_SIZE) // 达到缓冲大小后写入分割标准
+        if (cursor.needsSeparation()) // 达到缓冲大小后：回填块长度并预留下一块
         {
-
-            writeSeparatedStandard(tempOffset, offset);
-            offset += tempOffset;
-            // 写入完毕后将当前相对位置（用多个存储标准偏移量累加维护的tempOffset）加到文件的总偏移量offset上，以维护整个偏移逻辑
-            tempOffset = 0; // 相对位置归零
-
-            // 预留下一次回填的位置
-            writeBlankSeparatedStandard();
-            offset += Y_flib::Constants::SEPARATED_STANDARD_SIZE; // 更新offset，保证回填正确。不更新tempOffset，为的是将分割标准的大小排除在外，便于拿到偏移量能不经变换直接操作对应位置的数据
+            writeSeparatedStandard(cursor); // 把累计的块字节数回填到当前分割标准的长度槽位
+            cursor.onBlockSealed();         // 游标跳过块体，块内累计清零
+            writeBlankSeparatedStandard();  // 预留下一次回填的位置
+            cursor.onSlotReserved();        // 游标跳过槽位本身（槽位大小不计入 blockBytes，保证槽位可直接定位）
         }
     }
     // 目录标准写入函数
-    void BinaryStandardWriter::writeDirectoryStandard(EntryDetails &details, Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset)
+    void BinaryStandardWriter::writeDirectoryStandard(EntryDetails &details, Y_flib::FileCount count, DirectoryScanCursor &cursor)
     {
         Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
 
-        tempOffset += Y_flib::Constants::DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
+        cursor.accountEntry(Y_flib::Constants::DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName);
 
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Directory, outFile);
         standardWriter.writeBinaryStandards(sizeOfName, outFile);
@@ -98,11 +93,11 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(count, outFile); // 写入文件数目
     }
     // 文件标准写入函数
-    void BinaryStandardWriter::writeFileStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
+    void BinaryStandardWriter::writeFileStandard(EntryDetails &details, DirectoryScanCursor &cursor)
     {
         Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
 
-        tempOffset += Y_flib::Constants::FILE_STANDARD_SIZE_BASIC + sizeOfName;
+        cursor.accountEntry(Y_flib::Constants::FILE_STANDARD_SIZE_BASIC + sizeOfName);
 
         standardWriter.writeBinaryStandards(Y_flib::FlagType::File, outFile); // 先写文件标
         standardWriter.writeBinaryStandards(sizeOfName, outFile);             // 写入文件名偏移量
@@ -112,11 +107,11 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(details.getFileSizeInDetails(), outFile); // 写入文件大小
         standardWriter.writeBinaryStandards(Y_flib::FileSize(0), outFile);            // 预留大小
     }
-    // 分割标准写入函数（回填）
-    void BinaryStandardWriter::writeSeparatedStandard(Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize offset)
+    // 分割标准写入函数（把当前块累计字节数回填到长度槽位）
+    void BinaryStandardWriter::writeSeparatedStandard(DirectoryScanCursor &cursor)
     {
-        locator.locateFromBegin(outFile, offset + Y_flib::Constants::FLAG_SIZE);
-        standardWriter.writeBinaryStandards(tempOffset, outFile);
+        locator.locateFromBegin(outFile, cursor.lengthSlotPos());
+        standardWriter.writeBinaryStandards(cursor.blockBytes, outFile);
         locator.locateFromEnd(outFile, 0);
     }
     // 空分割标准写入函数
@@ -133,14 +128,14 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), File);
     }
     // 符号链接标准写入函数
-    void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)
+    void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, DirectoryScanCursor &cursor)
     {
         // 使用 u8string() 获取 UTF-8 编码，确保中文路径正确
         Y_flib::FileNameSize sizeOfName = details.getSizeOfName();
         std::string pathStr = EncodingUtils::pathToUtf8(details.getFullPath());
         Y_flib::FileNameSize sizeOfPath = pathStr.size();
 
-        tempOffset += Y_flib::Constants::SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath;
+        cursor.accountEntry(Y_flib::Constants::SYMBOL_LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath);
 
         standardWriter.writeBinaryStandards(Y_flib::FlagType::SymbolLink, outFile);
 
@@ -150,10 +145,10 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(details.getName(), outFile);
         standardWriter.writeBinaryStandards(pathStr, outFile);
     }
-    void BinaryStandardWriter::writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, Y_flib::DirectoryOffsetSize &tempOffset)
+    void BinaryStandardWriter::writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, DirectoryScanCursor &cursor)
     {
         Y_flib::FileNameSize sizeOfName = logicalRoot.size();
-        tempOffset += Y_flib::Constants::DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName;
+        cursor.accountEntry(Y_flib::Constants::DIRECTORY_STANDARD_SIZE_BASIC + sizeOfName);
 
         standardWriter.writeBinaryStandards(Y_flib::FlagType::LogicalRoot, outFile);
         standardWriter.writeBinaryStandards(sizeOfName, outFile);
@@ -162,7 +157,7 @@ namespace Y_flib
 
         standardWriter.writeBinaryStandards(count, outFile); // 写文件数
     }
-    void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, Y_flib::DirectoryOffsetSize &tempOffset)
+    void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryScanCursor &cursor)
     {
         Y_flib::FileCount num = filePathToScan.size();
         for (Y_flib::FileCount i = 0; i < num; i++)
@@ -198,17 +193,17 @@ namespace Y_flib
             const std::filesystem::directory_entry entry(parentPath);
             if (entry.is_regular_file())
             {
-                writeFileStandard(rootDetails, tempOffset);
+                writeFileStandard(rootDetails, cursor);
             }
             else if (entry.is_directory())
             {
                 Y_flib::FileCount count = countFilesInDirectory(parentPath);
-                writeDirectoryStandard(rootDetails, count, tempOffset);
+                writeDirectoryStandard(rootDetails, count, cursor);
             }
             else if (entry.is_symlink())
             {
                 rootDetails.setFileSize(1); // 利用大小区分符号链接
-                writeSymbolLinkStandard(rootDetails, tempOffset);
+                writeSymbolLinkStandard(rootDetails, cursor);
             }
             else
             {
