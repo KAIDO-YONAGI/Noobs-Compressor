@@ -2,7 +2,7 @@
 
 namespace Y_flib
 {
-    void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
+    void DataExporter::thisBlockIsDone(Y_flib::BlockLength dataSize)
     {
         std::streamoff currentPos = outFile.tellp();
         std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + Y_flib::Constants::BLOCK_LENGTH_FIELD_SIZE);
@@ -11,7 +11,7 @@ namespace Y_flib
         locator.locateFromEnd(outFile, 0);
     }
 
-    void DataExporter::thisFileIsDone(Y_flib::FileSize offsetToFill)
+    void DataExporter::thisFileIsDone(Y_flib::SlotOffset offsetToFill)
     {
         locator.locateFromBegin(outFile, offsetToFill);
         standardWriter.writeBinaryStandards(processedFileSize, outFile); // Backfill processed size
@@ -21,7 +21,7 @@ namespace Y_flib
 
     void DataExporter::exportCompressedData(const Y_flib::DataBlock &data)
     {
-        Y_flib::FileSize dataSize = data.size();
+        Y_flib::BlockLength dataSize = data.size();
 
         std::ofstream blank;
         BinaryStandardWriter binaryStandardWriter(blank);

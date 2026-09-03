@@ -34,7 +34,7 @@ private:
     // 处理单个文件
     void processFile(Y_flib::BinaryStandardLoader &headerLoaderIterator,
                      Y_flib::Locator &locator,
-                     Y_flib::DirectoryOffsetSize &dataOffset,
+                     Y_flib::SlotOffset &dataOffset,
                      std::chrono::steady_clock::time_point &lastCallbackTime,
                      double &lastReportedProgress);
 

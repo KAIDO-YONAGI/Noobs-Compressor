@@ -82,7 +82,7 @@ void CompressionLoop::compressionLoop(
 
         if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
         {
-            Y_flib::FileNameSize offsetToFill = headerLoaderIterator.fileQueue.front().second;
+            Y_flib::SlotOffset offsetToFill = headerLoaderIterator.fileQueue.front().second;
             dataExporter.thisFileIsDone(offsetToFill);
 
             headerLoaderIterator.fileQueue.pop();
