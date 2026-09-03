@@ -142,4 +142,25 @@ namespace Y_flib
         constexpr ConstSize IV_BYTES = 16;
 
     }
+
+#pragma pack(push, 1)
+    // 分割标准的前缀布局（磁盘字段顺序：flag + 块长度 + IV）。
+    // 只作布局唯一定义与编译期校验；写入路径仍按现有方式逐字段调用
+    // writeBinaryStandards，不改为整体写入（避免字节序/填充差异，见 DevFiles 方案 R3）
+    struct SeparatedPrefix
+    {
+        FlagType flag;
+        BlockLength length;
+        IvSize iv;
+    };
+
+    // 文件标准的尾部布局（原始大小 + 预留的"处理后大小"，紧跟变长文件名之后）
+    struct FileStandardTail
+    {
+        FileSize originalSize;
+        FileSize processedSize;
+    };
+#pragma pack(pop)
+    static_assert(sizeof(SeparatedPrefix) == Constants::SEPARATED_STANDARD_SIZE);
+    static_assert(sizeof(FileStandardTail) == sizeof(FileSize) * 2);
 }
