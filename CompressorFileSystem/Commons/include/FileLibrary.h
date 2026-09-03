@@ -21,6 +21,10 @@ namespace Y_flib
     using HeaderOffsetSize = uint8_t;
     using DirectoryOffsetSize = uint64_t;
 
+    // 偏移和长度使用不同的类型名称，杜绝"一型多用"（详见 DevFiles 重构方案 R2）
+    using SlotOffset = uint64_t;   // 预留字段在归档中的偏移（绝对位置）
+    using BlockLength = uint64_t;  // 数据块长度（分割标准/数据区前缀中的长度字段）
+
     using UpSizeOfBuffer = uint32_t;
 
     using SizeOfMagicNum = uint32_t;

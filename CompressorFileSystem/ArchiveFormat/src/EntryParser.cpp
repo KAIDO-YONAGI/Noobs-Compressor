@@ -38,7 +38,7 @@ namespace Y_flib
         std::filesystem::path pathToProcess;
         Y_flib::FileNameSize fileNameSize = 0;
         Y_flib::FileSize compressedSize = 0;
-        Y_flib::FileSize lastOffset = 0;
+        Y_flib::SlotOffset lastOffset = 0; // 该文件"处理后大小"预留字段在归档中的绝对偏移
 
         // 解析信息，注意和下一步的顺序不能颠倒，否则会导致读写协议不对称，后续解析失败
 

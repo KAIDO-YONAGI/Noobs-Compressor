@@ -123,14 +123,14 @@ namespace Y_flib
     void BinaryStandardWriter::writeBlankSeparatedStandard()
     {
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, outFile);
-        standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), outFile);
+        standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), outFile);
         standardWriter.writeBinaryStandards(Y_flib::IvSize{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}, outFile);
     }
     // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
     void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
     {
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, File);
-        standardWriter.writeBinaryStandards(Y_flib::DirectoryOffsetSize(0), File);
+        standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), File);
     }
     // 符号链接标准写入函数
     void BinaryStandardWriter::writeSymbolLinkStandard(EntryDetails &details, Y_flib::DirectoryOffsetSize &tempOffset)

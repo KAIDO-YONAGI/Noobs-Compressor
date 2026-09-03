@@ -32,7 +32,7 @@ namespace Y_flib
         Y_flib::FileSize processedFileSize = 0;
 
         /* 标记单个数据块处理完成并更新位置 */
-        void thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize);
+        void thisBlockIsDone(Y_flib::BlockLength dataSize);
 
     public:
         /* 构造函数，打开输出文件（使用fstream支持读写） */
@@ -69,8 +69,8 @@ namespace Y_flib
         /* 获取已处理数据的总大小 */
         Y_flib::FileSize getProcessedFileSize() { return processedFileSize; }
 
-        /* 更新当前文件的完成标记和位置 */
-        void thisFileIsDone(Y_flib::FileSize offsetToFill);
+        /* 更新当前文件的完成标记和位置（offsetToFill 为"处理后大小"预留字段在归档中的偏移） */
+        void thisFileIsDone(Y_flib::SlotOffset offsetToFill);
 
         /* 写入压缩数据块到输出文件 */
         void exportCompressedData(const Y_flib::DataBlock &data);

@@ -58,7 +58,7 @@ namespace Y_flib
         loadSeparatedStandard(const_cast<Y_flib::FlagType &>(flag), standardsReader, ivNum);
 
         // 读取加密数据到vector，等待解密处理：将读取到的数据块位置信息存入队列，供后续加密使用
-        Y_flib::DirectoryOffsetSize readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
+        Y_flib::BlockLength readSize = (tempOffset == 0 ? (offset - sizeof(Y_flib::SizeOfMagicNum)) : tempOffset);
 
         // std::cout << "DEBUG loadEntryBlock: tempOffset=" << tempOffset << ", readSize=" << readSize << std::endl;
 
@@ -164,7 +164,7 @@ namespace Y_flib
         flag = standardsReader.readBinaryStandards<Y_flib::FlagType>();
 
         // 读取子块偏移量
-        tempOffset = standardsReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+        tempOffset = standardsReader.readBinaryStandards<Y_flib::BlockLength>();
         // 读取iv头
         ivNum = standardsReader.readBinaryStandards<Y_flib::IvSize>();
 

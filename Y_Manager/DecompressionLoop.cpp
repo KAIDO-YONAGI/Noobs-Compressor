@@ -20,7 +20,7 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
     std::vector<std::string> blank;
     BinaryStandardLoader headerLoaderIterator(EncodingUtils::pathToUtf8(fullPath), blank, parentPath);
     headerLoaderIterator.headerLoaderIterator(encryption);
-    Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
+    Y_flib::SlotOffset dataOffset = headerLoaderIterator.getDirectoryOffset();
 
     Locator locator;
 
@@ -76,7 +76,7 @@ void DecompressionLoop::processDirectories(BinaryStandardLoader &headerLoaderIte
 void DecompressionLoop::processFile(
     BinaryStandardLoader &headerLoaderIterator,
     Locator &locator,
-    Y_flib::DirectoryOffsetSize &dataOffset,
+    Y_flib::SlotOffset &dataOffset,
     std::chrono::steady_clock::time_point &lastCallbackTime,
     double &lastReportedProgress)
 {
@@ -162,7 +162,7 @@ void DecompressionLoop::processDataBlock(
         throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before metadata block");
 
     // 读取 metadata 块
-    Y_flib::DirectoryOffsetSize metadataBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    Y_flib::BlockLength metadataBlockSize = numReader.readBinaryStandards<Y_flib::BlockLength>();
     rawMetadata.clear();
     rawMetadata.resize(metadataBlockSize);
     loader.dataLoader(metadataBlockSize, inFile, rawMetadata);
@@ -175,7 +175,7 @@ void DecompressionLoop::processDataBlock(
     if (!(numReader.readBinaryStandards<Y_flib::FlagType>() == Y_flib::FlagType::Separated))
         throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before data block");
 
-    Y_flib::DirectoryOffsetSize blockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    Y_flib::BlockLength blockSize = numReader.readBinaryStandards<Y_flib::BlockLength>();
     rawData.clear();
     rawData.resize(blockSize);
     loader.dataLoader(blockSize, inFile, rawData);
