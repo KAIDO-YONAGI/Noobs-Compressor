@@ -62,3 +62,31 @@ add_executable(test_flagtype
     "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
 )
 
+# ========================
+# 归档基准 CLI 工具（重构验收用，见 DevFiles《文件系统类型与布局重构方案》§0）
+# compress/decompress/verify 三个子命令，直接编译核心库源文件（与 GUI 的 CORE_SOURCES 一致，无 Qt）
+# ========================
+add_executable(tool_archivebaseline
+    tool_archivebaseline.cpp
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/ToolClasses.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryParser.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataExporter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryProcessor.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardWriter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/HeaderWriter.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Strategy/src/NullCompression.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Strategy/src/StrategyFactory.cpp"
+    "${REPO_ROOT}/Y_Manager/MainLoop.cpp"
+    "${REPO_ROOT}/Y_Manager/CompressionLoop.cpp"
+    "${REPO_ROOT}/Y_Manager/DecompressionLoop.cpp"
+    "${REPO_ROOT}/EncryptionModules/Aes/src/AesFunctions.cpp"
+    "${REPO_ROOT}/EncryptionModules/Aes/src/mainCircle.cpp"
+    "${REPO_ROOT}/BufferPool/BufferPool.cpp"
+    "${REPO_ROOT}/CompressionModules/Huffman/Hufftype/HuffmanType.cpp"
+    "${REPO_ROOT}/CompressionModules/Huffman/Core/src/Huffman.cpp"
+)
+target_link_libraries(tool_archivebaseline PRIVATE advapi32)
+
