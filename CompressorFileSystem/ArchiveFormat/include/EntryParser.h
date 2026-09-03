@@ -22,7 +22,7 @@ namespace Y_flib
     {
     private:
         EntryQueue &entryQueue;
-        EntryQueue &fileQueue;
+        FileTaskQueue &fileQueue;
         std::vector<std::string> &filePathToScan;
         Y_flib::DataBlock &buffer;
         const Y_flib::Header &header;
@@ -116,7 +116,7 @@ namespace Y_flib
 
         /* 构造函数，初始化解析器，自动检测压缩/解压模式 */
         EntryParser(Y_flib::DataBlock &buffer, EntryQueue &entryQueue,
-                    EntryQueue &fileQueue, const Y_flib::Header &header,
+                    FileTaskQueue &fileQueue, const Y_flib::Header &header,
                     const Y_flib::DirectoryOffsetSize &offset,
                     const Y_flib::DirectoryOffsetSize &tempOffset,
                     std::vector<std::string> &filePathToScan)

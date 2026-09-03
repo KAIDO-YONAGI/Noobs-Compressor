@@ -59,8 +59,8 @@ namespace Y_flib
     void headerLoaderIterator(Y_flib::IEncryption &encryption); // 主读取循环：逐块读取、解密、解析目录结构
 
     // 压缩时队列
-    EntryQueue fileQueue;                                                  // 文件队列
-    EntryQueue entryQueue;                                                 // 目录队列
+    FileTaskQueue fileQueue;                                                 // 文件任务队列（载荷语义见 FileTask）
+    EntryQueue entryQueue;                                                   // 目录队列
     std::vector<std::array<Y_flib::DirectoryOffsetSize, 2>> blockPosition; // 目录数据块位置数组 1 为起点，2为大小
 
     // 解压时队列

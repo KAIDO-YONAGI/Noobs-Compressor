@@ -80,7 +80,7 @@ void DecompressionLoop::processFile(
     std::chrono::steady_clock::time_point &lastCallbackTime,
     double &lastReportedProgress)
 {
-    std::filesystem::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
+    std::filesystem::path relativePath = headerLoaderIterator.fileQueue.front().entry.getFullPath();
     std::filesystem::path fullFilePath = parentPath / relativePath;
 
     createFile(fullFilePath);
@@ -99,8 +99,8 @@ void DecompressionLoop::processFile(
     }
 
     DataExporter dataExporter(fullFilePath);
-    Y_flib::FileSize fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
-    Y_flib::FileSize originalSize = headerLoaderIterator.fileQueue.front().first.getFileSizeInDetails();
+    Y_flib::FileSize fileCompressedSize = headerLoaderIterator.fileQueue.front().compressedSize;
+    Y_flib::FileSize originalSize = headerLoaderIterator.fileQueue.front().entry.getFileSizeInDetails();
     Y_flib::FileSize totalDecompressedBytes = 0;
 
     // 预分配缓冲区

@@ -15,10 +15,28 @@ namespace Y_flib
     /* EntryQueue - 目录文件队列
      *
      * 功能:
-     *   BFS遍历中使用的队列，存储目录和文件计数对
+     *   BFS遍历中使用的队列，存储目录和子项计数对（second 语义单一：子项数）
      *   用链表实现，支持push/pop/front/back操作
      */
     class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
+    {
+    };
+
+    /* FileTask - 待处理文件任务
+     *
+     * 功能:
+     *   压缩/解压流程中 fileQueue 的元素。
+     *   消灭原 pair.second 双语义：压缩模式装"处理后大小"预留槽偏移，
+     *   解压模式装压缩后大小——两种载荷各自具名，按模式取用
+     */
+    struct FileTask
+    {
+        EntryDetails entry;                 // 待处理文件的目录条目
+        Y_flib::SlotOffset processedSizeOffset = 0; // 压缩模式：预留字段在归档中的偏移
+        Y_flib::FileSize compressedSize = 0;        // 解压模式：该文件压缩后的大小
+    };
+
+    class FileTaskQueue : public std::queue<FileTask>
     {
     };
 
