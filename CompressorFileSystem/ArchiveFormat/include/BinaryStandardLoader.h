@@ -24,6 +24,13 @@
    allLoopIsDone(): 检查是否完成所有读取
    restartLoader(): 重新初始化读取状态
    encryptHeaderBlock(): 加密并回填目录块
+
+   归档输出文件的写入分三个阶段依次进行，任何阶段都不并发写入
+   （本类的 encryptHeaderBlock 承担阶段③）：
+   ① HeaderWriter（ofstream，建档阶段：写文件头、目录树、各预留字段）
+   ② DataExporter（fstream，数据阶段：逐块追加，并回写每块长度、每文件大小）
+   ③ BinaryStandardLoader::encryptHeaderBlock（fstreamForRefill，收尾阶段：目录区原地加密）
+   并行化时②③归专职写线程，见《线程池调研与改造计划.md》§7.1。
 */
 namespace Y_flib
 {
