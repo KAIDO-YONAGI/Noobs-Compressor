@@ -210,7 +210,7 @@ namespace Y_flib
             StandardsReader::readDataBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
 
             encryption.encrypt(inBlock, encryptedBlock);
-            locator.locateFromBegin(fstreamForRefill, startPos - sizeof(Y_flib::IvSize)); // 定位回数据块起始位置，准备回写加密数据
+            locator.locateFromBegin(fstreamForRefill, startPos - Y_flib::Constants::IV_BYTES); // 定位到数据块前的 IV 预留空间，准备回写加密数据
 
             StandardsWriter::writeDataBlock(blockSize + sizeof(Y_flib::IvSize), fstreamForRefill, encryptedBlock); // 回写加密数据
 

@@ -23,7 +23,7 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(directoryOffsetSize, outFile);
 
         // 回填偏移量并重定位指针至回填前的位置
-        locator.locateFromBegin(outFile, Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize) - sizeof(Y_flib::HeaderOffsetSize));
+        locator.locateFromBegin(outFile, Y_flib::Header::Layout::HEADER_OFFSET_FIELD_POS);
         standardWriter.writeBinaryStandards(Y_flib::Constants::HEADER_SIZE, outFile);
         locator.locateFromEnd(outFile, 0);
     }
@@ -43,7 +43,7 @@ namespace Y_flib
         // std::cout << "DEBUG writeDirectory: fullOutPath=" << EncodingUtils::pathToUtf8(fullOutPath) << ", directoryOffset=" << directoryOffset << std::endl;
 
         // 回填偏移量并重定位指针至回填前的位置
-        locator.locateFromBegin(outFile, Y_flib::Constants::HEADER_SIZE - sizeof(Y_flib::Constants::MAGIC_NUM) - sizeof(Y_flib::DirectoryOffsetSize));
+        locator.locateFromBegin(outFile, Y_flib::Header::Layout::DIRECTORY_OFFSET_FIELD_POS);
         standardWriter.writeBinaryStandards(directoryOffset + Y_flib::DirectoryOffsetSize(sizeof(Y_flib::Constants::MAGIC_NUM)), outFile); // sizeof(MAGIC_NUM)认为整个目录+文件头是包含末尾魔数的，只不过此时还未写入
         locator.locateFromEnd(outFile, 0);
     }
