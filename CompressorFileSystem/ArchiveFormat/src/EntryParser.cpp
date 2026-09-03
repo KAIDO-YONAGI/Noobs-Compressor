@@ -99,6 +99,46 @@ namespace Y_flib
         entryQueue.push({directoryDetails, count});
     }
 
+    void EntryParser::linkParser(
+        Y_flib::DirectoryOffsetSize &bufferPtr,
+        bool isRoot,
+        Y_flib::FlagType linkType)
+    {
+        if (header.version < 2)
+        {
+            throw std::runtime_error(
+                "Legacy v1 symbolic-link metadata cannot be restored safely");
+        }
+
+        // 链接标准的两个长度字段连续存放，随后才是名称和目标正文。
+        const Y_flib::FileNameSize nameSize =
+            readDataFromReadBlock<Y_flib::FileNameSize>(bufferPtr);
+        const Y_flib::FileNameSize targetSize =
+            readDataFromReadBlock<Y_flib::FileNameSize>(bufferPtr);
+
+        checkBounds(bufferPtr, nameSize);
+        std::string name(
+            buffer.data() + bufferPtr,
+            buffer.data() + bufferPtr + nameSize);
+        bufferPtr += nameSize;
+
+        checkBounds(bufferPtr, targetSize);
+        std::string target(
+            buffer.data() + bufferPtr,
+            buffer.data() + bufferPtr + targetSize);
+        bufferPtr += targetSize;
+
+        const std::filesystem::path linkPath =
+            isRoot ? tempPathForRootParser : pathConnector(name);
+        if (parserMode == 2)
+        {
+            linkQueue.push({
+                linkType,
+                linkPath,
+                EncodingUtils::pathFromUtf8(target)});
+        }
+    }
+
     void EntryParser::rootParser(Y_flib::DirectoryOffsetSize &bufferPtr, const std::vector<std::string> &filePathToScan, Y_flib::FileCount &countOfChildDirectory, bool &noDirec)
     {
         Y_flib::FileNameSize directoryNameSize = 0;
@@ -134,6 +174,12 @@ namespace Y_flib
                 case Y_flib::FlagType::Directory:
                     directoryParser(bufferPtr, true);
                     break;
+                case Y_flib::FlagType::SymbolicLinkFile:
+                case Y_flib::FlagType::SymbolicLinkDirectory:
+                case Y_flib::FlagType::Junction:
+                    // 根链接只消费目录元数据，不加入普通文件数据队列。
+                    linkParser(bufferPtr, true, entryFlag);
+                    break;
                 default:
                     throw std::runtime_error("rootParser()-Error:Failed to read flag");
                 }
@@ -160,6 +206,14 @@ namespace Y_flib
         case Y_flib::FlagType::Directory:
         {
             directoryParser(bufferPtr, false);
+            countOfChildDirectory--;
+            break;
+        }
+        case Y_flib::FlagType::SymbolicLinkFile:
+        case Y_flib::FlagType::SymbolicLinkDirectory:
+        case Y_flib::FlagType::Junction:
+        {
+            linkParser(bufferPtr, false, entryFlag);
             countOfChildDirectory--;
             break;
         }

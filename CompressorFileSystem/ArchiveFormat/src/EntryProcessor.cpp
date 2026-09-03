@@ -29,7 +29,8 @@ namespace Y_flib
             {
 
                 sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
-                if (!FileSystemUtils::queryEntry(sPath).isRegularFile)
+                const FileSystemEntryInfo rootInfo = FileSystemUtils::queryEntry(sPath);
+                if (rootInfo.isDirectory)
                 {
                     file.setFilePathToScan(sPath);
                     binaryStandardWriter->binaryStandardWriter(file, entryQueue, cursor); // 添加当前目录到队列以启动整个BFS递推
@@ -46,14 +47,12 @@ namespace Y_flib
     void EntryProcessor::flowScanner(FilePath &file, Y_flib::BinaryStandardWriter::DirectoryScanCursor &cursor)
     {
 
-        BinaryStandardWriter binaryStandardWriter(outFile);
-
         while (!entryQueue.empty())
         {
             EntryDetails &details = (entryQueue.front()).first;
             file.setFilePathToScan(details.getFullPath());
 
-            binaryStandardWriter.binaryStandardWriter(file, entryQueue, cursor);
+            binaryStandardWriter->binaryStandardWriter(file, entryQueue, cursor);
 
             entryQueue.pop();
         }

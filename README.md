@@ -41,6 +41,9 @@ The project is mainly intended for studying **file archiving structures, data co
 - 实现 **路径重复跳过机制**以避免部分重复文件处理  
   Implements a **duplicate-path skipping mechanism** to avoid redundant processing
 
+- 支持 **Windows 文件符号链接、目录符号链接与 Junction**：归档只保存链接类型、名称和原始目标路径，不解析或递归扫描目标；外部目标与缺失目标均按正常链接保存
+  Supports **Windows file symbolic links, directory symbolic links, and Junctions** by storing their type, name, and original target path without resolving or scanning the target; external and missing targets are preserved normally
+
 - **GUI 版本特性**：拖放支持、实时进度、日志输出  
   **GUI features**: drag-and-drop support, real-time progress, log output
 
@@ -89,6 +92,12 @@ file overwriting **may still occur in extreme situations**.
 
 在使用软件前，请务必**备份原始文件**。  
 Please **always back up your original files before using the software**.
+
+解压创建 Windows 符号链接时，系统需要启用开发者模式或授予“创建符号链接”权限；Junction 不依赖该权限。
+Restoring Windows symbolic links requires Developer Mode or the “Create symbolic links” privilege; Junction restoration does not require it.
+
+链接目标不会随归档复制。解压到另一台机器后，目标路径不存在时会形成正常的悬空链接；绝对目标仍指向归档中记录的原位置。
+Link targets are not copied into the archive. On another machine, a missing target becomes a normal dangling link, while an absolute target continues to point to the recorded location.
 
 ---
 
@@ -380,4 +389,3 @@ This project is intended **for educational and learning purposes only**.
 
 使用前请务必 **备份原始文件**。  
 Please **back up your original files before using the software**.
-

@@ -149,6 +149,11 @@ void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathTo
                     {
                         const Y_flib::FileSystemEntryInfo info =
                             Y_flib::FileSystemUtils::queryEntry(fullPath);
+                        if (info.isReparsePoint)
+                        {
+                            // 链接只有目录元数据，不读取目标内容，也不计入文件进度。
+                            continue;
+                        }
                         if (info.isRegularFile)
                         {
                             ++totalFiles;

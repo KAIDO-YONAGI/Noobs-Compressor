@@ -51,10 +51,37 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
         }
     }
 
+    processDirectories(headerLoaderIterator);
+    processLinks(headerLoaderIterator);
+
     // 完成回调
     if (progressCallback)
     {
         progressCallback("", 100.0, 100.0, "Completed");
+    }
+}
+
+void DecompressionLoop::processLinks(BinaryStandardLoader &headerLoaderIterator)
+{
+    while (!headerLoaderIterator.linkQueueReady.empty())
+    {
+        const Y_flib::LinkTask task = headerLoaderIterator.linkQueueReady.front();
+        headerLoaderIterator.linkQueueReady.pop();
+
+        if (task.targetPath.empty())
+        {
+            throw std::runtime_error("Archived Windows link target is empty");
+        }
+
+        std::filesystem::path linkPath = task.linkPath;
+        if (!linkPath.is_absolute())
+        {
+            linkPath = parentPath / linkPath;
+        }
+
+        // 目标字符串按归档记录原样交给 Windows；外部或缺失目标均允许。
+        Y_flib::FileSystemUtils::createLink(
+            linkPath, task.targetPath, task.linkType);
     }
 }
 
