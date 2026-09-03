@@ -99,6 +99,18 @@ static int makeSample(const std::string &rootUtf8)
     // 样本树之外的独立散文件：构成第二个扫描条目，覆盖多路径输入
     writeLcgFile(root / "extra.txt", 5 * 1024 + 29, 7);
 
+    // 多文件目录：500 个小文件让目录区标准累计超过 HEADER_BUFFER_SIZE(16KB)，
+    // 强制触发目录区分割标准的回填/预留路径（这是目录区写入最关键的分支部）
+    {
+        const fs::path many = tree / "manyfiles";
+        fs::create_directories(many, ec);
+        for (int i = 0; i < 500; ++i)
+        {
+            std::string name = "f" + std::to_string(i) + ".bin";
+            writeLcgFile(many / name, 80 + (i % 64), 100 + static_cast<uint32_t>(i));
+        }
+    }
+
     std::cout << "sample: tree written to " << rootUtf8 << "\n";
     return 0;
 }

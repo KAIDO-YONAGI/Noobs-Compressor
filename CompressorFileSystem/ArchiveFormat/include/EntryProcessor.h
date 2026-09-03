@@ -28,8 +28,8 @@ namespace Y_flib
         BinaryStandardWriter *binaryStandardWriter;
         StandardsWriter standardWriter;
 
-        /* BFS扫描目录并处理每个文件/子目录，维护偏移量 */
-        void flowScanner(FilePath &file, Y_flib::DirectoryOffsetSize &tempOffset, Y_flib::DirectoryOffsetSize &offset);
+        /* BFS扫描目录并处理每个文件/子目录，游标位置算术收口在 DirectoryScanCursor 内 */
+        void flowScanner(FilePath &file, Y_flib::BinaryStandardWriter::DirectoryScanCursor &cursor);
 
     public:
         /* 构造函数，初始化处理器并创建二进制写入器 */
