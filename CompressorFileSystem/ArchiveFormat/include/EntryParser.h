@@ -120,12 +120,13 @@ namespace Y_flib
                     const Y_flib::DirectoryOffsetSize &offset,
                     const Y_flib::DirectoryOffsetSize &tempOffset,
                     std::vector<std::string> &filePathToScan)
-            : buffer(buffer), entryQueue(entryQueue),
+            : entryQueue(entryQueue),
               fileQueue(fileQueue),
+              filePathToScan(filePathToScan),
+              buffer(buffer),
               header(header),
               offset(offset),
-              tempOffset(tempOffset),
-              filePathToScan(filePathToScan)
+              tempOffset(tempOffset)
         {
             parserMode = ((!filePathToScan.empty()) ? 1 : 2); // 非空表示压缩
         }

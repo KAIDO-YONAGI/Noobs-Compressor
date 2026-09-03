@@ -5,7 +5,7 @@ namespace Y_flib
     void DataExporter::thisBlockIsDone(Y_flib::DirectoryOffsetSize dataSize)
     {
         std::streamoff currentPos = outFile.tellp();
-        std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + sizeof(Y_flib::DirectoryOffsetSize));
+        std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + Y_flib::Constants::BLOCK_LENGTH_FIELD_SIZE);
         locator.locateFromBegin(outFile, offsetToFill);
         standardWriter.writeBinaryStandards(dataSize, outFile);
         locator.locateFromEnd(outFile, 0);

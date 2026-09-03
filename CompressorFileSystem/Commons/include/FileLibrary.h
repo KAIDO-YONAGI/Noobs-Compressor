@@ -62,6 +62,16 @@ namespace Y_flib
         Y_flib::HeaderOffsetSize headerOffset = 0;
         Y_flib::DirectoryOffsetSize directoryOffset = 0;
         Y_flib::SizeOfMagicNum magicNum_2 = 0;
+
+        // 内部布局：各预留字段相对文件头起点的位置（按字段顺序累积，
+        // 不依赖尾部字段，也不依赖在 Header 之后才定义的 Constants::HEADER_SIZE）
+        struct Layout
+        {
+            static constexpr ConstSize HEADER_OFFSET_FIELD_POS =
+                sizeof(SizeOfMagicNum) + sizeof(CompressStrategy) + sizeof(CompressorVersion); // = 6
+            static constexpr ConstSize DIRECTORY_OFFSET_FIELD_POS =
+                HEADER_OFFSET_FIELD_POS + sizeof(HeaderOffsetSize); // = 7
+        };
     };
 #pragma pack(pop)
 
@@ -116,6 +126,16 @@ namespace Y_flib
 
         // 文件头的大小
         constexpr ConstSize HEADER_SIZE = sizeof(Header);
+
+        // 交叉验证：Header::Layout 的字段累积形式与 sizeof(Header) 一致
+        static_assert(Header::Layout::DIRECTORY_OFFSET_FIELD_POS + sizeof(DirectoryOffsetSize) +
+                          sizeof(SizeOfMagicNum) == HEADER_SIZE);
+
+        // 数据块前缀中"块长度字段"的宽度
+        constexpr ConstSize BLOCK_LENGTH_FIELD_SIZE = sizeof(DirectoryOffsetSize);
+
+        // IV 的字节数。IvSize 是值类型，位置计算不应依赖 sizeof(值类型)
+        constexpr ConstSize IV_BYTES = 16;
 
     }
 }
