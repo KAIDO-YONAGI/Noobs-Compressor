@@ -1,6 +1,8 @@
 #include "CompressionLoop.h"
+#include "../CompressorFileSystem/Commons/include/FileSystemUtils.h"
 #include <chrono>
 #include <memory>
+#include <vector>
 
 using Y_flib::BinaryStandardLoader;
 using Y_flib::DataExporter;
@@ -36,7 +38,14 @@ void CompressionLoop::compressionLoop(
     countTotalFiles(filePathToScan);
 
     headerLoaderIterator.headerLoaderIterator(encryption); // 执行第一次操作，把根目录载入
-    if (!headerLoaderIterator.fileQueue.empty())           // 单个文件特殊处理
+    // 首个目录块可能只有目录条目而没有文件条目（BFS 层序 + 16KB 分割所致），
+    // 需持续拉块直到出现文件条目或目录读取完成，否则主循环会因队列空而静默跳过
+    while (headerLoaderIterator.fileQueue.empty() && !headerLoaderIterator.allLoopIsDone())
+    {
+        headerLoaderIterator.restartLoader();
+        headerLoaderIterator.headerLoaderIterator(encryption);
+    }
+    if (!headerLoaderIterator.fileQueue.empty()) // 单个文件特殊处理
     {
         EntryDetails loadFile = headerLoaderIterator.fileQueue.front().entry;
         loadPath = loadFile.getFullPath();
@@ -125,16 +134,33 @@ void CompressionLoop::countTotalFiles(const std::vector<std::string> &filePathTo
         try
         {
             std::filesystem::path fsPath = EncodingUtils::pathFromUtf8(path);
-            if (std::filesystem::is_directory(fsPath))
+            const Y_flib::FileSystemEntryInfo rootInfo =
+                Y_flib::FileSystemUtils::queryEntry(fsPath);
+            if (rootInfo.isDirectory)
             {
-                for (auto it = std::filesystem::recursive_directory_iterator(fsPath);
-                     it != std::filesystem::recursive_directory_iterator(); ++it)
+                std::vector<std::filesystem::path> directories{fsPath};
+                while (!directories.empty())
                 {
-                    if (it->is_regular_file())
-                        totalFiles++;
+                    const std::filesystem::path directory = directories.back();
+                    directories.pop_back();
+
+                    for (const std::filesystem::path &fullPath :
+                         Y_flib::FileSystemUtils::listDirectory(directory))
+                    {
+                        const Y_flib::FileSystemEntryInfo info =
+                            Y_flib::FileSystemUtils::queryEntry(fullPath);
+                        if (info.isRegularFile)
+                        {
+                            ++totalFiles;
+                        }
+                        else if (info.isDirectory)
+                        {
+                            directories.push_back(fullPath);
+                        }
+                    }
                 }
             }
-            else if (std::filesystem::is_regular_file(fsPath))
+            else if (rootInfo.isRegularFile)
             {
                 totalFiles++;
             }

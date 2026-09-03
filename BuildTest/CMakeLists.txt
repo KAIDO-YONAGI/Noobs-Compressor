@@ -74,6 +74,7 @@ include_directories(
 # ========================
 set(CORE_SOURCES
     "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/FileSystemUtils.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryParser.cpp"
     "${REPO_ROOT}/CompressorFileSystem/Commons/src/ToolClasses.cpp"
     "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataExporter.cpp"

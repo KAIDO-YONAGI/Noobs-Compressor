@@ -1,4 +1,5 @@
 #include "DecompressionLoop.h"
+#include "../CompressorFileSystem/Commons/include/FileSystemUtils.h"
 #include <chrono>
 #include <memory>
 
@@ -231,12 +232,8 @@ void DecompressionLoop::createDirectory(const std::filesystem::path &directoryPa
 {
     try
     {
-        if (!directoryPath.parent_path().empty() && !std::filesystem::exists(directoryPath.parent_path()))
-        {
-            createDirectory(directoryPath.parent_path());
-        }
-
-        std::filesystem::create_directory(directoryPath);
+        // 使用兼容层递归创建，确保解压目标超过 MAX_PATH 时仍可落盘。
+        Y_flib::FileSystemUtils::createDirectories(directoryPath);
     }
     catch (const std::exception &e)
     {
@@ -248,23 +245,32 @@ bool DecompressionLoop::createFile(const std::filesystem::path &filePath)
 {
     try
     {
-        if (std::filesystem::exists(filePath))
+        if (Y_flib::FileSystemUtils::exists(filePath))
         {
             std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
             return false;
         }
 
-        if (!filePath.parent_path().empty() && !std::filesystem::exists(filePath.parent_path()))
+        if (!filePath.parent_path().empty() &&
+            !Y_flib::FileSystemUtils::exists(filePath.parent_path()))
         {
             createDirectory(filePath.parent_path());
         }
 
-        std::ofstream outfile(filePath);
+        // 保留归档中的普通路径，仅在创建文件时转换为扩展长度路径。
+        std::ofstream outfile(Y_flib::FileSystemUtils::pathForIo(filePath));
+        if (!outfile)
+        {
+            throw std::runtime_error(
+                "Failed to create file: " + EncodingUtils::pathToUtf8(filePath));
+        }
         outfile.close();
     }
-    catch (const std::filesystem::filesystem_error &e)
+    catch (const std::exception &e)
     {
-        throw std::runtime_error("createDirectory()-Error: " + EncodingUtils::pathToUtf8(filePath));
+        throw std::runtime_error(
+            "createFile()-Error: " + EncodingUtils::pathToUtf8(filePath) +
+            " - " + e.what());
     }
     return true;
 }

@@ -69,6 +69,7 @@ add_executable(test_flagtype
 add_executable(tool_archivebaseline
     tool_archivebaseline.cpp
     "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/Commons/src/FileSystemUtils.cpp"
     "${REPO_ROOT}/CompressorFileSystem/Commons/src/ToolClasses.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryParser.cpp"
     "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataExporter.cpp"
@@ -89,4 +90,3 @@ add_executable(tool_archivebaseline
     "${REPO_ROOT}/CompressionModules/Huffman/Core/src/Huffman.cpp"
 )
 target_link_libraries(tool_archivebaseline PRIVATE advapi32)
-

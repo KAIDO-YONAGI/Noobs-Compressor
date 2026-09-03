@@ -1,4 +1,5 @@
 #include "../include/BinaryStandardWriter.h"
+#include "../../Commons/include/FileSystemUtils.h"
 
 namespace Y_flib
 {
@@ -6,35 +7,45 @@ namespace Y_flib
     {
         try
         {
-            for (const std::filesystem::directory_entry &entry : std::filesystem::directory_iterator(file.getFilePathToScan()))
+            const std::filesystem::path directoryPath = file.getFilePathToScan();
+            // 枚举和计数共用同一套长路径元数据，避免“写入数量”和实际条目不一致。
+            for (const std::filesystem::path &fullPath :
+                 FileSystemUtils::listDirectory(directoryPath))
             {
                 bool isFile = true;
                 std::string name;
-                std::filesystem::path fullPath;
                 Y_flib::FileNameSize sizeOfName;
                 Y_flib::FileSize fileSize;
-                if (entry.is_regular_file())
+
+                name = EncodingUtils::u8ToString(fullPath.filename().u8string());
+                const FileSystemEntryInfo info = FileSystemUtils::queryEntry(fullPath);
+                if (!info.exists)
                 {
-                    isFile = true;
-                    fileSize = entry.file_size();
+                    throw std::runtime_error(
+                        "Filesystem entry disappeared while scanning: " +
+                        EncodingUtils::pathToUtf8(fullPath));
                 }
 
-                else if (entry.is_directory())
+                if (info.isRegularFile)
+                {
+                    isFile = true;
+                    fileSize = info.size;
+                }
+
+                else if (info.isDirectory)
                 {
                     isFile = false;
                     fileSize = 0;
                 }
 
-                else if (entry.is_symlink())
+                else if (info.isSymbolicLink)
                 {
                     isFile = false;
                     fileSize = 1; // 大小为一的文件夹，仅表示是符号链接
                 }
                 else
                     continue; // 禁用三个基本文件类型之外的文件类型
-                // 使用 u8string() 获取 UTF-8 编码的文件名，确保中文路径正确
-                name = EncodingUtils::u8ToString(entry.path().filename().u8string());
-                fullPath = entry.path();
+
                 sizeOfName = name.size();
                 EntryDetails details(
                     name,
@@ -165,13 +176,16 @@ namespace Y_flib
 
             std::filesystem::path sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
 
-            if (std::filesystem::exists(sPath))
+            const FileSystemEntryInfo info = FileSystemUtils::queryEntry(sPath);
+            if (info.exists)
             {
                 file.setFilePathToScan(sPath);
             }
             else
             {
-                throw("entryProcessor()-Error:file Not Exist: " + EncodingUtils::pathToUtf8(sPath) + "\n");
+                throw std::runtime_error(
+                    "entryProcessor()-Error:file Not Exist: " +
+                    EncodingUtils::pathToUtf8(sPath));
             }
 
             std::filesystem::path parentPath = file.getFilePathToScan(); // 获取根目录
@@ -180,8 +194,8 @@ namespace Y_flib
             // 使用 u8string() 获取 UTF-8 编码的文件名
             std::string rootName = EncodingUtils::u8ToString(parentPath.filename().u8string());
             Y_flib::FileNameSize rootNameSize = rootName.size();
-            bool isFile = std::filesystem::is_regular_file(parentPath);
-            Y_flib::FileSize fileSize = isFile ? std::filesystem::file_size(parentPath) : 0;
+            bool isFile = info.isRegularFile;
+            Y_flib::FileSize fileSize = isFile ? info.size : 0;
 
             EntryDetails rootDetails(
                 rootName,     // 目录名 (如 "Folder")
@@ -190,24 +204,25 @@ namespace Y_flib
                 isFile,       // 是否为常规文件
                 parentPath    // 完整路径
             );
-            const std::filesystem::directory_entry entry(parentPath);
-            if (entry.is_regular_file())
+            if (info.isRegularFile)
             {
                 writeFileStandard(rootDetails, cursor);
             }
-            else if (entry.is_directory())
+            else if (info.isDirectory)
             {
                 Y_flib::FileCount count = countFilesInDirectory(parentPath);
                 writeDirectoryStandard(rootDetails, count, cursor);
             }
-            else if (entry.is_symlink())
+            else if (info.isSymbolicLink)
             {
                 rootDetails.setFileSize(1); // 利用大小区分符号链接
                 writeSymbolLinkStandard(rootDetails, cursor);
             }
             else
             {
-                throw("entryProcessor()-Error:Unsupported file type: " + EncodingUtils::pathToUtf8(parentPath) + "\n");
+                throw std::runtime_error(
+                    "entryProcessor()-Error:Unsupported file type: " +
+                    EncodingUtils::pathToUtf8(parentPath));
             }
         }
     }
@@ -215,11 +230,30 @@ namespace Y_flib
     {
         try
         {
-            return std::distance(std::filesystem::directory_iterator(filePathToScan), std::filesystem::directory_iterator{});
+            Y_flib::FileCount count = 0;
+            // 仅统计后续确实会写入归档的三类条目，保持目录子项计数严格一致。
+            for (const std::filesystem::path &fullPath :
+                 FileSystemUtils::listDirectory(filePathToScan))
+            {
+                const FileSystemEntryInfo info = FileSystemUtils::queryEntry(fullPath);
+                if (!info.exists)
+                {
+                    throw std::runtime_error(
+                        "Filesystem entry disappeared while counting: " +
+                        EncodingUtils::pathToUtf8(fullPath));
+                }
+
+                if (info.isRegularFile || info.isDirectory || info.isSymbolicLink)
+                {
+                    ++count;
+                }
+            }
+            return count;
         }
         catch (std::filesystem::filesystem_error &e)
         {
-            throw("countFilesInDirectory()-Error: " + std::string(e.what()) + "\n");
+            throw std::runtime_error(
+                "countFilesInDirectory()-Error: " + std::string(e.what()));
         }
     }
     Y_flib::FileSize BinaryStandardWriter::getFileSize(const std::filesystem::path &filePathToScan)

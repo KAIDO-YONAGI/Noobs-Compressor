@@ -3,6 +3,7 @@
 
 #include "FileLibrary.h"
 #include "ToolClasses.h"
+#include "FileSystemUtils.h"
 /* DataLoader - 二进制数据块加载器
 //为非文件标准数据读取封装的读取器类，提供按块读取和按指定大小读取的功能
  *
@@ -57,7 +58,7 @@ namespace Y_flib
 
         /* 构造函数，打开指定文件 */
         DataLoader(const std::filesystem::path &inPath)
-            : inFile(inPath, std::ios::binary) // 使用初始化列表
+            : inFile(FileSystemUtils::pathForIo(inPath), std::ios::binary) // 转换为支持超长路径的实际 I/O 路径
         {
             if (!inFile.is_open())
                 throw std::runtime_error("DataLoader()-Error: Failed to open inFile Path: " + EncodingUtils::pathToUtf8(inPath));
