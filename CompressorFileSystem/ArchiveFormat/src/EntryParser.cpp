@@ -68,7 +68,11 @@ namespace Y_flib
             originSize,
             true,
             pathToProcess);
-        fileQueue.push({fileDetails, parserMode == 1 ? lastOffset : compressedSize});
+
+        if (parserMode == 1)
+            fileQueue.push({fileDetails, lastOffset, 0}); // 压缩：记录预留槽偏移，供压缩完成后回填
+        else
+            fileQueue.push({fileDetails, 0, compressedSize}); // 解压：记录压缩后大小，供逐块读出
     }
 
     void EntryParser::directoryParser(Y_flib::DirectoryOffsetSize &bufferPtr, bool isRoot)

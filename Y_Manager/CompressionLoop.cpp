@@ -38,7 +38,7 @@ void CompressionLoop::compressionLoop(
     headerLoaderIterator.headerLoaderIterator(encryption); // 执行第一次操作，把根目录载入
     if (!headerLoaderIterator.fileQueue.empty())           // 单个文件特殊处理
     {
-        EntryDetails loadFile = headerLoaderIterator.fileQueue.front().first;
+        EntryDetails loadFile = headerLoaderIterator.fileQueue.front().entry;
         loadPath = loadFile.getFullPath();
         dataLoader = std::make_unique<DataLoader>(loadPath);
         totalBlocks = (loadFile.getFileSizeInDetails() + Y_flib::Constants::BUFFER_SIZE - 1) / Y_flib::Constants::BUFFER_SIZE;
@@ -82,7 +82,7 @@ void CompressionLoop::compressionLoop(
 
         if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
         {
-            Y_flib::SlotOffset offsetToFill = headerLoaderIterator.fileQueue.front().second;
+            Y_flib::SlotOffset offsetToFill = headerLoaderIterator.fileQueue.front().processedSizeOffset;
             dataExporter.thisFileIsDone(offsetToFill);
 
             headerLoaderIterator.fileQueue.pop();
@@ -90,7 +90,7 @@ void CompressionLoop::compressionLoop(
 
             if (!headerLoaderIterator.fileQueue.empty())
             {
-                prepareNextFile(dataLoader.get(), headerLoaderIterator.fileQueue.front().first,
+                prepareNextFile(dataLoader.get(), headerLoaderIterator.fileQueue.front().entry,
                                 filename, totalBlocks, blockCount);
             }
         }
@@ -102,7 +102,7 @@ void CompressionLoop::compressionLoop(
 
             if (!headerLoaderIterator.fileQueue.empty())
             {
-                prepareNextFile(dataLoader.get(), headerLoaderIterator.fileQueue.front().first,
+                prepareNextFile(dataLoader.get(), headerLoaderIterator.fileQueue.front().entry,
                                 filename, totalBlocks, blockCount);
             }
         }
