@@ -12,14 +12,6 @@
 
 namespace Y_flib
 {
-    enum class WindowsLinkType : std::uint8_t
-    {
-        None = 0,
-        SymbolicLink,
-        Junction,
-        Unsupported
-    };
-
     /**
      * 文件系统条目的统一元数据。
      *
@@ -37,8 +29,8 @@ namespace Y_flib
 
     struct WindowsLinkInfo
     {
-        WindowsLinkType type = WindowsLinkType::None;
-        bool targetIsDirectory = false;
+        // 读取重解析点时直接确定最终归档类型，写入端无需再次转换。
+        Y_flib::FlagType linkType;
         // 保存重解析点自身记录的目标字符串，不解析、不验证目标是否存在。
         std::filesystem::path targetPath;
     };

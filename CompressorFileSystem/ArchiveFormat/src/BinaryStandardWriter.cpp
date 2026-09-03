@@ -120,7 +120,18 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, File);
         standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), File);
     }
-    // Windows 链接标准写入函数：类型在 flag 中，正文只保存名称和原始目标路径。
+    /**
+     * 将 Windows 符号链接或 Junction 写入归档的目录元数据区。
+     *
+     * 磁盘布局：
+     *   [链接类型][名称长度][目标长度][链接名称][链接记录的目标路径]
+     *
+     * details 只提供链接名称等通用条目信息，linkInfo 提供从重解析点本身
+     * 读取到的最终归档类型和目标路径。FileSystemUtils 已根据重解析标签
+     * 和目录属性完成一次性类型判断；本函数只负责序列化，不再重复映射。
+     * 本函数不会访问、解析或扫描链接目标，因此目标位于归档外或目标不
+     * 存在时也可以正常写入。
+     */
     void BinaryStandardWriter::writeLinkStandard(
         EntryDetails &details,
         const WindowsLinkInfo &linkInfo,
@@ -133,19 +144,7 @@ namespace Y_flib
         cursor.accountEntry(
             Y_flib::Constants::LINK_STANDARD_SIZE_BASIC + sizeOfName + sizeOfPath);
 
-        Y_flib::FlagType flag = Y_flib::FlagType::Junction;
-        if (linkInfo.type == WindowsLinkType::SymbolicLink)
-        {
-            flag = linkInfo.targetIsDirectory
-                       ? Y_flib::FlagType::SymbolicLinkDirectory
-                       : Y_flib::FlagType::SymbolicLinkFile;
-        }
-        else if (linkInfo.type != WindowsLinkType::Junction)
-        {
-            throw std::runtime_error("Unsupported Windows link type");
-        }
-
-        standardWriter.writeBinaryStandards(flag, outFile);
+        standardWriter.writeBinaryStandards(linkInfo.linkType, outFile);
 
         standardWriter.writeBinaryStandards(sizeOfName, outFile);
         standardWriter.writeBinaryStandards(sizeOfPath, outFile);

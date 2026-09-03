@@ -11,8 +11,8 @@
 
 namespace
 {
+    using Y_flib::FlagType;
     using Y_flib::WindowsLinkInfo;
-    using Y_flib::WindowsLinkType;
     namespace fs = std::filesystem;
 
     class UniqueHandle
@@ -34,12 +34,6 @@ namespace
         UniqueHandle &operator=(const UniqueHandle &) = delete;
 
         HANDLE get() const { return handle; }
-    };
-
-    struct RawLinkInfo
-    {
-        WindowsLinkType type = WindowsLinkType::Unsupported;
-        fs::path target;
     };
 
     [[noreturn]] void throwFilesystemError(
@@ -164,7 +158,9 @@ namespace
         return target;
     }
 
-    RawLinkInfo readRawLink(const fs::path &linkPath)
+    WindowsLinkInfo readRawLink(
+        const fs::path &linkPath,
+        bool targetIsDirectory)
     {
         UniqueHandle handle(openPathHandle(linkPath, true));
         if (handle.get() == INVALID_HANDLE_VALUE)
@@ -194,11 +190,14 @@ namespace
         USHORT substituteLength = 0;
         USHORT printOffset = 0;
         USHORT printLength = 0;
-        RawLinkInfo result;
+        FlagType linkType;
 
         if (tag == IO_REPARSE_TAG_SYMLINK)
         {
-            result.type = WindowsLinkType::SymbolicLink;
+            // 符号链接的标签相同，必须结合目录属性确定解压时使用的创建标志。
+            linkType = targetIsDirectory
+                           ? FlagType::SymbolicLinkDirectory
+                           : FlagType::SymbolicLinkFile;
             substituteOffset = readValue<USHORT>(buffer, 8);
             substituteLength = readValue<USHORT>(buffer, 10);
             printOffset = readValue<USHORT>(buffer, 12);
@@ -207,7 +206,7 @@ namespace
         }
         else if (tag == IO_REPARSE_TAG_MOUNT_POINT)
         {
-            result.type = WindowsLinkType::Junction;
+            linkType = FlagType::Junction;
             substituteOffset = readValue<USHORT>(buffer, 8);
             substituteLength = readValue<USHORT>(buffer, 10);
             printOffset = readValue<USHORT>(buffer, 12);
@@ -237,8 +236,9 @@ namespace
         {
             throw std::runtime_error("Windows link target is empty");
         }
-        result.target = fs::path(normalizeNtTarget(std::move(rawTarget)));
-        return result;
+        return WindowsLinkInfo{
+            linkType,
+            fs::path(normalizeNtTarget(std::move(rawTarget)))};
     }
 
     void createSymbolicLink(
@@ -429,15 +429,11 @@ namespace Y_flib
             throwFilesystemError("Failed to query Windows link attributes", linkPath);
         }
 
-        const RawLinkInfo rawLink = readRawLink(normalizedLink);
-
-        WindowsLinkInfo result;
-        result.type = rawLink.type;
-        result.targetIsDirectory =
+        const bool targetIsDirectory =
             (attributes.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-        // 只读取重解析点本身；相对/绝对形式和目标是否存在均不在此处解释。
-        result.targetPath = rawLink.target;
-        return result;
+        // 在读取处一次性映射为归档 FlagType；目标字符串保持原有语义，
+        // 不解析相对/绝对形式，也不检查目标是否存在。
+        return readRawLink(normalizedLink, targetIsDirectory);
     }
 
     void FileSystemUtils::createLink(
