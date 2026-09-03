@@ -15,24 +15,26 @@ namespace Y_flib
     {
     private:
         std::string name;
-        Y_flib::FileNameSize sizeOfName;
         Y_flib::FileSize fileSize;
         bool isFile;
         std::filesystem::path fullPath;
 
     public:
-        /* 构造函数，初始化文件/目录元数据 */
-        EntryDetails(std::string name, Y_flib::FileNameSize sizeOfName, Y_flib::FileSize fileSize, bool isFile, std::filesystem::path fullPath)
-            : name(std::move(name)), sizeOfName(sizeOfName), fileSize(fileSize), isFile(isFile), fullPath(fullPath) {}
+        /* 名称长度始终由 name 派生，避免同一信息保存两份后发生不一致。 */
+        EntryDetails(std::string name, Y_flib::FileSize fileSize, bool isFile, std::filesystem::path fullPath)
+            : name(std::move(name)), fileSize(fileSize), isFile(isFile), fullPath(std::move(fullPath)) {}
 
         /* 获取文件/目录名称 */
-        std::string getName() const { return name; }
+        const std::string &getName() const { return name; }
 
         /* 获取完整路径 */
-        std::filesystem::path getFullPath() const { return fullPath; }
+        const std::filesystem::path &getFullPath() const { return fullPath; }
 
-        /* 获取名称长度 */
-        Y_flib::FileNameSize getSizeOfName() const { return sizeOfName; }
+        /* name 保存归档使用的 UTF-8 字节，size() 就是磁盘中应写入的名称长度。 */
+        Y_flib::FileNameSize getSizeOfName() const
+        {
+            return static_cast<Y_flib::FileNameSize>(name.size());
+        }
 
         /* 获取文件大小 */
         Y_flib::FileSize getFileSizeInDetails() const { return fileSize; }
@@ -40,42 +42,5 @@ namespace Y_flib
         /* 检查是否为文件（false表示目录） */
         bool getIsFile() const { return isFile; }
 
-        /* 更新文件大小 */
-        void setFileSize(Y_flib::FileSize fileSize) { this->fileSize = fileSize; }
-    };
-
-    /* FilePath - 输入输出路径管理器
-     *
-     * 功能:
-     *   管理源路径和目标输出路径
-     *   为文件扫描和处理流程提供路径信息
-     */
-    class FilePath
-    {
-    private:
-        std::filesystem::path outputFilePath;
-        std::filesystem::path filePathToScan;
-
-    public:
-        /* 默认构造函数 */
-        FilePath() {}
-
-        /* 设置输出文件路径 */
-        void setOutputFilePath(const std::filesystem::path outputFilePath)
-        {
-            this->outputFilePath = outputFilePath;
-        }
-
-        /* 用于重新设置要扫描的源路径，复用对象 */
-        void setFilePathToScan(const std::filesystem::path filePathToScan)
-        {
-            this->filePathToScan = filePathToScan;
-        }
-
-        /* 获取输出文件路径 */
-        std::filesystem::path getOutputFilePath() const { return outputFilePath; }
-
-        /* 获取要扫描的源路径 */
-        std::filesystem::path getFilePathToScan() const { return filePathToScan; }
     };
 } // namespace Y_flib

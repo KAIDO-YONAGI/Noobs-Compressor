@@ -18,9 +18,7 @@ namespace Y_flib
      *   BFS遍历中使用的队列，存储目录和子项计数对（second 语义单一：子项数）
      *   用链表实现，支持push/pop/front/back操作
      */
-    class EntryQueue : public std::queue<std::pair<EntryDetails, Y_flib::FileCount>>
-    {
-    };
+    using EntryQueue = std::queue<std::pair<EntryDetails, Y_flib::FileCount>>;
 
     /* FileTask - 待处理文件任务
      *
@@ -36,9 +34,7 @@ namespace Y_flib
         Y_flib::FileSize compressedSize = 0;        // 解压模式：该文件压缩后的大小
     };
 
-    class FileTaskQueue : public std::queue<FileTask>
-    {
-    };
+    using FileTaskQueue = std::queue<FileTask>;
 
     /* LinkTask - 解压末尾统一重建的 Windows 链接任务
      *
@@ -52,52 +48,23 @@ namespace Y_flib
         std::filesystem::path targetPath;
     };
 
-    class LinkTaskQueue : public std::queue<LinkTask>
-    {
-    };
-
-    /* PathTransfer - 文件路径转换工具（现废弃，暂时使用WINDOWS API）
-     *
-     * 功能:
-     *   为filesystem的fs::path提供宽字符转换支持
-     *   解决中文路径问题，处理多字节字符编码转换
-     */
-    class PathTransfer
-    {
-    public:
-        /* 转换输入路径为fs::path，支持中文路径 */
-        std::filesystem::path transPath(std::string_view p);
-    };
-
-    /* Utf8Converter - UTF-8 字符串转换工具
-     *
-     * 功能:
-     *   将 std::u8string 转换为 std::string
-     *   用于处理 C++20 中 path::u8string() 返回的 char8_t 类型
-     */
-    class Utf8Converter
-    {
-    public:
-        /* 将 std::u8string 转换为 std::string */
-        static std::string u8_to_string(std::u8string_view u8str);
-    };
+    using LinkTaskQueue = std::queue<LinkTask>;
 
     /* StandardsWriter - 二进制数值写入器
      *
      * 功能:
      *   将任意类型数值以二进制格式写入文件流
-     *   支持ofstream和fstream，编译时类型检查
+     *   统一接收 std::ostream，因此 ofstream 和 fstream 共用同一套写入逻辑
      */
     class StandardsWriter
     {
     public:
-        /* 模板化函数：将数值写入ofstream（编译时检查可复制性、指针和多态性） */
+        /* 写入平凡可复制类型；归档格式直接由 T 的固定宽度决定。 */
         template <typename T>
-        void writeBinaryStandards(const T value, std::ofstream &ofstream)
+        void writeBinaryStandards(const T value, std::ostream &stream)
         {
-            if (!ofstream)
-                throw std::runtime_error("writeBinaryStandards() Error-noOutFile");
-            // 编译时检查
+            if (!stream)
+                throw std::runtime_error("writeBinaryStandards(): invalid output stream");
 
             static_assert(std::is_trivially_copyable_v<T>,
                           "Cannot write non-trivially-copyable type");
@@ -105,59 +72,41 @@ namespace Y_flib
                           "Cannot safely write raw pointers");
             static_assert(!std::is_polymorphic_v<T>,
                           "Cannot safely write polymorphic types");
-            if (!ofstream.write(reinterpret_cast<const char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+            if (!stream.write(reinterpret_cast<const char *>(&value), sizeof(T)))
             {
-                throw std::runtime_error("writeBinaryStandards()Error-Failed to write outFile");
+                throw std::runtime_error("writeBinaryStandards(): failed to write output stream");
             }
         }
 
-        /* 模板化函数：将数值写入fstream（编译时检查可复制性、指针和多态性） */
-        template <typename T>
-        void writeBinaryStandards(const T value, std::fstream &fstream) // 针对写入fstream的重载
+        /* 字符串按原始字节写入，长度字段由调用方按照归档布局单独写入。 */
+        void writeBinaryStandards(const std::string &str, std::ostream &stream)
         {
-            if (!fstream)
-                throw std::runtime_error("writeBinaryNums() Error-noInFile");
-            // 编译时检查
-
-            static_assert(std::is_trivially_copyable_v<T>,
-                          "Cannot write non-trivially-copyable type");
-            static_assert(!std::is_pointer_v<T>,
-                          "Cannot safely write raw pointers");
-            static_assert(!std::is_polymorphic_v<T>,
-                          "Cannot safely write polymorphic types");
-            if (!fstream.write(reinterpret_cast<const char *>(&value), sizeof(T))) // 不做类型检查，直接进行类型转换
+            if (!stream)
+                throw std::runtime_error("writeBinaryStandards(string): invalid output stream");
+            if (!stream.write(str.data(), static_cast<std::streamsize>(str.size())))
             {
-                throw std::runtime_error("writeBinaryNums()Error-Failed to write inFile");
-            }
-        }
-        void writeBinaryStandards(const std::string &str, std::ofstream &ofstream)
-        {
-            if (!ofstream)
-                throw std::runtime_error("writeBinaryStandards-char*() Error-noOutFile");
-            if (!ofstream.write(str.c_str(), str.size()))
-            {
-                throw std::runtime_error("writeBinaryStandards-char*()Error-Failed to write outFile");
+                throw std::runtime_error("writeBinaryStandards(string): failed to write output stream");
             }
         }
 
-        static void writeDataBlock(Y_flib::FileSize size, std::ofstream &file, const Y_flib::DataBlock &buffer)
+        /* 数据块只负责写正文，调用方负责保证 size 不超过 buffer.size()。 */
+        static void writeDataBlock(
+            Y_flib::FileSize size,
+            std::ostream &stream,
+            const Y_flib::DataBlock &buffer)
         {
-            if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
+            if (!stream.write(
+                    reinterpret_cast<const char *>(buffer.data()),
+                    static_cast<std::streamsize>(size)))
             {
-                throw std::runtime_error("writeDataBlock(std::ofstream)-Failed to write header");
+                throw std::runtime_error("writeDataBlock(): failed to write output stream");
             }
         }
-        static void writeDataBlock(Y_flib::FileSize size, std::fstream &file, const Y_flib::DataBlock &buffer)
-        {
-            if (!file.write(reinterpret_cast<const char *>(buffer.data()), size))
-            {
-                throw std::runtime_error("writeDataBlock(std::fstream &file)-Failed to write header");
-            }
-        }
+
         /* 写入静态魔数标记到输出文件 */
-        void appendMagicStatic(std::ofstream &outFile)
+        void appendMagicStatic(std::ostream &stream)
         {
-            writeBinaryStandards(Y_flib::Constants::MAGIC_NUM, outFile);
+            writeBinaryStandards(Y_flib::Constants::MAGIC_NUM, stream);
         }
     };
 
@@ -224,13 +173,6 @@ namespace Y_flib
             return n;
         }
     };
-    /* EntryQueue - 目录文件队列
-     *
-     * 功能:
-     *   BFS遍历中使用的队列，存储目录和文件计数对
-     *   用链表实现，支持push/pop/front/back操作
-     */
-
     /* Locator - 文件位置定位器
      *
      * 功能:
@@ -253,7 +195,5 @@ namespace Y_flib
 
         void locateFromBegin(std::fstream &file, Y_flib::FileSize offset);
         void locateFromEnd(std::fstream &file, Y_flib::FileSize offset);
-        /* 获取输出文件的当前大小 */
-        Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan, std::ofstream &outFile);
     };
 } // namespace Y_flib

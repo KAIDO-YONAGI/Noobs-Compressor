@@ -43,7 +43,8 @@ namespace Y_flib
         }
         catch (const std::exception &e)
         {
-            throw std::runtime_error("Error-dataLaoder_compression()");
+            throw std::runtime_error(
+                std::string("DataLoader compression read failed: ") + e.what());
         }
 
         if (inFile.gcount() == 0)
@@ -51,16 +52,5 @@ namespace Y_flib
             done();
         }
         readCount += inFile.gcount();
-    }
-    void DataLoader::dataLoader(Y_flib::FileSize readSize, std::ifstream &loadFile, Y_flib::DataBlock &data)
-    {
-        try
-        {
-            StandardsReader::readDataBlock(readSize, loadFile, data);
-        }
-        catch (const std::exception &e)
-        {
-            throw std::runtime_error("Error-dataLaoder_decompression()");
-        }
     }
 } // namespace Y_flib

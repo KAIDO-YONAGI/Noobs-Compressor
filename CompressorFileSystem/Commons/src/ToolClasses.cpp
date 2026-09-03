@@ -2,16 +2,6 @@
 
 namespace Y_flib
 {
-    std::filesystem::path PathTransfer::transPath(std::string_view p)
-    {
-        return EncodingUtils::pathFromUtf8(p);
-    }
-
-    std::string Utf8Converter::u8_to_string(std::u8string_view u8str)
-    {
-        return EncodingUtils::u8ToString(u8str);
-    }
-
     void Locator::locateFromBegin(std::ofstream &outFile, Y_flib::FileSize offset)
     {
         if (!outFile)
@@ -68,19 +58,4 @@ namespace Y_flib
         file.seekp(offset, std::ios::end);
     }
 
-    Y_flib::FileSize Locator::getFileSize(
-        const std::filesystem::path &filePathToScan,
-        std::ofstream &outFile)
-    {
-        try
-        {
-            outFile.flush();
-            return std::filesystem::file_size(filePathToScan);
-        }
-        catch (const std::filesystem::filesystem_error &e)
-        {
-            std::cerr << "getFileSize() Error: " << e.what() << '\n';
-            return 0;
-        }
-    }
 } // namespace Y_flib

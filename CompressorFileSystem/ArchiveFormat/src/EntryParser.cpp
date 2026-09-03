@@ -22,7 +22,7 @@ namespace Y_flib
             std::filesystem::path lastPath = entryQueue.front().first.getFullPath();
             // fileName 是 UTF-8 编码，需要正确转换为 path
             // 在 Windows 上，直接从 UTF-8 字符串构造 path 可能会出错
-            // 使用 PathTransfer 进行转换
+            // 统一通过 EncodingUtils 把归档中的 UTF-8 名称转换为 Windows 路径。
             std::filesystem::path fileNamePath = EncodingUtils::pathFromUtf8(fileName);
             pathToProcess = lastPath / fileNamePath;
         }
@@ -64,7 +64,6 @@ namespace Y_flib
 
         EntryDetails fileDetails(
             fileName,
-            fileNameSize,
             originSize,
             true,
             pathToProcess);
@@ -95,7 +94,7 @@ namespace Y_flib
         else
             pathToProcess = pathConnector(directoryName);
 
-        EntryDetails directoryDetails(directoryName, directoryNameSize, 0, false, pathToProcess);
+        EntryDetails directoryDetails(directoryName, 0, false, pathToProcess);
         entryQueue.push({directoryDetails, count});
     }
 
@@ -155,7 +154,7 @@ namespace Y_flib
             std::filesystem::path root = EncodingUtils::pathFromUtf8(rootForDecompression);
             std::filesystem::path file = EncodingUtils::pathFromUtf8(directoryName);
             std::filesystem::path fullPath = root / file;
-            EntryDetails logicalRootDetails(directoryName, directoryNameSize, 0, false, fullPath);
+            EntryDetails logicalRootDetails(directoryName, 0, false, fullPath);
             entryQueue.push({logicalRootDetails, count});
         }
         else if (parserMode == 1) // 压缩模式

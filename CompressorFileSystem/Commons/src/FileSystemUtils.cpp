@@ -394,6 +394,10 @@ namespace Y_flib
         const bool directoryAttribute =
             (attributes.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
         info.exists = true;
+        info.nativeAttributes = attributes.dwFileAttributes;
+        info.hasDirectoryAttribute = directoryAttribute;
+        info.isReadOnly =
+            (attributes.dwFileAttributes & FILE_ATTRIBUTE_READONLY) != 0;
         info.isReparsePoint =
             (attributes.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0;
         // 重解析点与普通目录/文件互斥，扫描器因此不会进入链接目标。
@@ -420,20 +424,9 @@ namespace Y_flib
                 EncodingUtils::pathToUtf8(linkPath));
         }
 
-        WIN32_FILE_ATTRIBUTE_DATA attributes{};
-        if (!GetFileAttributesExW(
-                pathForIo(normalizedLink).c_str(),
-                GetFileExInfoStandard,
-                &attributes))
-        {
-            throwFilesystemError("Failed to query Windows link attributes", linkPath);
-        }
-
-        const bool targetIsDirectory =
-            (attributes.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
         // 在读取处一次性映射为归档 FlagType；目标字符串保持原有语义，
         // 不解析相对/绝对形式，也不检查目标是否存在。
-        return readRawLink(normalizedLink, targetIsDirectory);
+        return readRawLink(normalizedLink, entry.hasDirectoryAttribute);
     }
 
     void FileSystemUtils::createLink(
@@ -601,16 +594,8 @@ namespace Y_flib
         }
 
         const std::filesystem::path ioPath = pathForIo(path);
-        const DWORD attributes = GetFileAttributesW(ioPath.c_str());
-        if (attributes == INVALID_FILE_ATTRIBUTES)
-        {
-            throwFilesystemError("Failed to query entry before removal", path);
-        }
-
-        const bool isDirectory =
-            (attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
         std::uintmax_t removed = 0;
-        if (isDirectory)
+        if (info.hasDirectoryAttribute)
         {
             // 重解析点可能连接到归档树外，只移除链接目录本身。
             if (!info.isReparsePoint)
@@ -628,9 +613,11 @@ namespace Y_flib
         }
         else
         {
-            if ((attributes & FILE_ATTRIBUTE_READONLY) != 0)
+            if (info.isReadOnly)
             {
-                SetFileAttributesW(ioPath.c_str(), attributes & ~FILE_ATTRIBUTE_READONLY);
+                SetFileAttributesW(
+                    ioPath.c_str(),
+                    static_cast<DWORD>(info.nativeAttributes) & ~FILE_ATTRIBUTE_READONLY);
             }
 
             if (!DeleteFileW(ioPath.c_str()))

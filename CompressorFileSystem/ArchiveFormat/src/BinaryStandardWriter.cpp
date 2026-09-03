@@ -3,11 +3,13 @@
 
 namespace Y_flib
 {
-    void BinaryStandardWriter::binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, DirectoryScanCursor &cursor)
+    void BinaryStandardWriter::binaryStandardWriter(
+        const std::filesystem::path &directoryPath,
+        EntryQueue &entryQueue,
+        DirectoryScanCursor &cursor)
     {
         try
         {
-            const std::filesystem::path directoryPath = file.getFilePathToScan();
             // 枚举和计数共用同一套长路径元数据，避免“写入数量”和实际条目不一致。
             for (const std::filesystem::path &fullPath :
                  FileSystemUtils::listDirectory(directoryPath))
@@ -23,12 +25,11 @@ namespace Y_flib
                         EncodingUtils::pathToUtf8(fullPath));
                 }
 
-                const Y_flib::FileNameSize sizeOfName = name.size();
                 if (info.isReparsePoint)
                 {
                     const WindowsLinkInfo linkInfo =
                         FileSystemUtils::readLinkForArchive(fullPath);
-                    EntryDetails details(name, sizeOfName, 0, false, fullPath);
+                    EntryDetails details(name, 0, false, fullPath);
                     writeLinkStandard(details, linkInfo, cursor);
                     separateBlockIfNeeded(cursor);
                     continue;
@@ -41,7 +42,6 @@ namespace Y_flib
 
                 EntryDetails details(
                     name,
-                    sizeOfName,
                     info.isRegularFile ? info.size : 0,
                     info.isRegularFile,
                     fullPath);
@@ -62,7 +62,7 @@ namespace Y_flib
         {
             writeFileStandard(details, cursor);
         }
-        else if ((!details.getIsFile()) && (details.getFileSizeInDetails() == 0)) // 目录对应的处理
+        else // 链接和不支持的类型已在调用前处理，因此非文件条目这里只可能是目录。
         {
             Y_flib::FileCount countOfThisDirectory = countFilesInDirectory(details.getFullPath());
 
@@ -113,12 +113,6 @@ namespace Y_flib
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, outFile);
         standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), outFile);
         standardWriter.writeBinaryStandards(Y_flib::IvSize{{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}}, outFile);
-    }
-    // 由于加密模式iv包含在数据区内，直接写入不含iv部分的空分割标准
-    void BinaryStandardWriter::writeBlankSeparatedStandardForEncryption(std::fstream &File)
-    {
-        standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, File);
-        standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), File);
     }
     /**
      * 将 Windows 符号链接或 Junction 写入归档的目录元数据区。
@@ -178,7 +172,9 @@ namespace Y_flib
 
         standardWriter.writeBinaryStandards(count, outFile); // 写文件数
     }
-    void BinaryStandardWriter::writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryScanCursor &cursor)
+    void BinaryStandardWriter::writeRoot(
+        const std::vector<std::string> &filePathToScan,
+        DirectoryScanCursor &cursor)
     {
         Y_flib::FileCount num = filePathToScan.size();
         for (Y_flib::FileCount i = 0; i < num; i++)
@@ -187,30 +183,25 @@ namespace Y_flib
             std::filesystem::path sPath = EncodingUtils::pathFromUtf8(filePathToScan[i]);
 
             const FileSystemEntryInfo info = FileSystemUtils::queryEntry(sPath);
-            if (info.exists)
-            {
-                file.setFilePathToScan(sPath);
-            }
-            else
+            if (!info.exists)
             {
                 throw std::runtime_error(
                     "entryProcessor()-Error:file Not Exist: " +
                     EncodingUtils::pathToUtf8(sPath));
             }
 
-            std::filesystem::path parentPath = file.getFilePathToScan(); // 获取根目录
+            const std::filesystem::path &parentPath = sPath;
 
             // 先写入根目录(或文件)自身（手动构造）
             // 使用 u8string() 获取 UTF-8 编码的文件名
             std::string rootName = EncodingUtils::u8ToString(parentPath.filename().u8string());
-            Y_flib::FileNameSize rootNameSize = rootName.size();
             if (info.isReparsePoint)
             {
                 // 链接可作为独立根条目归档，只保存链接自身，不扫描或读取目标。
                 const WindowsLinkInfo linkInfo =
                     FileSystemUtils::readLinkForArchive(parentPath);
                 EntryDetails rootDetails(
-                    rootName, rootNameSize, 0, false, parentPath);
+                    rootName, 0, false, parentPath);
                 writeLinkStandard(rootDetails, linkInfo, cursor);
                 continue;
             }
@@ -220,7 +211,6 @@ namespace Y_flib
 
             EntryDetails rootDetails(
                 rootName,     // 目录名 (如 "Folder")
-                rootNameSize, // 名称长度
                 fileSize,     // 文件大小(如果是文件)
                 isFile,       // 是否为常规文件
                 parentPath    // 完整路径
@@ -270,18 +260,6 @@ namespace Y_flib
         {
             throw std::runtime_error(
                 "countFilesInDirectory()-Error: " + std::string(e.what()));
-        }
-    }
-    Y_flib::FileSize BinaryStandardWriter::getFileSize(const std::filesystem::path &filePathToScan)
-    {
-        try
-        {
-            return locator.getFileSize(filePathToScan, outFile);
-        }
-        catch (std::filesystem::filesystem_error &e)
-        {
-            std::cerr << "getFileSize()-Error: " << e.what() << "\n";
-            return 0;
         }
     }
 } // namespace Y_flib

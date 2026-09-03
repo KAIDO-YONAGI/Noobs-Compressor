@@ -88,9 +88,6 @@ namespace Y_flib
         /* 统计指定目录下的文件总数（不递归） */
         Y_flib::FileCount countFilesInDirectory(const std::filesystem::path &filePathToScan);
 
-        /* 获取指定文件的大小 */
-        Y_flib::FileSize getFileSize(const std::filesystem::path &filePathToScan);
-
     public:
         /* 构造函数，初始化写入器并关联输出文件流 */
         BinaryStandardWriter(std::ofstream &outFile) : outFile(outFile) {};
@@ -99,15 +96,15 @@ namespace Y_flib
         void writeLogicalRoot(const std::string &logicalRoot, const Y_flib::FileCount count, DirectoryScanCursor &cursor);
 
         /* 写入根节点，处理filesystem自动忽略的根目录 */
-        void writeRoot(FilePath &file, const std::vector<std::string> &filePathToScan, DirectoryScanCursor &cursor);
+        void writeRoot(const std::vector<std::string> &filePathToScan, DirectoryScanCursor &cursor);
 
         /* 写入空白分隔符标记 */
         void writeBlankSeparatedStandard();
 
-        /* 写入用于加密的空白分隔符标记 */
-        void writeBlankSeparatedStandardForEncryption(std::fstream &File);
-
         /* 主扫描函数，递归扫描并序列化目录结构到二进制格式 */
-        void binaryStandardWriter(FilePath &file, EntryQueue &entryQueue, DirectoryScanCursor &cursor);
+        void binaryStandardWriter(
+            const std::filesystem::path &directoryPath,
+            EntryQueue &entryQueue,
+            DirectoryScanCursor &cursor);
     };
 } // namespace Y_flib

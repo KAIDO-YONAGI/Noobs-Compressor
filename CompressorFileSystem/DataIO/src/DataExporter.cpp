@@ -23,10 +23,10 @@ namespace Y_flib
     {
         Y_flib::BlockLength dataSize = data.size();
 
-        std::ofstream blank;
-        BinaryStandardWriter binaryStandardWriter(blank);
         locator.locateFromEnd(outFile, 0);
-        binaryStandardWriter.writeBlankSeparatedStandardForEncryption(outFile);
+        // 加密数据块不单独预留 IV；直接写入分隔标志和待回填的块长度。
+        standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, outFile);
+        standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), outFile);
 
         StandardsWriter::writeDataBlock(dataSize, outFile, data); // Write block directly to output file
         processedFileSize += dataSize;

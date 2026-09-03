@@ -2,9 +2,7 @@
 #pragma once
 
 #include "FileLibrary.h"
-#include "EntryProcessor.h"
 #include "ToolClasses.h"
-#include "BinaryStandardWriter.h"
 #include "FileSystemUtils.h"
 
 /* DataExporter - 二进制数据块导出器
@@ -26,7 +24,6 @@
  *   exportCompressedData(): 写入压缩数据块
  *   exportDecompressedData(): 写入解压数据块
  *   thisFileIsDone(): 更新当前文件的完成位置
- *   getProcessedY_flib::FileSize(): 获取已处理数据大小
  */
 namespace Y_flib
 {
@@ -54,7 +51,7 @@ namespace Y_flib
             }
 
             // 归档文件自身也可能位于深层目录，打开流前统一转换实际 I/O 路径。
-            std::fstream outFile(
+            outFile.open(
                 FileSystemUtils::pathForIo(outPath),
                 std::ios::binary | std::ios::out | std::ios::in);
             if (!outFile)
@@ -64,20 +61,10 @@ namespace Y_flib
                                          "\nPath length: " + std::to_string(utf8Path.size()) +
                                          "\nPossible reasons: path too long (>260 chars), permission denied, or file locked");
             }
-            this->outFile = std::move(outFile);
         }
 
-        /* 析构函数，自动关闭输出文件 */
-        ~DataExporter()
-        {
-            if (outFile.is_open())
-            {
-                outFile.close();
-            }
-        }
-
-        /* 获取已处理数据的总大小 */
-        Y_flib::FileSize getProcessedFileSize() { return processedFileSize; }
+        /* fstream 自身负责关闭文件，无需手写析构函数。 */
+        ~DataExporter() = default;
 
         /* 更新当前文件的完成标记和位置（offsetToFill 为"处理后大小"预留字段在归档中的偏移） */
         void thisFileIsDone(Y_flib::SlotOffset offsetToFill);

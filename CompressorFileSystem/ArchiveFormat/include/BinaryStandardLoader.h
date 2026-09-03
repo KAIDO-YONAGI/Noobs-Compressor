@@ -125,8 +125,6 @@ namespace Y_flib
 
     Y_flib::DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
 
-    Y_flib::CompressStrategy getStrategy() const { return header.strategy; } // 获取文件头中的策略号
-
     bool allLoopIsDone() { return allDone; } // 检查所有读取是否完成
 
     bool loaderRequestIsDone() { return blockIsDone; } // 检查当前块读取是否完成
