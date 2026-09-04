@@ -2,9 +2,13 @@
 
 #pragma comment(lib, "advapi32.lib")
 
+/* CFB 封装层：IV 生成/解析、密钥流生成与异或。块核心轮函数在 AesFunctions.cpp */
+
 Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode)
 {
     Y_flib::DataBlock outputBuffer;
+    uint8_t *body = nullptr;
+    size_t bodyLen = 0;
 
     // 处理IV
     if (mode == Y_flib::AesMode::Encrypt)
@@ -35,11 +39,14 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_fl
             throw std::runtime_error("Failed to generate random IV");
         }
 
-        // 添加IV到输出缓冲区
-        outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));
-
-        // 准备要加密的数据
-        buffer = inputBuffer;
+        // 一次分配：前置 IV，随后原地把明文加密进输出缓冲，省去中间整块拷贝
+        outputBuffer.resize(sizeof(iv) + inputBuffer.size());
+        memcpy(outputBuffer.data(), iv, sizeof(iv));
+        if (!inputBuffer.empty()) {
+            memcpy(outputBuffer.data() + sizeof(iv), inputBuffer.data(), inputBuffer.size());
+        }
+        body = outputBuffer.data() + sizeof(iv);
+        bodyLen = inputBuffer.size();
     }
     else if (mode == Y_flib::AesMode::Decrypt)
     { // 解密
@@ -52,23 +59,23 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_fl
         // 提取IV
         memcpy(iv, inputBuffer.data(), sizeof(iv));
 
-        // 准备要解密的数据
-        buffer.assign(inputBuffer.begin() + sizeof(iv), inputBuffer.end());
+        // 密文体拷入输出后原地解密（CFB 解密与加密共用同一条正向轮函数路径）
+        bodyLen = inputBuffer.size() - sizeof(iv);
+        outputBuffer.resize(bodyLen);
+        if (bodyLen > 0) {
+            memcpy(outputBuffer.data(), inputBuffer.data() + sizeof(iv), bodyLen);
+        }
+        body = outputBuffer.data();
     }
 
-    // 处理数据
-    size_t bytesToProcess = buffer.size();
-    if (mode == Y_flib::AesMode::Encrypt)
+    // 原地处理密文体
+    if (bodyLen > 0)
     {
-        aes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 加密
+        if (mode == Y_flib::AesMode::Encrypt)
+            aes(reinterpret_cast<char *>(body), static_cast<int>(bodyLen)); // 加密
+        else
+            deAes(reinterpret_cast<char *>(body), static_cast<int>(bodyLen)); // 解密
     }
-    else if (mode == Y_flib::AesMode::Decrypt)
-    {
-        deAes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 解密
-    }
-
-    // 添加处理后的数据到输出缓冲区
-    outputBuffer.insert(outputBuffer.end(), buffer.begin(), buffer.end());
 
     return outputBuffer;
 }
@@ -136,7 +143,7 @@ void Aes::aes(char *p, int plen)
     }
 
     // 安全清除
-    memset(feedback, 0, sizeof(feedback));
+    SecureZeroMemory(feedback, sizeof(feedback));
 }
 
 void Aes::deAes(char *c, int clen)
@@ -186,6 +193,5 @@ void Aes::deAes(char *c, int clen)
     }
 
     // 安全清除
-    memset(feedback, 0, sizeof(feedback));
+    SecureZeroMemory(feedback, sizeof(feedback));
 }
-
