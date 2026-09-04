@@ -46,12 +46,12 @@ namespace Y_flib
         // 解析文件原大小
         Y_flib::FileSize originSize = readDataFromReadBlock<Y_flib::FileSize>(bufferPtr);
 
-        if (parserMode == 1) // for compression
+        if (parserMode == ParserMode::Compression)
         {
             lastOffset = cursor.entryFieldPos(header.directoryOffset, bufferPtr); // "处理后大小"预留槽的绝对偏移
             bufferPtr += sizeof(Y_flib::FileSize); // skip compressedSize
         }
-        else if (parserMode == 2) // for decompression
+        else if (parserMode == ParserMode::Decompression)
         {
             compressedSize = readDataFromReadBlock<Y_flib::FileSize>(bufferPtr); // compressedSize
         }
@@ -68,7 +68,7 @@ namespace Y_flib
             true,
             pathToProcess);
 
-        if (parserMode == 1)
+        if (parserMode == ParserMode::Compression)
             fileQueue.push({fileDetails, lastOffset, 0}); // 压缩：记录预留槽偏移，供压缩完成后回填
         else
             fileQueue.push({fileDetails, 0, compressedSize}); // 解压：记录压缩后大小，供逐块读出
@@ -129,7 +129,7 @@ namespace Y_flib
 
         const std::filesystem::path linkPath =
             isRoot ? tempPathForRootParser : pathConnector(name);
-        if (parserMode == 2)
+        if (parserMode == ParserMode::Decompression)
         {
             linkQueue.push({
                 linkType,
@@ -149,7 +149,7 @@ namespace Y_flib
 
         countOfChildDirectory = count;
 
-        if (parserMode == 2) // 解压模式,把逻辑根写进队列
+        if (parserMode == ParserMode::Decompression) // 解压模式,把逻辑根写进队列
         {
             std::filesystem::path root = EncodingUtils::pathFromUtf8(rootForDecompression);
             std::filesystem::path file = EncodingUtils::pathFromUtf8(directoryName);
@@ -157,7 +157,7 @@ namespace Y_flib
             EntryDetails logicalRootDetails(directoryName, 0, false, fullPath);
             entryQueue.push({logicalRootDetails, count});
         }
-        else if (parserMode == 1) // 压缩模式
+        else if (parserMode == ParserMode::Compression)
         {
             for (const std::string &path : filePathToScan)
             {

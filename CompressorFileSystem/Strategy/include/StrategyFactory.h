@@ -9,8 +9,6 @@
 #include <stdexcept>
 #include <string>
 
-class Aes;
-
 namespace Y_flib
 {
     struct StrategyModules
@@ -34,19 +32,18 @@ namespace Y_flib
         */
         static CompressionMode idToMode(CompressStrategy id)
         {
-            // 文件头里持久化的策略号就是 CompressionMode 的底层值（见 modeToId），
-            // 因此这里只校验 id 是否为已知模式，再按底层值映射回枚举；
-            // 不使用 0/1/2/3 魔法数字，枚举定义是唯一事实来源。
-            switch (id)
+            // id 来自归档文件头，属不可信输入，穷举校验通过后才映射回枚举。
+            // switch 刻意对枚举本身做且不带 default：新增 CompressionMode 枚举值
+            // 时由 -Wswitch 在编译期提醒来此补 case；未知 id 落到下方的 throw。
+            switch (static_cast<CompressionMode>(id))
             {
-            case static_cast<CompressStrategy>(CompressionMode::HuffmanAES):
-            case static_cast<CompressStrategy>(CompressionMode::HuffmanOnly):
-            case static_cast<CompressStrategy>(CompressionMode::AESOnly):
-            case static_cast<CompressStrategy>(CompressionMode::PackOnly):
+            case CompressionMode::HuffmanAES:
+            case CompressionMode::HuffmanOnly:
+            case CompressionMode::AESOnly:
+            case CompressionMode::PackOnly:
                 return static_cast<CompressionMode>(id);
-            default:
-                throw std::runtime_error("Unsupported compression strategy: " + std::to_string(id));
             }
+            throw std::runtime_error("Unsupported compression strategy: " + std::to_string(id));
         }
 
         static CompressStrategy modeToId(CompressionMode mode)
