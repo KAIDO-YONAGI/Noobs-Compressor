@@ -11,7 +11,10 @@
 #include <wincrypt.h>
 #include "../../../CompressorFileSystem/Commons/include/FileLibrary.h"
 
-/* AES-128加密算法实现 - 标准AES加密/解密、密钥扩展、预计算表优化 */
+/* AES-128 CFB 加密实现（自研核心）
+   注意：实测本核心与 FIPS-197 标准 AES 不逐比特一致（MixColumns 混合方向不同），
+   密文不能与标准 AES 工具互通；本实现的密文即归档格式的事实标准，
+   改动核心必须与历史版本逐比特一致（BuildTest/tests 黄金向量 + tool_archivebaseline 验收） */
 class Aes
 {
     public:
