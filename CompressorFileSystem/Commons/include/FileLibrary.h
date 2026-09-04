@@ -21,7 +21,7 @@ namespace Y_flib
     using HeaderOffsetSize = uint8_t;
     using DirectoryOffsetSize = uint64_t;
 
-    // 偏移和长度使用不同的类型名称，杜绝"一型多用"（详见 DevFiles 重构方案 R2）
+    // 偏移和长度使用不同的类型名称，杜绝"一型多用"
     using SlotOffset = uint64_t;   // 预留字段在归档中的偏移（绝对位置）
     using BlockLength = uint64_t;  // 数据块长度（分割标准/数据区前缀中的长度字段）
 
@@ -58,6 +58,18 @@ namespace Y_flib
         SymbolicLinkFile = 4,
         SymbolicLinkDirectory = 5,
         Junction = 6
+    };
+
+    enum class ParserMode // 运行时解析方式，不写入归档，无需固定底层宽度
+    {
+        Compression,  // 压缩：扫描本地文件
+        Decompression // 解压：读取目录块
+    };
+
+    enum class AesMode // AES 处理方向，运行时状态，不写入归档，无需固定底层宽度
+    {
+        Encrypt, // 加密
+        Decrypt  // 解密
     };
 #pragma pack(push, 1)
     struct Header
@@ -149,7 +161,7 @@ namespace Y_flib
 #pragma pack(push, 1)
     // 分割标准的前缀布局（磁盘字段顺序：flag + 块长度 + IV）。
     // 只作布局唯一定义与编译期校验；写入路径仍按现有方式逐字段调用
-    // writeBinaryStandards，不改为整体写入（避免字节序/填充差异，见 DevFiles 方案 R3）
+    // writeBinaryStandards，不改为整体写入（避免字节序/填充差异）
     struct SeparatedPrefix
     {
         FlagType flag;

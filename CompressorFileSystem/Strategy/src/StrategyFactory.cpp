@@ -1,31 +1,6 @@
 #include "../include/StrategyFactory.h"
 #include "../../../CompressionModules/Huffman/Core/include/HuffmanCompression.h"
 #include "../../../EncryptionModules/Aes/include/AesEncryption.h"
-#include "../../../EncryptionModules/Aes/include/My_Aes.h"
-
-// AesEncryption持有裸指针Aes*但不拥有它，需要包装一层来管理Aes对象的生命周期
-namespace
-{
-    class OwnedAesEncryption : public Y_flib::IEncryption
-    {
-        std::unique_ptr<Aes> ownedAes;
-        Y_flib::AesEncryption impl;
-
-    public:
-        OwnedAesEncryption(std::unique_ptr<Aes> aes)
-            : ownedAes(std::move(aes)), impl(ownedAes.get()) {}
-
-        void encrypt(const Y_flib::DataBlock &input, Y_flib::DataBlock &output) override
-        {
-            impl.encrypt(input, output);
-        }
-
-        void decrypt(const Y_flib::DataBlock &input, Y_flib::DataBlock &output) override
-        {
-            impl.decrypt(input, output);
-        }
-    };
-}
 
 namespace Y_flib
 {
@@ -38,7 +13,7 @@ namespace Y_flib
         {
         case CompressionMode::HuffmanAES:
             modules.compression = std::make_unique<HuffmanCompression>();
-            modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
+            modules.encryption = std::make_unique<AesEncryption>(password);
             break;
 
         case CompressionMode::HuffmanOnly:
@@ -48,7 +23,7 @@ namespace Y_flib
 
         case CompressionMode::AESOnly:
             modules.compression = std::make_unique<NullCompression>();
-            modules.encryption = std::make_unique<OwnedAesEncryption>(std::make_unique<Aes>(password.c_str()));
+            modules.encryption = std::make_unique<AesEncryption>(password);
             break;
 
         case CompressionMode::PackOnly:

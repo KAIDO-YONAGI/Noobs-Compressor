@@ -150,6 +150,9 @@ endif()
 # ========================
 # 编译选项
 # ========================
+# -Wswitch：对枚举的 switch 漏写新增枚举值时编译期报警
+# （StrategyFactory 的 idToMode / createModules 依赖它提醒为新模式接线）
+target_compile_options(SimpleFilesCompressorGUI PRIVATE -Wswitch)
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     if (NOT MSVC)
         target_compile_options(SimpleFilesCompressorGUI PRIVATE

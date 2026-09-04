@@ -27,12 +27,14 @@ class Aes
     /* 析构函数，安全清除内存中的密钥副本 */
     ~Aes()
     {
-        // 安全清除密钥
-        memset(const_cast<uint8_t *>(aesKey16Bytes), 0, 16);
+        // 主密钥与轮密钥都能还原出完整加解密能力，销毁前必须一并清零；
+        // 用 SecureZeroMemory 而非 memset：后者对"之后不再读"的内存可能被优化掉
+        SecureZeroMemory(aesKey16Bytes, sizeof(aesKey16Bytes));
+        SecureZeroMemory(w, sizeof(w));
     }
 
-    /* 统一加密/解密接口，mode=1加密、mode=2解密。自动分块处理 */
-    void doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
+    /* 统一加密/解密接口，按 AesMode 选择加密或解密。自动分块处理 */
+    void doAes(Y_flib::AesMode mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
 
 private:
     /* 提取32位整数的高4比特，返回0-15 */
@@ -108,7 +110,7 @@ private:
     void hashTo16Bytes(const char *input, uint8_t *output);
 
     /* 分块处理AES加密/解密，按16字节分块 */
-    Y_flib::DataBlock processDataAes(const Y_flib::DataBlock &inputBuffer, int mode);
+    Y_flib::DataBlock processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode);
 
     /* AES加密，10轮加密循环 */
     void aes(char *p, int plen);

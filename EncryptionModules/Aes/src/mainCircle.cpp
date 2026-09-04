@@ -2,12 +2,12 @@
 
 #pragma comment(lib, "advapi32.lib")
 
-Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int  mode)
+Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode)
 {
     Y_flib::DataBlock outputBuffer;
 
     // 处理IV
-    if (mode==1)
+    if (mode == Y_flib::AesMode::Encrypt)
     { // 加密
         // 生成随机IV (使用 Windows CryptoAPI)
         HCRYPTPROV hProv = 0;
@@ -41,7 +41,7 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int 
         // 准备要加密的数据
         buffer = inputBuffer;
     }
-    else if(mode ==2)
+    else if (mode == Y_flib::AesMode::Decrypt)
     { // 解密
         // 检查输入是否足够包含IV
         if (inputBuffer.size() < sizeof(iv))
@@ -58,11 +58,11 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int 
 
     // 处理数据
     size_t bytesToProcess = buffer.size();
-    if (mode==1)
+    if (mode == Y_flib::AesMode::Encrypt)
     {
         aes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 加密
     }
-    else if (mode==2)
+    else if (mode == Y_flib::AesMode::Decrypt)
     {
         deAes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 解密
     }
@@ -72,13 +72,13 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int 
 
     return outputBuffer;
 }
-//mode 1: 加密 2: 解密
-void Aes::doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer)
+void Aes::doAes(Y_flib::AesMode mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer)
 {
 
-    if (mode != 1 && mode != 2)
+    // 枚举值只能经 static_cast 越界，仍保留穷举校验兜底
+    if (mode != Y_flib::AesMode::Encrypt && mode != Y_flib::AesMode::Decrypt)
     {
-        throw std::invalid_argument("Invalid mode. Use 1 for encryption and 2 for decryption.");
+        throw std::invalid_argument("Invalid AesMode. Use AesMode::Encrypt or AesMode::Decrypt.");
     }
 
     try

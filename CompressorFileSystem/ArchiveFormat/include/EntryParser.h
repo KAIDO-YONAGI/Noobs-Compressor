@@ -29,7 +29,7 @@ namespace Y_flib
         Y_flib::DataBlock &buffer;
         const Y_flib::Header &header;
         const Y_flib::DirectoryReadCursor &cursor; // 绑定 Loader 的目录区读取游标（剩余量+当前块长）
-        size_t parserMode = 0; // 0：占位、1：压缩模式、2：解压模式
+        ParserMode parserMode = ParserMode::Decompression; // 构造时按 filePathToScan 是否为空判定压缩/解压
 
         std::filesystem::path tempPathForRootParser;
 
@@ -135,7 +135,9 @@ namespace Y_flib
               header(header),
               cursor(cursor)
         {
-            parserMode = ((!filePathToScan.empty()) ? 1 : 2); // 非空表示压缩
+            parserMode = filePathToScan.empty()
+                             ? ParserMode::Decompression
+                             : ParserMode::Compression; // 非空表示压缩
         }
 
         /* 主解析函数，处理缓冲区中的目录数据块 */

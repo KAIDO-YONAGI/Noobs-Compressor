@@ -71,8 +71,8 @@ static void roundTripCase(const char *name, const Y_flib::DataBlock &plain,
 {
     Aes aes(key);
     Y_flib::DataBlock encrypted, decrypted;
-    aes.doAes(1, plain, encrypted);
-    aes.doAes(2, encrypted, decrypted);
+    aes.doAes(Y_flib::AesMode::Encrypt,plain, encrypted);
+    aes.doAes(Y_flib::AesMode::Decrypt,encrypted, decrypted);
 
     char msg[128];
     std::snprintf(msg, sizeof(msg), "%s: 输出长度应为 输入+16(IV)", name);
@@ -111,9 +111,9 @@ static void testIvPrefixAndRandomness()
     Y_flib::DataBlock plain(64, 0x5A);
     Y_flib::DataBlock c1, c2, c3;
 
-    aes.doAes(1, plain, c1);
-    aes.doAes(1, plain, c2);
-    aes.doAes(1, plain, c3);
+    aes.doAes(Y_flib::AesMode::Encrypt,plain, c1);
+    aes.doAes(Y_flib::AesMode::Encrypt,plain, c2);
+    aes.doAes(Y_flib::AesMode::Encrypt,plain, c3);
 
     CHECK(c1.size() == plain.size() + 16, "密文长度 = 明文 + 16 字节 IV");
 
@@ -128,9 +128,9 @@ static void testIvPrefixAndRandomness()
 
     // 三个密文都能独立解回同一明文（IV 自包含在密文里）
     Y_flib::DataBlock d1, d2, d3;
-    aes.doAes(2, c1, d1);
-    aes.doAes(2, c2, d2);
-    aes.doAes(2, c3, d3);
+    aes.doAes(Y_flib::AesMode::Decrypt,c1, d1);
+    aes.doAes(Y_flib::AesMode::Decrypt,c2, d2);
+    aes.doAes(Y_flib::AesMode::Decrypt,c3, d3);
     CHECK(blocksEqual(plain, d1) && blocksEqual(plain, d2) && blocksEqual(plain, d3),
           "三个随机 IV 的密文都应解回同一明文");
 }
@@ -144,8 +144,8 @@ static void testInstanceReuse()
     {
         Y_flib::DataBlock plain = makePattern(1000 + i * 37, 4, rng);
         Y_flib::DataBlock enc, dec;
-        aes.doAes(1, plain, enc);
-        aes.doAes(2, enc, dec);
+        aes.doAes(Y_flib::AesMode::Encrypt,plain, enc);
+        aes.doAes(Y_flib::AesMode::Decrypt,enc, dec);
         if (!blocksEqual(plain, dec))
         {
             CHECK(false, "实例复用时第 i 轮 round-trip 失败");
@@ -167,7 +167,7 @@ static void testTruncatedInputThrows()
         bool threw = false;
         try
         {
-            aes.doAes(2, tooShort, out);
+            aes.doAes(Y_flib::AesMode::Decrypt,tooShort, out);
         }
         catch (const std::runtime_error &)
         {
@@ -180,7 +180,8 @@ static void testTruncatedInputThrows()
     Y_flib::DataBlock dummy(32, 0);
     try
     {
-        aes.doAes(3, dummy, out);
+        // 枚举经 static_cast 仍可越界，doAes 需对此兜底抛错
+        aes.doAes(static_cast<Y_flib::AesMode>(3), dummy, out);
     }
     catch (const std::exception &)
     {
@@ -198,8 +199,8 @@ static void testWrongKeyGarbage()
 
     Aes encryptor("correct-horse");
     Aes wrongDecryptor("battery-staple");
-    encryptor.doAes(1, plain, enc);
-    wrongDecryptor.doAes(2, enc, dec);
+    encryptor.doAes(Y_flib::AesMode::Encrypt,plain, enc);
+    wrongDecryptor.doAes(Y_flib::AesMode::Decrypt,enc, dec);
 
     CHECK(!blocksEqual(plain, dec), "错误密钥解密结果不应等于明文");
     CHECK(dec.size() == plain.size(), "错误密钥解密后长度仍应正确");
@@ -215,10 +216,10 @@ static void testCiphertextDiffusion()
 
     Aes aes("diffusion-key");
     Y_flib::DataBlock c1, c2, d1, d2;
-    aes.doAes(1, p1, c1);
-    aes.doAes(2, c1, d1);
-    aes.doAes(1, p2, c2);
-    aes.doAes(2, c2, d2);
+    aes.doAes(Y_flib::AesMode::Encrypt,p1, c1);
+    aes.doAes(Y_flib::AesMode::Decrypt,c1, d1);
+    aes.doAes(Y_flib::AesMode::Encrypt,p2, c2);
+    aes.doAes(Y_flib::AesMode::Decrypt,c2, d2);
 
     CHECK(blocksEqual(p1, d1) && blocksEqual(p2, d2), "两份明文各自 round-trip 正确");
     CHECK(std::memcmp(c1.data() + 16, c2.data() + 16, 1024) != 0,
@@ -236,8 +237,8 @@ static void testLongKeyVariants()
     {
         Aes aes(key);
         Y_flib::DataBlock enc, dec;
-        aes.doAes(1, plain, enc);
-        aes.doAes(2, enc, dec);
+        aes.doAes(Y_flib::AesMode::Encrypt,plain, enc);
+        aes.doAes(Y_flib::AesMode::Decrypt,enc, dec);
         char msg[96];
         std::snprintf(msg, sizeof(msg), "密钥长度 %zu 应 round-trip 正确", std::strlen(key));
         CHECK(blocksEqual(plain, dec), msg);
