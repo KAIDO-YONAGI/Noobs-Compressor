@@ -75,14 +75,14 @@ void CompressionLoop::compressionLoop(
             // 通过接口调用压缩模块
             metadata.clear();
             compressedData.clear();
-            compression.compress(data_In, metadata, compressedData);
+            compression.compress(data_In, metadata, compressedData);//压缩 吐出后两者：压缩元数据 压缩后数据
 
-            encryption.encrypt(metadata, encryptedBlock);
-            dataExporter.exportCompressedData(encryptedBlock);
+            encryption.encrypt(metadata, encryptedBlock);//加密 压缩元数据
+            dataExporter.exportCompressedData(encryptedBlock);//元数据写盘
 
-            encryptedBlock.clear();
-            encryption.encrypt(compressedData, encryptedBlock);
-            dataExporter.exportCompressedData(encryptedBlock);
+            encryptedBlock.clear();//复用加密块
+            encryption.encrypt(compressedData, encryptedBlock);//加密 压缩后数据
+            dataExporter.exportCompressedData(encryptedBlock);//写盘
             //TODO:这可以把两次io优化为一次 方法是合并两个数据块后再写（因为逻辑上也是连续的）
 
             // 计算进度并回调

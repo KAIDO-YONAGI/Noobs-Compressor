@@ -2,14 +2,6 @@
 
 namespace Y_flib
 {
-    void DataExporter::thisBlockIsDone(Y_flib::BlockLength dataSize)
-    {
-        std::streamoff currentPos = outFile.tellp();
-        std::streamoff offsetToFill = currentPos - static_cast<std::streamoff>(dataSize + Y_flib::Constants::BLOCK_LENGTH_FIELD_SIZE);
-        locator.locateFromBegin(outFile, offsetToFill);
-        standardWriter.writeBinaryStandards(dataSize, outFile);
-        locator.locateFromEnd(outFile, 0);
-    }
 
     void DataExporter::thisFileIsDone(Y_flib::SlotOffset offsetToFill)
     {
@@ -24,14 +16,12 @@ namespace Y_flib
         Y_flib::BlockLength dataSize = data.size();
 
         locator.locateFromEnd(outFile, 0);
-        // 加密数据块不单独预留 IV；直接写入分隔标志和待回填的块长度。
+        // 加密数据块不单独预留 IV；直接写入分隔标志和块长度。
         standardWriter.writeBinaryStandards(Y_flib::FlagType::Separated, outFile);
-        standardWriter.writeBinaryStandards(Y_flib::BlockLength(0), outFile);
+        standardWriter.writeBinaryStandards(Y_flib::BlockLength(dataSize), outFile);
 
         StandardsWriter::writeDataBlock(dataSize, outFile, data); // Write block directly to output file
         processedFileSize += dataSize;
-
-        thisBlockIsDone(dataSize);
     }
 
     void DataExporter::exportDecompressedData(const Y_flib::DataBlock &data)

@@ -36,7 +36,6 @@ namespace Y_flib
         Y_flib::FileSize processedFileSize = 0;
 
         /* 标记单个数据块处理完成并更新位置 */
-        void thisBlockIsDone(Y_flib::BlockLength dataSize);
 
     public:
         /* 构造函数，打开输出文件（使用fstream支持读写） */
