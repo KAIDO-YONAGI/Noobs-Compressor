@@ -3,14 +3,6 @@
 namespace Y_flib
 {
 
-    void DataExporter::thisFileIsDone(Y_flib::SlotOffset offsetToFill)
-    {
-        locator.locateFromBegin(outFile, offsetToFill);
-        standardWriter.writeBinaryStandards(processedFileSize, outFile); // Backfill processed size
-        locator.locateFromEnd(outFile, 0);
-        processedFileSize = 0;
-    }
-
     void DataExporter::exportCompressedData(const Y_flib::DataBlock &data)
     {
         Y_flib::BlockLength dataSize = data.size();

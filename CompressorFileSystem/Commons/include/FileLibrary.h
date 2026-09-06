@@ -178,4 +178,15 @@ namespace Y_flib
 #pragma pack(pop)
     static_assert(sizeof(SeparatedPrefix) == Constants::SEPARATED_STANDARD_SIZE);
     static_assert(sizeof(FileStandardTail) == sizeof(FileSize) * 2);
+
+    /* BlockSpan - 目录数据块在归档中的位置记录（原裸 array<u64,2> 的具名化）
+     * 读侧（BinaryStandardLoader）逐块顺手记录，收尾阶段 CatalogFinalizer 原地加密回写使用 */
+    struct BlockSpan
+    {
+        SlotOffset startPos = 0; // 块数据起始绝对偏移
+        BlockLength size = 0;    // 块字节数
+
+        /* 块数据之前的 IV 预留槽绝对偏移（紧邻块起点之前 16 字节处） */
+        SlotOffset ivSlotPos() const { return startPos - Constants::IV_BYTES; }
+    };
 }
