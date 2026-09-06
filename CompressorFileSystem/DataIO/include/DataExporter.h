@@ -11,19 +11,20 @@
  * 功能:
  *   写入加密和压缩的数据块到输出文件
  *   支持压缩流程和解压流程中的写入操作
- *   管理文件写入进度和位置更新
- *   支持记录填充位置用于解密回填
+ *   纯追加写入：写指针只在文件末尾定位，从不 seek 回改
+ *   自行累加当前文件的处理后大小，文件完成时由调度者取走
  *
  * 归档输出文件的写入分三个阶段依次进行，任何阶段都不并发写入（本类承担阶段②）：
  *   ① HeaderWriter（ofstream，建档阶段：写文件头、目录树、各预留字段）
- *   ② DataExporter（fstream，数据阶段：逐块追加，并回写每块长度、每文件大小）
- *   ③ BinaryStandardLoader::encryptHeaderBlock（fstreamForRefill，收尾阶段：目录区原地加密）
+ *   ② DataExporter（fstream，数据阶段：逐块纯追加，块长度直写真实值）
+ *   ③ CatalogFinalizer（fstream，收尾阶段：回填"处理后大小"槽 + 目录区原地加密）
  * 并行化时②③归专职写线程，见《线程池调研与改造计划.md》§7.1。
  *
  * 公共接口:
  *   exportCompressedData(): 写入压缩数据块
  *   exportDecompressedData(): 写入解压数据块
- *   thisFileIsDone(): 更新当前文件的完成位置
+ *   currentFileProcessedSize(): 查询当前文件累计的处理后大小
+ *   startNextFile(): 结束当前文件的统计，从 0 开始累计下一文件
  */
 namespace Y_flib
 {
@@ -34,8 +35,6 @@ namespace Y_flib
         Locator locator;
         StandardsWriter standardWriter;
         Y_flib::FileSize processedFileSize = 0;
-
-        /* 标记单个数据块处理完成并更新位置 */
 
     public:
         /* 构造函数，打开输出文件（使用fstream支持读写） */
@@ -65,8 +64,11 @@ namespace Y_flib
         /* fstream 自身负责关闭文件，无需手写析构函数。 */
         ~DataExporter() = default;
 
-        /* 更新当前文件的完成标记和位置（offsetToFill 为"处理后大小"预留字段在归档中的偏移） */
-        void thisFileIsDone(Y_flib::SlotOffset offsetToFill);
+        /* 查询当前文件累计的处理后大小（块字节数直接累加，加密块含 IV 也按写入值计） */
+        Y_flib::FileSize currentFileProcessedSize() const { return processedFileSize; }
+
+        /* 结束当前文件的统计，从 0 开始累计下一文件 */
+        void startNextFile() { processedFileSize = 0; }
 
         /* 写入压缩数据块到输出文件 */
         void exportCompressedData(const Y_flib::DataBlock &data);

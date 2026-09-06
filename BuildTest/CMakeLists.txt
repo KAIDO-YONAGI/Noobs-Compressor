@@ -82,6 +82,7 @@ set(CORE_SOURCES
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryProcessor.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardWriter.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/CatalogFinalizer.cpp"
     "${REPO_ROOT}/CompressorFileSystem/Strategy/src/NullCompression.cpp"
     "${REPO_ROOT}/CompressorFileSystem/Strategy/src/StrategyFactory.cpp"
     "${REPO_ROOT}/Y_Manager/MainLoop.cpp"

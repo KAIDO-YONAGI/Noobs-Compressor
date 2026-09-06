@@ -25,6 +25,9 @@ void CompressionLoop::compressionLoop(
 
     Y_flib::DataBlock encryptedBlock;
 
+    // 收尾回填表：文件完成时配对记下（预留槽偏移，处理后大小），收尾统一交 CatalogFinalizer 写回
+    std::vector<Y_flib::SizeFillEntry> sizeFillEntries;
+
     std::filesystem::path loadPath;
     std::unique_ptr<DataLoader> dataLoader;
 
@@ -91,8 +94,11 @@ void CompressionLoop::compressionLoop(
 
         if (dataLoader->isDone() && !headerLoaderIterator.fileQueue.empty()) // 当前文件处理完成，准备下一个文件
         {
-            Y_flib::SlotOffset offsetToFill = headerLoaderIterator.fileQueue.front().processedSizeOffset;
-            dataExporter.thisFileIsDone(offsetToFill);
+            // 读侧槽偏移 + 写侧累计大小当场配对入表，收尾由 CatalogFinalizer 统一写回
+            sizeFillEntries.push_back({
+                headerLoaderIterator.fileQueue.front().processedSizeOffset,
+                dataExporter.currentFileProcessedSize()});
+            dataExporter.startNextFile();
 
             headerLoaderIterator.fileQueue.pop();
             processedFiles++;
@@ -116,7 +122,9 @@ void CompressionLoop::compressionLoop(
             }
         }
     }
-    headerLoaderIterator.encryptHeaderBlock(encryption, mode);
+    // 收尾：目录区统一交 CatalogFinalizer（先回填"处理后大小"槽，后原地加密，见《线程池调研与改造计划.md》§4.7）
+    Y_flib::CatalogFinalizer catalogFinalizer(EncodingUtils::pathFromUtf8(compressionFilePath));
+    catalogFinalizer.finalize(sizeFillEntries, headerLoaderIterator.takeBlockSpans(), encryption, mode);
 
     // 完成回调
     if (progressCallback)

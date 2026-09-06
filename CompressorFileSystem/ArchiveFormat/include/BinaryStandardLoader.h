@@ -23,13 +23,12 @@
    getDirectoryOffset(): 获取目录块偏移量
    allLoopIsDone(): 检查是否完成所有读取
    restartLoader(): 重新初始化读取状态
-   encryptHeaderBlock(): 加密并回填目录块
+   takeBlockSpans(): 移交目录块位置记录（供 CatalogFinalizer 收尾加密）
 
-   归档输出文件的写入分三个阶段依次进行，任何阶段都不并发写入
-   （本类的 encryptHeaderBlock 承担阶段③）：
+   归档输出文件的写入分三个阶段依次进行，任何阶段都不并发写入（本类为纯读侧，不承担写入）：
    ① HeaderWriter（ofstream，建档阶段：写文件头、目录树、各预留字段）
-   ② DataExporter（fstream，数据阶段：逐块追加，并回写每块长度、每文件大小）
-   ③ BinaryStandardLoader::encryptHeaderBlock（fstreamForRefill，收尾阶段：目录区原地加密）
+   ② DataExporter（fstream，数据阶段：逐块纯追加）
+   ③ CatalogFinalizer（fstream，收尾阶段：回填"处理后大小"槽 + 目录区原地加密）
    并行化时②③归专职写线程，见《线程池调研与改造计划.md》§7.1。
 */
 namespace Y_flib
@@ -40,16 +39,7 @@ namespace Y_flib
     /* 读取侧目录区游标（物理定义在 DirectoryCursor.h，独立头避免与 EntryParser 循环包含） */
     using ReadCursor = DirectoryReadCursor;
 
-    /* BlockSpan - 目录数据块在归档中的位置记录
-     * 供收尾阶段 encryptHeaderBlock 原地加密回写使用（原裸 array<u64,2> 的具名化） */
-    struct BlockSpan
-    {
-      Y_flib::SlotOffset startPos = 0; // 块数据起始绝对偏移
-      Y_flib::BlockLength size = 0;    // 块字节数
-
-      /* 块数据之前的 IV 预留槽绝对偏移（紧邻块起点之前 16 字节处） */
-      Y_flib::SlotOffset ivSlotPos() const { return startPos - Y_flib::Constants::IV_BYTES; }
-    };
+    // BlockSpan（目录块位置记录）已上移到 FileLibrary.h 公共类型区
 
   private:
     bool isReadHeader = false;
@@ -63,7 +53,6 @@ namespace Y_flib
     std::filesystem::path loadPath;
     std::filesystem::path parentPath;
     std::ifstream inFile;
-    std::fstream fstreamForRefill;
     std::vector<std::string> filePathToScan; // 构造时初始化，而且只使用一次
 
     Y_flib::Header header;                        // 私有化存储当前文件头信息
@@ -96,11 +85,8 @@ namespace Y_flib
 
       this->inFile = std::ifstream(loadPath, std::ios::binary);
 
-      this->fstreamForRefill = std::fstream(loadPath, std::ios::binary | std::ios::in | std::ios::out);
-
       if (!inFile)
         throw std::runtime_error("BinaryStandardLoader()-Error:Failed to open inFile" + inPath);
-      // fstreamForRefill 用于压缩时回填加密目录块，解压时不需要写权限，允许打开失败
 
       this->filePathToScan = filePathToScan;
       this->parserForLoader = std::make_unique<EntryParser>(
@@ -117,10 +103,6 @@ namespace Y_flib
       {
         inFile.close();
       }
-      if (fstreamForRefill.is_open())
-      {
-        fstreamForRefill.close();
-      }
     }
 
     Y_flib::DirectoryOffsetSize getDirectoryOffset() { return header.directoryOffset; } // 获取目录块偏移量
@@ -133,6 +115,7 @@ namespace Y_flib
 
     void restartLoader(); // 重新打开文件并定位到当前偏移
 
-    void encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode); // 在压缩流程中读取完目录信息就直接加密并回填目录块到文件
+    /* 移交目录块位置记录（take 后本类不再持有，供 CatalogFinalizer 收尾加密回写） */
+    std::vector<BlockSpan> takeBlockSpans() { return std::move(blockPosition); }
   };
 } // namespace Y_flib

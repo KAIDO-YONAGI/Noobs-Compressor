@@ -4,6 +4,7 @@
 #include "../CompressorFileSystem/DataIO/include/DataLoader.h"
 #include "../CompressorFileSystem/DataIO/include/DataExporter.h"
 #include "../CompressorFileSystem/ArchiveFormat/include/BinaryStandardLoader.h"
+#include "../CompressorFileSystem/ArchiveFormat/include/CatalogFinalizer.h"
 #include "../CompressorFileSystem/Commons/include/ToolClasses.h"
 #include "../CompressorFileSystem/Strategy/include/ICompression.h"
 #include "../CompressorFileSystem/Strategy/include/IEncryption.h"

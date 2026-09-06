@@ -77,6 +77,7 @@ add_executable(tool_archivebaseline
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryProcessor.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardWriter.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardLoader.cpp"
+    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/CatalogFinalizer.cpp"
     "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/HeaderWriter.cpp"
     "${REPO_ROOT}/CompressorFileSystem/Strategy/src/NullCompression.cpp"
     "${REPO_ROOT}/CompressorFileSystem/Strategy/src/StrategyFactory.cpp"

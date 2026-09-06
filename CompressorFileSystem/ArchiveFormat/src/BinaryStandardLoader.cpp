@@ -172,48 +172,6 @@ namespace Y_flib
         }
     }
 
-    void BinaryStandardLoader::encryptHeaderBlock(Y_flib::IEncryption &encryption, Y_flib::CompressionMode mode)
-    {
-        // 非加密模式下，目录块保持明文，无需加密回填
-        if (!Y_flib::StrategyFactory::hasEncryption(mode))
-            return;
-
-        // 检查 fstreamForRefill 是否有效
-        if (!fstreamForRefill.is_open())
-        {
-            // 尝试重新打开
-            fstreamForRefill.open(loadPath, std::ios::binary | std::ios::in | std::ios::out);
-            if (!fstreamForRefill)
-            {
-                throw std::runtime_error("encryptHeaderBlock()-Error: Failed to reopen fstreamForRefill: " + EncodingUtils::pathToUtf8(loadPath));
-            }
-        }
-
-        Locator locator;
-        Y_flib::DataBlock inBlock;
-        Y_flib::DataBlock encryptedBlock;
-
-        for (const BlockSpan &span : blockPosition)
-        {
-            const Y_flib::SlotOffset startPos = span.startPos;
-            const Y_flib::BlockLength blockSize = span.size;
-
-            inBlock.resize(blockSize);
-            encryptedBlock.resize(blockSize + Y_flib::Constants::IV_BYTES);
-
-            locator.locateFromBegin(fstreamForRefill, startPos); // 定位到数据块起始位置
-
-            StandardsReader::readDataBlock(blockSize, fstreamForRefill, inBlock); // 读取数据块到buffer
-
-            encryption.encrypt(inBlock, encryptedBlock);
-            locator.locateFromBegin(fstreamForRefill, span.ivSlotPos()); // 定位到数据块前的 IV 预留空间，准备回写加密数据
-
-            StandardsWriter::writeDataBlock(blockSize + Y_flib::Constants::IV_BYTES, fstreamForRefill, encryptedBlock); // 回写加密数据
-
-            inBlock.clear();
-            encryptedBlock.clear();
-        }
-    }
     void BinaryStandardLoader::setRequestDone()
     {
 
