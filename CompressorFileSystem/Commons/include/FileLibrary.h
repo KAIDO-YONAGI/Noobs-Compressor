@@ -1,16 +1,27 @@
 // FileLibaray.h
 #pragma once
+// 本头文件只收录"归档磁盘格式"类型：字段宽度别名、文件/目录/分割标准、
+// Header 布局、Constants、BlockSpan。运行期通用类型在 RuntimeLibrary.h（Y_flib::Runtime）。
 // 关于编译：需要使用普通O3优化级别，且需要开启C++20标准支持（编译器选项 -std=c++20）。此外，确保链接器正确链接了所需的库，如stdc++fs（对于某些编译器）以支持文件系统功能。
 // 别开LTO（链接时优化）选项，因为它可能会导致某些符号被错误地优化掉，尤其是在使用了模板或内联函数的情况下。
 #include <cstdint>
 #include <array>
 #include <vector>
+#include "RuntimeLibrary.h"
 //关于包含文件的规则
 //只在用到头文件的cpp的.h中包含对应头文件，而不是.cpp中，或者总的库头文件中
 
 // 命名空间
 namespace Y_flib
 {
+    // —— 运行期通用类型再导出（定义在 RuntimeLibrary.h 的 Y_flib::Runtime）——
+    using Runtime::DataBlock;
+    using Runtime::UpSizeOfBuffer;
+    using Runtime::MetadataMarker;
+    using Runtime::CompressionMode;
+    using Runtime::ParserMode;
+    using Runtime::AesMode;
+
     using FileCount = uint32_t;
     using FileSize = uint64_t;
     using FileNameSize = uint32_t;
@@ -25,27 +36,12 @@ namespace Y_flib
     using SlotOffset = uint64_t;   // 预留字段在归档中的偏移（绝对位置）
     using BlockLength = uint64_t;  // 数据块长度（分割标准/数据区前缀中的长度字段）
 
-    using UpSizeOfBuffer = uint32_t;
-
     using SizeOfMagicNum = uint32_t;
     using SizeOfFlag = uint8_t;
 
     using IvSize = std::array<uint8_t, 16>;
 
-    using DataBlock = std::vector<unsigned char>;
-
-    using MetadataMarker = uint8_t;
-
     using ConstSize= uint64_t;
-
-    // 压缩模式策略枚举
-    enum class CompressionMode : uint8_t
-    {
-        HuffmanAES  = 0, // 默认：Huffman压缩 + AES加密（向后兼容）
-        HuffmanOnly = 1, // 仅Huffman压缩，无加密
-        AESOnly     = 2, // 仅AES加密，无压缩
-        PackOnly    = 3  // 仅打包，无压缩无加密
-    };
 
     // 文件标准相关
 
@@ -58,18 +54,6 @@ namespace Y_flib
         SymbolicLinkFile = 4,
         SymbolicLinkDirectory = 5,
         Junction = 6
-    };
-
-    enum class ParserMode // 运行时解析方式，不写入归档，无需固定底层宽度
-    {
-        Compression,  // 压缩：扫描本地文件
-        Decompression // 解压：读取目录块
-    };
-
-    enum class AesMode // AES 处理方向，运行时状态，不写入归档，无需固定底层宽度
-    {
-        Encrypt, // 加密
-        Decrypt  // 解密
     };
 #pragma pack(push, 1)
     struct Header
