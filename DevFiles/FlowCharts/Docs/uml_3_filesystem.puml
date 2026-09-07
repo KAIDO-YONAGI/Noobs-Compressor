@@ -1,11 +1,9 @@
 @startuml File_System_and_Serialization
 scale 2
-!theme spacelab
+!theme plain
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 skinparam defaultFontName "Microsoft YaHei"
-skinparam shadowing false
-skinparam roundCorner 6
 skinparam nodesep 35
 skinparam ranksep 40
 caption v2.2.0 · 2026-09-07

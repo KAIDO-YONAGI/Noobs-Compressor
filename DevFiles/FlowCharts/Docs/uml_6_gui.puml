@@ -1,11 +1,9 @@
 @startuml GUI_Layer
 scale 2
-!theme spacelab
+!theme plain
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
 skinparam defaultFontName "Microsoft YaHei"
-skinparam shadowing false
-skinparam roundCorner 6
 skinparam nodesep 40
 skinparam ranksep 50
 caption v2.2.0 · 2026-09-07
