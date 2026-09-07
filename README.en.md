@@ -38,19 +38,25 @@ The project is mainly intended for studying **file archiving structures, data co
 
 # Performance Notes
 
-Since **Huffman coding and AES encryption are implemented purely in software**, runtime performance is relatively slow.
+The compression core is a 3-stage pipeline (dedicated reader thread + N compute workers + dedicated writer thread, N = logical CPU cores). Huffman coding and AES encryption are pure software implementations (no AES-NI).
+
+Measured compression throughput in v2.2.0 (HuffmanAES, 16 logical cores / NVMe, same machine and identical input vs the old version):
+
+| Data profile | Old throughput | v2.2.0 throughput | Speedup |
+|---|---|---|---|
+| Mostly large files (avg 1.1 MB/file) | 19.1 MiB/s | 131.9 MiB/s | **6.9x** |
+| Small/medium files + very long paths (avg 75 KB/file, up to 267 chars) | 14.7 MiB/s | 52.6 MiB/s | **3.6x** |
+| Extreme tiny files (avg 172 B/file) | 962 files/s | 1,743 files/s | **1.8x** |
+
+Inverted view: per 1 GiB compressed, the large-file scenario takes ~54 s old vs ~7.8 s new; the long-path scenario ~70 s old vs ~19.5 s new.
+
+The pattern: the bigger the files, the bigger the gain — compression/encryption parallelizes across cores, while directory enumeration and per-file I/O are serial endpoints that do not scale with core count.
 
 Because compression relies solely on Huffman coding, the **compression ratio is limited**, with a best-case ratio of about **60%**.
 
-The program uses a **block-processing strategy**, and under normal path length conditions:
+Peak memory is hard-capped by the buffer pool: about `2 x (cores + 2)` 8 MB blocks (~300 MB on a 16-core machine), independent of total input size.
 
-- **Peak memory usage is approximately 100 MB**
-
-Test scenario:
-
-- Approximately **13,000 files and directories**
-
-- Total data size around **230 GB**
+Decompression is still single-threaded at about 20-24 MiB/s.
 
 ---
 
@@ -156,13 +162,15 @@ Memory usage is stable around **60 MB**.
 
 **Multithreaded compression pipeline**: compression now runs as a 3-stage pipeline — dedicated reader thread → N compute workers → dedicated writer thread (N = logical CPU cores), with a buffer pool capping memory usage.
 
-Measured performance (HuffmanAES, same machine, identical input; see `DevFiles/性能报告-2026-09-07.md`):
+Measured compression throughput (HuffmanAES, 16 logical cores, same machine and identical input; see `DevFiles/性能报告-2026-09-07.md`):
 
-| Scenario | Old | New | Speedup |
+| Data profile | Old throughput | New throughput | Speedup |
 |---|---|---|---|
-| Large files 4GiB (3,871 files) | 214.3 s | 31.1 s | **6.9×** |
-| Long paths 2.4GiB (33,835 files, up to 267 chars) | 168.7 s | 47.2 s | **3.6×** |
-| Tiny files, 150k of them (41 MiB) | 155.9 s | 86.1 s | **1.8×** |
+| Large-file set 4GiB (3,871 files) | 19.1 MiB/s | 131.9 MiB/s | **6.9x** |
+| Long-path full set 2.4GiB (33,835 files, up to 267 chars) | 14.7 MiB/s | 52.6 MiB/s | **3.6x** |
+| Extreme tiny files, 150k of them (41 MiB total) | 962 files/s | 1,743 files/s | **1.8x** |
+
+Full-size reference: a 13.47GiB project tree (45,390 files) compresses at 106.5 MiB/s.
 
 **Performance fixes**:
 - AES module: CSP handle caching (previously acquired/released a system handle on every encrypt — heavy and contended under threads)
