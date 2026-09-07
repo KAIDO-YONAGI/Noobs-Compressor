@@ -6,104 +6,103 @@ skinparam linetype ortho
 skinparam defaultFontName "Microsoft YaHei"
 skinparam shadowing false
 skinparam roundCorner 6
-skinparam nodesep 40
-skinparam ranksep 45
+skinparam nodesep 30
+skinparam ranksep 35
 caption v2.2.0 · 2026-09-07
 
-title Dual Pipelines — Compression & Decompression (v2.2.0)
+title 双流水线总览 — Compression & Decompression
+
+left to right direction
 
 package "SFC_GUI" {
     class CompressionWorker {
-        + doCompression() : void
-        + doDecompression() : void
-        + requestStop() : void
-        .. signals (queued, thread-safe) ..
-        + detailedProgress(file, filePct, overallPct, status)
+        + doCompression() / doDecompression()
+        + requestStop()
+        .. 排队信号 ..
+        + detailedProgress(..)
         + finished(success, message)
     }
 }
 
-package "Y_Manager — Orchestrators" {
+package "Y_Manager — 总指挥" {
     class CompressionLoop {
-        - progressCallback
         + compressionLoop(paths, mode, password)
-        - readerLoop(..) : 借池块/编号/结算/进度与取消
-        - workerLoop(..) : 压缩+两次加密,零池调用
-        - writerLoop(..) : 定序/纯追加/攒回填表
+        - readerLoop : 借池块/编号/结算/进度取消
+        - workerLoop : 压缩+两次加密
+        - writerLoop : 定序/纯追加/攒回填表
     }
     class DecompressionLoop {
-        - progressCallback
         + decompressionLoop(mode, password)
-        - readerLoop(..) : 目录解密/数据区顺序读/FileStart
-        - workerLoop(..) : 两次解密+解压,原地覆写
-        - writerLoop(..) : 定序/按文件开关/追加
-        - processLinks(..) : 链接最后重建
+        - readerLoop : 目录解密/顺序读/FileStart
+        - workerLoop : 两次解密+解压
+        - writerLoop : 定序/按文件开关
+        - processLinks : 链接最后重建
     }
 }
 
-package "ThreadPool — Reusable Components" {
+package "ThreadPool — 复用组件" {
     class "SafeQueue<T>" as SafeQueue {
-        + push(T&&) : bool  「关后拒绝」
-        + waitPop(T&) : bool  「排空契约」
-        + setDone() : void  「notify_all」
+        + push(T&&) 「关后拒绝」
+        + waitPop(T&) 「排空契约」
+        + setDone() 「notify_all」
     }
     class "WriteSorter<T>" as WriteSorter {
-        + canWrite(seq, T&&) : bool  「区段连续判据」
-        + takeInOrder() : vector<T>
-        + drainAll() : vector<T>
+        + canWrite(seq, T&&)
+        + takeInOrder() / drainAll()
     }
     class BufferPool {
-        + acquire() : DataBlock  「背压点」
-        + release(DataBlock&&) : void
-        + close() : void
+        + acquire() 「背压点」
+        + release(..) / close()
     }
 }
 
-package "Pipeline Messages (PipelineMessages.h)" {
+package "Pipeline Messages" {
     class BlockTask {
-        + sequence
         + inputData : 池块(明文)
     }
     class PipelineMessage {
         + kind : Block | Settlement
-        + encryptedMetadata / encryptedData(池块)
-        + exception / processedSizeOffset
+        + encryptedData / exception
+        + processedSizeOffset
     }
     class DecompressTask {
-        + sequence
-        + expectedOriginal : 输出上限(预计算)
-        + encryptedMetadata / encryptedData(池块,密文)
+        + expectedOriginal
+        + encryptedData : 池块(密文)
     }
     class DecompressionMessage {
         + kind : Block | FileStart
-        + decompressedData(池块,明文)
-        + exception / outputPath / originalSize
+        + decompressedData / exception
+        + outputPath / originalSize
     }
 }
 
 package "CompressorFileSystem" {
     class StrategyFactory {
         + {static} createModules(mode, password)
-        + {static} idToMode(id) / modeToId(mode)
+        + {static} idToMode(id)
     }
-    class BinaryStandardLoader {
-        + headerLoaderIterator(encryption)
-        + takeBlockSpans() : 目录块位置表
-        + fileQueue : FileTaskQueue
+    package "读线程独占" {
+        class BinaryStandardLoader {
+            + headerLoaderIterator(enc)
+            + takeBlockSpans()
+            + fileQueue : FileTaskQueue
+        }
+        class DataLoader {
+            + getBlock() 「须复制」
+        }
     }
-    class DataLoader {
-        + getBlock() : 内部缓冲引用,须复制
-    }
-    class DataExporter {
-        + exportCompressedData / exportDecompressedData
-        + currentFileProcessedSize() / startNextFile()
-    }
-    class HeaderWriter {
-        + headerWriter(paths, out, root, mode)
-    }
-    class CatalogFinalizer {
-        + finalize(sizeEntries, spans, enc, mode)
-        「先回填大小槽,后目录区加密 — 次序焊死」
+    package "写线程独占/收尾" {
+        class DataExporter {
+            + exportCompressedData
+            + exportDecompressedData
+        }
+        class CatalogFinalizer {
+            + finalize(sizeEntries, spans, enc, mode)
+            「先回填后加密」
+        }
+        class HeaderWriter {
+            + headerWriter(paths, out, root, mode)
+        }
     }
 }
 
@@ -111,46 +110,42 @@ CompressionWorker ..> HeaderWriter : ① 建档
 CompressionWorker ..> CompressionLoop : ② (paths, mode, password)
 CompressionWorker ..> DecompressionLoop : (mode, password)
 
-CompressionLoop ..> SafeQueue : 任务/结果 ×2
-CompressionLoop ..> BufferPool : 2×(N+2) × 8MB块
-DecompressionLoop ..> SafeQueue
+CompressionLoop ..> SafeQueue : ×2
+CompressionLoop ..> BufferPool
+CompressionLoop ..> WriteSorter
+DecompressionLoop ..> SafeQueue : ×2
 DecompressionLoop ..> BufferPool
+DecompressionLoop ..> WriteSorter
 
 CompressionLoop ..> BlockTask
 CompressionLoop ..> PipelineMessage
 DecompressionLoop ..> DecompressTask
 DecompressionLoop ..> DecompressionMessage
 
-CompressionLoop ..> WriteSorter : writer 私有
-DecompressionLoop ..> WriteSorter : writer 私有
-
-CompressionLoop ..> StrategyFactory : 每工人一份私有模块
+CompressionLoop ..> StrategyFactory : 每工人私有模块
 DecompressionLoop ..> StrategyFactory : 读线程+每工人
-CompressionLoop ..> BinaryStandardLoader : reader 独占
-CompressionLoop ..> DataLoader : reader 独占
-CompressionLoop ..> DataExporter : writer 独占(纯追加)
+CompressionLoop ..> BinaryStandardLoader
+CompressionLoop ..> DataLoader
+CompressionLoop ..> DataExporter
 CompressionLoop ..> CatalogFinalizer : 排空后收尾
-DecompressionLoop ..> BinaryStandardLoader : reader 独占(目录)
-DecompressionLoop ..> DataExporter : writer 按文件开关
+DecompressionLoop ..> BinaryStandardLoader
+DecompressionLoop ..> DataExporter
 
 note as N1
-  **Compression flow (3-stage pipeline):**
-  1. reader: 借池块←DataLoader 复制,分配全局序号
-  2. N workers: compress → encrypt ×2,池块原地变换(明文→密文)
-  3. writer: WriteSorter 按序重组 → DataExporter 追加
-  4. 排空后 CatalogFinalizer(回填+目录区加密)
-  —— 池块全链路流动:读线程唯一借出,写线程唯一归还
+  **压缩流水线:** reader 借池块←DataLoader 复制并编号 →
+  N workers compress+encrypt×2(池块原地变换) → writer
+  WriteSorter 按序重组→DataExporter 纯追加 → 排空后
+  CatalogFinalizer(回填大小槽+目录区加密)
+  池块全链路流动:读线程唯一借出,写线程唯一归还
 end note
 
 note as N2
-  **Decompression flow:**
-  1. reader: loader 目录解密 + 数据区专用流零 seek 顺序读
-     FileStart 占号开文件,expectedOriginal 预计算
-  2. N workers: decrypt ×2 → decompress 原地覆写(密文→明文)
-  3. writer: 按序写出,FileStart 即结算上一文件
-  4. 排空后 processLinks(链接严格最后)
-  —— 集中关闭: join 读→关任务队列→join 工人→
-     关结果队列→join 写→收尾→关池
+  **解压流水线:** reader 目录解密+数据区零 seek 顺序读
+  (FileStart 占号,expectedOriginal 预计算) → N workers
+  decrypt×2+decompress(原地覆写) → writer 按序写出 →
+  processLinks(链接严格最后)
+  **集中关闭:** join 读→关任务队列→join 工人→关结果
+  队列→join 写→收尾→关池
 end note
 
 @enduml
