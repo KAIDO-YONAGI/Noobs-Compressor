@@ -27,6 +27,10 @@ class Aes
         memset(iv, 0, sizeof(iv));
     }
 
+    /* 持有 CSP 句柄后不可复制（否则双重释放）；移动也无意义——按模块私有实例使用 */
+    Aes(const Aes &) = delete;
+    Aes &operator=(const Aes &) = delete;
+
     /* 析构函数，安全清除内存中的密钥副本 */
     ~Aes()
     {
@@ -34,6 +38,11 @@ class Aes
         // 用 SecureZeroMemory 而非 memset：后者对"之后不再读"的内存可能被优化掉
         SecureZeroMemory(aesKey16Bytes, sizeof(aesKey16Bytes));
         SecureZeroMemory(w, sizeof(w));
+        if (cryptProvider != 0)
+        {
+            CryptReleaseContext(cryptProvider, 0);
+            cryptProvider = 0;
+        }
     }
 
     /* 统一加密/解密接口，按 AesMode 选择加密或解密。自动分块处理 */
@@ -125,6 +134,7 @@ private:
     uint8_t iv[16];              // 当前块的初始化向量(加密时随机生成，解密时取自密文头)
     uint8_t aesKey16Bytes[16]; // 128位主密钥(哈希后)
     Y_flib::DataBlock buffer;    // 数据处理缓冲区
+    HCRYPTPROV cryptProvider = 0; // CSP 句柄：首次生成 IV 时获取并复用（实例私有，单线程使用）
 
 
 private:

@@ -13,29 +13,25 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_fl
     // 处理IV
     if (mode == Y_flib::AesMode::Encrypt)
     { // 加密
-        // 生成随机IV (使用 Windows CryptoAPI)
-        HCRYPTPROV hProv = 0;
-
-        // 尝试多种提供商类型以提高兼容性
-        bool success = false;
-        DWORD providers[] = {
-            PROV_RSA_AES,    // Windows XP SP3+
-            PROV_RSA_FULL    // 旧版Windows
-        };
-
-        for (DWORD provType : providers)
+        // 生成随机IV (使用 Windows CryptoAPI)。
+        // CSP 句柄获取是重操作（底层 RPC），逐次获取/释放在多工人并发下互相争抢，
+        // 是流水线病态慢的根源——句柄缓存进实例，只获取一次，IV 仍每次随机
+        if (cryptProvider == 0)
         {
-            if (CryptAcquireContext(&hProv, NULL, NULL, provType,
-                CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+            // 尝试多种提供商类型以提高兼容性
+            DWORD providers[] = {
+                PROV_RSA_AES,    // Windows XP SP3+
+                PROV_RSA_FULL    // 旧版Windows
+            };
+            for (DWORD provType : providers)
             {
-                success = CryptGenRandom(hProv, sizeof(iv), iv);
-                CryptReleaseContext(hProv, 0);
+                if (CryptAcquireContext(&cryptProvider, NULL, NULL, provType,
+                    CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+                    break;
             }
-            if (success)
-                break;
         }
 
-        if (!success) {
+        if (cryptProvider == 0 || !CryptGenRandom(cryptProvider, sizeof(iv), iv)) {
             throw std::runtime_error("Failed to generate random IV");
         }
 
