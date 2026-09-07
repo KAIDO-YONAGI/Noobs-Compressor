@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
     app.setApplicationName("Compressor By Yonagi");
     app.setApplicationDisplayName(QCoreApplication::translate("MainWindow", "Compressor By Yonagi"));
-    app.setApplicationVersion("2.1.0");
+    app.setApplicationVersion("2.2.0");
     app.setOrganizationName("YONAGI");
 
     QFont font = app.font();
