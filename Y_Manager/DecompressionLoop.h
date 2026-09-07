@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
-#include "../CompressorFileSystem/DataCommunication/include/DataLoader.h"
-#include "../CompressorFileSystem/DataCommunication/include/DataExporter.h"
-#include "../CompressorFileSystem/DataCommunication/include/BinaryStandardLoader.h"
-#include "../CompressorFileSystem/DataCommunication/include/ToolClasses.h"
-#include "../CompressorFileSystem/DataCommunication/include/ICompression.h"
-#include "../CompressorFileSystem/DataCommunication/include/IEncryption.h"
+#include "../CompressorFileSystem/Commons/include/FileLibrary.h"
+#include "../CompressorFileSystem/DataIO/include/DataLoader.h"
+#include "../CompressorFileSystem/DataIO/include/DataExporter.h"
+#include "../CompressorFileSystem/ArchiveFormat/include/BinaryStandardLoader.h"
+#include "../CompressorFileSystem/Commons/include/ToolClasses.h"
+#include "../CompressorFileSystem/Strategy/include/ICompression.h"
+#include "../CompressorFileSystem/Strategy/include/IEncryption.h"
 #include <filesystem>
 #include <functional>
 #include <string>
@@ -31,10 +31,13 @@ private:
     // 处理目录队列
     void processDirectories(Y_flib::BinaryStandardLoader &headerLoaderIterator);
 
+    // 普通文件和目录恢复完成后，按归档记录重建 Windows 链接
+    void processLinks(Y_flib::BinaryStandardLoader &headerLoaderIterator);
+
     // 处理单个文件
     void processFile(Y_flib::BinaryStandardLoader &headerLoaderIterator,
                      Y_flib::Locator &locator,
-                     Y_flib::DirectoryOffsetSize &dataOffset,
+                     Y_flib::SlotOffset &dataOffset,
                      std::chrono::steady_clock::time_point &lastCallbackTime,
                      double &lastReportedProgress);
 

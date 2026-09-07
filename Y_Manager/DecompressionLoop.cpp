@@ -1,4 +1,5 @@
 #include "DecompressionLoop.h"
+#include "../CompressorFileSystem/Commons/include/FileSystemUtils.h"
 #include <chrono>
 #include <memory>
 
@@ -20,7 +21,7 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
     std::vector<std::string> blank;
     BinaryStandardLoader headerLoaderIterator(EncodingUtils::pathToUtf8(fullPath), blank, parentPath);
     headerLoaderIterator.headerLoaderIterator(encryption);
-    Y_flib::DirectoryOffsetSize dataOffset = headerLoaderIterator.getDirectoryOffset();
+    Y_flib::SlotOffset dataOffset = headerLoaderIterator.getDirectoryOffset();
 
     Locator locator;
 
@@ -50,10 +51,37 @@ void DecompressionLoop::decompressionLoop(Y_flib::IEncryption &encryption, Y_fli
         }
     }
 
+    processDirectories(headerLoaderIterator);
+    processLinks(headerLoaderIterator);
+
     // 完成回调
     if (progressCallback)
     {
         progressCallback("", 100.0, 100.0, "Completed");
+    }
+}
+
+void DecompressionLoop::processLinks(BinaryStandardLoader &headerLoaderIterator)
+{
+    while (!headerLoaderIterator.linkQueueReady.empty())
+    {
+        const Y_flib::LinkTask task = headerLoaderIterator.linkQueueReady.front();
+        headerLoaderIterator.linkQueueReady.pop();
+
+        if (task.targetPath.empty())
+        {
+            throw std::runtime_error("Archived Windows link target is empty");
+        }
+
+        std::filesystem::path linkPath = task.linkPath;
+        if (!linkPath.is_absolute())
+        {
+            linkPath = parentPath / linkPath;
+        }
+
+        // 目标字符串按归档记录原样交给 Windows；外部或缺失目标均允许。
+        Y_flib::FileSystemUtils::createLink(
+            linkPath, task.targetPath, task.linkType);
     }
 }
 
@@ -76,11 +104,11 @@ void DecompressionLoop::processDirectories(BinaryStandardLoader &headerLoaderIte
 void DecompressionLoop::processFile(
     BinaryStandardLoader &headerLoaderIterator,
     Locator &locator,
-    Y_flib::DirectoryOffsetSize &dataOffset,
+    Y_flib::SlotOffset &dataOffset,
     std::chrono::steady_clock::time_point &lastCallbackTime,
     double &lastReportedProgress)
 {
-    std::filesystem::path relativePath = headerLoaderIterator.fileQueue.front().first.getFullPath();
+    std::filesystem::path relativePath = headerLoaderIterator.fileQueue.front().entry.getFullPath();
     std::filesystem::path fullFilePath = parentPath / relativePath;
 
     createFile(fullFilePath);
@@ -99,8 +127,8 @@ void DecompressionLoop::processFile(
     }
 
     DataExporter dataExporter(fullFilePath);
-    Y_flib::FileSize fileCompressedSize = headerLoaderIterator.fileQueue.front().second;
-    Y_flib::FileSize originalSize = headerLoaderIterator.fileQueue.front().first.getFileSizeInDetails();
+    Y_flib::FileSize fileCompressedSize = headerLoaderIterator.fileQueue.front().compressedSize;
+    Y_flib::FileSize originalSize = headerLoaderIterator.fileQueue.front().entry.getFileSizeInDetails();
     Y_flib::FileSize totalDecompressedBytes = 0;
 
     // 预分配缓冲区
@@ -162,10 +190,10 @@ void DecompressionLoop::processDataBlock(
         throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before metadata block");
 
     // 读取 metadata 块
-    Y_flib::DirectoryOffsetSize metadataBlockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    Y_flib::BlockLength metadataBlockSize = numReader.readBinaryStandards<Y_flib::BlockLength>();
     rawMetadata.clear();
     rawMetadata.resize(metadataBlockSize);
-    loader.dataLoader(metadataBlockSize, inFile, rawMetadata);
+    StandardsReader::readDataBlock(metadataBlockSize, inFile, rawMetadata);
 
     encryption.decrypt(rawMetadata, decryptedMetadata);
 
@@ -175,10 +203,10 @@ void DecompressionLoop::processDataBlock(
     if (!(numReader.readBinaryStandards<Y_flib::FlagType>() == Y_flib::FlagType::Separated))
         throw std::runtime_error("decompressionLoop()-Error:Can't read SEPARATED_FLAG before data block");
 
-    Y_flib::DirectoryOffsetSize blockSize = numReader.readBinaryStandards<Y_flib::DirectoryOffsetSize>();
+    Y_flib::BlockLength blockSize = numReader.readBinaryStandards<Y_flib::BlockLength>();
     rawData.clear();
     rawData.resize(blockSize);
-    loader.dataLoader(blockSize, inFile, rawData);
+    StandardsReader::readDataBlock(blockSize, inFile, rawData);
 
     Y_flib::FileSize readedSize = inFile.gcount();
     if (readedSize != blockSize)
@@ -231,12 +259,8 @@ void DecompressionLoop::createDirectory(const std::filesystem::path &directoryPa
 {
     try
     {
-        if (!directoryPath.parent_path().empty() && !std::filesystem::exists(directoryPath.parent_path()))
-        {
-            createDirectory(directoryPath.parent_path());
-        }
-
-        std::filesystem::create_directory(directoryPath);
+        // 使用兼容层递归创建，确保解压目标超过 MAX_PATH 时仍可落盘。
+        Y_flib::FileSystemUtils::createDirectories(directoryPath);
     }
     catch (const std::exception &e)
     {
@@ -248,23 +272,32 @@ bool DecompressionLoop::createFile(const std::filesystem::path &filePath)
 {
     try
     {
-        if (std::filesystem::exists(filePath))
+        if (Y_flib::FileSystemUtils::exists(filePath))
         {
             std::cerr << "fileIsExist: " << filePath << " ,skipped to next \n";
             return false;
         }
 
-        if (!filePath.parent_path().empty() && !std::filesystem::exists(filePath.parent_path()))
+        if (!filePath.parent_path().empty() &&
+            !Y_flib::FileSystemUtils::exists(filePath.parent_path()))
         {
             createDirectory(filePath.parent_path());
         }
 
-        std::ofstream outfile(filePath);
+        // 保留归档中的普通路径，仅在创建文件时转换为扩展长度路径。
+        std::ofstream outfile(Y_flib::FileSystemUtils::pathForIo(filePath));
+        if (!outfile)
+        {
+            throw std::runtime_error(
+                "Failed to create file: " + EncodingUtils::pathToUtf8(filePath));
+        }
         outfile.close();
     }
-    catch (const std::filesystem::filesystem_error &e)
+    catch (const std::exception &e)
     {
-        throw std::runtime_error("createDirectory()-Error: " + EncodingUtils::pathToUtf8(filePath));
+        throw std::runtime_error(
+            "createFile()-Error: " + EncodingUtils::pathToUtf8(filePath) +
+            " - " + e.what());
     }
     return true;
 }

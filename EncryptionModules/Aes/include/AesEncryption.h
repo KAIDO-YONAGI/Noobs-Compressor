@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../../CompressorFileSystem/DataCommunication/include/IEncryption.h"
+#include "../../../CompressorFileSystem/Strategy/include/IEncryption.h"
 #include "My_Aes.h"
-#include <memory>
+#include <string>
 
 namespace Y_flib
 {
@@ -13,27 +13,22 @@ namespace Y_flib
     class AesEncryption : public IEncryption
     {
     public:
-        explicit AesEncryption(Aes *aes) : aes(aes) {}
+        explicit AesEncryption(const std::string &password) : aes(password.c_str()) {}
 
+        // 输出由 doAes 内部整体赋值，无需预分配：
+        // 加密输出 = 16 字节 IV + 密文（比输入多 16）；解密输出 = 去掉 IV 头的明文
         void encrypt(const DataBlock &input, DataBlock &output) override
         {
-            output.clear();
-            output.resize(input.size());  // AES-CFB 无填充
-            aes->doAes(1, input, output);
+            aes.doAes(AesMode::Encrypt, input, output);
         }
 
         void decrypt(const DataBlock &input, DataBlock &output) override
         {
-            output.clear();
-            output.resize(input.size());  // AES-CFB 无填充
-            aes->doAes(2, input, output);
+            aes.doAes(AesMode::Decrypt, input, output);
         }
 
-        // 获取底层 Aes 对象
-        Aes *getAes() { return aes; }
-
     private:
-        Aes *aes;
+        Aes aes;
     };
 
 } // namespace Y_flib

@@ -1,0 +1,80 @@
+@startuml AES_Module
+
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 50
+skinparam padding 4
+skinparam packagePadding 4
+
+title AES-128 Encryption Module
+
+abstract class IEncryption {
+    + encrypt(input, output) : void
+    + decrypt(input, output) : void
+}
+
+together {
+    class AesEncryption {
+        - aes : Aes*
+        + AesEncryption(aes)
+        + encrypt(input, output) : void
+        + decrypt(input, output) : void
+        + getAes() : Aes*
+    }
+    class NullEncryption {
+        + encrypt(input, output) : void
+        + decrypt(input, output) : void
+    }
+}
+
+class Aes {
+    - w : int[44]
+    - iv : uint8_t[16]
+    - aesKey : const char*
+    - aesKey16Bytes : uint8_t[16]
+    - buffer : DataBlock
+    - S/S2 : const int[16][16]
+    - Rcon : const uint[10]
+    - GF_MUL_2/3/9/11/13/14 : uint8_t[256]
+    --
+    + Aes(aesKey)
+    + ~Aes()
+    + doAes(mode, input, output) : void
+    --
+    AES rounds:
+    - extendKey(key) : void
+    - subBytes(array) : void
+    - shiftRows(array) : void
+    - mixColumns(array) : void
+    - addRoundKey(array, round) : void
+    Inverse rounds:
+    - deSubBytes(array) : void
+    - deShiftRows(array) : void
+    - deMixColumns(array) : void
+    Processing:
+    - processDataAes(input, mode) : DataBlock
+    - aes(p, plen) : void
+    - deAes(c, clen) : void
+    - hashTo16Bytes(input, output) : void
+}
+
+IEncryption <|-- AesEncryption
+IEncryption <|-- NullEncryption
+AesEncryption *--> Aes
+
+note right of Aes
+  AES-128 CBC, 10 rounds
+  128-bit key (hashed from password)
+  Precomputed GF(2^8) tables
+  PKCS padding, IV per block
+  mode: 0=Encrypt, 1=Decrypt
+end note
+
+note left of AesEncryption
+  Adapter: wraps Aes into
+  IEncryption interface
+end note
+
+@enduml

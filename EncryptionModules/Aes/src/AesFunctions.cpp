@@ -62,6 +62,8 @@ namespace {
             output[i*4+2] = (state[i] >> 8) & 0xff;
             output[i*4+3] = state[i] & 0xff;
         }
+        // padded 中暂存过明文口令，释放前必须清零（SecureZeroMemory 防被优化掉）
+        SecureZeroMemory(padded, blocks * 64);
         delete[] padded;
     }
 }
@@ -299,4 +301,6 @@ void Aes::hashTo16Bytes(const char* input, uint8_t* output) {
     uint8_t hash[32];
     sha256((const uint8_t*)input, strlen(input), hash);
     memcpy(output, hash, 16);
+    // 完整摘要的前 16 字节即主密钥，栈上 32 字节副本一并清零
+    SecureZeroMemory(hash, sizeof(hash));
 }

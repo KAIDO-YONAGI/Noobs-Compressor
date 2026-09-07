@@ -1,6 +1,8 @@
 # ignore IDE setting files
 .vscode/
 .vs/
+.zcode/
+
 *.code-workspace
 # ignore build directories
 build-debug/
@@ -23,4 +25,8 @@ src/main.cpp
 *.bin
 *.ps1
 *.bat
-*.claude
+
+# codegraph index data
+.codegraph/
+
+
