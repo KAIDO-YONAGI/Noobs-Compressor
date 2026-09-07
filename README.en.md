@@ -56,7 +56,7 @@ Because compression relies solely on Huffman coding, the **compression ratio is 
 
 Peak memory is hard-capped by the buffer pool: about `2 x (cores + 2)` 8 MB blocks (~300 MB on a 16-core machine), independent of total input size.
 
-Decompression is still single-threaded at about 20-24 MiB/s.
+Decompression uses the same 3-stage pipeline. Measured throughput (same environment): large files 24.1 -> **126.2 MiB/s** (5.2x), long paths 19.7 -> **64.3 MiB/s** (3.3x); the extreme tiny-file case (avg 172 B/file) decompresses slower than the old serial code (834 vs 1,135 files/s) — per-file queue and lock overhead cannot be amortized over microsecond-scale compute; batch scheduling is on the roadmap.
 
 ---
 
@@ -160,7 +160,7 @@ Memory usage is stable around **60 MB**.
 
 ## v2.2.0 — Pipeline (2026-09-07)
 
-**Multithreaded compression pipeline**: compression now runs as a 3-stage pipeline — dedicated reader thread → N compute workers → dedicated writer thread (N = logical CPU cores), with a buffer pool capping memory usage.
+**Multithreaded compression & decompression pipelines**: both compression and decompression now run as a 3-stage pipeline — dedicated reader thread → N compute workers → dedicated writer thread (N = logical CPU cores) — sharing one set of components (blocking queues / resequencer / buffer pool), with a buffer pool capping memory usage.
 
 Measured compression throughput (HuffmanAES, 16 logical cores, same machine and identical input; see DevFiles design doc, section 5.1):
 
@@ -171,6 +171,14 @@ Measured compression throughput (HuffmanAES, 16 logical cores, same machine and 
 | Extreme tiny files, 150k of them (41 MiB total) | 962 files/s | 1,743 files/s | **1.8x** |
 
 Full-size reference: a 13.47GiB project tree (45,390 files) compresses at 106.5 MiB/s.
+
+**Decompression throughput** (same environment, vs old serial):
+
+| Data profile | Old throughput | v2.2.0 throughput | Speedup |
+|---|---|---|---|
+| Mostly large files (13.47GiB / 45,390 files) | 24.1 MiB/s | **126.2 MiB/s** | **5.2x** |
+| Small/medium files + long paths (2.42GiB / 33,835 files) | 19.7 MiB/s | **64.3 MiB/s** | **3.3x** |
+| Extreme tiny files (251k of them, 41 MiB) | 1,135 files/s | 834 files/s | 0.74x (endpoint-bound) |
 
 **Performance fixes**:
 - AES module: CSP handle caching (previously acquired/released a system handle on every encrypt — heavy and contended under threads)

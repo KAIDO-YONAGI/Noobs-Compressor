@@ -238,10 +238,9 @@ static int doDecompress(const std::string &inUtf8, const std::string &outDirUtf8
         }
     }
     const Y_flib::CompressionMode detected = Y_flib::StrategyFactory::idToMode(fileHeader.strategy);
-    auto modules = Y_flib::StrategyFactory::createModules(detected, "");
 
     DecompressionLoop decompressor(inUtf8, outDirUtf8);
-    decompressor.decompressionLoop(*modules.encryption, *modules.compression);
+    decompressor.decompressionLoop(detected, ""); // 流水线内部按 (mode, password) 自制模块
 
     std::cout << "decompress: done -> " << outDirUtf8 << "\n";
     return 0;
