@@ -1,167 +1,147 @@
 @startuml File_System_and_Serialization
-
-!theme plain
+scale 2
+!theme spacelab
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
-skinparam nodesep 30
-skinparam ranksep 30
-skinparam padding 3
-skinparam packagePadding 3
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam nodesep 35
+skinparam ranksep 40
+caption v2.2.0 · 2026-09-07
 
-title File System & Binary Serialization
+title File System & Binary Serialization — 三阶段写入 + 纯读装载
 
-package "Entry & Path" as P1 {
+package "Entry & Path" {
     class EntryDetails {
-        - name : string
-        - sizeOfName : FileNameSize
-        - fileSize : FileSize
+        - name / sizeOfName / fileSize
         - isFile : bool
         - fullPath : path
-        + getName() : string
-        + getFullPath() : path
-        + getFileSizeInDetails() : FileSize
-        + getIsFile() : bool
+        + getName() / getFullPath()
+        + getFileSizeInDetails() / getIsFile()
     }
-    class FilePath {
-        - outputFilePath : path
-        - filePathToScan : path
-    }
-    class EntryQueue {
-        Extends: queue~pair~EntryDetails, FileCount~~
+    class FileTask {
+        + entry : EntryDetails
+        + processedSizeOffset : SlotOffset 「压缩:预留槽偏移」
+        + compressedSize : FileSize 「解压:压缩后大小」
     }
     class EncodingUtils {
-        + {static} pathFromUtf8/utf8ToWide/wideToUtf8
-        + {static} qStringToUtf8/utf8ToQString
+        + {static} pathFromUtf8 / pathToUtf8
+        + {static} qStringToUtf8 / utf8ToQString
     }
 }
 
-package "Binary Format" as P2 {
-    class "<<packed 22B>>\nHeader" as Header {
+package "Binary Format" {
+    class "<<packed 19B>>\nHeader" as Header {
         + magicNum_1/2 : uint32_t
-        + strategy : uint8_t
-        + version : uint8_t
-        + headerOffset : uint8_t
+        + strategy / version / headerOffset : uint8_t
         + directoryOffset : uint64_t
     }
     class StandardsWriter {
-        + writeBinaryStandards(value, file) : void
-        + {static} writeDataBlock(size, file, buffer) : void
+        + writeBinaryStandards(value, stream)
+        + {static} writeDataBlock(size, stream, buffer)
     }
     class StandardsReader {
-        - file : istream&
-        + readBinaryStandards() : T
-        + {static} readDataBlock(size, file, buffer) : void
+        + readBinaryStandards<T>() : T
+        + {static} readDataBlock(size, stream, buffer)
     }
     class Locator {
-        + locateFromBegin(file, offset) : void
-        + locateFromEnd(file, offset) : void
-        + getFileSize(path, outFile) : FileSize
+        + locateFromBegin(stream, offset)
+        + locateFromEnd(stream, offset)
     }
 }
 
-package "Writer / Exporter" as P3 {
-    class BinaryStandardWriter {
-        - outFile : ofstream&
-        + writeLogicalRoot(...) : void
-        + writeRoot(...) : void
-        + writeBlankSeparatedStandard() : void
-        + binaryStandardWriter(...) : void
-    }
-    class DataExporter {
-        - outFile : fstream
-        - processedFileSize : FileSize
-        + exportCompressedData(data) : void
-        + exportDecompressedData(data) : void
-        + thisFileIsDone(offset) : void
+package "① 建档 HeaderWriter" {
+    class HeaderWriter {
+        - writeHeader(..) / writeDirectory(..)
+        + headerWriter(paths, outPath, logicalRoot, mode)
+        「魔数+文件头+目录树+预留字段」
     }
     class EntryProcessor {
-        - outFile : ofstream&
-        - entryQueue : EntryQueue
-        - binaryStandardWriter : BinaryStandardWriter*
-        + entryProcessor(filePathToScan, fullOutPath, logicalRoot) : void
+        + entryProcessor(paths, fullOutPath, root)
+        「BFS 扫描,序列化目录树」
+    }
+    class BinaryStandardWriter {
+        + writeLogicalRoot / writeRoot
+        + writeBlankSeparatedStandard
     }
 }
 
-package "Loader / Parser" as P4 {
-    class BinaryStandardLoader {
-        - header : Header
-        - parserForLoader : unique_ptr~EntryParser~
-        - buffer : DataBlock
-        + fileQueue/entryQueue : EntryQueue
-        + blockPosition : vector~array~
-        + headerLoaderIterator(encryption) : void
-        + getStrategy() : CompressStrategy
-        + allLoopIsDone() : bool
-        + encryptHeaderBlock(encryption, mode) : void
-    }
-    class EntryParser {
-        - entryQueue/fileQueue : EntryQueue&
-        - buffer : DataBlock&
-        - header : const Header&
-        + rootForDecompression : string
-        + parser(bufferPtr, count) : void
-        - fileParser/directoryParser/rootParser() : void
+package "② 数据 DataExporter (纯追加)" {
+    class DataExporter {
+        - outFile : fstream
+        - processedFileSize
+        + exportCompressedData(data) 「flag+真实块长+数据」
+        + exportDecompressedData(data)
+        + currentFileProcessedSize() / startNextFile()
+        「从不 seek 回改」
     }
     class DataLoader {
-        - data : DataBlock
-        - fileSize : FileSize
         - inFile : ifstream
-        - loadIsDone : bool
-        + reset(inPath) : void
-        + dataLoader() : void
-        + getBlock() : DataBlock&
-        + isDone() : bool
+        + dataLoader() / getBlock()
+        + isDone() / reset(path)
+        「getBlock 返回内部引用,调用方须复制」
     }
 }
 
-package "Header Writer (Strategy)" as P5 {
-    abstract class HeaderWriter_Interface {
-        + writeHeader(...) : void
-        + writeDirectory(...) : void
+package "③ 收尾 CatalogFinalizer" {
+    class CatalogFinalizer {
+        - archiveFile : fstream
+        + finalize(sizeEntries, spans, enc, mode)
+        - backfillFileSizes(..) 「先」
+        - encryptDirectoryBlocks(..) 「后」
+        「次序焊死在类内」
     }
-    class HeaderWriter_v0 {
-        + writeHeader(...) : void
-        + writeDirectory(...) : void
+    class SizeFillEntry {
+        + slotOffset : SlotOffset
+        + processedSize : FileSize
     }
-    class HeaderWriter {
-        - writer : unique_ptr~HeaderWriter_Interface~
-        + headerWriter(...) : void
+    class BlockSpan {
+        + startPos : SlotOffset
+        + size : BlockLength
+        + ivSlotPos() : SlotOffset
     }
 }
 
-' ── composition / inheritance ──
+package "纯读装载 BinaryStandardLoader" {
+    class BinaryStandardLoader {
+        - header / cursor / inFile
+        + fileQueue : FileTaskQueue
+        + blockPosition : vector~BlockSpan~
+        + headerLoaderIterator(encryption)
+        + takeBlockSpans() : 目录块位置表移交
+        + restartLoader() / allLoopIsDone()
+        「读目录时顺手记块位置,不持写句柄」
+    }
+    class EntryParser {
+        + parser(bufferPtr, count)
+        「目录块→FileTask/EntryQueue/LinkTask」
+    }
+}
+
 DataExporter *-- Locator
 DataExporter *-- StandardsWriter
-
-BinaryStandardWriter *-- Locator
-BinaryStandardWriter *-- StandardsWriter
-
 BinaryStandardLoader *-- EntryParser : unique_ptr
-
-EntryProcessor *-- BinaryStandardWriter
-
-HeaderWriter_Interface <|-- HeaderWriter_v0
-HeaderWriter *-- HeaderWriter_Interface
-
-' ── cross-package dependencies ──
-BinaryStandardWriter ..> EntryDetails : serializes
-EntryProcessor ..> EntryDetails : BFS traversal
-EntryProcessor ..> FilePath : uses
-EntryProcessor ..> EntryQueue : uses
-
-BinaryStandardLoader ..> Header : reads
-BinaryStandardLoader ..> StandardsReader : uses
-BinaryStandardLoader ..> EntryQueue : fills
-
-EntryParser ..> Header : reads
-EntryParser ..> EntryQueue : uses
-
-DataLoader ..> FilePath : reads from
+BinaryStandardLoader o-- FileTask : fileQueue
 
 HeaderWriter ..> EntryProcessor : creates
-HeaderWriter ..> BinaryStandardWriter : uses
+EntryProcessor *-- BinaryStandardWriter
+EntryProcessor ..> EntryDetails : BFS
+BinaryStandardLoader ..> Header : reads
+BinaryStandardLoader ..> StandardsReader : uses
+EntryParser ..> Header : reads
 
-EncodingUtils ..> EntryDetails : converts paths
-EncodingUtils ..> FilePath : converts paths
+CatalogFinalizer ..> SizeFillEntry : 回填表
+CatalogFinalizer ..> BlockSpan : 加密回写
+BinaryStandardLoader ..> BlockSpan : 记录
+EncodingUtils ..> EntryDetails : 路径转换
+
+note as N1
+  **归档写入三阶段(任何阶段不并发):**
+  ① HeaderWriter — 建档:文件头/目录树/预留字段
+  ② DataExporter — 数据区纯追加(块长直写真实值)
+  ③ CatalogFinalizer — 收尾:回填"处理后大小"槽
+     + 目录区原地加密(先回填后加密,类内焊死)
+end note
 
 @enduml

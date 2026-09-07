@@ -1,32 +1,29 @@
 @startuml GUI_Layer
-
-!theme plain
+scale 2
+!theme spacelab
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam roundCorner 6
 skinparam nodesep 40
 skinparam ranksep 50
-skinparam padding 4
-skinparam packagePadding 4
+caption v2.2.0 · 2026-09-07
 
-title GUI Layer - Qt 6
+title GUI Layer — Qt 6 (Static)
 
 class MainWindow {
     ** Widgets **
     - m_compressModeCombo : QComboBox*
     - m_fileListWidget : QListWidget*
-    - m_outputDirEdit : QLineEdit*
-    - m_outputFileNameEdit : QLineEdit*
+    - m_outputDirEdit / m_outputFileNameEdit
     - m_passwordEdit : QLineEdit*
-    - m_startCompressBtn : QPushButton*
-    - m_compressProgressBar : QProgressBar*
-    - m_compressCurrentFileLabel : QLabel*
-    - m_compressLogEdit : QTextEdit*
-    - m_decompressFilePathEdit : QLineEdit*
-    - m_decompressOutputDirEdit : QLineEdit*
-    - m_decompressPasswordEdit : QLineEdit*
-    - m_startDecompressBtn : QPushButton*
-    - m_decompressProgressBar : QProgressBar*
-    - m_decompressLogEdit : QTextEdit*
+    - m_startCompressBtn / m_compressProgressBar
+    - m_compressCurrentFileLabel / m_compressLogEdit
+    - m_decompressFilePathEdit / m_decompressOutputDirEdit
+    - m_decompressPasswordEdit
+    - m_startDecompressBtn / m_decompressProgressBar
+    - m_decompressLogEdit
     - m_tabWidget : QTabWidget*
     - m_backgroundPixmap : QPixmap
     --
@@ -36,66 +33,47 @@ class MainWindow {
     - m_isProcessing : bool
     --
     ** Slots **
-    - onAddFilesClicked() : void
-    - onAddFolderClicked() : void
-    - onStartCompressionClicked() : void
-    - onStartDecompressionClicked() : void
-    - onCompressionDetailedProgress(...) : void
-    - onCompressionFinished(success, msg) : void
-    - onDecompressionDetailedProgress(...) : void
-    - onDecompressionFinished(success, msg) : void
+    - onStartCompressionClicked() / onStartDecompressionClicked()
+    - onAddFilesClicked() / onAddFolderClicked()
+    - onCompressionDetailedProgress(..) / onCompressionFinished(..)
+    - onDecompressionDetailedProgress(..) / onDecompressionFinished(..)
     --
-    ** Overrides **
-    # dragEnterEvent(event) : void
-    # dropEvent(event) : void
-    # resizeEvent(event) : void
-    --
-    ** Helpers **
-    - setupUI() : void
-    - createCompressionTab() : QWidget*
-    - createDecompressionTab() : QWidget*
-    - addDroppedPaths(urls) : void
-    - updateOutputDirectory() : void
-    - updateOutputFileName() : void
+    ** Overrides & Helpers **
+    # dragEnterEvent / dropEvent / resizeEvent
+    - setupUI() / createCompressionTab() / createDecompressionTab()
+    - addDroppedPaths(urls) / updateOutputDirectory()
 }
 
 class CompressionWorker {
     - m_filesToCompress : QStringList
-    - m_outputDir : QString
-    - m_outputFileName : QString
-    - m_password : QString
+    - m_outputDir / m_outputFileName / m_password
     - m_mode : CompressionMode
-    - m_decompressInputFile : QString
-    - m_decompressOutputDir : QString
+    - m_decompressInputFile / m_decompressOutputDir
     - m_stopRequested : atomic~bool~
-    - m_lastProgressTime : time_point
-    - m_lastEmittedProgress : double
+    - m_lastProgressTime / m_lastEmittedProgress
     --
-    + setCompressionParams(files, outputDir, ...) : void
-    + setDecompressionParams(inputFile, outputDir, ...) : void
+    + setCompressionParams(..) / setDecompressionParams(..)
     + requestStop() : void
     + doCompression() : void
     + doDecompression() : void
     .. signals ..
-    + detailedProgress(filename, fileProgress, overallProgress, status) : void
-    + finished(success, message) : void
+    + detailedProgress(file, filePct, overallPct, status)
+    + finished(success, message)
     --
     - validateCompressionParams() : bool
-    - shouldEmitProgress(currentProgress) : bool
+    - shouldEmitProgress(current) : bool
 }
 
 together {
     class PlaceholderLineEdit {
         - m_ghostText : QString
         - m_ghostTextColor : QColor
-        + setGhostText(text) : void
-        + setGhostTextColor(color) : void
-        # paintEvent(event) : void
+        + setGhostText / setGhostTextColor
+        # paintEvent(event)
     }
     class IconHandler {
-        + {static} AssociateIconToSyFile(syFilePath, iconPath) : bool
-        - {static} RegisterSyFileIcon(iconPath) : bool
-        - {static} ExtractIconFromExe(iconPath) : bool
+        + {static} AssociateIconToSyFile(syPath, iconPath)
+        - {static} RegisterSyFileIcon / ExtractIconFromExe
     }
 }
 
@@ -109,15 +87,20 @@ MainWindow ..> IconHandler : uses
 CompressionWorker --> "QThread" : runs on
 
 note right of MainWindow
-  GUI thread + worker thread
-  Signals/slots for progress
-  Drag & drop file support
+  GUI 主线程 + 独立工作线程
+  进度经排队信号回传(参数全为
+  Qt 内建元类型,跨线程安全)
+  支持拖放文件/目录
 end note
 
 note right of CompressionWorker
-  Progress throttled:
-  200ms min interval, 2% delta
-  Stop via atomic bool
+  v2.2.0 起不再创建共享模块实例:
+  调用 compressionLoop(paths, mode, password)
+  / decompressionLoop(mode, password),
+  模块组装下沉到流水线内部
+  (读线程与每工人各自创建私有实例)
+  进度回调节流:100ms 或 5% 跳变
+  取消 = 原子标志 + 回调内抛异常
 end note
 
 @enduml

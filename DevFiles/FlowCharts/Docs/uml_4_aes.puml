@@ -1,14 +1,16 @@
 @startuml AES_Module
-
-!theme plain
+scale 2
+!theme spacelab
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
-skinparam nodesep 50
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam roundCorner 6
+skinparam nodesep 45
 skinparam ranksep 50
-skinparam padding 4
-skinparam packagePadding 4
+caption v2.2.0 · 2026-09-07
 
-title AES-128 Encryption Module
+title AES-128 CFB Encryption Module — 纯软件实现
 
 abstract class IEncryption {
     + encrypt(input, output) : void
@@ -16,48 +18,40 @@ abstract class IEncryption {
 }
 
 together {
-    class AesEncryption {
-        - aes : Aes*
-        + AesEncryption(aes)
+    class AesEncryption <<adapter>> {
+        - aes : Aes 「值持有,非复制」
+        + AesEncryption(password)
         + encrypt(input, output) : void
         + decrypt(input, output) : void
-        + getAes() : Aes*
     }
     class NullEncryption {
-        + encrypt(input, output) : void
+        + encrypt(input, output) : void 「直通」
         + decrypt(input, output) : void
     }
 }
 
 class Aes {
-    - w : int[44]
+    - w : int[44] 「轮密钥字,构造后只读」
     - iv : uint8_t[16]
-    - aesKey : const char*
     - aesKey16Bytes : uint8_t[16]
     - buffer : DataBlock
-    - S/S2 : const int[16][16]
+    - cryptProvider : HCRYPTPROV 「v2.2.0 实例缓存」
+    - S / S2 : const int[16][16]
     - Rcon : const uint[10]
     - GF_MUL_2/3/9/11/13/14 : uint8_t[256]
-    --
-    + Aes(aesKey)
-    + ~Aes()
-    + doAes(mode, input, output) : void
-    --
-    AES rounds:
-    - extendKey(key) : void
-    - subBytes(array) : void
-    - shiftRows(array) : void
-    - mixColumns(array) : void
-    - addRoundKey(array, round) : void
-    Inverse rounds:
-    - deSubBytes(array) : void
-    - deShiftRows(array) : void
-    - deMixColumns(array) : void
-    Processing:
+    ..
+    + Aes(password)
+    + ~Aes() 「SecureZeroMemory 擦除密钥与轮密钥」
+    + doAes(mode, input, output)
+    __ 轮函数(构造后只读) __
+    - extendKey / subBytes / shiftRows / mixColumns
+    - addRoundKey
+    - deSubBytes / deShiftRows / deMixColumns
+    __ 处理 __
     - processDataAes(input, mode) : DataBlock
-    - aes(p, plen) : void
-    - deAes(c, clen) : void
-    - hashTo16Bytes(input, output) : void
+    - aes(p, plen) / deAes(c, clen)
+    - hashTo16Bytes(in, out)
+    __ 「不可复制:持有 CSP 句柄」 __
 }
 
 IEncryption <|-- AesEncryption
@@ -65,16 +59,18 @@ IEncryption <|-- NullEncryption
 AesEncryption *--> Aes
 
 note right of Aes
-  AES-128 CBC, 10 rounds
-  128-bit key (hashed from password)
-  Precomputed GF(2^8) tables
-  PKCS padding, IV per block
-  mode: 0=Encrypt, 1=Decrypt
+  **AES-128 CFB** (流式,无分组填充)
+  密文 = 16B 随机 IV + 密文体
+  解密输出 = 去掉 IV 头的明文
+  密钥: SHA-256(password) 截取前 16B
+  并行单位是 8MB 块,块间 IV 相互独立
 end note
 
 note left of AesEncryption
-  Adapter: wraps Aes into
-  IEncryption interface
+  v2.2.0 性能修复:
+  CSP 句柄(CryptAcquireContext)缓存进实例,
+  仅首次获取、析构释放——原每次 encrypt
+  都获取/释放,重 RPC 且多线程争抢
 end note
 
 @enduml

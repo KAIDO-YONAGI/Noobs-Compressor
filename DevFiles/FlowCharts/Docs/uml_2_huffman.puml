@@ -1,84 +1,50 @@
 @startuml Huffman_Pipeline
-
-!theme plain
+scale 2
+!theme spacelab
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam roundCorner 6
 skinparam nodesep 40
-skinparam ranksep 40
-skinparam padding 4
-skinparam packagePadding 4
+skinparam ranksep 45
+caption v2.2.0 · 2026-09-07
 
-title Huffman Compression Pipeline
+title Huffman Core — 单线程核心,流水线工人各持一份私有实例
 
-together {
-    abstract class Worker {
-        + work(connector: DataConnector*) : void
-    }
-    abstract class DataConnector {
-        + getInputBlocks() : blocks_t*
-        + getOutputBlocks() : blocks_t*
-        + done() : void
-    }
-}
-
-together {
-    class GetFreq {
-        - heffman : shared_ptr~Huffman~
-        - tpool : unique_ptr~ThreadPool~
-        + GetFreq(huffman)
-        + work(connector) : void
-    }
-    class DoEncode {
-        - heffman : shared_ptr~Huffman~
-        - tpool : unique_ptr~ThreadPool~
-        + DoEncode(huffman)
-        + work(connector) : void
-    }
-    class DoDecode {
-        - heffman : shared_ptr~Huffman~
-        + DoDecode(huffman)
-        + work(connector) : void
-    }
-    class GenHeffcodeTab {
-        - heffman : shared_ptr~Huffman~
-        - root : HeffTreeNode*
-        + GenHeffcodeTab(huffman)
-        + work(connector) : void
-    }
-    class LoadHeffcodeTab {
-        - heffman : shared_ptr~Huffman~
-        - root : HeffTreeNode*
-        + LoadHeffcodeTab(huffman)
-        + work(connector) : void
-    }
+class HuffmanCompression <<adapter>> {
+    - huffman : unique_ptr~Huffman~
+    + compress(input, metadataOut, output)
+    + decompress(metadata, input, output, originalSize)
 }
 
 class Huffman {
-    - byteCount : uint64_t
-    - threadTabs : Heffmaps
-    - hashTab : Heffmap
-    - treeRoot : HeffTreeNode*
+    - freqTab : Huffmap 「暂存当前块频率」
+    - hashTab : Huffmap 「总哈希表」
+    - treeRoot : HuffTreeNode*
     - pathStack : PathStack
-    + Huffman(threadNums)
-    + statisticFreq(threadId, block) : void
-    + encode(input, output, bitOutput) : void
-    + decode(input, output, bitInput, maxOutputSize) : void
-    + mergeTtabs() : void
-    + genHefftree() : void
-    + saveCodeInTab() : void
-    + treeToPlatUchar(outBlock) : void
-    + spawnTree(inBlock) : void
-    + getTreeRoot() : HeffTreeNode*
-    + receiveTreeRoot(root) : void
+    ..
+    + statisticFreq(block)
+    + finishFreqStat()
+    + genHufftree()
+    + saveCodeInTab()
+    + treeToPlatUchar(outBlock) 「树→元数据」
+    + spawnTree(inBlock) 「元数据→树」
+    + encode(input, output, bitOutput)
+    + decode(input, output, bitInput, maxOutputSize)
+    __ private __
+    - genMinheap() : unique_ptr~Minheap~
+    - runSaveCodeInTab(root)
+    - findchar(now, result, toward) : bool
+    - connectNode(l, r) : bool
+    - destroyTree(node)
 }
 
 together {
-    class HeffTreeNode {
+    class HuffTreeNode {
         + data : uchar
         + freq : FreqT
-        + left : HeffTreeNode*
-        + right : HeffTreeNode*
-        + isLeaf : bool
+        + left / right : HuffTreeNode*
     }
     class CharData {
         + freq : FreqT
@@ -86,94 +52,51 @@ together {
         + code : CodeT
         + add() : void
     }
+}
+
+together {
     class PathStack {
         + codeBlocks : CodeT
         + codeLen : CodeLenT
-        + push(bit) : void
-        + pop() : void
-        + writeCode(cdata) : void
+        + push(bit) / pop()
+        + writeCode(cdata)
     }
     class BitHandler {
         + byte : uchar
         + bitLen : uint8_t
         + byteCount : uint64_t
-        + handle(codeBlocks, codeLen, block) : void
-        + handleLast() : void
+        + handle(codeBlocks, codeLen, block)
+        + handleLast()
+    }
+    class Minheap {
+        优先队列:节点按频率取小
+        「genMinheap() 构建期间使用」
     }
 }
 
-class "sfc::DataBlocks" as sfc_DataBlocks {
-    - blocks : vector~block_t~
-    + size() : int
-    + at(i) : block_t&
-    + clear() : void
-    + checkAndFix() : void
-}
-class DataBlocksManage {
-    - dataBlocksArray : DataBlocks[2]
-    - whichOut : uint8_t
-    + DataBlocksManage(count)
-    + getInputBlocks() : blocks_t*
-    + getOutputBlocks() : blocks_t*
-    + done() : void
-}
-
-together {
-    class ThreadPool {
-        - threads : map~string, Thread~
-        + newThread(name) : void
-        + delThread(name) : void
-        + addTask(name, task) : void
-    }
-    class Thread {
-        - taskQueue : MonitorTaskQueue
-        + addTask(task) : void
-    }
-    class MonitorTaskQueue {
-        - mtx : mutex
-        - condition : condition_variable
-        + addTask(task) : void
-        + getTask() : function
-    }
-}
-
-Worker <|-- GetFreq
-Worker <|-- DoEncode
-Worker <|-- DoDecode
-Worker <|-- GenHeffcodeTab
-Worker <|-- LoadHeffcodeTab
-
-GetFreq --> Huffman : shared_ptr
-DoEncode --> Huffman : shared_ptr
-DoDecode --> Huffman : shared_ptr
-GenHeffcodeTab --> Huffman : shared_ptr
-LoadHeffcodeTab --> Huffman : shared_ptr
-GenHeffcodeTab --> HeffTreeNode : root
-LoadHeffcodeTab --> HeffTreeNode : root
-GetFreq --> ThreadPool : unique_ptr
-DoEncode --> ThreadPool : unique_ptr
-
-Worker ..> DataConnector : uses
-
-Huffman *--> HeffTreeNode : treeRoot
-Huffman *--> PathStack : pathStack
-Huffman o--> CharData : hashTab/Heffmap
-Huffman ..> BitHandler : encode/decode
+HuffmanCompression *--> Huffman
+Huffman *--> HuffTreeNode : treeRoot
+Huffman *--> PathStack
+Huffman o--> CharData : hashTab 值表
+Huffman ..> BitHandler : encode/decode 比特流
+Huffman ..> Minheap : genMinheap
+HuffTreeNode --> HuffTreeNode : left/right
+HuffTreeNode o--> CharData : 叶子持字符数据
 PathStack ..> CharData : writeCode
-HeffTreeNode --> HeffTreeNode : left/right
-BitHandler --> CharData : handles code
 
-DataConnector <|-- DataBlocksManage
-DataBlocksManage *--> sfc_DataBlocks : double-buffer
+note right of Huffman
+  **压缩调用链** (每 8MB 块):
+  statisticFreq → finishFreqStat → genHufftree
+  → saveCodeInTab → treeToPlatUchar(metadata)
+  + encode(data)
+  **解压调用链**:
+  spawnTree(metadata) → decode(data, maxOutputSize)
+end note
 
-ThreadPool *--> Thread : map
-Thread *--> MonitorTaskQueue : taskQueue
-
-note right of GetFreq
-  Encode pipeline:
-  GetFreq -> GenHeffcodeTab -> DoEncode
-  Decode pipeline:
-  LoadHeffcodeTab -> DoDecode
+note bottom of HuffmanCompression
+  v2.2.0: 多线程频率统计残留已删除,
+  并行单位是 8MB 块(流水线工人私有实例),
+  核心保持单线程语义,每块独立建树
 end note
 
 @enduml

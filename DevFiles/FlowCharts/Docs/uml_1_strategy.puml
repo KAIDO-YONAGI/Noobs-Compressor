@@ -1,14 +1,16 @@
 @startuml Strategy_Pattern
-
-!theme plain
+scale 2
+!theme spacelab
 skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam shadowing false
+skinparam roundCorner 6
 skinparam nodesep 40
-skinparam ranksep 40
-skinparam padding 4
-skinparam packagePadding 4
+skinparam ranksep 45
+caption v2.2.0 · 2026-09-07
 
-title Strategy Pattern - Compression & Encryption
+title Strategy Pattern — Compression & Encryption Modules
 
 together {
     abstract class ICompression {
@@ -23,45 +25,35 @@ together {
 
 together {
     class NullCompression {
-        - NULL_COMPRESSION_MARKER = 0x00
-        + compress(...) : void
-        + decompress(...) : void
+        + NULL_COMPRESSION_MARKER = 0x00
+        + compress(..) / decompress(..) 「直通」
     }
     class NullEncryption {
-        + encrypt(...) : void
-        + decrypt(...) : void
+        + encrypt(..) / decrypt(..) 「直通」
     }
 }
 
 together {
     class HuffmanCompression {
         - huffman : unique_ptr~Huffman~
-        + HuffmanCompression(threadNums = 1)
-        + compress(...) : void
-        + decompress(...) : void
-        + getHuffman() : Huffman*
+        + HuffmanCompression()
+        + compress(input, metadataOut, output)
+        + decompress(metadata, input, output, originalSize)
     }
     class AesEncryption {
-        - aes : Aes*
-        + AesEncryption(aes)
-        + encrypt(...) : void
-        + decrypt(...) : void
-        + getAes() : Aes*
+        - aes : Aes 「值持有」
+        + AesEncryption(password)
+        + encrypt(..) / decrypt(..)
     }
 }
 
 class Aes {
-    - w : int[44]
-    - iv : uint8_t[16]
-    - aesKey16Bytes : uint8_t[16]
-    + Aes(aesKey)
-    + doAes(mode, input, output) : void
-    - extendKey() : void
-    - subBytes/shiftRows/mixColumns() : void
-    - addRoundKey(round) : void
-    - deSubBytes/deShiftRows/deMixColumns() : void
-    - processDataAes(input, mode) : DataBlock
-    - hashTo16Bytes(input, output) : void
+    - w[44] 轮密钥 / iv[16]
+    - aesKey16Bytes[16]
+    - cryptProvider : HCRYPTPROV 「实例缓存」
+    + doAes(mode, input, output)
+    - processDataAes / hashTo16Bytes
+    - 轮函数组 (构造后只读)
 }
 
 class StrategyFactory {
@@ -81,12 +73,10 @@ ICompression <|-- HuffmanCompression
 IEncryption <|-- NullEncryption
 IEncryption <|-- AesEncryption
 
-HuffmanCompression *--> Huffman : unique_ptr
+HuffmanCompression *--> Huffman
 AesEncryption *--> Aes
 
 StrategyFactory ..> StrategyModules : <<creates>>
-StrategyFactory ..> ICompression : creates impl
-StrategyFactory ..> IEncryption : creates impl
 StrategyModules *--> ICompression
 StrategyModules *--> IEncryption
 
@@ -94,6 +84,14 @@ note right of StrategyFactory
   CompressionMode:
   HuffmanAES=0, HuffmanOnly=1,
   AESOnly=2, PackOnly=3
+  —— idToMode 用于解压端
+  从归档头探测策略
+end note
+
+note bottom of StrategyModules
+  v2.2.0: createModules 不再由 GUI 一次性创建共享实例,
+  而是流水线读线程与每个工人各自创建私有模块
+  (AES 轮密钥/Huffman 树均为可变状态,不可共享)
 end note
 
 @enduml
