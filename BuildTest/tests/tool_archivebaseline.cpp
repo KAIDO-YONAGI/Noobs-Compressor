@@ -190,15 +190,13 @@ static int doCompress(const std::string &rootUtf8, const std::string &outUtf8, c
         Y_flib::EncodingUtils::pathToUtf8(root / "sample"),
         Y_flib::EncodingUtils::pathToUtf8(root / "extra.txt")};
 
-    auto modules = Y_flib::StrategyFactory::createModules(m, "");
-
     // 三阶段写入的第一阶段：建档（写文件头 + 目录树 + 各预留字段），与 GUI CompressionWorker 相同的顺序
     std::string outPathUtf8 = outUtf8; // headerWriter 形参为非 const 引用
     Y_flib::HeaderWriter headerWriter;
     headerWriter.headerWriter(filePathToScan, outPathUtf8, "baseline_root", m);
 
     CompressionLoop compressor(outUtf8);
-    compressor.compressionLoop(filePathToScan, *modules.encryption, *modules.compression, m);
+    compressor.compressionLoop(filePathToScan, m, ""); // 流水线内部按 (mode, password) 自制模块
 
     std::cout << "compress: " << outUtf8 << " (" << mode << ", "
               << fs::file_size(outPath) << " bytes)\n";
@@ -360,14 +358,12 @@ static int doCompressDir(const std::string &dirUtf8, const std::string &outUtf8,
 
     std::vector<std::string> filePathToScan = {dirUtf8};
 
-    auto modules = Y_flib::StrategyFactory::createModules(m, "");
-
     std::string outPathUtf8 = outUtf8;
     Y_flib::HeaderWriter headerWriter;
     headerWriter.headerWriter(filePathToScan, outPathUtf8, "baseline_root", m);
 
     CompressionLoop compressor(outUtf8);
-    compressor.compressionLoop(filePathToScan, *modules.encryption, *modules.compression, m);
+    compressor.compressionLoop(filePathToScan, m, ""); // 流水线内部按 (mode, password) 自制模块
 
     std::cout << "compressdir: " << outUtf8 << " (" << mode << ", "
               << fs::file_size(outPath) << " bytes)\n";

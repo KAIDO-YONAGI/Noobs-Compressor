@@ -200,8 +200,8 @@ void CompressionWorker::doCompression()
 
         emit detailedProgress("", 0.0, 10.0, tr("Creating strategy modules..."));
 
-        // 依据模式实例化加密/压缩策略，口令在此交给策略模块持有
-        auto modules = Y_flib::StrategyFactory::createModules(m_mode, EncodingUtils::qStringToUtf8(m_password));
+        // 模块组装下沉进流水线：工人/读线程各自按 (mode, password) 制造私有模块，
+        // 此处不再创建共享实例
 
         if (isStopRequested())
         {
@@ -244,7 +244,7 @@ void CompressionWorker::doCompression()
                                       EncodingUtils::utf8ToQString(status));
             }
         });
-        compressor.compressionLoop(filePathToScan, *modules.encryption, *modules.compression, m_mode);
+        compressor.compressionLoop(filePathToScan, m_mode, EncodingUtils::qStringToUtf8(m_password));
 
         if (isStopRequested())
         {
