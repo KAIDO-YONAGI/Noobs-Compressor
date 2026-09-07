@@ -2,44 +2,49 @@
 
 #pragma comment(lib, "advapi32.lib")
 
-Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int  mode)
+/* CFB 封装层：IV 生成/解析、密钥流生成与异或。块核心轮函数在 AesFunctions.cpp */
+
+Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode)
 {
     Y_flib::DataBlock outputBuffer;
+    uint8_t *body = nullptr;
+    size_t bodyLen = 0;
 
     // 处理IV
-    if (mode==1)
+    if (mode == Y_flib::AesMode::Encrypt)
     { // 加密
-        // 生成随机IV (使用 Windows CryptoAPI)
-        HCRYPTPROV hProv = 0;
-
-        // 尝试多种提供商类型以提高兼容性
-        bool success = false;
-        DWORD providers[] = {
-            PROV_RSA_AES,    // Windows XP SP3+
-            PROV_RSA_FULL    // 旧版Windows
-        };
-
-        for (int i = 0; i < 3 && !success; ++i)
+        // 生成随机IV (使用 Windows CryptoAPI)。
+        // CSP 句柄获取是重操作（底层 RPC），逐次获取/释放在多工人并发下互相争抢，
+        // 是流水线病态慢的根源——句柄缓存进实例，只获取一次，IV 仍每次随机
+        if (cryptProvider == 0)
         {
-            if (CryptAcquireContext(&hProv, NULL, NULL, providers[i],
-                CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+            // 尝试多种提供商类型以提高兼容性
+            DWORD providers[] = {
+                PROV_RSA_AES,    // Windows XP SP3+
+                PROV_RSA_FULL    // 旧版Windows
+            };
+            for (DWORD provType : providers)
             {
-                success = CryptGenRandom(hProv, sizeof(iv), iv);
-                CryptReleaseContext(hProv, 0);
+                if (CryptAcquireContext(&cryptProvider, NULL, NULL, provType,
+                    CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+                    break;
             }
         }
 
-        if (!success) {
+        if (cryptProvider == 0 || !CryptGenRandom(cryptProvider, sizeof(iv), iv)) {
             throw std::runtime_error("Failed to generate random IV");
         }
 
-        // 添加IV到输出缓冲区
-        outputBuffer.insert(outputBuffer.end(), iv, iv + sizeof(iv));
-
-        // 准备要加密的数据
-        buffer = inputBuffer;
+        // 一次分配：前置 IV，随后原地把明文加密进输出缓冲，省去中间整块拷贝
+        outputBuffer.resize(sizeof(iv) + inputBuffer.size());
+        memcpy(outputBuffer.data(), iv, sizeof(iv));
+        if (!inputBuffer.empty()) {
+            memcpy(outputBuffer.data() + sizeof(iv), inputBuffer.data(), inputBuffer.size());
+        }
+        body = outputBuffer.data() + sizeof(iv);
+        bodyLen = inputBuffer.size();
     }
-    else if(mode ==2)
+    else if (mode == Y_flib::AesMode::Decrypt)
     { // 解密
         // 检查输入是否足够包含IV
         if (inputBuffer.size() < sizeof(iv))
@@ -50,33 +55,33 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, int 
         // 提取IV
         memcpy(iv, inputBuffer.data(), sizeof(iv));
 
-        // 准备要解密的数据
-        buffer.assign(inputBuffer.begin() + sizeof(iv), inputBuffer.end());
+        // 密文体拷入输出后原地解密（CFB 解密与加密共用同一条正向轮函数路径）
+        bodyLen = inputBuffer.size() - sizeof(iv);
+        outputBuffer.resize(bodyLen);
+        if (bodyLen > 0) {
+            memcpy(outputBuffer.data(), inputBuffer.data() + sizeof(iv), bodyLen);
+        }
+        body = outputBuffer.data();
     }
 
-    // 处理数据
-    size_t bytesToProcess = buffer.size();
-    if (mode==1)
+    // 原地处理密文体
+    if (bodyLen > 0)
     {
-        aes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 加密
+        if (mode == Y_flib::AesMode::Encrypt)
+            aes(reinterpret_cast<char *>(body), static_cast<int>(bodyLen)); // 加密
+        else
+            deAes(reinterpret_cast<char *>(body), static_cast<int>(bodyLen)); // 解密
     }
-    else if (mode==2)
-    {
-        deAes(reinterpret_cast<char*>((buffer.data())), static_cast<int>(bytesToProcess)); // 解密
-    }
-
-    // 添加处理后的数据到输出缓冲区
-    outputBuffer.insert(outputBuffer.end(), buffer.begin(), buffer.end());
 
     return outputBuffer;
 }
-//mode 1: 加密 2: 解密
-void Aes::doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer)
+void Aes::doAes(Y_flib::AesMode mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer)
 {
 
-    if (mode != 1 && mode != 2)
+    // 枚举值只能经 static_cast 越界，仍保留穷举校验兜底
+    if (mode != Y_flib::AesMode::Encrypt && mode != Y_flib::AesMode::Decrypt)
     {
-        throw std::invalid_argument("Invalid mode. Use 1 for encryption and 2 for decryption.");
+        throw std::invalid_argument("Invalid AesMode. Use AesMode::Encrypt or AesMode::Decrypt.");
     }
 
     try
@@ -134,7 +139,7 @@ void Aes::aes(char *p, int plen)
     }
 
     // 安全清除
-    memset(feedback, 0, sizeof(feedback));
+    SecureZeroMemory(feedback, sizeof(feedback));
 }
 
 void Aes::deAes(char *c, int clen)
@@ -184,6 +189,5 @@ void Aes::deAes(char *c, int clen)
     }
 
     // 安全清除
-    memset(feedback, 0, sizeof(feedback));
+    SecureZeroMemory(feedback, sizeof(feedback));
 }
-

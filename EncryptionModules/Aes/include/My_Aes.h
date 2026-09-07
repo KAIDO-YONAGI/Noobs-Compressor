@@ -9,9 +9,12 @@
 #include <cstring>
 #include <windows.h>
 #include <wincrypt.h>
-#include "../CompressorFileSystem/DataCommunication/include/FileLibrary.h"
+#include "../../../CompressorFileSystem/Commons/include/FileLibrary.h"
 
-/* AES-128加密算法实现 - 标准AES加密/解密、密钥扩展、预计算表优化 */
+/* AES-128 CFB 加密实现（自研核心）
+   注意：实测本核心与 FIPS-197 标准 AES 不逐比特一致（MixColumns 混合方向不同），
+   密文不能与标准 AES 工具互通；本实现的密文即归档格式的事实标准，
+   改动核心必须与历史版本逐比特一致（BuildTest/tests 黄金向量 + tool_archivebaseline 验收） */
 class Aes
 {
     public:
@@ -24,15 +27,26 @@ class Aes
         memset(iv, 0, sizeof(iv));
     }
 
+    /* 持有 CSP 句柄后不可复制（否则双重释放）；移动也无意义——按模块私有实例使用 */
+    Aes(const Aes &) = delete;
+    Aes &operator=(const Aes &) = delete;
+
     /* 析构函数，安全清除内存中的密钥副本 */
     ~Aes()
     {
-        // 安全清除密钥
-        memset(const_cast<uint8_t *>(aesKey16Bytes), 0, 16);
+        // 主密钥与轮密钥都能还原出完整加解密能力，销毁前必须一并清零；
+        // 用 SecureZeroMemory 而非 memset：后者对"之后不再读"的内存可能被优化掉
+        SecureZeroMemory(aesKey16Bytes, sizeof(aesKey16Bytes));
+        SecureZeroMemory(w, sizeof(w));
+        if (cryptProvider != 0)
+        {
+            CryptReleaseContext(cryptProvider, 0);
+            cryptProvider = 0;
+        }
     }
 
-    /* 统一加密/解密接口，mode=1加密、mode=2解密。自动分块处理 */
-    void doAes(int mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
+    /* 统一加密/解密接口，按 AesMode 选择加密或解密。自动分块处理 */
+    void doAes(Y_flib::AesMode mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
 
 private:
     /* 提取32位整数的高4比特，返回0-15 */
@@ -108,7 +122,7 @@ private:
     void hashTo16Bytes(const char *input, uint8_t *output);
 
     /* 分块处理AES加密/解密，按16字节分块 */
-    Y_flib::DataBlock processDataAes(const Y_flib::DataBlock &inputBuffer, int mode);
+    Y_flib::DataBlock processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode);
 
     /* AES加密，10轮加密循环 */
     void aes(char *p, int plen);
@@ -117,10 +131,10 @@ private:
     void deAes(char *c, int clen);
 
     int w[44];                   // 44个32位轮密钥字(w[0]-w[43])
-    uint8_t iv[16];              // 初始化向量(当前实现为全0)
-    const char *aesKey;         // 用户密钥指针(保存参考)
+    uint8_t iv[16];              // 当前块的初始化向量(加密时随机生成，解密时取自密文头)
     uint8_t aesKey16Bytes[16]; // 128位主密钥(哈希后)
     Y_flib::DataBlock buffer;    // 数据处理缓冲区
+    HCRYPTPROV cryptProvider = 0; // CSP 句柄：首次生成 IV 时获取并复用（实例私有，单线程使用）
 
 
 private:
