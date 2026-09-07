@@ -162,7 +162,7 @@ Memory usage is stable around **60 MB**.
 
 **Multithreaded compression pipeline**: compression now runs as a 3-stage pipeline — dedicated reader thread → N compute workers → dedicated writer thread (N = logical CPU cores), with a buffer pool capping memory usage.
 
-Measured compression throughput (HuffmanAES, 16 logical cores, same machine and identical input; see `DevFiles/性能报告-2026-09-07.md`):
+Measured compression throughput (HuffmanAES, 16 logical cores, same machine and identical input; see DevFiles design doc, section 5.1):
 
 | Data profile | Old throughput | New throughput | Speedup |
 |---|---|---|---|
