@@ -152,6 +152,32 @@ Memory usage is stable around **60 MB**.
 
 ---
 
+## v2.2.0 — Pipeline (2026-09-07)
+
+**Multithreaded compression pipeline**: compression now runs as a 3-stage pipeline — dedicated reader thread → N compute workers → dedicated writer thread (N = logical CPU cores), with a buffer pool capping memory usage.
+
+Measured performance (HuffmanAES, same machine, identical input; see `DevFiles/性能报告-2026-09-07.md`):
+
+| Scenario | Old | New | Speedup |
+|---|---|---|---|
+| Large files 4GiB (3,871 files) | 214.3 s | 31.1 s | **6.9×** |
+| Long paths 2.4GiB (33,835 files, up to 267 chars) | 168.7 s | 47.2 s | **3.6×** |
+| Tiny files, 150k of them (41 MiB) | 155.9 s | 86.1 s | **1.8×** |
+
+**Performance fixes**:
+- AES module: CSP handle caching (previously acquired/released a system handle on every encrypt — heavy and contended under threads)
+- Write path split into 3 phases: header build → pure-append data write → finalizer for unified backfill/encryption; block lengths written directly (two seek-backs per block removed)
+
+**Architecture changes**:
+- Added `ThreadPool/SafeQueue.h` (monitor-style blocking queue) and `ThreadPool/WriteSorter.h` (out-of-order result resequencing), each with unit tests
+- `compressionLoop` signature is now `(paths, mode, password)`; module assembly moved into worker threads (one private AES/Huffman instance per worker)
+- Runtime types split into `RuntimeLibrary.h` (`Y_flib::Runtime`); `FileLibrary.h` keeps on-disk format types only
+- Archive byte layout is identical to the previous version (byte-exact acceptance via `tool_archivebaseline` on non-encrypted modes)
+
+**Compatibility**: v1/v2 archive reading unchanged; HuffmanAES output stays backward compatible.
+
+---
+
 # Build Instructions
 
 ## CLI Build
