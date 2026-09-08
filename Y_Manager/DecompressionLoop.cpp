@@ -68,15 +68,18 @@ void DecompressionLoop::decompressionLoop(Y_flib::CompressionMode mode, const st
     resultQueue.setDone();
     writerThread.join();
 
-    if (readerException)
-    {
-        bufferPool.close();
-        std::rethrow_exception(readerException);
-    }
+    // 写线程异常优先重抛：它持有根因（工人任务异常/写盘失败），读线程此时携带的
+    // 只是关池唤醒的次生 acquire-on-closed。读线程异常单独出现（用户取消/读失败）
+    // 时写线程正常排空、无异常，仍走读线程分支
     if (writerException)
     {
         bufferPool.close();
         std::rethrow_exception(writerException);
+    }
+    if (readerException)
+    {
+        bufferPool.close();
+        std::rethrow_exception(readerException);
     }
 
     // 链接严格最后：目标可能是刚还原的文件/目录
@@ -278,6 +281,16 @@ void DecompressionLoop::writerLoop(
     std::exception_ptr &exceptionOut)
 {
     std::exception_ptr taskException = nullptr;
+    // 写线程任意早退（任务异常停写 / 写盘 IO 异常）必须立刻关池：abort 清理只归还
+    // sorter 中已到达的块，其后读线程继续借出的新在途块无人归还，归档大于池容量
+    // 时读线程会睡死在 acquire() 背压点上、总指挥 join 永不返回。close 把「无限等」
+    // 变成 acquire 抛异常，读线程走自身异常出口。close 幂等：正常路径随后总指挥
+    // 处的 close 只是重复置位
+    struct ClosePoolOnExit
+    {
+        BufferPool &pool;
+        ~ClosePoolOnExit() { pool.close(); }
+    } closePoolOnExit{bufferPool};
     try
     {
         WriteSorter<DecompressionMessage> sorter;
