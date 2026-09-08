@@ -372,9 +372,8 @@ void CompressionWorker::doDecompression()
 
         emit detailedProgress("", 0.0, 10.0, tr("Creating strategy modules..."));
 
-        auto modules = Y_flib::StrategyFactory::createModules(
-            detectedMode,
-            EncodingUtils::qStringToUtf8(m_decompressPassword));
+        // 模块组装下沉进流水线：读线程/工人各自按 (mode, password) 制造私有模块，
+        // 此处不再创建共享实例
 
         if (isStopRequested())
         {
@@ -405,7 +404,7 @@ void CompressionWorker::doDecompression()
                                       EncodingUtils::utf8ToQString(status));
             }
         });
-        decompressor.decompressionLoop(*modules.encryption, *modules.compression);
+        decompressor.decompressionLoop(detectedMode, EncodingUtils::qStringToUtf8(m_decompressPassword));
 
         if (isStopRequested())
         {
