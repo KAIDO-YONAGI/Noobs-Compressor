@@ -1,6 +1,5 @@
 // tool_archivebaseline.cpp — 归档基准生成/对比 CLI 工具（零外部依赖，仿 test_flagtype 模式）
 //
-// 用途：为"零字节变更"重构验收提供可重复的基准（见 DevFiles《文件系统类型与布局重构方案》§0）：
 //   tool_archivebaseline sample    <root>                    生成固定样本集（root/sample 树 + root/extra.txt）
 //   tool_archivebaseline compress  <root> <out.sy> <mode>    压缩样本集（mode: pack | huffman，均无加密）
 //   tool_archivebaseline decompress <in.sy> <outdir>         解压归档（outdir 必须不存在）

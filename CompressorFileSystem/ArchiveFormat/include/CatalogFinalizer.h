@@ -19,7 +19,6 @@
  *   ① HeaderWriter（ofstream，建档阶段：写文件头、目录树、各预留字段）
  *   ② DataExporter（fstream，数据阶段：逐块纯追加）
  *   ③ CatalogFinalizer（fstream，收尾阶段：回填"处理后大小"槽 + 目录区原地加密）
- * 并行化时②③归专职写线程，见《线程池调研与改造计划.md》§4.7/§7.1。
  *
  * 公共接口:
  *   finalize(): 唯一入口，先回填后加密，次序在类内焊死

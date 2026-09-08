@@ -77,7 +77,6 @@ add_executable(test_writesorter
 )
 
 # ========================
-# 归档基准 CLI 工具（重构验收用，见 DevFiles《文件系统类型与布局重构方案》§0）
 # compress/decompress/verify 三个子命令，直接编译核心库源文件（与 GUI 的 CORE_SOURCES 一致，无 Qt）
 # ========================
 add_executable(tool_archivebaseline

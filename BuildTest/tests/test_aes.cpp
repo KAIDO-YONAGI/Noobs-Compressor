@@ -2,7 +2,6 @@
 // 覆盖：round-trip 各种尺寸/模式、IV 前置格式与随机性、实例复用、
 //       截断输入抛错、错误密钥、密文扩散、非法 mode。
 //
-// 构建：见同目录 CMakeLists.txt（MinGW，无 Qt）
 // 退出码：0 = 全部通过；非 0 = 失败用例数
 
 #include "My_Aes.h"
