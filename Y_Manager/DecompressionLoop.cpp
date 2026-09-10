@@ -84,9 +84,6 @@ void DecompressionLoop::decompressionLoop(Y_flib::CompressionMode mode, const st
 
     bufferPool.close();
 
-    processDirectories(headerLoaderIterator);
-    processLinks(headerLoaderIterator);
-
     // 完成回调
     if (progressCallback)
     {
