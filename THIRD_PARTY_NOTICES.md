@@ -1,4 +1,4 @@
-﻿# 第三方组件与许可 / Third-Party Notices
+# 第三方组件与许可 / Third-Party Notices
 
 本文件列出 SFC（Simple Files Compressor）使用或随包分发的第三方组件及其许可。
 **本项目自身代码的许可是 GPL-3.0**，完整原文见 [LICENSE](LICENSE)；
@@ -34,7 +34,6 @@ For the full text of LGPL v3:
 | 资源 | 位置 | 来源 |
 | --- | --- | --- |
 | 应用图标 `YONAGII_512x512.ico` | `SFC_GUI/` | 项目作者 |
-| 界面背景图 `background.jpg` | `SFC_GUI/images/` | 项目作者 |
 | 界面图标（由 `resources.qrc` 引用） | `SFC_GUI/` | 项目作者 |
 | 流程图 / UML / 结构图 | `DevFiles/FlowCharts/` | 项目作者 |
 | 中文翻译 `.ts` / `.qm` | `SFC_GUI/translations/` | 项目作者 |
@@ -42,6 +41,11 @@ For the full text of LGPL v3:
 **若上表任一资源并非作者原创**，请补登其来源与许可：GPL-3.0 只能覆盖作者拥有版权的部分，
 覆盖不了他人素材。
 
+> **已移除（2026-09-11）**：原先随包分发的界面背景图 `SFC_GUI/images/background.jpg` 经确认来自
+> 视觉小说厂商 RASK 的商业作品《Re:LieF ～親愛なるあなたへ～》的 CG。该素材不属于本项目、
+> **不能由本项目授权，也不在 GPL-3.0 覆盖范围内**，已从仓库与历史中移除，并同步移除
+> `resources.qrc` 中的引用。应用在找不到背景图时会以无背景方式正常运行。
+> 若要自定义背景，请放入你自己拥有权利的图片，并在 `SFC_GUI/resources.qrc` 中登记。
 ## 3. 压缩与加密实现
 
 按仓库内源码与文档，Huffman 压缩与 AES 加密均为本项目自行实现，加密经 Windows 提供的
