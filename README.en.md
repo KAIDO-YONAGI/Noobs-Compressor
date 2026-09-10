@@ -323,6 +323,17 @@ After building, the executable is in the `bin/SFC/` directory.
 
 ---
 
+# Licensing
+
+- **The project's own source code: GPL-3.0** (full text in [LICENSE](LICENSE)). You may use,
+  modify and redistribute it; derivatives must be released under the same licence and may not be
+  distributed as closed source.
+- **Third-party component: Qt 6.2.4 (LGPL v3, statically linked)** — licence terms and the
+  compliance material (object files for relinking, source URL, build configuration) are in
+  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The bundled icons, background image, diagrams and translations are registered in the same file;
+  GPL-3.0 covers only what the author holds copyright to.
+
 # Disclaimer
 
 This project is intended **for educational and learning purposes only**.
