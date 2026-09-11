@@ -13,6 +13,12 @@ build-local-*/
 cmake-build-*/
 out/
 build/
+# 开发期临时产物（压测/探针/消融脚本、黄金快照、发版说明草稿等）
+# 约定位置：BuildTest/_bench/ —— 内容可随时整目录删除，不入库；只有 README 入库。
+# 这里写 _bench/* 而不是 _bench/：父目录被排除时无法再用 ! 反选文件，
+# 写成通配才能让 README.md 继续被跟踪。
+BuildTest/_bench/*
+!BuildTest/_bench/README.md
 # ignore test files
 bin/
 *.txt
