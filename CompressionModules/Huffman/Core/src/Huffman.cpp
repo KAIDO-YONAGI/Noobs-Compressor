@@ -7,10 +7,12 @@
 // 输入块的所有权在调用方：本类只通过 const 引用读取 inBlock，
 // 不负责清空或归还；清空/归还（如 BufferPool::release）由持有方处理。
 
-Huffman::Huffman() : treeRoot(NULL)
+Huffman::Huffman() : treeRoot(NULL), maxCodeLen(0)
 {
     std::memset(blockFreq, 0, sizeof(blockFreq));
     std::memset(totalFreq, 0, sizeof(totalFreq));
+    std::memset(codeLenTab, 0, sizeof(codeLenTab));
+    std::memset(lut, 0, sizeof(lut));
 }
 
 Huffman::~Huffman()
@@ -98,6 +100,10 @@ void Huffman::saveCodeInTab()
     {
         runSaveCodeInTab(treeRoot);
     }
+
+    // 树只用于导出码长；码字改按 canonical 规则统一重排，
+    // 使解压侧能由码长表重建出完全相同的码字并用查表解码。
+    buildCanonical();
 }
 
 void Huffman::runSaveCodeInTab(HuffTreeNode *root)
@@ -116,6 +122,135 @@ void Huffman::runSaveCodeInTab(HuffTreeNode *root)
     pathStack.push(1);
     runSaveCodeInTab(root->right);
     pathStack.pop();
+}
+
+// 由 codeTab.len（树导出的码长）构造 canonical 码。
+// canonical 规则：码字按 (码长, 符号值) 升序连续分配，
+//     firstCode[L+1] = (firstCode[L] + count[L]) << 1
+// 这样解压侧只需码长表就能复现同一套码字，无需整棵树。
+void Huffman::buildCanonical()
+{
+    for (int L = 0; L <= kMaxCodeLen; ++L)
+    {
+        canonCount[L] = 0;
+        canonFirstCode[L] = 0;
+        canonFirstIdx[L] = 0;
+    }
+    maxCodeLen = 0;
+
+    for (int s = 0; s < 256; ++s)
+    {
+        codeLenTab[s] = codeTab.len[s];
+        if (codeLenTab[s] != 0 && codeLenTab[s] > maxCodeLen)
+        {
+            maxCodeLen = codeLenTab[s];
+        }
+    }
+
+    // 256 符号 + 8MB 块（8.4M 样本）下，Huffman 深度受 Fibonacci 界约束：
+    // F(35)≈9.2e6 > 8.4e6，故 maxCodeLen ≤ 32，绝无可能超过 64。
+    // 仍保留防御性校验，避免任何越界/溢出变成静默的数据损坏。
+    if (maxCodeLen > 64)
+    {
+        throw std::runtime_error("Huffman: code length exceeds 64 bits");
+    }
+    if (maxCodeLen == 0)
+    {
+        return;
+    }
+
+    for (int s = 0; s < 256; ++s)
+    {
+        if (codeLenTab[s] != 0)
+        {
+            ++canonCount[codeLenTab[s]];
+        }
+    }
+
+    // 按 (码长, 符号值) 升序排列
+    int cursor = 0;
+    for (int L = 1; L <= maxCodeLen; ++L)
+    {
+        for (int s = 0; s < 256; ++s)
+        {
+            if (codeLenTab[s] == L)
+            {
+                sortedSymbols[cursor++] = static_cast<uint8_t>(s);
+            }
+        }
+    }
+
+    // 各码长的首码字与首下标
+    uint64_t code = 0;
+    cursor = 0;
+    for (int L = 1; L <= maxCodeLen; ++L)
+    {
+        canonFirstCode[L] = code;
+        canonFirstIdx[L] = static_cast<uint16_t>(cursor);
+        cursor += canonCount[L];
+        code = (code + canonCount[L]) << 1;
+    }
+
+    // 回写码字供 encode 使用：code[] 为右对齐 uint64（快路径）；
+    // packed[] 仅在码长 > 64 时需要，故只在此时填充，避免每块 256 次小分配。
+    for (int L = 1; L <= maxCodeLen; ++L)
+    {
+        const uint64_t first = canonFirstCode[L];
+        const uint16_t idx0 = canonFirstIdx[L];
+        const uint16_t n = canonCount[L];
+        for (uint16_t i = 0; i < n; ++i)
+        {
+            const uint8_t sym = sortedSymbols[idx0 + i];
+            const uint64_t cw = first + i;
+            codeTab.code[sym] = cw;
+            if (L > 64)
+            {
+                CodeT &pk = codeTab.packed[sym];
+                pk.assign(static_cast<size_t>((L + 7) / 8), 0);
+                for (int b = 0; b < L; ++b)
+                {
+                    if ((cw >> (L - 1 - b)) & 1ULL)
+                    {
+                        pk[static_cast<size_t>(b) / 8] |= static_cast<uint8_t>(1u << (7 - (b % 8)));
+                    }
+                }
+            }
+        }
+    }
+}
+
+// 由 canonical 码构造 12bit 主表。
+// 表项 0 表示「该 12bit 前缀属于长码（>12bit）」，解码时走 canonical 逐位回退。
+// 码长 ≤ 12 的符号把覆盖自己的全部 12bit 后缀一次填满。
+void Huffman::buildDecodeLut()
+{
+    for (int i = 0; i < kLutSize; ++i)
+    {
+        lut[i] = 0;
+    }
+    if (maxCodeLen <= 0)
+    {
+        return;
+    }
+
+    const int fillLen = (maxCodeLen < kLutBits) ? maxCodeLen : kLutBits;
+    for (int L = 1; L <= fillLen; ++L)
+    {
+        const uint32_t span = 1u << (kLutBits - L);
+        const uint64_t first = canonFirstCode[L];
+        const uint16_t idx0 = canonFirstIdx[L];
+        const uint16_t n = canonCount[L];
+        for (uint16_t i = 0; i < n; ++i)
+        {
+            const uint8_t sym = sortedSymbols[idx0 + i];
+            const uint32_t base = static_cast<uint32_t>(first + i) << (kLutBits - L);
+            const uint16_t entry = static_cast<uint16_t>((L << 8) | sym);
+            for (uint32_t k = 0; k < span; ++k)
+            {
+                lut[base + k] = entry;
+            }
+        }
+    }
 }
 
 void Huffman::encode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHandler bitOutput)
@@ -158,110 +293,130 @@ void Huffman::encode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHan
     outBlock[paddingBitsPos] = paddingBits;
 }
 
-bool Huffman::findchar(HuffTreeNode *&now, unsigned char &result, uint8_t toward)
-{
-    if (toward == 0)
-    {
-        now = now->left;
-    }
-    else
-    {
-        now = now->right;
-    }
-    if (now != NULL && now->isLeaf == true)
-    {
-        result = now->data;
-        now = treeRoot;
-        return true; // 找到了一个字符
-    }
-    return false; // 还在树的中间节点
-}
-
+// canonical 码 + 12bit 查表解码。
+// 取代原实现：原实现把每个输入字节展开成 8 个元素的 vector（BitHandler::handle），
+// 再逐位 findchar 走树；现在每符号只需一次 12bit 表查询。
 void Huffman::decode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHandler bitInput, size_t maxOutputSize)
 {
+    (void)bitInput; // 解码自维护 64 位位缓冲，不再经 BitHandler 逐字节展开
+
     if (inBlock.size() < 1)
     {
         throw std::runtime_error("decode: input block too small (missing padding bits marker)");
     }
 
     // 读取填充位数标记（第一个字节）
-    uint8_t paddingBits = inBlock[0];
+    const uint8_t paddingBits = inBlock[0];
     if (paddingBits > 7)
     {
         throw std::runtime_error("decode: invalid padding bits value: " + std::to_string(paddingBits));
     }
 
-    HuffTreeNode *now = treeRoot;
-    std::vector<uint8_t> treePath; // 不预分配元素,只在需要时push_back
-    treePath.reserve(8);           // 预留容量避免重新分配
-    unsigned char result = 0;
-    size_t totalBitsProcessed = 0;
-    size_t charsDecoded = 0;
+    // 有效比特总数：首字节为填充标记；最后一个数据字节的低 paddingBits 位为填充
+    size_t totalBits = (inBlock.size() - 1) * 8;
+    if (paddingBits > 0 && inBlock.size() > 1)
+    {
+        totalBits -= paddingBits;
+    }
 
     // 预留足够空间避免频繁重新分配
     outBlock.reserve(inBlock.size() * 2);
 
-    // 计算最后有填充的字节位置（如果paddingBits>0，最后一个字节才有填充）
-    // 如果paddingBits==0，使用SIZE_MAX表示没有字节有填充（避免误匹配索引0）
-    size_t lastByteIdx = (paddingBits > 0) ? (inBlock.size() - 1) : SIZE_MAX;
-
-    // 特殊处理：如果树只有一个叶子节点（根节点本身就是叶子），直接根据比特数量输出字符
-    if (treeRoot != nullptr && treeRoot->isLeaf == true)
+    if (totalBits == 0)
     {
-        // 计算总比特数
-        size_t totalBits = 0;
-        for (size_t idx = 1; idx < inBlock.size(); ++idx)
-        {
-            size_t validBits = (idx == lastByteIdx && paddingBits > 0) ? (8 - paddingBits) : 8;
-            totalBits += validBits;
-        }
-
-        // 对于单叶子树，每一比特代表一个字符
-        for (size_t i = 0; i < totalBits && outBlock.size() < maxOutputSize; ++i)
-        {
-            outBlock.push_back(treeRoot->data);
-        }
         return;
     }
 
-    // 从第二个字节开始处理（跳过填充位数标记）
-    for (size_t idx = 1; idx < inBlock.size(); ++idx)
-    {
-        unsigned char c = inBlock[idx];
+    uint64_t acc = 0;    // 低位对齐的位缓冲
+    int nbits = 0;       // acc 中的有效位数
+    size_t ip = 1;       // 输入字节游标
+    size_t consumed = 0; // 已消费比特数
 
-        // 只有当这是最后有填充的字节时，才考虑填充位
-        uint8_t validBits = (idx == lastByteIdx && paddingBits > 0) ? (8 - paddingBits) : 8;
-
-        bitInput.handle(c, treePath, validBits);
-        totalBitsProcessed += validBits;
-
-        for (auto toward : treePath)
+    // 补齐位缓冲（每次最多补到 64 位；最后一个字节按 paddingBits 截取有效高位）
+    auto refill = [&]() {
+        while (nbits <= 56 && ip < inBlock.size())
         {
-            if (now == NULL)
+            const bool isLast = (ip + 1 == inBlock.size());
+            int valid = 8;
+            if (isLast && paddingBits > 0)
+            {
+                valid = 8 - paddingBits; // 编码侧把有效位左移到高位
+            }
+            const uint8_t byte = inBlock[ip++];
+            if (valid <= 0)
             {
                 break;
             }
+            acc = (acc << valid) | static_cast<uint64_t>(byte >> (8 - valid));
+            nbits += valid;
+        }
+    };
 
-            // 调用findchar并检查是否找到了字符
-            bool foundChar = findchar(now, result, toward);
+    // 丢弃已消费的高位
+    auto drop = [&](int n) {
+        nbits -= n;
+        acc &= (nbits >= 64) ? ~0ULL : ((1ULL << nbits) - 1ULL);
+    };
 
-            // 如果找到了字符，输出它
-            if (foundChar)
+    while (consumed < totalBits && outBlock.size() < maxOutputSize)
+    {
+        refill();
+        if (nbits == 0)
+        {
+            break;
+        }
+
+        // 窥视高 12 位（不足则左移到 12 位宽度，低位补零）
+        const int use = (nbits < kLutBits) ? nbits : kLutBits;
+        const uint32_t idx = static_cast<uint32_t>((acc >> (nbits - use)) << (kLutBits - use));
+        const uint16_t entry = lut[idx];
+
+        if (entry != 0)
+        {
+            const int len = entry >> 8;
+            if (len > nbits || static_cast<size_t>(len) > totalBits - consumed)
             {
-                // 在push之前检查是否已达到maxOutputSize
-                if (outBlock.size() >= maxOutputSize)
-                {
-                    return;
-                }
-                outBlock.push_back(result);
-                charsDecoded++;
+                break; // 流不一致，保护性退出
             }
-            else if (now == NULL)
+            outBlock.push_back(static_cast<uint8_t>(entry & 0xFFu));
+            drop(len);
+            consumed += static_cast<size_t>(len);
+            continue;
+        }
+
+        // 长码回退（码长 > 12bit）：canonical 逐位解码，不消费已窥视的位
+        uint64_t code = 0;
+        bool found = false;
+        for (int L = 1; L <= maxCodeLen && consumed < totalBits; ++L)
+        {
+            if (nbits == 0)
             {
+                refill();
+            }
+            if (nbits == 0)
+            {
+                break;
+            }
+            code = (code << 1) | ((acc >> (nbits - 1)) & 1ULL);
+            drop(1);
+            ++consumed;
+
+            // code < firstCode 时相减会下溢成极大值，自然不满足 < count，无需额外判断
+            if ((code - canonFirstCode[L]) < static_cast<uint64_t>(canonCount[L]))
+            {
+                if (outBlock.size() < maxOutputSize)
+                {
+                    outBlock.push_back(sortedSymbols[canonFirstIdx[L] +
+                                                     static_cast<uint32_t>(code - canonFirstCode[L])]);
+                }
+                found = true;
                 break;
             }
         }
-        treePath.clear();
+        if (!found)
+        {
+            break; // 到达末尾或流损坏
+        }
     }
 }
 
@@ -274,126 +429,42 @@ void Huffman::destroyTree(HuffTreeNode *node)
     delete node;
 }
 
-// 序列化编码树并输出
-void Huffman::treeToPlatUchar(sfc::block_t &outBlock)
+// 序列化码长表：'L' + 最大码长(1B) + 256 字节码长（0 = 该符号未出现），共 258 字节。
+// 取代原「2 字节/节点」的整树序列化（满字母表约 1023 字节）。
+void Huffman::codeTableToPlatUchar(sfc::block_t &outBlock)
 {
-    std::stack<HuffTreeNode *> stack;
-    auto root = treeRoot;
-    stack.push(root);
-    outBlock.push_back('F');
-    while (stack.empty() == false)
+    outBlock.push_back('L');
+    outBlock.push_back(static_cast<uint8_t>(maxCodeLen));
+    for (int s = 0; s < 256; ++s)
     {
-        auto cur = stack.top();
-        stack.pop();
-        if (cur->isLeaf == false)
-        {
-            outBlock.push_back('r');
-            if (cur->right == NULL || cur->left == NULL)
-            {
-                throw std::runtime_error("treeToPlatUchar: 内部节点缺少子节点，编码树已损坏");
-            }
-            stack.push(cur->right);
-            stack.push(cur->left);
-        }
-        else
-            outBlock.push_back('l');
-        outBlock.push_back(cur->data);
+        outBlock.push_back(codeLenTab[s]);
     }
 }
 
-// 解析编码表并加载树
-void Huffman::spawnTree(sfc::block_t &inBlock)
+// 由码长表重建 canonical 码与解码查找表（不再重建树）
+void Huffman::spawnCodeTable(const sfc::block_t &inBlock)
 {
-    // 清空旧的树,避免内存泄漏和状态污染
-    if (treeRoot != nullptr)
+    if (inBlock.size() != 258 || inBlock[0] != 'L')
     {
-        destroyTree(treeRoot);
-        treeRoot = nullptr;
-    }
-    std::stack<HuffTreeNode *> stack;
-
-    auto iter_ib = inBlock.cbegin();
-    if (*iter_ib != 'F')
-    {
-        throw std::runtime_error("spawnTree: Invalid tree format - missing 'F' header");
-    }
-    ++iter_ib;
-
-    HuffTreeNode *lastNode = nullptr; // 记录最后处理的节点
-
-    while (iter_ib != inBlock.cend())
-    {
-        HuffTreeNode *node = NULL;
-        if (iter_ib + 1 == inBlock.cend())
-        {
-            throw std::runtime_error("spawnTree: Incomplete data - missing node data");
-        }
-        if (*iter_ib == 'r')
-        {
-            node = new HuffTreeNode(*++iter_ib, 0, false);
-            stack.push(node);
-        }
-        else if (*iter_ib == 'l')
-        {
-            node = new HuffTreeNode(*++iter_ib, 0, true);
-            // 叶子节点需要连接到栈顶的父节点
-            while (!stack.empty())
-            {
-                HuffTreeNode *parent = stack.top();
-                bool parentComplete = connectNode(parent, node);
-
-                if (parentComplete)
-                {
-                    // 父节点完成,弹出并作为新的子节点继续向上连接
-                    stack.pop();
-                    node = parent;
-                }
-                else
-                {
-                    // 父节点还没完成(只连接了左子节点),停止
-                    break;
-                }
-            }
-        }
-        if (node == NULL)
-        {
-            throw std::runtime_error("spawnTree: Failed to create node");
-        }
-        lastNode = node; // 记录最后的节点
-        ++iter_ib;
+        throw std::runtime_error("spawnCodeTable: invalid code-length table");
     }
 
-    // 如果栈空了,说味著整棵树已经构建完成,根节点在lastNode中
-    if (stack.empty())
+    const int declared = inBlock[1];
+    if (declared <= 0 || declared > 64)
     {
-        treeRoot = lastNode;
+        throw std::runtime_error("spawnCodeTable: invalid max code length");
     }
-    else if (stack.size() == 1)
-    {
-        treeRoot = stack.top();
-    }
-    else
-    {
-        throw std::runtime_error("spawnTree: Invalid tree structure - stack size is " +
-                                 std::to_string(stack.size()) + ", expected 0 or 1");
-    }
-}
 
-bool Huffman::connectNode(HuffTreeNode *p, HuffTreeNode *c)
-{
-    if (p == NULL || c == NULL)
+    codeTab.clear();
+    for (int s = 0; s < 256; ++s)
     {
-        throw std::runtime_error("connectNode: 节点指针为空");
+        codeTab.len[s] = inBlock[2 + s];
     }
-    if (p->left == NULL)
+
+    buildCanonical();
+    if (maxCodeLen != declared)
     {
-        p->left = c;
-        return false; // 左子节点连接,但父节点还没完成,不应该弹出
+        throw std::runtime_error("spawnCodeTable: max code length mismatch");
     }
-    if (p->right == NULL)
-    {
-        p->right = c;
-        return true; // 右子节点也连接了,父节点完成,应该弹出
-    }
-    return false; // 父节点已经有两个子节点,不能连接
+    buildDecodeLut();
 }

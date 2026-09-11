@@ -173,9 +173,11 @@ static int doCompress(const std::string &rootUtf8, const std::string &outUtf8, c
         m = Y_flib::CompressionMode::PackOnly;
     else if (mode == "huffman")
         m = Y_flib::CompressionMode::HuffmanOnly;
+    else if (mode == "huffman-aes")
+        m = Y_flib::CompressionMode::HuffmanAES; // 端到端覆盖加密路径
     else
     {
-        std::cerr << "compress: unknown mode '" << mode << "' (expected pack|huffman)\n";
+        std::cerr << "compress: unknown mode '" << mode << "' (expected pack|huffman|huffman-aes)\n";
         return 1;
     }
 
@@ -344,9 +346,11 @@ static int doCompressDir(const std::string &dirUtf8, const std::string &outUtf8,
         m = Y_flib::CompressionMode::PackOnly;
     else if (mode == "huffman")
         m = Y_flib::CompressionMode::HuffmanOnly;
+    else if (mode == "huffman-aes")
+        m = Y_flib::CompressionMode::HuffmanAES; // 端到端覆盖加密路径
     else
     {
-        std::cerr << "compressdir: unknown mode '" << mode << "' (expected pack|huffman)\n";
+        std::cerr << "compressdir: unknown mode '" << mode << "' (expected pack|huffman|huffman-aes)\n";
         return 1;
     }
 
@@ -429,8 +433,8 @@ int main(int argc, char **argv)
 
     std::cerr << "usage:\n"
               << "  tool_archivebaseline sample <root>\n"
-              << "  tool_archivebaseline compress <root> <out.sy> <pack|huffman>\n"
-              << "  tool_archivebaseline compressdir <dir> <out.sy> <pack|huffman>  (arbitrary directory)\n"
+              << "  tool_archivebaseline compress <root> <out.sy> <pack|huffman|huffman-aes>\n"
+              << "  tool_archivebaseline compressdir <dir> <out.sy> <pack|huffman|huffman-aes>  (arbitrary directory)\n"
               << "  tool_archivebaseline decompress <in.sy> <outdir>\n"
               << "  tool_archivebaseline roundtrip <root> <pack|huffman>\n"
               << "  tool_archivebaseline verify <dirA> <dirB>\n";

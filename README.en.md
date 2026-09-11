@@ -38,7 +38,27 @@ The project is mainly intended for studying **file archiving structures, data co
 
 # Performance Notes
 
-The compression core is a 3-stage pipeline (dedicated reader thread + N compute workers + dedicated writer thread, N = logical CPU cores). Huffman coding and AES encryption are pure software implementations (no AES-NI).
+The compression core is a 3-stage pipeline (dedicated reader thread + N compute workers + dedicated writer thread, N = logical CPU cores). Since v2.2.1, AES uses the standard AES-128-CTR implementation from Windows CNG and therefore runs on the AES-NI hardware instructions; Huffman coding/decoding remains pure software.
+
+**Measured throughput in v2.2.1** (same machine, identical input of 13.47 GiB / 45,390 files, back-to-back against v2.2.0):
+
+| Direction | v2.2.0 | **v2.2.1** | Speedup |
+|---|---|---|---|
+| Compress | 96.1 s / 143.5 MiB/s | **48.6 s / 283.6 MiB/s** | **1.98x** |
+| Decompress | 106.1 s / 130.1 MiB/s | **36.9 s / 373.6 MiB/s** | **2.87x** |
+
+Decompression is now faster than compression (373.6 vs 283.6 MiB/s). Archive size went from 14,093,391,633 to 14,082,700,706 bytes (-0.08%; per-block metadata dropped from ~1 KB to 258 B).
+
+Single-threaded codec figures (8 MB blocks; v2.2.0 built with `-O3`, v2.2.1 with `-O3 -flto`):
+
+| Stage | v2.2.0 | **v2.2.1** | Speedup |
+|---|---|---|---|
+| Huffman encode | 63.2 MB/s | **471.1 MB/s** | **7.5x** |
+| Huffman decode | 91.3 MB/s | **236.8 MB/s** | **2.6x** |
+| AES encrypt | 62.8 MB/s | **1261.5 MB/s** | **20.1x** |
+| AES decrypt | 62.1 MB/s | **1279.6 MB/s** | **20.6x** |
+
+The figures below are from v2.2.0 and are kept for historical comparison.
 
 Measured compression throughput in v2.2.0 (HuffmanAES, 16 logical cores / NVMe, same machine and identical input vs the old version):
 
@@ -54,7 +74,7 @@ The pattern: the bigger the files, the bigger the gain — compression/encryptio
 
 Because compression relies solely on Huffman coding, the **compression ratio is limited**, with a best-case ratio of about **60%**.
 
-Peak memory is hard-capped by the buffer pool: about `2 x (cores + 2)` 8 MB blocks (~300 MB on a 16-core machine), independent of total input size.
+Peak memory is independent of total input size and has two components: the **buffer pool** of `2 x (workers + 2)` 8 MB blocks (~**288 MB** with 16 workers), plus the **per-worker private 8 MB scratch buffer** (`compressedData`, ~**128 MB** with 16 workers), on top of the process image itself (static Qt, ~90 MB when idle). On a 16-worker / 8 MB-block machine the measured peak during a full run is about **500 MB**.
 
 Decompression uses the same 3-stage pipeline. Measured throughput (same environment): large files 24.1 -> **126.2 MiB/s** (5.2x), long paths 19.7 -> **64.3 MiB/s** (3.3x); the extreme tiny-file case (avg 172 B/file) decompresses slower than the old serial code (834 vs 1,135 files/s) — per-file queue and lock overhead cannot be amortized over microsecond-scale compute; batch scheduling is on the roadmap.
 
@@ -155,6 +175,22 @@ Memory usage is stable around **60 MB**.
 - Header `strategy` field now in use
 - Added `USE_STATIC_QT` CMake toggle for static/dynamic linking
 - LGPL v3 compliance notice
+
+---
+
+## v2.2.1 — Core speedups (2026-09-11)
+
+**Performance** (same machine and input, 13.47 GiB / 45,390 files, end-to-end vs v2.2.0): compression **1.98x**, decompression **2.87x**.
+
+- **Huffman encoding**: the symbol table moved from `unordered_map` to a flat 256-entry array, removing 3-4 hash probes per input byte plus a heap pointer chase per symbol; bit packing moved from per-bit shifting to a 64-bit buffer flushed in bulk. Encode: 63.2 -> **471.1 MB/s**.
+- **Huffman decoding**: rewritten around canonical codes plus a 12-bit lookup table (codes longer than 12 bits fall back to canonical bit-by-bit decoding), replacing "expand each byte into a bit vector, then walk the tree bit by bit". Decode: 91.3 -> **236.8 MB/s**.
+- **A code-length table replaces full tree serialization**: per-block metadata dropped from 2 bytes/node (~1023 B for a full alphabet) to **258 B**.
+- **AES replaced with a standard implementation**: the previous in-house AES-128 CFB core mixed along the wrong axis in MixColumns (across a row rather than down a column). A single-bit flip changed bytes only within the same row in **128/128 measured cases**, leaving the four state rows fully independent; it does not meet the avalanche criterion for a block cipher and had no hardware-accelerated path. It is now the standard AES-128-CTR from Windows CNG, with the keystream produced by bulk ECB. Encrypt/decrypt: 62.8/62.1 -> **1261.5/1279.6 MB/s**.
+- **LTO enabled**: `-flto` for Release builds, using `gcc-ar`/`gcc-ranlib` as the archiver to silence the `plugin needed to handle lto object` warning.
+
+**Tooling**: `tool_archivebaseline` gained a `huffman-aes` mode (previously `compress`/`compressdir` only accepted pack|huffman, so the end-to-end encrypted path had no coverage).
+
+**Compatibility (breaking)**: the archive format version goes `2 -> 3` and `MIN_SUPPORTED_VERSION` is raised to `3`, so **v1/v2 archives are no longer supported at all** (the v1 legacy branch in `EntryParser` was removed). Because the AES core was replaced, the ciphertext of old archives is unreadable regardless.
 
 ---
 

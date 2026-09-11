@@ -24,13 +24,13 @@ namespace Y_flib
             huffman->finishFreqStat();
             huffman->genHufftree();
             huffman->saveCodeInTab();
-            huffman->treeToPlatUchar(metadataOut);
+            huffman->codeTableToPlatUchar(metadataOut);
             huffman->encode(input, output);
         }
 
         void decompress(const DataBlock &metadata, const DataBlock &input, DataBlock &output, size_t originalSize) override
         {
-            huffman->spawnTree(const_cast<DataBlock &>(metadata));
+            huffman->spawnCodeTable(metadata);
             huffman->decode(input, output, BitHandler(), originalSize);
         }
 

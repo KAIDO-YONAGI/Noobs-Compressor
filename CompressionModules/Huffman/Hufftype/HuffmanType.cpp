@@ -64,26 +64,9 @@ void PathStack::pop(){
 }
 
 void PathStack::writeCode(CodeTable& tab, unsigned char sym){
-   const CodeLenT L = codeLen;
-   tab.len[sym] = L;
-
-   // 字节打包形态（等价于旧实现的 clear + 逐个 push_back），
-   // 供 len>64 或位缓冲溢位时的回退路径使用。
-   tab.packed[sym].assign(codeBlocks.begin(), codeBlocks.end());
-
-   // 右对齐 uint64 码字：codeBlocks 是 MSB-first 打包，末尾字节可能含填充位或
-   // 历史 pop 残留的脏位，统一右移掉。nBytes 上限 8 => L<=64 时不会溢出。
-   if(L <= 64){
-      const size_t nBytes = (static_cast<size_t>(L) + 7) / 8;
-      uint64_t v = 0;
-      for(size_t i = 0; i < nBytes && i < codeBlocks.size(); ++i){
-         v = (v << 8) | codeBlocks[i];
-      }
-      const unsigned pad = static_cast<unsigned>(nBytes * 8 - L);
-      tab.code[sym] = v >> pad;
-   }else{
-      tab.code[sym] = 0; // 不用，走 packed
-   }
+   // 这里只记录由树导出的码长；码字改由 Huffman::buildCanonical 按 canonical 规则
+   // 统一生成，使解压侧仅凭码长表即可复现同一套码字（无需序列化整棵树）。
+   tab.len[sym] = codeLen;
 }
 
 //method of BitHandler
