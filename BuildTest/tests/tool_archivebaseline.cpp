@@ -1,9 +1,9 @@
 // tool_archivebaseline.cpp — 归档基准生成/对比 CLI 工具（零外部依赖，仿 test_flagtype 模式）
 //
 //   tool_archivebaseline sample    <root>                    生成固定样本集（root/sample 树 + root/extra.txt）
-//   tool_archivebaseline compress  <root> <out.sy> <mode>    压缩样本集（mode: pack | huffman，均无加密）
+//   tool_archivebaseline compress  <root> <out.sy> <mode>    压缩样本集（mode: pack | huffman | huffman-aes）
 //   tool_archivebaseline decompress <in.sy> <outdir>         解压归档（outdir 必须不存在）
-//   tool_archivebaseline roundtrip <root> <mode>             压缩→解压→逐文件校验，一条命令完成往返验收
+//   tool_archivebaseline roundtrip <root> <mode>             压缩→解压→逐文件校验（mode 同上），一条命令完成往返验收
 //   tool_archivebaseline verify    <dirA> <dirB>             递归对比两棵树（文件集合 + 逐字节）
 // 退出码：0 成功，非 0 失败（可直接用于脚本判定）。
 //
@@ -11,7 +11,9 @@
 // 解压恢复为 outdir/baseline_root/sample/... 与 outdir/baseline_root/extra.txt。
 //
 // 确定性说明：样本内容由固定种子 LCG 生成；Windows/NTFS 的 directory_iterator
-// 在同一目录上顺序稳定，因此同机生成的归档逐字节可复现（加密模式因 IV 随机不适用，本工具只做无加密模式）。
+// 在同一目录上顺序稳定，因此同机生成的归档逐字节可复现——但仅限无加密的 pack/huffman
+// 模式。huffman-aes 每次加密用随机 IV，归档本身不可逐字节复现；其往返结果（解密后的
+// 明文）仍由 roundtrip 逐文件逐字节校验，故加密路径同样纳入 ctest 覆盖。
 
 #include "FileLibrary.h"
 #include "EncodingUtils.h"
@@ -436,7 +438,7 @@ int main(int argc, char **argv)
               << "  tool_archivebaseline compress <root> <out.sy> <pack|huffman|huffman-aes>\n"
               << "  tool_archivebaseline compressdir <dir> <out.sy> <pack|huffman|huffman-aes>  (arbitrary directory)\n"
               << "  tool_archivebaseline decompress <in.sy> <outdir>\n"
-              << "  tool_archivebaseline roundtrip <root> <pack|huffman>\n"
+              << "  tool_archivebaseline roundtrip <root> <pack|huffman|huffman-aes>\n"
               << "  tool_archivebaseline verify <dirA> <dirB>\n";
     return 1;
 }

@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.20)
 
 project(SimpleFilesCompressorGUI VERSION 2.2.1 LANGUAGES CXX)
 # 构建与测试位于根目录 BuildTest/（本文件为 GUI 构建，tests/ 为单元测试）：GUI 代码在 ../SFC_GUI，其余模块在仓库根各目录
-set(REPO_ROOT "${CMAKE_SOURCE_DIR}/..")
-set(GUI_DIR "${CMAKE_SOURCE_DIR}/../SFC_GUI")
+# 核心库源清单与包含目录由 sfc_core.cmake 唯一定义（与 tests/ 共用，避免两份清单漂移）
+include("${CMAKE_CURRENT_LIST_DIR}/sfc_core.cmake")
+set(REPO_ROOT "${SFC_REPO_ROOT}")
+set(GUI_DIR "${SFC_REPO_ROOT}/SFC_GUI")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,46 +68,15 @@ endif()
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets)
 
 # ========================
-# include 目录
+# include 目录（来自 sfc_core.cmake，与 tests/ 同源）
 # ========================
-include_directories(
-    "${REPO_ROOT}/EncryptionModules/Aes/include"
-    "${REPO_ROOT}/CompressionModules/Huffman/Hufftype"
-    "${REPO_ROOT}/CompressionModules/Huffman/Core/include"
-    "${REPO_ROOT}/BufferPool"
-    "${REPO_ROOT}/CompressorFileSystem/Commons/include"
-    "${REPO_ROOT}/CompressorFileSystem/DataIO/include"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/include"
-    "${REPO_ROOT}/CompressorFileSystem/Strategy/include"
-    "${REPO_ROOT}/Y_Manager"
-)
+include_directories(${SFC_CORE_INCLUDE_DIRS})
 
 # ========================
-# 源文件（核心库）
+# 核心库源文件
 # ========================
-set(CORE_SOURCES
-    "${REPO_ROOT}/CompressorFileSystem/Commons/src/EncodingUtils.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/Commons/src/FileSystemUtils.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryParser.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/Commons/src/ToolClasses.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataExporter.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/DataIO/src/DataLoader.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/EntryProcessor.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardWriter.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/BinaryStandardLoader.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/CatalogFinalizer.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/Strategy/src/NullCompression.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/Strategy/src/StrategyFactory.cpp"
-    "${REPO_ROOT}/Y_Manager/MainLoop.cpp"
-    "${REPO_ROOT}/Y_Manager/CompressionLoop.cpp"
-    "${REPO_ROOT}/Y_Manager/DecompressionLoop.cpp"
-    "${REPO_ROOT}/CompressorFileSystem/ArchiveFormat/src/HeaderWriter.cpp"
-    "${REPO_ROOT}/EncryptionModules/Aes/src/AesFunctions.cpp"
-    "${REPO_ROOT}/EncryptionModules/Aes/src/mainCircle.cpp"
-    "${REPO_ROOT}/BufferPool/BufferPool.cpp"
-    "${REPO_ROOT}/CompressionModules/Huffman/Hufftype/HuffmanType.cpp"
-    "${REPO_ROOT}/CompressionModules/Huffman/Core/src/Huffman.cpp"
-)
+# 21 个文件的清单在 sfc_core.cmake 中（与 tests/ 共用同一份，见文件顶部 include），
+# 此处不再重复列举
 
 # ========================
 # GUI 源文件
@@ -123,7 +94,7 @@ set(GUI_SOURCES
 # 创建可执行文件
 # ========================
 add_executable(SimpleFilesCompressorGUI
-    ${CORE_SOURCES}
+    ${SFC_CORE_SOURCES}
     ${GUI_SOURCES}
     ${RESOURCES}
 )
@@ -172,9 +143,11 @@ endif()
 # ========================
 # 编译选项
 # ========================
-# -Wswitch：对枚举的 switch 漏写新增枚举值时编译期报警
-# （StrategyFactory 的 idToMode / createModules 依赖它提醒为新模式接线）
-target_compile_options(SimpleFilesCompressorGUI PRIVATE -Wswitch)
+# -Wall -Wextra：让警告可见；刻意不配 -Werror（单人开发下升级编译器会把构建
+# 直接搞挂，收益不抵成本，理由同 tests/CMakeLists.txt）
+# -Wswitch 由 -Wall 隐含，这里显式列出以标明"策略接线漏写靠它提醒"这一意图：
+# StrategyFactory 的 createModules 依赖它提醒为新模式接线
+target_compile_options(SimpleFilesCompressorGUI PRIVATE -Wall -Wextra -Wswitch)
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     if (NOT MSVC)
         target_compile_options(SimpleFilesCompressorGUI PRIVATE
