@@ -3,6 +3,7 @@
 #include "../CompressorFileSystem/Strategy/include/StrategyFactory.h"
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <memory>
 #include <utility>
 
@@ -18,9 +19,16 @@ using Y_flib::StandardsReader;
 // 进度回调最小间隔（毫秒）
 static constexpr int PROGRESS_CALLBACK_INTERVAL_MS = 100;
 
-// 计算工人数量：物理并行度，取不到时退回 4（与压缩侧一致）
+// 计算工人数量：默认取硬件并行度，取不到时退回 4（与压缩侧同口径）。
+// SFC_WORKERS 可覆盖（正整数）——压测并行度与限流，见压缩侧同名说明。
 static unsigned pipelineWorkerCount()
 {
+    if (const char *override = std::getenv("SFC_WORKERS"))
+    {
+        const int requested = std::atoi(override);
+        if (requested > 0)
+            return static_cast<unsigned>(requested);
+    }
     const unsigned count = std::thread::hardware_concurrency();
     return count == 0 ? 4u : count;
 }
