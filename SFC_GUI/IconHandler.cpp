@@ -11,8 +11,12 @@
 
 using Y_flib::EncodingUtils;
 
+// shell32 / ole32 由 CMake 显式链接（见 BuildTest/CMakeLists.txt 的 target_link_libraries）；
+// 这两行只是 MSVC 的冗余声明，MinGW/GCC 会忽略并报 -Wunknown-pragmas，故仅对 MSVC 保留
+#if defined(_MSC_VER)
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "ole32.lib")
+#endif
 
 // 资源ID定义
 #define IDI_APPICON 101
@@ -57,7 +61,7 @@ bool IconHandler::ExtractIconFromExe(const std::wstring &iconPath)
         }
 
         // 获取位图信息
-        BITMAP bm = {0};
+        BITMAP bm = {};
         if (!GetObjectW(iconInfo.hbmColor, sizeof(BITMAP), &bm))
         {
             DestroyIcon(hIcon);
@@ -103,7 +107,7 @@ bool IconHandler::ExtractIconFromExe(const std::wstring &iconPath)
         WriteFile(hFile, &header, sizeof(ICONDIR), &written, NULL);
 
         // 准备目录项
-        ICONDIRENTRY entry = {0};
+        ICONDIRENTRY entry = {};
         entry.bWidth = (bm.bmWidth > 255) ? 0 : (BYTE)bm.bmWidth;
         entry.bHeight = (bm.bmHeight > 255) ? 0 : (BYTE)bm.bmHeight;
         entry.bColorCount = 0;
@@ -121,7 +125,7 @@ bool IconHandler::ExtractIconFromExe(const std::wstring &iconPath)
 
         // 从HICON获取像素数据（使用GetDIBits）
         HDC hDC = GetDC(NULL);
-        BITMAPINFOHEADER bmiHeader = {0};
+        BITMAPINFOHEADER bmiHeader = {};
         bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
         bmiHeader.biWidth = bm.bmWidth;
         bmiHeader.biHeight = bm.bmHeight;
@@ -290,7 +294,11 @@ bool IconHandler::RegisterSyFileIcon(const std::string &iconPath)
     }
 }
 
-bool IconHandler::AssociateIconToSyFile(const std::string &syFilePath, const std::string &iconPath)
+// syFilePath 未使用：本函数注册的是"全局 .sy 文件类型"关联（写 HKCU\Software\Classes\syfile），
+// 与具体某个归档无关，故不需要该路径；参数保留是为了调用方语义清晰，头文件亦注明可为空。
+// 图标来源是 exe 自身的图标资源（RegisterSyFileIcon 内 GetModuleFileNameW + ",0"），
+// 传入的 iconPath 仅作为取不到 exe 路径时的备用。
+bool IconHandler::AssociateIconToSyFile([[maybe_unused]] const std::string &syFilePath, const std::string &iconPath)
 {
     try
     {

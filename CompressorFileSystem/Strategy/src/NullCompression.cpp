@@ -16,7 +16,9 @@ namespace Y_flib
         output = input;
     }
 
-    void NullCompression::decompress(const DataBlock &metadata, const DataBlock &input, DataBlock &output, size_t originalSize)
+    // metadata 是压缩侧写入的"标记 + 原始大小"（见上方 compress），透传模式不需要它，
+    // 但它是 ICompression 接口签名的一部分，故显式标注未使用而非省略参数名
+    void NullCompression::decompress([[maybe_unused]] const DataBlock &metadata, const DataBlock &input, DataBlock &output, size_t originalSize)
     {
         // 透传数据，按 originalSize 截断（处理最后一个不完整块）
         size_t copySize = (originalSize < input.size()) ? originalSize : input.size();
