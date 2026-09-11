@@ -58,6 +58,8 @@ Single-threaded codec figures (8 MB blocks; v2.2.0 built with `-O3`, v2.2.1 with
 | AES encrypt | 62.8 MB/s | **1261.5 MB/s** | **20.1x** |
 | AES decrypt | 62.1 MB/s | **1279.6 MB/s** | **20.6x** |
 
+> The general criteria and methodology behind these speedups (three criteria, five audits, a decision tree, cross-language mapping, an anti-pattern checklist and how to identify which kind of bottleneck you have) are written up in [《性能优化通用方法论》](DevFiles/性能优化通用方法论.md) (Chinese only for now).
+
 The figures below are from v2.2.0 and are kept for historical comparison.
 
 Measured compression throughput in v2.2.0 (HuffmanAES, 16 logical cores / NVMe, same machine and identical input vs the old version):
