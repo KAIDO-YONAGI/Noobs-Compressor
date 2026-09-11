@@ -48,7 +48,7 @@ add_executable(test_aes
     "${REPO_ROOT}/EncryptionModules/Aes/src/mainCircle.cpp"
     "${REPO_ROOT}/EncryptionModules/Aes/src/AesFunctions.cpp"
 )
-target_link_libraries(test_aes PRIVATE advapi32)
+target_link_libraries(test_aes PRIVATE advapi32 bcrypt)
 
 # ========================
 # BufferPool 单元测试（纯手写断言，零外部依赖）
@@ -118,4 +118,4 @@ add_executable(tool_archivebaseline
     "${REPO_ROOT}/CompressionModules/Huffman/Hufftype/HuffmanType.cpp"
     "${REPO_ROOT}/CompressionModules/Huffman/Core/src/Huffman.cpp"
 )
-target_link_libraries(tool_archivebaseline PRIVATE advapi32)
+target_link_libraries(tool_archivebaseline PRIVATE advapi32 bcrypt)

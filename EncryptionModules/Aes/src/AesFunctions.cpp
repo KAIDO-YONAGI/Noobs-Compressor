@@ -1,5 +1,17 @@
 #include "../include/My_Aes.h"
 
+#include <stdexcept>
+#include <string>
+
+/* AES 底层原语层：密钥派生、CNG 密钥建立/销毁、CTR 密钥流生成。
+ *
+ * 与旧实现的分工保持一致：原 AesFunctions.cpp 放的是密码原语与密钥材料
+ * （S 盒、轮函数、extendKey、SHA-256），模式封装与对外入口在 mainCircle.cpp。
+ * 现在的对应关系：
+ *     hashTo16Bytes / Aes::Aes / Aes::~Aes  <=> 原 hashTo16Bytes / extendKey（密钥建立与销毁）
+ *     ctrXor                                <=> 原 subBytes/shiftRows/mixColumns（分组密码主体）
+ */
+
 // 密钥派生所需的轻量级 SHA256（仅用于把任意长度口令压成 128 位密钥）。
 // 分组密码本体已改为 Windows CNG 的标准 AES，不再自研。
 
@@ -76,4 +88,124 @@ void Aes::hashTo16Bytes(const char *input, uint8_t *output) {
     memcpy(output, hash, 16);
     // 完整摘要的前 16 字节即主密钥，栈上 32 字节副本一并清零
     SecureZeroMemory(hash, sizeof(hash));
+}
+
+Aes::Aes(const char *aesKey)
+{
+    memset(iv, 0, sizeof(iv));
+    hashTo16Bytes(aesKey, aesKey16Bytes);
+
+    if (BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_AES_ALGORITHM, NULL, 0) < 0)
+    {
+        throw std::runtime_error("Failed to open AES algorithm provider");
+    }
+
+    // 用 ECB 批量加密计数器块来生成 CTR 密钥流。选这条路的实测依据：
+    //   · CNG 原生 CTR：本机返回 STATUS_INVALID_PARAMETER(0xC000000D)，不可用
+    //   · CNG CFB：既不是标准 CFB-128（IV 未直接参与首块），也不走硬件（54 MB/s）
+    //   · ECB 批量：9.0 GB/s，是唯一可靠的硬件路径
+    if (BCryptSetProperty(hAlg, BCRYPT_CHAINING_MODE,
+                          (PUCHAR)BCRYPT_CHAIN_MODE_ECB,
+                          sizeof(BCRYPT_CHAIN_MODE_ECB), 0) < 0)
+    {
+        BCryptCloseAlgorithmProvider(hAlg, 0);
+        hAlg = NULL;
+        throw std::runtime_error("Failed to set AES chaining mode to ECB");
+    }
+
+    if (BCryptGenerateSymmetricKey(hAlg, &hKey, NULL, 0,
+                                   aesKey16Bytes, sizeof(aesKey16Bytes), 0) < 0)
+    {
+        BCryptCloseAlgorithmProvider(hAlg, 0);
+        hAlg = NULL;
+        throw std::runtime_error("Failed to generate AES key");
+    }
+}
+
+Aes::~Aes()
+{
+    // 主密钥与展开后的密钥句柄都能还原出完整加解密能力，销毁前必须一并处理
+    SecureZeroMemory(aesKey16Bytes, sizeof(aesKey16Bytes));
+    SecureZeroMemory(iv, sizeof(iv));
+    if (hKey != NULL)
+    {
+        BCryptDestroyKey(hKey);
+        hKey = NULL;
+    }
+    if (hAlg != NULL)
+    {
+        BCryptCloseAlgorithmProvider(hAlg, 0);
+        hAlg = NULL;
+    }
+}
+
+void Aes::ctrXor(uint8_t *data, size_t len)
+{
+    if (len == 0)
+    {
+        return;
+    }
+
+    // 批量生成密钥流以摊薄 CNG 调用开销；CHUNK 必须是 16 的倍数
+    const size_t CHUNK = 256 * 1024;
+    ctrBuf.resize(CHUNK);
+    ksBuf.resize(CHUNK);
+
+    uint8_t ctr[16];
+    memcpy(ctr, iv, 16);
+
+    size_t offset = 0;
+    while (offset < len)
+    {
+        const size_t remain = len - offset;
+        const size_t fullBytes = (remain / 16) * 16;
+        size_t thisLen = (fullBytes < CHUNK) ? fullBytes : CHUNK;
+
+        if (thisLen == 0)
+        {
+            // 末尾不足 16 字节：生成整块密钥流，只消费前 remain 字节
+            memcpy(ctrBuf.data(), ctr, 16);
+            for (int i = 15; i >= 0; --i)
+            {
+                if (++ctr[i] != 0)
+                    break; // 128 位大端计数器自增
+            }
+            ULONG done = 0;
+            if (BCryptEncrypt(hKey, ctrBuf.data(), 16, NULL, NULL, 0,
+                              ksBuf.data(), 16, &done, 0) < 0 || done != 16)
+            {
+                throw std::runtime_error("CTR keystream generation failed");
+            }
+            for (size_t i = 0; i < remain; ++i)
+            {
+                data[offset + i] ^= ksBuf[i];
+            }
+            offset += remain;
+            continue;
+        }
+
+        for (size_t b = 0; b < thisLen; b += 16)
+        {
+            memcpy(ctrBuf.data() + b, ctr, 16);
+            for (int i = 15; i >= 0; --i)
+            {
+                if (++ctr[i] != 0)
+                    break;
+            }
+        }
+
+        ULONG done = 0;
+        if (BCryptEncrypt(hKey, ctrBuf.data(), static_cast<ULONG>(thisLen), NULL, NULL, 0,
+                          ksBuf.data(), static_cast<ULONG>(thisLen), &done, 0) < 0 ||
+            done != thisLen)
+        {
+            throw std::runtime_error("CTR keystream generation failed");
+        }
+
+        for (size_t i = 0; i < thisLen; ++i)
+        {
+            data[offset + i] ^= ksBuf[i];
+        }
+        offset += thisLen;
+    }
 }

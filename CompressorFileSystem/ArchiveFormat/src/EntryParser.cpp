@@ -103,12 +103,7 @@ namespace Y_flib
         bool isRoot,
         Y_flib::FlagType linkType)
     {
-        if (header.version < 2)
-        {
-            throw std::runtime_error(
-                "Legacy v1 symbolic-link metadata cannot be restored safely");
-        }
-
+        // v1/v2 归档已由加载端按 MIN_SUPPORTED_VERSION 直接拒绝，此处不再保留版本分支。
         // 链接标准的两个长度字段连续存放，随后才是名称和目标正文。
         const Y_flib::FileNameSize nameSize =
             readDataFromReadBlock<Y_flib::FileNameSize>(bufferPtr);

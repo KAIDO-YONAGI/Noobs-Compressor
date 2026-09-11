@@ -5,6 +5,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <stdexcept>
 #include <vector>
 
 #include "../../../CompressorFileSystem/Commons/include/FileLibrary.h"

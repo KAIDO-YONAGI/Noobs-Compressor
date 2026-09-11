@@ -84,8 +84,11 @@ namespace Y_flib
 
         constexpr Y_flib::CompressStrategy STRATEGY = 0; // 策略号
 
-        constexpr Y_flib::CompressorVersion VERSION = 2;               // v2：Windows 链接/Junction 使用独立类型标志
-        constexpr Y_flib::CompressorVersion MIN_SUPPORTED_VERSION = 1; // v1 普通文件归档仍可读取
+        // v3：AES 核心换为标准 AES-128-CTR（Windows CNG，走 AES-NI 硬件指令）。
+        // 旧自研 CFB 核心已整体移除，v1/v2 归档一律不再支持（已确认无历史用户），
+        // 加载端按 MIN_SUPPORTED_VERSION 直接拒绝。
+        constexpr Y_flib::CompressorVersion VERSION = 3;
+        constexpr Y_flib::CompressorVersion MIN_SUPPORTED_VERSION = 3;
 
         constexpr Y_flib::SizeOfMagicNum MAGIC_NUM = 0xDEADBEEF; // 文件标识魔数
         // 实现分割方案，为分块加密和解压时的分块读取密文做准备

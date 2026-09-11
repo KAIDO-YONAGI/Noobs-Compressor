@@ -165,6 +165,7 @@ if (WIN32)
         gdi32
         shell32
         ole32
+        bcrypt
     )
 endif()
 
