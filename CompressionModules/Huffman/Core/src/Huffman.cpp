@@ -1,5 +1,6 @@
 #include "../include/Huffman.h"
 #include <algorithm>
+#include <cstring>
 #include <stdexcept>
 #include <iostream>
 
@@ -8,6 +9,8 @@
 
 Huffman::Huffman() : treeRoot(NULL)
 {
+    std::memset(blockFreq, 0, sizeof(blockFreq));
+    std::memset(totalFreq, 0, sizeof(totalFreq));
 }
 
 Huffman::~Huffman()
@@ -19,45 +22,33 @@ void Huffman::statisticFreq(const sfc::block_t &inBlock)
 {
     for (auto &c : inBlock)
     {
-        freqTab[c].freq++;
+        ++blockFreq[c];
     }
 }
 
 void Huffman::finishFreqStat()
 {
-    // 合并暂存频率表到总表，然后清空暂存表（保留容量以便复用）。
-    // 注意：保留"暂存表 → 总表"两段式是为了迭代顺序稳定——unordered_map
-    // 的迭代顺序影响 genMinheap 的建堆顺序，进而影响同频率字节的树结构
-    // 选择；若把频率直接计入总表，压缩输出的字节会发生变化。
-    hashTab.clear(); // 清空旧的表
-    auto iter = freqTab.cbegin();
-    auto tabend = freqTab.cend();
-    while (iter != tabend)
-    {
-        hashTab[iter->first].add(iter->second);
-        ++iter; // 必须递增迭代器，否则会无限循环
-    }
-    freqTab.clear(); // 清空暂存表（只清空数据，保留容量以便复用）
+    // 原实现用「暂存表 → 总表」两段式，是为了让 genMinheap 的建堆顺序不受
+    // unordered_map 迭代顺序影响（详见 genMinheap 注释）。
+    // 改平坦数组后按符号值遍历天然有序，此处只需把暂存表原样搬到总表再清空暂存，
+    // 语义与旧实现（hashTab.clear() 后逐个 add）完全一致。
+    std::memcpy(totalFreq, blockFreq, sizeof(totalFreq));
+    std::memset(blockFreq, 0, sizeof(blockFreq));
 }
 
 std::unique_ptr<Minheap> Huffman::genMinheap()
 {
-    // 按字节值排序后入堆：同频率节点的建树顺序不依赖 unordered_map 的
-    // 迭代顺序（clear() 保留桶数组，首次插入与复用再插入的迭代顺序不同），
-    // 保证同一数据无论实例是否复用、压缩输出字节都一致。
-    std::vector<std::pair<unsigned char, FreqT>> entries;
-    entries.reserve(hashTab.size());
-    for (const auto &kv : hashTab)
-    {
-        entries.emplace_back(kv.first, kv.second.freq);
-    }
-    std::sort(entries.begin(), entries.end());
-
+    // 按符号值 0..255 升序遍历入堆：与旧实现「先收集再按 (byte, freq) 排序」的
+    // 入堆顺序完全一致，因此树结构与压缩输出字节保持不变；
+    // 同时天然不依赖任何哈希容器的迭代顺序。
     auto heap = std::make_unique<Minheap>();
-    for (const auto &entry : entries)
+    for (int sym = 0; sym < 256; ++sym)
     {
-        HuffTreeNode *node = new HuffTreeNode(entry.first, entry.second, true);
-        heap->push(node);
+        if (totalFreq[sym] > 0)
+        {
+            HuffTreeNode *node = new HuffTreeNode(static_cast<unsigned char>(sym), totalFreq[sym], true);
+            heap->push(node);
+        }
     }
     return heap;
 }
@@ -89,6 +80,8 @@ void Huffman::saveCodeInTab()
     // 重置pathStack
     pathStack.codeBlocks.clear();
     pathStack.codeLen = 0;
+    // 重置符号编码表（len[] 归零即可；packed[] 的陈旧内容不会被读到）
+    codeTab.clear();
 
     // 处理特殊情况：只有一个字符时，树的根节点本身就是叶子节点
     if (treeRoot != nullptr && treeRoot->isLeaf == true)
@@ -97,7 +90,7 @@ void Huffman::saveCodeInTab()
         pathStack.codeBlocks.clear();
         pathStack.codeBlocks.push_back(0);
         pathStack.codeLen = 1;
-        pathStack.writeCode(hashTab[treeRoot->data]);
+        pathStack.writeCode(codeTab, treeRoot->data);
         pathStack.codeBlocks.clear();
         pathStack.codeLen = 0;
     }
@@ -114,7 +107,7 @@ void Huffman::runSaveCodeInTab(HuffTreeNode *root)
 
     if (root->isLeaf == true)
     {
-        pathStack.writeCode(hashTab[root->data]);
+        pathStack.writeCode(codeTab, root->data);
         return; // 直接返回，不需要pop，因为调用者会pop
     }
     pathStack.push(0);
@@ -132,16 +125,24 @@ void Huffman::encode(const sfc::block_t &inBlock, sfc::block_t &outBlock, BitHan
     size_t paddingBitsPos = outBlock.size();
     outBlock.push_back(0); // 占位符，稍后更新
 
-    size_t charsEncoded = 0;
     for (auto &c : inBlock)
     {
+        const CodeLenT len = codeTab.len[c];
         // 检查字符是否在编码表中
-        if (hashTab.find(c) == hashTab.end() || hashTab[c].codeLen == 0)
+        if (len == 0)
         {
             throw std::runtime_error("Character not in Huffman encoding table");
         }
-        bitOutput.handle(hashTab[c].code, hashTab[c].codeLen, outBlock);
-        charsEncoded++;
+        // 快速路径前置条件：暂存位 + 码长 <= 64（避免 64 位移位溢出）
+        if (len <= 64 && static_cast<unsigned>(bitOutput.bitLen) + len <= 64)
+        {
+            bitOutput.handleFast(codeTab.code[c], len, outBlock);
+        }
+        else
+        {
+            // 罕见回退：码长 > 64，或暂存位 + 码长会超出 64 位
+            bitOutput.handle(codeTab.packed[c], len, outBlock);
+        }
     }
 
     // 处理最后不足8位的字节

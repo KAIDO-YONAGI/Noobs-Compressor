@@ -26,6 +26,21 @@ include_directories(
 )
 
 # ========================
+# LTO 归档器修正（同 GUI 构建）
+# 开启 LTO 后 GCC 使用 -fno-fat-lto-objects，对象只含 GIMPLE；普通 ar/ranlib
+# 无法处理会打 "plugin needed to handle lto object"。换 gcc-ar/gcc-ranlib 即消除。
+# ========================
+if(NOT MSVC AND CMAKE_CXX_COMPILER_AR)
+    set(CMAKE_AR "${CMAKE_CXX_COMPILER_AR}" CACHE FILEPATH "Archiver for LTO objects" FORCE)
+    set(CMAKE_RANLIB "${CMAKE_CXX_COMPILER_RANLIB}" CACHE FILEPATH "Ranlib for LTO objects" FORCE)
+endif()
+
+# ========================
+# 全部测试目标启用 LTO（与 GUI 发布构建口径一致）
+# ========================
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
+# ========================
 # AES 单元测试（纯手写断言，零外部依赖）
 # ========================
 add_executable(test_aes

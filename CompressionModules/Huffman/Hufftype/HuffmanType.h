@@ -3,7 +3,6 @@
 
 #include <queue>
 #include <stack>
-#include <unordered_map>
 #include <vector>
 #include <cstdint>
 
@@ -18,37 +17,26 @@ using CodeLenT = uint8_t;
 using CodeT = std::vector<uint8_t>;
 
 /**
- * CharData类：存储一个字符的编码信息
- * 参数列表：
- *     freq：频率
- *     codeLen：编码长度
- *     code：编码
- * 函数功能：
- *     add()：频率加1
- *     add(const CharData&)：合并频率到此对象
+ * CodeTable类：符号编码表（平坦数组，256 项，取代原 Huffmap）
+ *
+ * 原实现用 unordered_map<unsigned char, CharData> 存编码表，热路径（encode）
+ * 每输入字节要付 3~4 次哈希探查 + 每符号一次堆上 vector 的指针追逐。
+ * 改为按符号值直接索引的平坦数组后，热路径只剩两次数组 load，整表常驻 L1。
+ *
+ *     len[sym] == 0         该符号本块未出现
+ *     1 <= len[sym] <= 64   code[sym] 为该码的右对齐（低位对齐）码字
+ *     len[sym] > 64         仅 packed[sym] 有效（罕见回退路径）
+ *
+ * packed[] 在 len<=64 时也会写入，用于「暂存位 + 码长 > 64」时的溢出回退。
  */
+struct CodeTable{
+    uint64_t code[256];
+    CodeLenT len[256];
+    CodeT packed[256];
 
-struct CharData{
-    CharData();
-
-    FreqT freq;
-    CodeLenT codeLen;
-    CodeT code;
-
-    void add();
-    void add(const CharData&);
+    CodeTable();
+    void clear();
 };
-
-/**
- * Huffmap类：字符到字符信息的映射
- */
-
-typedef
-std::unordered_map<
-    unsigned char,
-    CharData
->
-Huffmap;
 
 /**
  * HuffTreeNode：编码树节点
@@ -113,7 +101,7 @@ struct PathStack
 
     void push(int bit);
     void pop();
-    void writeCode(CharData& cdata);
+    void writeCode(CodeTable& tab, unsigned char sym);
 };
 
 /**
@@ -138,6 +126,9 @@ struct BitHandler
     BitHandler() : byte(0), bitLen(0), byteCount(0), valuedBits(0) { }
 
     void handle(CodeT& codeBlocks, CodeLenT codeLen, sfc::block_t&);
+    // 64-bit 位缓冲快速路径：整码字一次并入、按字节批量冲刷，取代逐位移位。
+    // 前置条件 bitLen + codeLen <= 64（调用方保证），否则左移会超出 64 位。
+    void handleFast(uint64_t code, CodeLenT codeLen, sfc::block_t& outBlock);
     void handle(unsigned char, std::vector<uint8_t>&, uint8_t validBits = 8);
     void handleLast();
 };

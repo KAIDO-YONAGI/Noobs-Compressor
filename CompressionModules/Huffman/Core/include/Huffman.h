@@ -8,8 +8,9 @@
 /**
  * Huffman类 压缩/解压处理模块
  * 
- *     freqTab：暂存频率表（统计当前块，finishFreqStat 时并入总表）
- *     hashTab：总哈希表
+ *     blockFreq：暂存频率表（统计当前块，finishFreqStat 时并入总表）
+ *     totalFreq：总频率表
+ *     codeTab：平坦符号编码表（取代原 Huffmap hashTab）
  *     treeRoot：编码树的根节点
  * 
  * 函数功能：
@@ -46,8 +47,9 @@ public:
     void spawnTree(sfc::block_t& inBlock);
 
 private:
-    Huffmap freqTab;   // 暂存频率表（单个块），finishFreqStat 时并入 hashTab
-    Huffmap hashTab;
+    FreqT blockFreq[256];  // 暂存频率表（单个块），finishFreqStat 时并入 totalFreq
+    FreqT totalFreq[256];  // 总频率表
+    CodeTable codeTab;     // 平坦符号编码表（取代原 Huffmap hashTab）
     HuffTreeNode* treeRoot;
     PathStack pathStack;
 

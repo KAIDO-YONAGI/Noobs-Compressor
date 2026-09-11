@@ -1,18 +1,18 @@
 #include "HuffmanType.h"
 
-//method of CharData
+//method of CodeTable
 
-CharData::CharData(){
-   freq = 0;
-   codeLen = 0;
+CodeTable::CodeTable(){
+   clear();
 }
 
-void CharData::add(){
-   ++freq;
-}
-
-void CharData::add(const CharData& othercd){
-   freq += othercd.freq;
+void CodeTable::clear(){
+   // 只清 len[]/code[]：所有读取都以 len>0 为前提，packed[] 的陈旧内容不会被读到，
+   // 保留其容量可避免每块 256 次重新分配。
+   for(int i = 0; i < 256; ++i){
+      len[i] = 0;
+      code[i] = 0;
+   }
 }
 
 //method of HuffTreeNode
@@ -63,15 +63,27 @@ void PathStack::pop(){
    --codeLen;
 }
 
-void PathStack::writeCode(CharData& cdata){
-   // 清空之前的编码
-   cdata.code.clear();
+void PathStack::writeCode(CodeTable& tab, unsigned char sym){
+   const CodeLenT L = codeLen;
+   tab.len[sym] = L;
 
-   // 写入新的编码
-   for(auto stackBlock : codeBlocks){
-      cdata.code.push_back(stackBlock);
+   // 字节打包形态（等价于旧实现的 clear + 逐个 push_back），
+   // 供 len>64 或位缓冲溢位时的回退路径使用。
+   tab.packed[sym].assign(codeBlocks.begin(), codeBlocks.end());
+
+   // 右对齐 uint64 码字：codeBlocks 是 MSB-first 打包，末尾字节可能含填充位或
+   // 历史 pop 残留的脏位，统一右移掉。nBytes 上限 8 => L<=64 时不会溢出。
+   if(L <= 64){
+      const size_t nBytes = (static_cast<size_t>(L) + 7) / 8;
+      uint64_t v = 0;
+      for(size_t i = 0; i < nBytes && i < codeBlocks.size(); ++i){
+         v = (v << 8) | codeBlocks[i];
+      }
+      const unsigned pad = static_cast<unsigned>(nBytes * 8 - L);
+      tab.code[sym] = v >> pad;
+   }else{
+      tab.code[sym] = 0; // 不用，走 packed
    }
-   cdata.codeLen = codeLen;
 }
 
 //method of BitHandler
@@ -103,6 +115,32 @@ void BitHandler::handle(CodeT& codeBlocks, CodeLenT codeLen, sfc::block_t& outBl
          }
       }
    }
+}
+
+void BitHandler::handleFast(uint64_t code, CodeLenT codeLen, sfc::block_t& outBlock){
+   // 调用方保证 bitLen + codeLen <= 64
+   uint64_t acc;
+   unsigned n;
+   if(bitLen == 0){
+      // 单独分支：bitLen==0 时 (uint64_t)byte << 64 属于 UB，必须绕开
+      acc = code;
+      n = codeLen;
+   }else{
+      // 此分支下 codeLen <= 63 必然成立（bitLen>=1 且 bitLen+codeLen<=64）
+      acc = (static_cast<uint64_t>(byte) << codeLen) | code;
+      n = static_cast<unsigned>(bitLen) + codeLen;
+   }
+
+   // 按字节批量冲刷。byte/bitLen 的不变式与逐位路径完全一致：
+   // byte 的低 bitLen 位为待输出数据
+   while(n >= 8){
+      outBlock.push_back(static_cast<unsigned char>(acc >> (n - 8)));
+      n -= 8;
+      ++byteCount;
+   }
+
+   bitLen = static_cast<uint8_t>(n);
+   byte = static_cast<unsigned char>(n ? (acc & ((1ULL << n) - 1)) : 0);
 }
 
 void BitHandler::handle(unsigned char byteIn, std::vector<uint8_t>& path, uint8_t validBits){
