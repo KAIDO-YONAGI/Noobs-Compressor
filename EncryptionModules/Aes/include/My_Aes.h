@@ -8,7 +8,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../../../CompressorFileSystem/Commons/include/FileLibrary.h"
+#include "../../../CompressorFileSystem/Commons/include/RuntimeLibrary.h"
 
 /* AES-128-CTR 加密（标准 AES，Windows CNG/BCrypt，自动走 AES-NI 硬件指令）
 
@@ -42,7 +42,7 @@ public:
     ~Aes();
 
     /* 统一加密/解密接口，按 AesMode 选择加密或解密。自动分块处理 */
-    void doAes(Y_flib::AesMode mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer);
+    void doAes(Y_flib::Runtime::AesMode mode, const Y_flib::Runtime::DataBlock &inputBuffer, Y_flib::Runtime::DataBlock &outputBuffer);
 
 private:
     /* CTR 密钥流生成并与 data 原地异或（len 可为任意长度） */
@@ -52,12 +52,12 @@ private:
     void hashTo16Bytes(const char *input, uint8_t *output);
 
     /* 分块处理，按 AesMode 走加密/解密；IV 前置/解析在此完成 */
-    Y_flib::DataBlock processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode);
+    Y_flib::Runtime::DataBlock processDataAes(const Y_flib::Runtime::DataBlock &inputBuffer, Y_flib::Runtime::AesMode mode);
 
     BCRYPT_ALG_HANDLE hAlg = NULL; // AES 算法提供者（ECB 链模式，用于批量生成密钥流）
     BCRYPT_KEY_HANDLE hKey = NULL; // 展开后的密钥句柄
     uint8_t iv[16];                // 当前块的 IV / 计数器初值
     uint8_t aesKey16Bytes[16];     // 128 位主密钥（哈希后）
-    Y_flib::DataBlock ctrBuf;      // 计数器块缓冲（复用，避免逐块分配）
-    Y_flib::DataBlock ksBuf;       // 密钥流缓冲（复用）
+    Y_flib::Runtime::DataBlock ctrBuf;      // 计数器块缓冲（复用，避免逐块分配）
+    Y_flib::Runtime::DataBlock ksBuf;       // 密钥流缓冲（复用）
 };

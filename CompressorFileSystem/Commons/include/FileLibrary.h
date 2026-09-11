@@ -2,8 +2,12 @@
 #pragma once
 // 本头文件只收录"归档磁盘格式"类型：字段宽度别名、文件/目录/分割标准、
 // Header 布局、Constants、BlockSpan。运行期通用类型在 RuntimeLibrary.h（Y_flib::Runtime）。
-// 关于编译：需要使用普通O3优化级别，且需要开启C++20标准支持（编译器选项 -std=c++20）。此外，确保链接器正确链接了所需的库，如stdc++fs（对于某些编译器）以支持文件系统功能。
-// 别开LTO（链接时优化）选项，因为它可能会导致某些符号被错误地优化掉，尤其是在使用了模板或内联函数的情况下。
+// 关于编译：需要 C++20（-std=c++20）与 -O3。文件系统功能用 C++17 起的 std::filesystem
+// （GCC 9 以前需额外链接 stdc++fs；本工程用的 MinGW-w64 GCC 11.2 不需要）。
+// 关于 LTO（链接时优化）：本工程 GUI 与测试构建都对自有翻译单元开启（见 BuildTest/CMakeLists.txt
+// 与 BuildTest/sfc_core.cmake）。历史上"LTO 可能把模板/内联符号错误优化掉"的顾虑在本工程
+// 实测未出现；唯一实际遇到的是归档器需换成 gcc-ar/gcc-ranlib 才能处理只含 GIMPLE 的对象文件
+// （工具链配置问题，与符号消除无关）。静态 Qt 为非 LTO 目标，不受影响。
 #include <cstdint>
 #include <array>
 #include <vector>

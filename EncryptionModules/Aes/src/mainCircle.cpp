@@ -14,11 +14,11 @@
  * （CTR 加解密同一条路径，无需再分两个函数）。
  */
 
-Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_flib::AesMode mode)
+Y_flib::Runtime::DataBlock Aes::processDataAes(const Y_flib::Runtime::DataBlock &inputBuffer, Y_flib::Runtime::AesMode mode)
 {
-    Y_flib::DataBlock outputBuffer;
+    Y_flib::Runtime::DataBlock outputBuffer;
 
-    if (mode == Y_flib::AesMode::Encrypt)
+    if (mode == Y_flib::Runtime::AesMode::Encrypt)
     {
         // 每次加密生成新的随机 IV（系统首选 RNG，无需 CSP 句柄）
         if (BCryptGenRandom(NULL, iv, sizeof(iv), BCRYPT_USE_SYSTEM_PREFERRED_RNG) < 0)
@@ -35,7 +35,7 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_fl
             ctrXor(outputBuffer.data() + sizeof(iv), inputBuffer.size());
         }
     }
-    else if (mode == Y_flib::AesMode::Decrypt)
+    else if (mode == Y_flib::Runtime::AesMode::Decrypt)
     {
         // 检查输入是否足够包含 IV
         if (inputBuffer.size() < sizeof(iv))
@@ -59,10 +59,10 @@ Y_flib::DataBlock Aes::processDataAes(const Y_flib::DataBlock &inputBuffer, Y_fl
     return outputBuffer;
 }
 
-void Aes::doAes(Y_flib::AesMode mode, const Y_flib::DataBlock &inputBuffer, Y_flib::DataBlock &outputBuffer)
+void Aes::doAes(Y_flib::Runtime::AesMode mode, const Y_flib::Runtime::DataBlock &inputBuffer, Y_flib::Runtime::DataBlock &outputBuffer)
 {
     // 枚举值只能经 static_cast 越界，仍保留穷举校验兜底
-    if (mode != Y_flib::AesMode::Encrypt && mode != Y_flib::AesMode::Decrypt)
+    if (mode != Y_flib::Runtime::AesMode::Encrypt && mode != Y_flib::Runtime::AesMode::Decrypt)
     {
         throw std::invalid_argument("Invalid AesMode. Use AesMode::Encrypt or AesMode::Decrypt.");
     }

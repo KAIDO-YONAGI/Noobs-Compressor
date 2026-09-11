@@ -1,9 +1,13 @@
-// test_aes.cpp —— AES-128-CFB 模块单元测试（手写断言，零外部依赖）
+// test_aes.cpp —— AES-128-CTR 模块单元测试（手写断言，零外部依赖）
 // 覆盖：round-trip 各种尺寸/模式、IV 前置格式与随机性、实例复用、
 //       截断输入抛错、错误密钥、密文扩散、非法 mode。
 //
 // 退出码：0 = 全部通过；非 0 = 失败用例数
 
+// 显式声明本测试用到的 Y_flib 短名（DataBlock / AesMode）来自归档格式头：
+// My_Aes.h 只依赖 RuntimeLibrary.h，不再充当 FileLibrary.h 的传递性提供者，
+// 消费者须自己包含所需头文件
+#include "FileLibrary.h"
 #include "My_Aes.h"
 
 #include <cstdio>
