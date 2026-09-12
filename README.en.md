@@ -6,92 +6,70 @@ English | [简体中文](README.md)
 
 # Project Overview
 
-**SFC.exe (SimpleFilesCompressor)** is a file archiving tool based on **Huffman coding and AES encryption**, supporting **compression and decompression of multiple files and directories**.
+SFC.exe (SimpleFilesCompressor) is a file archiving tool based on Huffman coding and AES encryption, supporting compression and decompression of multiple files and directories.
 
-The project is mainly intended for studying **file archiving structures, data compression, and basic encryption implementations**.
+The project is mainly intended for studying file archiving structures, data compression, and basic encryption implementations.
 
-**Two versions are available**:
-- **Command-line version (CLI)**: `Y_Manager/` directory, v1.x.x
-- **GUI version**: `SFC_GUI/` directory, v2.x.x
+The code is organised by responsibility:
+
+- `SFC_GUI/`: Qt graphical interface and program entry point
+- `Y_Manager/`: compression and decompression pipelines
+- `CompressorFileSystem/`: archive format, directory standard parsing and I/O
+- `CompressionModules/`: Huffman codec
+- `EncryptionModules/`: AES encryption
+- `ThreadPool/`, `BufferPool/`: concurrency components and buffer pool
+- `BuildTest/`: build entry point and unit tests
 
 ---
 
 # Features
 
-- Supports **archiving, compression, and decompression of multiple files and directories**
-
-- Uses **Huffman coding** for data compression
-
-- Supports **AES encryption** and **SHA256** related security functions
-
-- Uses a **block-based compression and decompression mechanism** to reduce memory usage
-
-- Introduces a **logical root directory structure** to manage archive paths
-
-- Implements a **duplicate-path skipping mechanism** to avoid redundant processing
-
-- Supports **Windows file symbolic links, directory symbolic links, and Junctions** by storing their type, name, and original target path without resolving or scanning the target; external and missing targets are preserved normally
-
-- **GUI features**: drag-and-drop support, real-time progress, log output
+- Archiving, compression, and decompression of multiple files and directories
+- Huffman coding for data compression
+- AES encryption and SHA-256 key derivation
+- Block-based compression and decompression mechanism to reduce memory usage
+- A logical root directory structure to manage archive paths
+- A duplicate-path skipping mechanism to avoid redundant processing
+- Windows file symbolic links, directory symbolic links, and Junctions: only the link type, name and original target path are stored, without resolving or scanning the target; external and missing targets are preserved normally
+- GUI: drag-and-drop support, real-time progress, log output, cancellation and localisation
 
 ---
 
 # Performance Notes
 
-The compression core is a 3-stage pipeline (dedicated reader thread + N compute workers + dedicated writer thread, N = logical CPU cores). Since v2.2.1, AES uses the standard AES-128-CTR implementation from Windows CNG and therefore runs on the AES-NI hardware instructions; Huffman coding/decoding remains pure software.
+Both compression and decompression are 3-stage pipelines: a dedicated reader thread, N compute workers, and a dedicated writer thread, where N is the number of logical CPU cores. The worker count can be overridden with the `SFC_WORKERS` environment variable. AES uses the standard AES-128-CTR implementation from Windows CNG and therefore runs on the AES-NI hardware instructions; Huffman coding/decoding remains pure software.
 
-**Measured throughput in v2.2.1** (same machine, identical input of 13.47 GiB / 45,390 files, back-to-back against v2.2.0):
+Measured throughput on an input of 13.47 GiB / 45,390 files:
 
-| Direction | v2.2.0 | **v2.2.1** | Speedup |
-|---|---|---|---|
-| Compress | 96.1 s / 143.5 MiB/s | **48.6 s / 283.6 MiB/s** | **1.98x** |
-| Decompress | 106.1 s / 130.1 MiB/s | **36.9 s / 373.6 MiB/s** | **2.87x** |
+| Direction | Throughput (MiB/s) |
+|---|---|
+| Compress | 254.3 |
+| Decompress | 325.1 |
 
-Decompression is now faster than compression (373.6 vs 283.6 MiB/s). Archive size went from 14,093,391,633 to 14,082,700,706 bytes (-0.08%; per-block metadata dropped from ~1 KB to 258 B).
+Single-threaded codec throughput, 8 MB per block:
 
-Single-threaded codec figures (8 MB blocks; v2.2.0 built with `-O3`, v2.2.1 with `-O3 -flto`):
+| Stage | Throughput (MiB/s) |
+|---|---|
+| Huffman encode | 471.1 |
+| Huffman decode | 236.8 |
+| AES encrypt | 1261.5 |
+| AES decrypt | 1279.6 |
 
-| Stage | v2.2.0 | **v2.2.1** | Speedup |
-|---|---|---|---|
-| Huffman encode | 63.2 MB/s | **471.1 MB/s** | **7.5x** |
-| Huffman decode | 91.3 MB/s | **236.8 MB/s** | **2.6x** |
-| AES encrypt | 62.8 MB/s | **1261.5 MB/s** | **20.1x** |
-| AES decrypt | 62.1 MB/s | **1279.6 MB/s** | **20.6x** |
+Per-block metadata is 258 bytes.
 
-> The general criteria and methodology behind these speedups (three criteria, five audits, a decision tree, cross-language mapping, an anti-pattern checklist and how to identify which kind of bottleneck you have) are written up in [《性能优化通用方法论》](DevFiles/性能优化通用方法论.md) (Chinese only for now).
+Because compression relies solely on Huffman coding, the compression ratio is limited, with a best-case ratio of about 60%.
 
-The figures below are from v2.2.0 and are kept for historical comparison.
+Peak memory is independent of total input size and has two components: the buffer pool of `2 x (workers + 2)` 8 MB blocks, about 288 MB with 16 workers, plus the per-worker private 8 MB scratch buffer, about 128 MB with 16 workers. On top of that sits the process image itself, about 90 MB when idle with static Qt. On a 16-worker / 8 MB-block machine the measured peak during a full run is about 500 MB.
 
-Measured compression throughput in v2.2.0 (HuffmanAES, 16 logical cores / NVMe, same machine and identical input vs the old version):
-
-| Data profile | Old throughput | v2.2.0 throughput | Speedup |
-|---|---|---|---|
-| Mostly large files (avg 1.1 MB/file) | 19.1 MiB/s | 131.9 MiB/s | **6.9x** |
-| Small/medium files + very long paths (avg 75 KB/file, up to 267 chars) | 14.7 MiB/s | 52.6 MiB/s | **3.6x** |
-| Extreme tiny files (avg 172 B/file) | 962 files/s | 1,743 files/s | **1.8x** |
-
-Inverted view: per 1 GiB compressed, the large-file scenario takes ~54 s old vs ~7.8 s new; the long-path scenario ~70 s old vs ~19.5 s new.
-
-The pattern: the bigger the files, the bigger the gain — compression/encryption parallelizes across cores, while directory enumeration and per-file I/O are serial endpoints that do not scale with core count.
-
-Because compression relies solely on Huffman coding, the **compression ratio is limited**, with a best-case ratio of about **60%**.
-
-Peak memory is independent of total input size and has two components: the **buffer pool** of `2 x (workers + 2)` 8 MB blocks (~**288 MB** with 16 workers), plus the **per-worker private 8 MB scratch buffer** (`compressedData`, ~**128 MB** with 16 workers), on top of the process image itself (static Qt, ~90 MB when idle). On a 16-worker / 8 MB-block machine the measured peak during a full run is about **500 MB**.
-
-Decompression uses the same 3-stage pipeline. Measured throughput (same environment): large files 24.1 -> **126.2 MiB/s** (5.2x), long paths 19.7 -> **64.3 MiB/s** (3.3x); the extreme tiny-file case (avg 172 B/file) decompresses slower than the old serial code (834 vs 1,135 files/s) — per-file queue and lock overhead cannot be amortized over microsecond-scale compute; batch scheduling is on the roadmap.
+Multi-core utilisation, bottleneck analysis and the measured per-version evolution are in [《性能报告》](DevFiles/性能报告.md); the general criteria and methodology behind these speedups (three criteria, five audits, a decision tree, cross-language mapping, an anti-pattern checklist and how to identify which kind of bottleneck you have) are in [《性能优化通用方法论》](DevFiles/性能优化通用方法论.md). Both documents are Chinese only for now.
 
 ---
 
 # Safety Notice
 
-Although the program includes:
+Although the program includes a logical root directory mechanism and a duplicate-path skipping mechanism, file overwriting may still occur in extreme situations.
 
-- a **logical root directory mechanism**
-- a **duplicate-path skipping mechanism**
-
-file overwriting **may still occur in extreme situations**.
-
-Please **always back up your original files before using the software**.
+Please always back up your original files before using the software.
 
 Restoring Windows symbolic links requires Developer Mode or the "Create symbolic links" privilege; Junction restoration does not require it.
 
@@ -101,279 +79,88 @@ Link targets are not copied into the archive. On another machine, a missing targ
 
 # Project Documentation
 
-The project documentation includes:
-
-- `instructions.md`
-  Project instructions and HuffmanZip design documentation
-
-- `策划.md`
-  Project planning document
-
-- `开发日志.md`
-  Development timeline and technical details
-
----
-
-# Version History
-
-## v1.0.0 — Preview
-
-A small number of known bugs existed.
-
-The main cause was **incorrect construction of the Huffman tree when handling single-character input**.
-
----
-
-## v1.0.1 — Stable
-
-Fixed boundary handling issues in Huffman encoding.
-
-Applied lightweight optimization and visual adjustments to the executable.
-
-The compiler optimization level was upgraded from **O2 to O3**.
-
----
-
-## v1.1.1 — Well Done (CLI)
-
-Encapsulated file I/O operations and several helper methods (such as `seek*` functions).
-
-Fixed the directory block processing issue.
-
-Memory usage is stable around **60 MB**.
-
----
-
-## v2.0.0 — GUI Release (2026-04-16)
-
-**New Features**:
-- Qt 6 graphical user interface
-- Left-right two-column layout
-- Drag-and-drop support
-- Real-time progress and log output
-- Minimal deployment (reduced by ~30MB)
-
----
-
-## v2.1.0 — Strategy (2026-04-16)
-
-**New Features**:
-- Strategy pattern refactoring: 4 compression/encryption modes
-  - Huffman + AES (backward compatible with legacy .sy files)
-  - Huffman Only (default, compression only, no encryption)
-  - AES Only (encryption only, no compression)
-  - Pack Only (archive only, no compression or encryption)
-- Auto-detection on decompression via header strategy field
-- GUI mode selector on compression tab
-- Subfolder name input and reset button on decompression tab
-- **Qt 6.2.4 static linking**: package size reduced from 57MB to 16MB (single exe, no DLL dependencies)
-- Background image optimized: PNG → JPEG, embedded resource reduced from 11MB to 1.8MB
-- Fixed Chinese character path garbling during decompression
-
-**Architecture Changes**:
-- Added `NullCompression` / `NullEncryption` null implementations
-- Added `StrategyFactory`
-- Refactored `CompressionLoop` / `DecompressionLoop` / `BinaryStandardLoader` to use interface references (`ICompression&` / `IEncryption&`)
-- Header `strategy` field now in use
-- Added `USE_STATIC_QT` CMake toggle for static/dynamic linking
-- LGPL v3 compliance notice
-
----
-
-## v2.2.1 — Core speedups (2026-09-11)
-
-**Performance** (same machine and input, 13.47 GiB / 45,390 files, end-to-end vs v2.2.0): compression **1.98x**, decompression **2.87x**.
-
-- **Huffman encoding**: the symbol table moved from `unordered_map` to a flat 256-entry array, removing 3-4 hash probes per input byte plus a heap pointer chase per symbol; bit packing moved from per-bit shifting to a 64-bit buffer flushed in bulk. Encode: 63.2 -> **471.1 MB/s**.
-- **Huffman decoding**: rewritten around canonical codes plus a 12-bit lookup table (codes longer than 12 bits fall back to canonical bit-by-bit decoding), replacing "expand each byte into a bit vector, then walk the tree bit by bit". Decode: 91.3 -> **236.8 MB/s**.
-- **A code-length table replaces full tree serialization**: per-block metadata dropped from 2 bytes/node (~1023 B for a full alphabet) to **258 B**.
-- **AES replaced with a standard implementation**: the previous in-house AES-128 CFB core mixed along the wrong axis in MixColumns (across a row rather than down a column). A single-bit flip changed bytes only within the same row in **128/128 measured cases**, leaving the four state rows fully independent; it does not meet the avalanche criterion for a block cipher and had no hardware-accelerated path. It is now the standard AES-128-CTR from Windows CNG, with the keystream produced by bulk ECB. Encrypt/decrypt: 62.8/62.1 -> **1261.5/1279.6 MB/s**.
-- **LTO enabled**: `-flto` for Release builds, using `gcc-ar`/`gcc-ranlib` as the archiver to silence the `plugin needed to handle lto object` warning.
-
-**Tooling**: `tool_archivebaseline` gained a `huffman-aes` mode (previously `compress`/`compressdir` only accepted pack|huffman, so the end-to-end encrypted path had no coverage).
-
-**Compatibility (breaking)**: the archive format version goes `2 -> 3` and `MIN_SUPPORTED_VERSION` is raised to `3`, so **v1/v2 archives are no longer supported at all** (the v1 legacy branch in `EntryParser` was removed). Because the AES core was replaced, the ciphertext of old archives is unreadable regardless.
-
----
-
-## v2.2.0 — Pipeline (2026-09-07)
-
-**Multithreaded compression & decompression pipelines**: both compression and decompression now run as a 3-stage pipeline — dedicated reader thread → N compute workers → dedicated writer thread (N = logical CPU cores) — sharing one set of components (blocking queues / resequencer / buffer pool), with a buffer pool capping memory usage.
-
-Measured compression throughput (HuffmanAES, 16 logical cores, same machine and identical input; see DevFiles design doc, section 5.1):
-
-| Data profile | Old throughput | New throughput | Speedup |
-|---|---|---|---|
-| Large-file set 4GiB (3,871 files) | 19.1 MiB/s | 131.9 MiB/s | **6.9x** |
-| Long-path full set 2.4GiB (33,835 files, up to 267 chars) | 14.7 MiB/s | 52.6 MiB/s | **3.6x** |
-| Extreme tiny files, 150k of them (41 MiB total) | 962 files/s | 1,743 files/s | **1.8x** |
-
-Full-size reference: a 13.47GiB project tree (45,390 files) compresses at 106.5 MiB/s.
-
-**Decompression throughput** (same environment, vs old serial):
-
-| Data profile | Old throughput | v2.2.0 throughput | Speedup |
-|---|---|---|---|
-| Mostly large files (13.47GiB / 45,390 files) | 24.1 MiB/s | **126.2 MiB/s** | **5.2x** |
-| Small/medium files + long paths (2.42GiB / 33,835 files) | 19.7 MiB/s | **64.3 MiB/s** | **3.3x** |
-| Extreme tiny files (251k of them, 41 MiB) | 1,135 files/s | 834 files/s | 0.74x (endpoint-bound) |
-
-**Performance fixes**:
-- AES module: CSP handle caching (previously acquired/released a system handle on every encrypt — heavy and contended under threads)
-- Write path split into 3 phases: header build → pure-append data write → finalizer for unified backfill/encryption; block lengths written directly (two seek-backs per block removed)
-
-**Architecture changes**:
-- Added `ThreadPool/SafeQueue.h` (monitor-style blocking queue) and `ThreadPool/WriteSorter.h` (out-of-order result resequencing), each with unit tests
-- `compressionLoop` signature is now `(paths, mode, password)`; module assembly moved into worker threads (one private AES/Huffman instance per worker)
-- Runtime types split into `RuntimeLibrary.h` (`Y_flib::Runtime`); `FileLibrary.h` keeps on-disk format types only
-- Archive byte layout is identical to the previous version (byte-exact acceptance via `tool_archivebaseline` on non-encrypted modes)
-
-**Compatibility**: v1/v2 archive reading unchanged; HuffmanAES output stays backward compatible.
+- `DevFiles/开发流程与设计细节.md`: program structure, archive format, current implementation and thread model
+- `DevFiles/性能报告.md`: multi-core utilisation, bottleneck analysis and measured per-version evolution
+- `DevFiles/性能优化通用方法论.md`: general methodology for memory access, billing granularity and parallelism
+- `DevFiles/开发日志.md`: development timeline and technical details
+- `DevFiles/Others/策划.md`: project design plan
+- `DevFiles/Others/Instructions.md`: project notes and HuffmanZip design documents
+- `DevFiles/Others/Qt技术要点与策略工厂详解.md`: Qt and strategy factory notes
 
 ---
 
 # Build Instructions
 
-## CLI Build
+## Requirements
 
-To compile the CLI version yourself:
+- Qt 6.2.4 LTS, using its bundled MinGW 11.2.0
+- CMake 3.20+
+- Static builds require a pre-built Qt 6.2.4 static library (`D:/qt/6.2.4-static-mingw/`)
 
-### 1. Download Build Configuration
-
-Download the `.vscode` archive from the Release page.
-
----
-
-### 2. Place in Project Directory
-
-Place the extracted `.vscode` folder into:
-
-```
-Y_Manager/
-```
-
----
-
-### 3. Compile the Program
-
-Compile `main.cpp` to generate the executable.
-
----
-
-## GUI Build
-
-The GUI version is in the `SFC_GUI/` directory and requires Qt 6.2.4 LTS.
-
-### Requirements
-
-- **Qt 6.2.4 LTS** (with bundled MinGW 11.2.0)
-- **CMake 3.20+**
-- **Static linking mode**: requires pre-built Qt 6.2.4 static libraries (`D:/qt/6.2.4-static-mingw/`)
-
-### Build Steps (Static)
-
-Use the `build_static.bat` script (recommended):
+## Build Steps (Static)
 
 ```bash
-# Run in cmd.exe
-cd SFC_GUI
-build_static.bat
+cmake -S BuildTest -B BuildTest/build -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=ON
+cmake --build BuildTest/build --parallel
 ```
 
-Or build manually:
+The result is a single exe under `BuildTest/bin/SFC/`, with no DLL dependencies.
+
+## Build Steps (Dynamic)
 
 ```bash
-cd SFC_GUI
-cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=ON
-cmake --build build --parallel
+cmake -S BuildTest -B BuildTest/build -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=OFF
+cmake --build BuildTest/build --parallel
 ```
 
-After building, a single exe is in the `bin/SFC/` directory with no DLL dependencies.
-
-### Build Steps (Dynamic)
+## Unit Tests and End-to-End Checks
 
 ```bash
-cd SFC_GUI
-cmake -B build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -DUSE_STATIC_QT=OFF
-cmake --build build --config Release -j 8
+cmake -S BuildTest/tests -B BuildTest/tests/build -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release
+cmake --build BuildTest/tests/build --parallel
+ctest --test-dir BuildTest/tests/build --output-on-failure
 ```
-
-After building, the executable is in the `bin/SFC/` directory.
 
 ---
 
 # System Requirements
 
-## CLI Requirements
-
-- **OS**: Windows 10 or later
-- **Architecture**: x64
-
-## GUI Requirements
-
-- **OS**: Windows 10 1607+ (static build) / Windows 10 1809+ (dynamic build)
-- **Architecture**: x64
-- **Package size**: 16MB static (single exe) / 57MB dynamic (exe + DLLs + plugins)
+- OS: Windows 10 1607 or later (static build) / Windows 10 1809 or later (dynamic build)
+- Architecture: x64
+- Deployment size: 16 MB static (single exe) / 57 MB dynamic (exe + DLLs + plugins)
 
 ---
 
-### Compilation Requirements
+# Compilation Requirements
 
-- Use the **C++20 standard**
-
-- Compiler option:
-
-```
--std=c++20
-```
-
-- Recommended optimization level:
-
-```
--O3
-```
-
-- **Do not enable LTO (Link Time Optimization)**
-
-- **The GUI version must use Qt's bundled MinGW**
+- C++20: `-std=c++20`
+- Recommended optimisation level: `-O3`
+- LTO (link-time optimisation) is enabled; the archiver must be `gcc-ar` / `gcc-ranlib`
+- Qt's bundled MinGW is required
 
 ---
 
 # Dependencies
 
-## CLI Dependencies
-
-- **OpenSSL**
-  - `SHA256`
-  - `RAND`
-
-- **Windows 10–11 API**
-  Used for character encoding control and rand()
-
-## GUI Dependencies
-
-- **Qt 6.2.4 LTS** (Core, Widgets)
-- **MinGW 11.2.0** (Qt bundled)
-- **Windows 10–11 API**
-- **Additional dependencies for static linking mode**:
-  - Qt 6.2.4 static libraries (`D:/qt/6.2.4-static-mingw/`)
-  - Windows system libraries: dwmapi, uxtheme, imm32, oleaut32, version, setupapi, fontsub
+- Qt 6.2.4 LTS (Core, Widgets)
+- MinGW 11.2.0 (bundled with Qt)
+- Windows 10-11 API
+- Additional dependencies for static builds:
+  - Qt 6.2.4 static library (`D:/qt/6.2.4-static-mingw/`)
+  - Windows system libraries: bcrypt, dwmapi, uxtheme, imm32, oleaut32, version, setupapi, fontsub
 
 ---
 
 # Licensing
 
-- **The project's own source code: GPL-3.0** (full text in [LICENSE](LICENSE)). You may use,
-  modify and redistribute it; derivatives must be released under the same licence and may not be
-  distributed as closed source.
-- **Third-party component: Qt 6.2.4 (LGPL v3, statically linked)** — licence terms and the
-  compliance material (object files for relinking, source URL, build configuration) are in
-  [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
-- The bundled icons, background image, diagrams and translations are registered in the same file;
-  GPL-3.0 covers only what the author holds copyright to.
+- The project's own code: GPL-3.0 (full text in [LICENSE](LICENSE)). Free to use, modify and redistribute; redistributions must be released under the same licence and may not be closed-source.
+- Third-party components: Qt 6.2.4 (LGPL v3, statically linked). Licence terms and compliance material, including the object files needed for relinking, source locations and build parameters, are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- The icons, background images, diagrams and translations bundled with the project are also registered in that file; GPL-3.0 covers only the parts whose copyright the author holds.
+
+---
 
 # Disclaimer
 
-This project is intended **for educational and learning purposes only**.
+This project is for teaching and learning purposes only.
 
-Please **back up your original files before using the software**.
+Always back up your original files before use.
