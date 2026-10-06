@@ -1,0 +1,222 @@
+@startuml Y_Manager_Call_Chain
+scale 2
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam nodesep 22
+skinparam ranksep 26
+caption v2.2.1 · 归档格式 v3
+
+title 双流水线总览 — 压缩与解压
+
+package "SFC_GUI" {
+    class MainWindow {
+        + 压缩页与解压页两个标签页
+        + 拖放、进度、日志、取消
+    }
+    class CompressionWorker {
+        + setCompressionParams(..)
+        + setDecompressionParams(..)
+        + doCompression()
+        + doDecompression()
+        + requestStop() / resetStopFlag() / isStopRequested()
+        .. signals ..
+        + detailedProgress(..)
+        + finished(success, message)
+        - validateCompressionParams() : bool
+        - validateDecompressionParams() : bool
+        - shouldEmitProgress(currentProgress) : bool
+    }
+    MainWindow *--> CompressionWorker
+}
+
+package "Y_Manager" {
+    class CompressionLoop {
+        + compressionLoop(paths, mode, password)
+        - pipelineWorkerCount() : unsigned
+        - readerLoop(..)
+        - workerLoop(..)
+        - writerLoop(..)
+        - countTotalFiles(paths)
+        - prepareNextFile(..)
+        - reportProgress(..)
+    }
+    class DecompressionLoop {
+        + decompressionLoop(mode, password)
+        - readerLoop(..)
+        - workerLoop(..)
+        - writerLoop(..)
+        - processLinks(linkTasks)
+        - createDirectory(path) / createFile(path)
+        - reportProgress(..)
+    }
+    class BlockTask <<struct>> {
+        + sequence : uint64
+        + inputData : DataBlock
+    }
+    class PipelineMessage <<struct>> {
+        + sequence : uint64
+        + kind : Block 或 Settlement
+        + encryptedMetadata : DataBlock
+        + encryptedData : DataBlock
+        + exception : exception_ptr
+        + processedSizeOffset : SlotOffset
+    }
+    class DecompressTask <<struct>> {
+        + sequence : uint64
+        + expectedOriginal : FileSize
+        + encryptedMetadata : DataBlock
+        + encryptedData : DataBlock
+    }
+    class DecompressionMessage <<struct>> {
+        + sequence : uint64
+        + kind : Block 或 FileStart
+        + decompressedData : DataBlock
+        + exception : exception_ptr
+        + outputPath : path
+        + originalSize : FileSize
+    }
+    CompressionLoop ..> BlockTask
+    CompressionLoop ..> PipelineMessage
+    DecompressionLoop ..> DecompressTask
+    DecompressionLoop ..> DecompressionMessage
+}
+
+package "并发组件" {
+    class "SafeQueue<T>" as SafeQueue {
+        + push(value) : bool
+        + waitPop(value) : bool
+        + setDone()
+    }
+    class "WriteSorter<T>" as WriteSorter {
+        + canWrite(sequence, message) : bool
+        + takeInOrder() : vector~T~
+        + drainAll() : vector~T~
+        + getSize() : uint64
+    }
+    class BufferPool {
+        + acquire() : DataBlock
+        + release(block)
+        + close()
+        + capacity() : size_t
+        + available() : size_t
+    }
+}
+
+package "CompressorFileSystem" {
+    class StrategyFactory {
+        + {static} createModules(mode, password)
+        + {static} idToMode(id)
+        + {static} hasEncryption(mode) : bool
+    }
+    class BinaryStandardLoader {
+        + headerLoaderIterator(encryption)
+        + takeBlockSpans() : vector~BlockSpan~
+        + restartLoader()
+        + fileQueue : FileTaskQueue
+    }
+    class DataLoader {
+        + dataLoader()
+        + getBlock() : const DataBlock&
+        + reset(path)
+    }
+    class DataExporter {
+        + exportCompressedData(data)
+        + exportDecompressedData(data)
+        + currentFileProcessedSize() : FileSize
+        + startNextFile()
+    }
+    class CatalogFinalizer {
+        + finalize(sizeEntries, spans, encryption, mode)
+    }
+    class HeaderWriter {
+        + headerWriter(paths, outPath, logicalRoot, mode)
+    }
+}
+
+CompressionWorker ..> HeaderWriter : 建档
+CompressionWorker ..> CompressionLoop
+CompressionWorker ..> DecompressionLoop
+
+CompressionLoop ..> SafeQueue : 任务队列
+CompressionLoop ..> BufferPool : 背压
+CompressionLoop ..> WriteSorter : 定序
+DecompressionLoop ..> SafeQueue
+DecompressionLoop ..> BufferPool
+DecompressionLoop ..> WriteSorter
+
+CompressionLoop ..> StrategyFactory : 私有模块
+CompressionLoop ..> BinaryStandardLoader
+CompressionLoop ..> DataLoader
+CompressionLoop ..> DataExporter
+CompressionLoop ..> CatalogFinalizer : 收尾
+DecompressionLoop ..> StrategyFactory
+DecompressionLoop ..> BinaryStandardLoader
+DecompressionLoop ..> DataExporter
+
+' ── 版面控制：以下连线不渲染，只用于摆放 ──
+' 四个包摆成两行两列
+"SFC_GUI" -right[hidden]-> "Y_Manager"
+"Y_Manager" -right[hidden]-> "CompressorFileSystem"
+"SFC_GUI" -down[hidden]-> "并发组件"
+"并发组件" -right[hidden]-> "CompressorFileSystem"
+
+' SFC_GUI：主窗口在上，工人对象在下
+MainWindow -down[hidden]-> CompressionWorker
+
+' Y_Manager：两条流水线各带自己的块消息，摆成两行三列
+CompressionLoop -right[hidden]-> BlockTask
+BlockTask -right[hidden]-> PipelineMessage
+CompressionLoop -down[hidden]-> DecompressionLoop
+DecompressionLoop -right[hidden]-> DecompressTask
+DecompressTask -right[hidden]-> DecompressionMessage
+BlockTask -down[hidden]-> DecompressTask
+PipelineMessage -down[hidden]-> DecompressionMessage
+
+' 并发组件：三件并排
+SafeQueue -right[hidden]-> BufferPool
+BufferPool -right[hidden]-> WriteSorter
+
+' 文件系统：摆成两行三列
+StrategyFactory -right[hidden]-> BinaryStandardLoader
+BinaryStandardLoader -right[hidden]-> CatalogFinalizer
+StrategyFactory -down[hidden]-> DataLoader
+DataLoader -right[hidden]-> DataExporter
+DataExporter -right[hidden]-> HeaderWriter
+BinaryStandardLoader -down[hidden]-> DataExporter
+CatalogFinalizer -down[hidden]-> HeaderWriter
+
+note as N_ORDER
+  **序号与池块**
+  序号由读线程单线程分配，
+  块与文件界消息都占号，异常消息也占号。
+  池块随消息走完整条链路，
+  读线程是唯一借出方，写线程是唯一归还方。
+
+  **并行度**
+  工人数取 SFC_WORKERS，
+  未设置时取硬件并行度，取不到退为 4。
+  池容量为工人数加 2 后的 2 倍，
+  单块容量为 8MB 加 1KB。
+end note
+
+note as N_COMPRESS
+  **压缩流水线**
+  读线程取数据块，借出池块并复制，
+  分配序号后送入任务队列。
+  工人压缩并两次加密，原地覆写池块。
+  写线程按序号重排后纯追加写盘。
+  排空后回填大小槽并加密目录区。
+end note
+
+note as N_DECOMPRESS
+  **解压流水线**
+  读线程解密目录区，顺序读数据区，
+  每文件先发 FileStart 并预计算输出上限。
+  工人两次解密后解压，原地覆写池块。
+  写线程按序号重排，按文件开关输出。
+  排空后统一重建链接。
+end note
+
+@enduml

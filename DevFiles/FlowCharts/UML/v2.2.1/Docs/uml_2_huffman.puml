@@ -1,0 +1,120 @@
+@startuml Huffman_Pipeline
+scale 2
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam nodesep 30
+skinparam ranksep 35
+caption v2.2.1 · 归档格式 v3
+
+title Huffman 核心 — canonical 码与 12bit 查表，每 8MB 块独立建表
+
+class HuffmanCompression <<adapter>> {
+    - huffman : unique_ptr~Huffman~
+    + compress(input, metadataOut, output)
+    + decompress(metadata, input, output, originalSize)
+}
+
+class Huffman {
+    - blockFreq[256] : FreqT
+    - totalFreq[256] : FreqT
+    - codeTab : CodeTable
+    - treeRoot : HuffTreeNode*
+    - pathStack : PathStack
+    --
+    - maxCodeLen : int
+    - codeLenTab[256] : uint8_t
+    - sortedSymbols[256] : uint8_t
+    - canonFirstCode[257] : uint64_t
+    - canonFirstIdx[257] : uint16_t
+    - canonCount[257] : uint16_t
+    - lut[4096] : uint16_t
+    - {static} kLutBits = 12
+    - {static} kLutSize = 4096
+    - {static} kMaxCodeLen = 256
+    --
+    + statisticFreq(block)
+    + finishFreqStat()
+    + genHufftree()
+    + saveCodeInTab()
+    + codeTableToPlatUchar(outBlock)
+    + spawnCodeTable(inBlock)
+    + encode(input, output, bitOutput)
+    + decode(input, output, bitInput, maxOutputSize)
+    --
+    - genMinheap() : unique_ptr~Minheap~
+    - runSaveCodeInTab(root)
+    - destroyTree(node)
+    - buildCanonical()
+    - buildDecodeLut()
+}
+
+class CodeTable <<struct>> {
+    + code[256] : uint64_t
+    + len[256] : CodeLenT
+    + packed[256] : CodeT
+    + clear()
+}
+
+class HuffTreeNode <<struct>> {
+    + data : unsigned char
+    + freq : FreqT
+    + left : HuffTreeNode*
+    + right : HuffTreeNode*
+    + isLeaf : bool
+}
+
+class PathStack <<struct>> {
+    + codeBlocks : CodeT
+    + codeLen : CodeLenT
+    + push(bit)
+    + pop()
+    + writeCode(tab, sym)
+}
+
+class BitHandler <<struct>> {
+    + byte : unsigned char
+    + bitLen : uint8_t
+    + byteCount : uint64_t
+    + valuedBits : int
+    + handle(codeBlocks, codeLen, block)
+    + handleFast(code, codeLen, outBlock)
+    + handle(byte, bits, validBits)
+    + handleLast()
+}
+
+class Minheap <<alias>> {
+    priority_queue~HuffTreeNode*~ 按 freq 取小
+    CompareHeap 作为比较器反转比较结果
+}
+
+HuffmanCompression *--> Huffman
+Huffman *--> HuffTreeNode : treeRoot
+Huffman *--> PathStack
+Huffman o--> CodeTable : codeTab
+Huffman ..> BitHandler : 比特流
+Huffman ..> Minheap : genMinheap()
+HuffmanTreeNode --> HuffTreeNode : left / right
+
+note right of Huffman
+  压缩流程：
+  statisticFreq → finishFreqStat → genHufftree
+  → saveCodeInTab → codeTableToPlatUchar → encode
+
+  解压流程：
+  spawnCodeTable → buildCanonical → buildDecodeLut → decode
+end note
+
+note bottom of Huffman
+  码长表写入 metadata，格式为标记字节 'L'、
+  最大码长 1 字节、256 项码长各 1 字节，共 258 字节。
+  码长 0 表示该符号在本块中未出现。
+  buildCanonical 按码长与符号值升序分配码字，
+  buildDecodeLut 依据码字建立 4096 项 12bit 主表。
+  解码时一次数组访存取回符号，
+  码长超过 12bit 的符号走 canonical 逐位解码。
+  编码用 64bit 位缓冲整码字并入，再按字节批量冲刷。
+end note
+
+@enduml

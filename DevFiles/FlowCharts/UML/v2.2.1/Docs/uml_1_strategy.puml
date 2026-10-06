@@ -1,0 +1,123 @@
+@startuml Strategy_Pattern
+scale 2
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam nodesep 28
+skinparam ranksep 32
+caption v2.2.1 · 归档格式 v3
+
+title 策略模式 — 压缩与加密模块
+
+abstract class ICompression {
+    + compress(input, metadataOut, output) : void
+    + decompress(metadata, input, output, originalSize) : void
+}
+
+abstract class IEncryption {
+    + encrypt(input, output) : void
+    + decrypt(input, output) : void
+}
+
+class NullCompression {
+    + compress(input, metadataOut, output)
+    + decompress(metadata, input, output, originalSize)
+}
+
+class NullEncryption {
+    + encrypt(input, output)
+    + decrypt(input, output)
+}
+
+class HuffmanCompression <<adapter>> {
+    - huffman : unique_ptr~Huffman~
+    + HuffmanCompression()
+    + compress(input, metadataOut, output)
+    + decompress(metadata, input, output, originalSize)
+}
+
+class AesEncryption <<adapter>> {
+    - aes : Aes
+    + AesEncryption(password)
+    + encrypt(input, output)
+    + decrypt(input, output)
+}
+
+class Aes {
+    - hAlg : BCRYPT_ALG_HANDLE
+    - hKey : BCRYPT_KEY_HANDLE
+    - aesKey16Bytes[16] : uint8_t
+    - iv[16] : uint8_t
+    - ctrBuf : DataBlock
+    - ksBuf : DataBlock
+    + Aes(aesKey)
+    + ~Aes()
+    + doAes(mode, inputBuffer, outputBuffer)
+    - ctrXor(data, len)
+    - hashTo16Bytes(input, output)
+    - processDataAes(inputBuffer, mode) : DataBlock
+}
+
+class StrategyFactory {
+    + {static} createModules(mode, password) : StrategyModules
+    + {static} idToMode(id) : CompressionMode
+    + {static} modeToId(mode) : CompressStrategy
+    + {static} hasEncryption(mode) : bool
+}
+
+class StrategyModules <<struct>> {
+    + compression : unique_ptr~ICompression~
+    + encryption : unique_ptr~IEncryption~
+}
+
+class "Y_flib::Runtime\nRuntimeLibrary.h" as RuntimeLibrary {
+    + DataBlock : vector~unsigned char~
+    + UpSizeOfBuffer : uint32_t
+    + MetadataMarker : uint8_t
+    + CompressionMode
+    + ParserMode
+    + AesMode
+}
+
+ICompression <|-- NullCompression
+ICompression <|-- HuffmanCompression
+IEncryption <|-- NullEncryption
+IEncryption <|-- AesEncryption
+
+AesEncryption *--> Aes
+
+StrategyFactory ..> StrategyModules : 创建
+StrategyModules *--> ICompression
+StrategyModules *--> IEncryption
+
+note right of StrategyFactory
+  CompressionMode 定义在 RuntimeLibrary.h。
+  落盘时 modeToId 把模式映射为 CompressStrategy 字节，
+  解压端 idToMode 从归档头 strategy 字段反查，
+  穷举校验通过后映射回枚举。
+end note
+
+note bottom of RuntimeLibrary
+  CompressionMode 取值：
+  HuffmanAES = 0，Huffman 压缩加 AES 加密
+  HuffmanOnly = 1，仅 Huffman 压缩
+  AESOnly = 2，仅 AES 加密
+  PackOnly = 3，仅打包
+end note
+
+note bottom of StrategyModules
+  流水线的读线程与每个工人各自调用 createModules，
+  各自持有一份私有模块。Aes 持有 CNG 句柄与复用缓冲，
+  Huffman 持有频率表与编码树，都是可变状态。
+end note
+
+note bottom of Aes
+  AES-128-CTR 流模式，走 Windows CNG 与 AES-NI。
+  密钥由 SHA-256 口令取前 16 字节得到。
+  密文由 16 字节随机 IV 加密文体组成，
+  长度等于明文长度加 16 字节。
+  并行单位是 8MB 块，块间 IV 相互独立。
+end note
+
+@enduml
