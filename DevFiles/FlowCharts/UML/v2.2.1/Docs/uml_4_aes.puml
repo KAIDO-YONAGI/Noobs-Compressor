@@ -1,0 +1,69 @@
+@startuml AES_Module
+scale 2
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam nodesep 30
+skinparam ranksep 35
+caption v2.2.1 · 归档格式 v3
+
+title AES-128-CTR 加密模块 — Windows CNG 标准实现
+
+abstract class IEncryption {
+    + encrypt(input, output) : void
+    + decrypt(input, output) : void
+}
+
+class AesEncryption <<adapter>> {
+    - aes : Aes
+    + AesEncryption(password)
+    + encrypt(input, output) : void
+    + decrypt(input, output) : void
+}
+
+class NullEncryption {
+    + encrypt(input, output) : void
+    + decrypt(input, output) : void
+}
+
+class Aes {
+    - hAlg : BCRYPT_ALG_HANDLE
+    - hKey : BCRYPT_KEY_HANDLE
+    - iv[16] : uint8_t
+    - aesKey16Bytes[16] : uint8_t
+    - ctrBuf : DataBlock
+    - ksBuf : DataBlock
+    --
+    + Aes(aesKey)
+    + ~Aes()
+    + doAes(mode, inputBuffer, outputBuffer)
+    --
+    - ctrXor(data, len)
+    - hashTo16Bytes(input, output)
+    - processDataAes(inputBuffer, mode) : DataBlock
+}
+
+IEncryption <|-- AesEncryption
+IEncryption <|-- NullEncryption
+AesEncryption *--> Aes
+
+note right of Aes
+  AES-128-CTR 流模式，通过 Windows CNG 的 BCrypt 接口调用，
+  机器支持 AES-NI 时由硬件执行。
+  密钥来自 SHA-256 口令的前 16 字节。
+  每次加密由 BCryptGenRandom 生成 16 字节随机 IV，
+  IV 前置在密文体之前，密文体长度等于明文长度。
+  密钥流由 ECB 模式批量加密计数器块生成，
+  再与数据原地异或。
+  并行单位是 8MB 块，块间 IV 相互独立。
+end note
+
+note bottom of Aes
+  适配器以值成员持有 Aes，随适配器的生命周期创建与析构。
+  Aes 持有 CNG 算法提供者与密钥句柄，禁止拷贝构造与拷贝赋值。
+  析构时清零密钥副本并释放句柄。
+  实例按模块私有使用，同一实例不可被多线程并发调用。
+end note
+
+@enduml

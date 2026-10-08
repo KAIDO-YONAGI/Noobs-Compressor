@@ -1,0 +1,223 @@
+@startuml File_System_and_Serialization
+scale 2
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam nodesep 18
+skinparam ranksep 20
+caption v2.2.1 · 归档格式 v3
+
+title 文件系统与二进制序列化
+
+package "① 建档" {
+    class HeaderWriter {
+        - writeHeader(outFile, path, mode)
+        - writeDirectory(outFile, paths, logicalRoot)
+        + headerWriter(paths, outPath, logicalRoot, mode)
+    }
+    class EntryProcessor {
+        - entryQueue : EntryQueue / binaryStandardWriter : BinaryStandardWriter
+        + entryProcessor(paths, logicalRoot) / flowScanner(cursor)
+    }
+    class BinaryStandardWriter {
+        - standardWriter : StandardsWriter / locator : Locator
+        - outFile : ofstream&
+        + writeLogicalRoot(root, count, cursor) / writeRoot(paths, cursor)
+        + writeBlankSeparatedStandard() / binaryStandardWriter(dir, queue, cursor)
+        - writeDirectoryStandard(details, count, cursor)
+        - writeFileStandard(details, cursor)
+        - writeLinkStandard(details, linkInfo, cursor)
+        - writeStorageStandard(details, queue, cursor)
+        - writeSeparatedStandard / separateBlockIfNeeded
+    }
+    class DirectoryScanCursor <<struct>> {
+        + nextSlotPos : SlotOffset / blockBytes : BlockLength
+        + accountEntry(standardSize) / needsSeparation() : bool
+        + lengthSlotPos() : SlotOffset
+        + onBlockSealed() / onSlotReserved()
+    }
+    HeaderWriter ..right..> EntryProcessor
+    EntryProcessor *-right-> BinaryStandardWriter
+    BinaryStandardWriter ..right..> DirectoryScanCursor
+}
+
+package "② 数据区" {
+    class DataExporter {
+        - outFile : fstream / locator : Locator
+        - standardWriter : StandardsWriter / processedFileSize : FileSize
+        + exportCompressedData(data) / exportDecompressedData(data)
+        + currentFileProcessedSize() : FileSize / startNextFile()
+    }
+    class DataLoader {
+        - data : DataBlock / inFile : ifstream / fileSize : FileSize
+        - readCount : FileSize / loadIsDone : bool
+        + dataLoader() / reset(path) / resetByLastRead()
+        + getBlock() : const DataBlock& / isDone() : bool
+    }
+    DataExporter -right[hidden]-> DataLoader
+}
+
+package "③ 收尾" {
+    class CatalogFinalizer {
+        - archiveFile : fstream / locator : Locator
+        - standardWriter : StandardsWriter
+        + finalize(sizeEntries, spans, encryption, mode)
+        - backfillFileSizes(sizeEntries)
+        - encryptDirectoryBlocks(spans, encryption, mode)
+    }
+    class SizeFillEntry <<struct>> {
+        + slotOffset : SlotOffset / processedSize : FileSize
+    }
+    CatalogFinalizer ..right..> SizeFillEntry
+}
+
+package "纯读装载" {
+    class BinaryStandardLoader {
+        - header : Header / cursor : DirectoryReadCursor / inFile : ifstream
+        - countOfChildDirectory : FileCount
+        - parserForLoader : unique_ptr~EntryParser~ / buffer : DataBlock
+        + fileQueue : FileTaskQueue / entryQueue : EntryQueue
+        + linkQueueReady : LinkTaskQueue / blockPosition : vector~BlockSpan~
+        + directoryQueueReady : queue~path~
+        + headerLoaderIterator(encryption) / restartLoader()
+        + takeBlockSpans() : vector~BlockSpan~
+        + allLoopIsDone() : bool / getDirectoryOffset() : DirectoryOffsetSize
+    }
+    class EntryParser {
+        - entryQueue / fileQueue / linkQueue : 各任务队列的引用
+        - buffer : DataBlock& / header : const Header&
+        - cursor : const DirectoryReadCursor& / parserMode : ParserMode
+        + parser(bufferPtr, countOfChildDirectory) / setRootForDecompression(root)
+        - fileParser(bufferPtr, isRoot) / directoryParser(bufferPtr, isRoot)
+        - linkParser(bufferPtr, isRoot, linkType) / pathConnector(fileName) : path
+        - rootParser(bufferPtr, paths, count, noDirec)
+        - checkBounds(blockPosition, requiredSize)
+    }
+    class DirectoryReadCursor <<struct>> {
+        + remaining : BlockLength / blockLen : BlockLength
+        + nextReadPos(dataAreaStart) / entryFieldPos(dataAreaStart, bufferPtr)
+        + consumeSeparated(len) / bytesInThisBlock()
+    }
+    BinaryStandardLoader *-right-> EntryParser : unique_ptr
+    BinaryStandardLoader ..right..> DirectoryReadCursor
+}
+
+package "二进制格式" {
+    class Header <<packed 19B>> {
+        + magicNum_1 : uint32_t / strategy : CompressStrategy
+        + version : CompressorVersion
+        + headerOffset : HeaderOffsetSize / directoryOffset : DirectoryOffsetSize
+        + magicNum_2 : uint32_t
+    }
+    class Constants <<namespace>> {
+        + VERSION = 3 / MIN_SUPPORTED_VERSION = 3
+        + MAGIC_NUM = 0xDEADBEEF / BUFFER_SIZE = 8MB
+        + HEADER_BUFFER_SIZE = 16KB / HEADER_SIZE = 19
+        + SEPARATED_STANDARD_SIZE
+        + DIRECTORY_STANDARD_SIZE_BASIC / FILE_STANDARD_SIZE_BASIC
+        + LINK_STANDARD_SIZE_BASIC
+    }
+    class StandardsWriter {
+        + writeBinaryStandards(value, stream) / writeBinaryStandards(str, stream)
+        + {static} writeDataBlock(size, stream, buffer) / appendMagicStatic(stream)
+    }
+    class StandardsReader {
+        + readBinaryStandards~T~() : T
+        + {static} readDataBlock(size, stream, buffer)
+    }
+    Header -right[hidden]-> Constants
+    Constants -right[hidden]-> StandardsWriter
+    StandardsWriter -right[hidden]-> StandardsReader
+}
+
+package "寻址与块范围" {
+    class Locator {
+        + locateFromBegin(stream, offset)
+        + locateFromEnd(stream, offset)
+    }
+    class BlockSpan <<struct>> {
+        + startPos : SlotOffset / size : BlockLength
+        + ivSlotPos() : SlotOffset
+    }
+    Locator ..right..> BlockSpan
+}
+
+package "条目与路径" {
+    class EntryDetails {
+        - name : string / fileSize : FileSize / isFile : bool / fullPath : path
+        + getName() : string / getFullPath() : path
+        + getSizeOfName() : FileNameSize / getFileSizeInDetails() : FileSize
+        + getIsFile() : bool
+    }
+    class FileTask <<struct>> {
+        + entry : EntryDetails / processedSizeOffset : SlotOffset
+        + compressedSize : FileSize
+    }
+    class LinkTask <<struct>> {
+        + linkType : FlagType / linkPath : path / targetPath : path
+    }
+    class EncodingUtils {
+        + {static} pathFromUtf8 / pathToUtf8 / qStringToUtf8 / utf8ToQString
+        + {static} qStringToPath / pathToQString
+    }
+    class FileSystemUtils {
+        + {static} pathForIo(path) / queryEntry(path) : FileSystemEntryInfo
+        + {static} readLinkForArchive(link) : WindowsLinkInfo
+        + {static} createLink(link, target, type) / exists(path)
+        + {static} listDirectory(dir) / createDirectories(path)
+    }
+    EntryDetails -right[hidden]-> FileTask
+    FileTask -right[hidden]-> LinkTask
+    LinkTask -right[hidden]-> EncodingUtils
+    EncodingUtils -right[hidden]-> FileSystemUtils
+}
+
+' ── 版面：类级跨包连线，把七个包钉成五行 ──
+' 第 1 行：① 建档
+HeaderWriter -down[hidden]-> DataExporter
+' 第 2 行：② 数据区 与 ③ 收尾
+DataLoader -right[hidden]-> CatalogFinalizer
+' 第 3 行：纯读装载
+DataExporter -down[hidden]-> BinaryStandardLoader
+' 第 4 行：二进制格式
+BinaryStandardLoader -down[hidden]-> Header
+' 第 3 行右侧：寻址与块范围
+BinaryStandardLoader -right[hidden]-> Locator
+' 第 5 行：条目与路径
+Header -down[hidden]-> EntryDetails
+
+note right of CatalogFinalizer
+  **写入三阶段，依次进行**
+  ① HeaderWriter 建档
+  写文件头、目录树与各预留字段
+  ② DataExporter 数据区
+  逐块纯追加，块长直接写真实值
+  ③ CatalogFinalizer 收尾
+  先把各文件处理后大小写回预留槽
+  再对目录区做原地加密
+end note
+
+note right of StandardsReader
+  **磁盘布局**
+  4B 魔数 / 19B Header / 4B 魔数
+  数据区分割块 / 目录区 16KB 分割块 / 4B 魔数
+end note
+
+note bottom of EntryParser
+  **加载路径**
+  装载器逐块读目录区，解密后交给 EntryParser 解析。
+  文件进入 fileQueue，目录进入 entryQueue，
+  链接进入 linkQueue 并在解压收尾时统一重建。
+  目录块位置随手记入 blockPosition，供收尾加密使用。
+end note
+
+@enduml
+
+
+
+
+
+
+
+
