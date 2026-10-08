@@ -1,0 +1,116 @@
+@startuml GUI_Layer
+scale 2
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam defaultFontName "Microsoft YaHei"
+skinparam nodesep 26
+skinparam ranksep 30
+caption v2.2.1 · 归档格式 v3
+
+title GUI 层 — Qt 6 静态构建
+
+class MainWindow <<QMainWindow>> {
+    ** 压缩页控件 **
+    - m_compressModeCombo : QComboBox* / m_fileListWidget : QListWidget*
+    - m_outputDirEdit / m_outputFileNameEdit / m_passwordEdit : QLineEdit*
+    - m_startCompressBtn : QPushButton* / m_compressProgressBar : QProgressBar*
+    - m_compressCurrentFileLabel / m_compressProgressLabel : QLabel*
+    - m_compressLogEdit : QTextEdit*
+    --
+    ** 解压页控件 **
+    - m_decompressFilePathEdit / m_decompressOutputDirEdit : QLineEdit*
+    - m_decompressSubfolderEdit / m_decompressPasswordEdit : QLineEdit*
+    - m_startDecompressBtn : QPushButton* / m_decompressProgressBar : QProgressBar*
+    - m_decompressCurrentFileLabel / m_decompressProgressLabel : QLabel*
+    - m_decompressLogEdit : QTextEdit*
+    --
+    ** 框架与状态 **
+    - m_tabWidget : QTabWidget* / m_backgroundPixmap : QPixmap
+    - m_workerThread : QThread* / m_worker : CompressionWorker*
+    - m_isProcessing : bool
+    --
+    ** 槽函数 **
+    - 列表：onAddFilesClicked / onAddFolderClicked / onRemoveFileClicked
+    - onClearFilesClicked
+    - 目录：onBrowseOutputDirClicked / onBrowseDecompressFileClicked
+    - onBrowseDecompressOutputClicked
+    - 启动：onStartCompressionClicked / onStartDecompressionClicked
+    - 回调：onCompressionDetailedProgress / onCompressionFinished
+    - onDecompressionDetailedProgress / onDecompressionFinished
+    --
+    ** 重写与辅助 **
+    # dragEnterEvent / dropEvent / resizeEvent
+    - setupUI / createCompressionTab / createDecompressionTab
+    - addDroppedPaths / updateBackground
+    - updateOutputDirectory / updateOutputFileName
+    - pathExists / makeValidPath / elideText
+    - applyPlaceholderPalette / setPlaceholderHint
+    - localizeWorkerDialogMessage
+}
+
+class CompressionWorker <<QObject>> {
+    - m_filesToCompress : QStringList / m_outputDir : QString
+    - m_outputFileName : QString / m_password : QString
+    - m_mode : Y_flib::CompressionMode
+    - m_decompressInputFile / m_decompressOutputDir : QString
+    - m_decompressPassword : QString
+    - m_stopRequested : atomic~bool~ / m_lastEmittedProgress : double
+    - m_lastProgressTime : steady_clock::time_point
+    - {static} PROGRESS_INTERVAL_MS = 200 / PROGRESS_DELTA = 2.0
+    --
+    + setCompressionParams(..) / setDecompressionParams(..)
+    + requestStop() / resetStopFlag() / isStopRequested() : bool
+    + doCompression() / doDecompression()
+    .. signals ..
+    + detailedProgress(file, filePct, overallPct, status)
+    + finished(success, message)
+    --
+    - validateCompressionParams() / validateDecompressionParams() : bool
+    - shouldEmitProgress(currentProgress) : bool
+}
+
+class PlaceholderLineEdit <<QLineEdit>> {
+    - m_ghostText : QString / m_ghostTextColor : QColor
+    + setGhostText(text) / setGhostTextColor(color)
+    # paintEvent(event)
+}
+
+class IconHandler {
+    + {static} AssociateIconToSyFile(syPath, iconPath) : bool
+    - {static} RegisterSyFileIcon(iconPath) : bool
+    - {static} ExtractIconFromExe(iconPath) : bool
+    - {static} Utf8ToWide(utf8) : wstring
+    - {static} WideToUtf8(wide) : string
+}
+
+MainWindow *--> CompressionWorker : moveToThread
+MainWindow ..> PlaceholderLineEdit : 输入框提示文字
+CompressionWorker ..> IconHandler : 关联 .sy 文件图标
+
+' ── 版面控制：以下连线不渲染，只用于摆放 ──
+' 主窗口在左，工作对象在右，两者下方的辅助类各自对齐
+MainWindow -right[hidden]-> CompressionWorker
+MainWindow -down[hidden]-> PlaceholderLineEdit
+CompressionWorker -down[hidden]-> IconHandler
+
+note right of CompressionWorker
+  界面运行在 GUI 主线程，压缩与解压任务在独立工作线程执行。
+  进度由工作线程经排队信号回传，信号参数全部使用 Qt 内建元类型。
+end note
+
+note bottom of PlaceholderLineEdit
+  **任务阶段与进度刻度**
+  压缩：校验与建档 0 到 20，主循环 20 到 95，收尾 95 到 100
+  解压：读头与建模块 0 到 15，主循环 15 到 95，收尾 95 到 100
+end note
+
+note bottom of IconHandler
+  压缩：校验参数，写归档头，再调用 compressionLoop。
+  解压：读归档头校验魔数，经 idToMode 探测模式，
+  归档含加密且未填口令时直接返回失败，否则调用 decompressionLoop。
+  进度信号按 200ms 间隔或 2% 增幅节流，进度到达 100% 时必定发出。
+  取消由原子标志置位，任务内各检查点在进度回调中抛出异常结束循环。
+end note
+
+@enduml
