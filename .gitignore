@@ -29,8 +29,10 @@ bin/
 src/main.cpp
 
 *.bin
+# 上面两条针对构建期临时脚本；工作流知识库的租约脚本属于项目工具，必须入库。
 *.ps1
 *.bat
+!Y_MultipleAgentWorkflow/Workflow/Scripts/*.ps1
 
 # codegraph index data
 .codegraph/

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "distributionName": "Y_MultipleAgentWorkflow",
+  "packageVersion": "development",
+  "skillVersion": "development",
+  "workflowTemplateVersion": "development",
+  "workflowRootName": "Y_MultipleAgentWorkflow",
+  "projectValidationMode": "Guide",
+  "categories": [
+    "Workflow",
+    "Architecture",
+    "ArchiveFormat",
+    "Codec",
+    "Engineering",
+    "GUI",
+    "Pipeline"
+  ],
+  "installedAtUtc": "2026-10-26T08:44:35.8729896Z",
+  "updatedAtUtc": "2026-10-26T10:34:23.0278161Z",
+  "managedFiles": [
+    {
+      "path": "Workflow/Scripts/WorkingAgent.ps1",
+      "installedHash": "16138077ff1f585fc300ca04010836f7c8d5166dd10521228e765ac453bd377c"
+    },
+    {
+      "path": "Workflow/Scripts/Test-WorkingAgent.ps1",
+      "installedHash": "638fa3c2aea53c3d742549784df7ffe0d41564c6f0ba4d0b726c251d2a363ee8"
+    },
+    {
+      "path": "Workflow/Templates/BusinessRouter.template.md",
+      "installedHash": "b18dc760305e151f005dc127ec276400a9152f51e2526edd91830192b45bbbc0"
+    },
+    {
+      "path": "Workflow/Templates/DeveloperLog.template.md",
+      "installedHash": "69ad56b8242fa96facc56ffe3f313d7a5c695c7baee6d84c720597f77592f7f5"
+    },
+    {
+      "path": "WorkingAgent/.gitignore",
+      "installedHash": "aac0321d51496c76515b06f647080173f7de8025ddb90c429312f534c8a4d109"
+    }
+  ],
+  "entryMode": "ThinEntry"
+}
